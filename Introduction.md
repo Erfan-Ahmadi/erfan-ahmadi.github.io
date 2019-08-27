@@ -1,5 +1,4 @@
 ---
-layout: page
 title: Introduction To Me
 permalink: /Introduction/
 ---
