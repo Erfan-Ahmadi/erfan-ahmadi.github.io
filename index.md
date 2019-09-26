@@ -3,8 +3,12 @@ This blog is for me to Share my **passion** with you and telling my stories from
 
 **Graphics Programming :)**
 
-## Table of Contents
+
+## Articles
 - [Introduction to Me](/Introduction)
+
+## Show Cases
+- [The Forge Examples](/TheForgeExamples)
 
 ## Contact Me at
 - [GitHub](https://github.com/Erfan-Ahmadi)
