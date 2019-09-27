@@ -31,7 +31,8 @@ These are some previews:
   <img src="https://github.com/Erfan-Ahmadi/TheForgeExamples/raw/master/screenshots/toonshade.gif" alt="" width="300" height="200" />
 </p>
 
-#### 5. Tessellation (Passthrough - PN Triangles)
+#### 5. Tessellation (Left: Passthrough ------- Right: PN Triangles)
 <p align="center">
   <img src="https://github.com/Erfan-Ahmadi/TheForgeExamples/raw/master/screenshots/tessellation_passthrough.gif" alt="" width="300" height="200" />
+  <img src="https://github.com/Erfan-Ahmadi/TheForgeExamples/raw/master/screenshots/tessellation_pntriangles.gif" alt="" width="300" height="200" />
 </p>
