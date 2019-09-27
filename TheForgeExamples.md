@@ -5,7 +5,7 @@ permalink: /TheForgeExamples/
 
 It's been a wonderful couple of weekends for me and I learned a lot of Graphics Techniques and GLSL and HLSL along the way.
 
-I've been implementing these examples in TheForge API which is based on Modern Graphics APIs (Vulkan, DX12, Mertal)
+I've been implementing these examples in TheForge API which is based on Modern Graphics APIs (Vulkan, DX12, Metal)
 
 [GitHub](https://github.com/Erfan-Ahmadi/TheForgeExamples)
 
