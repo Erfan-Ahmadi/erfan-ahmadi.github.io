@@ -45,3 +45,16 @@ Tessellation using Hull/Control and Domain/Evaluation Shader in HLSL and GLSL. P
   <img src="https://github.com/Erfan-Ahmadi/TheForgeExamples/raw/master/screenshots/tessellation_passthrough.gif" alt="" width="600" height="400" />
   <img src="https://github.com/Erfan-Ahmadi/TheForgeExamples/raw/master/screenshots/tessellation_pntriangles_suzanne.gif" alt="" width="600" height="400" />
 </p>
+
+### 6. Bloom
+Bloom gives noticeable visual cues about the brightness of objects as bloom tends to give the illusion objects are really bright.
+
+The technique used is to render the bloom-affected objects to a 256x256 FBO and then blurred and added to the final scene.
+Technique based on **GPU Pro 2 : Post-Processing Effects on Mobile Devices** and [SachaWilliens Vulkan Example](https://github.com/SaschaWillems/Vulkan/tree/master/examples/bloom)
+
+The Final pass is **ToneMapping / Exposure Control** and Gamma Correction  and all the frame buffers before that are rendered as HDR (R16G16B16A16)
+
+<p align="center">
+  <img src="https://github.com/Erfan-Ahmadi/TheForgeExamples/raw/master/screenshots/bloom.gif" alt="" width="600"/>
+  <img src="https://github.com/Erfan-Ahmadi/TheForgeExamples/raw/master/screenshots/bloom2.gif" alt="" width="600"/>
+</p>
