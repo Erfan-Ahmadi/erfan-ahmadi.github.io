@@ -8,6 +8,7 @@ This blog is for me to Share my **passion** with you and telling my stories from
 - [Introduction to Me](/Introduction)
 
 ## Show Cases
+- [Bokeh Depth of Field](/Bokeh)
 - [The Forge Examples](/TheForgeExamples)
 
 ## Contact Me at
