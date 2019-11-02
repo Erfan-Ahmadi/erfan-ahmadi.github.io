@@ -27,7 +27,7 @@ Here is the 3 different methods implemented explained briefly:
 
 # Techniques Brief Description:
 
-### 1.Circular Seperable Depth of Field
+### 1. Circular Seperable Depth of Field
 
 - [x] Computation in 1/2 Resolution
 - [x] Seperable Filter
@@ -45,7 +45,7 @@ In his paper some important notes were missing like how we do the "blending" so 
 
 This method is operating on Near, Far Field Seperatly on multiple passes 
 
-### 2.Practical Gather-based Bokeh Depth of Field
+### 2. Practical Gather-based Bokeh Depth of Field
 
 - [x] Computation in 1/2 Resolution
 - [ ] Seperable Filter
@@ -57,7 +57,7 @@ This method is operating on Near, Far Field Seperatly on multiple passes
 
 This approach is also Gather-Based but the sampling and computation is **not** seperable and is circular sampling with 48 samples.
 
-### 3.Single Pass Depth of Field
+### 3. Single Pass Depth of Field
 
 - [ ] Computation in 1/2 Resolution
 - [x] Computation in Full Resolution
@@ -74,7 +74,7 @@ Due to this technique being in full-res and needing a lot more sample and calcul
 
 There are a lot of optimizations for this technique but since I forced it to be in a single pass my hands were tight (by myself).
 
-## Real-Time Bokeh Screen Shots
+# Real-Time Bokeh Screen Shots
 
 - [Circular Seperable Depth of Field](https://github.com/Erfan-Ahmadi/BokehDepthOfField/tree/master/src/CircularDOF) 
 <p align="center">
@@ -94,17 +94,17 @@ There are a lot of optimizations for this technique but since I forced it to be 
   <img src="https://github.com/Erfan-Ahmadi/BokehDepthOfField/raw/master/screenshots/simulation/single-pass/4.jpg" alt="" width="400"/>
 </p>
 
-## Implemented Techniques
+# Implemented Techniques
 
 - [Circular Seperable Depth of Field](https://github.com/Erfan-Ahmadi/BokehDepthOfField/tree/master/src/CircularDOF) - [Resources](#CircularDOF)
 - [Practical Gather-based Bokeh Depth of Field](https://github.com/Erfan-Ahmadi/BokehDepthOfField/tree/master/src/GatherBasedBokeh) - [Resources](#GatherBased)
 - [Single Pass Depth of Field](https://github.com/Erfan-Ahmadi/BokehDepthOfField/tree/master/src/SinglePassBokeh) - [Resources](#SinglePass)
 
-## Issues
+# Issues
 
 Report any bug on your devices with most detail [here](https://github.com/Erfan-Ahmadi/BokehDepthOfField/issues)
 
-## Resources 
+# Resources 
 
 All Bokeh Links and Book Chapters gathered for R&D are in [this github gist](https://gist.github.com/Erfan-Ahmadi/e27842ce9daa163ec10e28ee1fc72659); for detailed resources and links see below:
 
