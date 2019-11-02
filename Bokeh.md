@@ -39,7 +39,7 @@ Here is the 3 different methods implemented explained briefly:
 
 This technique is a seperable convolution filter like the Gaussian Filter and this makes it super faster than the "1-Pass 2D Kernel".
 
-Derivation of the kernel weights and math include "Complex Numbers" and "Fourier Transforms" explained in [Olli Niemitalo's blog post](http://yehar.com/blog/?p=1495).
+Derivation of the kernel weights and math include **Complex Numbers** and **Fourier Transforms** explained in [Olli Niemitalo's blog post](http://yehar.com/blog/?p=1495).
 
 In his paper some important notes were missing like how we do the "blending" so I had to get creative and do a lot of thinking myself.
 
