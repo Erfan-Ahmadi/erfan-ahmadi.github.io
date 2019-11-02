@@ -27,7 +27,7 @@ Here is the 3 different methods implemented explained briefly:
 
 # Techniques Brief Description:
 
-### Circular Seperable Depth of Field
+### 1.Circular Seperable Depth of Field
 
 - [x] Computation in 1/2 Resolution
 - [x] Seperable Filter
@@ -45,7 +45,7 @@ In his paper some important notes were missing like how we do the "blending" so 
 
 This method is operating on Near, Far Field Seperatly on multiple passes 
 
-### Practical Gather-based Bokeh Depth of Field
+### 2.Practical Gather-based Bokeh Depth of Field
 
 - [x] Computation in 1/2 Resolution
 - [ ] Seperable Filter
@@ -57,7 +57,7 @@ This method is operating on Near, Far Field Seperatly on multiple passes
 
 This approach is also Gather-Based but the sampling and computation is **not** seperable and is circular sampling with 48 samples.
 
-### Single Pass Depth of Field
+### 3.Single Pass Depth of Field
 
 - [ ] Computation in 1/2 Resolution
 - [x] Computation in Full Resolution
