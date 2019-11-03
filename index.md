@@ -1,3 +1,7 @@
+---
+title: Graphics Coder
+---
+
 # What is this blog about?
 This blog is for me to Share my **passion** with you and telling my stories from the day I decided to start doing It.
 
