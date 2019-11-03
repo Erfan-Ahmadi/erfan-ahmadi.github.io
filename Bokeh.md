@@ -1,5 +1,5 @@
 ---
-title: The Forge Examples
+title: Bokeh Depth Of Field Project
 permalink: /Bokeh/
 ---
 It's been a month since I decided to challenge my self with implementing **Bokeh Depth of Field** effect
