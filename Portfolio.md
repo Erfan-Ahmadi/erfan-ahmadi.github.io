@@ -6,7 +6,7 @@ permalink: /Portfolio/
 Here are my Graphics Projects sorted from latest to oldest.
 
 ---
-## 1. Bokeh Depth Of Field
+# 1. Bokeh Depth Of Field
 
 [[Blog Post](https://erfan-ahmadi.github.io/Bokeh), [GitHub](https://github.com/Erfan-Ahmadi/BokehDepthOfField)]
 
@@ -27,7 +27,7 @@ There are 3 methods used to create Depth of Field Effect described briefly in [t
 </p>
 
 ---
-## 2. Graphics Projects 
+# 2. Graphics Projects 
 
 Motivations for these Projects were to get comfortable with TheForge API and gain more experience with some Graphics Techniques I'm interested in.
 
@@ -86,7 +86,7 @@ Also on Mobile devices it's good to uses subpasses for tile-based rendering inst
 </p>
 
 ---
-## 3. SIMD and GPUGPU Collision Detection
+# 3. SIMD and GPUGPU Collision Detection
 
 Implementing Different Methods of Circle to Circle Collision with **Spatial Partitioning** Techniques and Vulkan Graphics Compute and SIMD AVX2 Technologies
 
