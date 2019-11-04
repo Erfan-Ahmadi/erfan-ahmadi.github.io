@@ -1,6 +1,6 @@
 ---
 title: Erfan Ahmadi Projects
-permalink: /Bokeh/
+permalink: /Portfolio/
 ---
 
 Here are my Graphics Projects sorted from latest to oldest.
