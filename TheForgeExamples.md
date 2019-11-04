@@ -43,7 +43,7 @@ Simple Toon Shading with outlining. It uses **Stencil Buffers** to draw the cool
 Tessellation using Hull/Control and Domain/Evaluation Shader in HLSL and GLSL. PN-Triangles is a method using **Bezier Triangles** and does not require a heightmap to improve quality of the geometry unlike the first technique which is simple and passthrough tessellation
 <p align="center">
   <img src="https://github.com/Erfan-Ahmadi/TheForgeExamples/raw/master/screenshots/tessellation_passthrough.gif" alt="" width="600" height="400" />
-  <img src="https://github.com/Erfan-Ahmadi/TheForgeExamples/raw/master/screenshots/tessellation_pntriangles_suzanne.gif" alt="" width="600" height="400" />
+  <img src="https://github.com/Erfan-Ahmadi/TheForgeExamples/raw/master/screenshots/tessellation_pntriangles_teapot.gif" alt="" width="600" height="400" />
 </p>
 
 ### 6. Bloom
