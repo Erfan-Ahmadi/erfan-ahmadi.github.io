@@ -33,15 +33,11 @@ Motivations for these Projects were to get comfortable with TheForge API and gai
 
 [[Blog Post](https://erfan-ahmadi.github.io/TheForgeExamples), [GitHub](https://github.com/Erfan-Ahmadi/TheForgeExamples)]
 
-1. Execute Indirect
-2. Bloom
-3. Tessellation
-4. Toon Shading
-5. Deffered Lighting
-6. Instancing
-
----
-### Execute Indirect
+1. Bloom
+2. Tessellation
+3. Toon Shading
+4. Deffered Lighting
+5. Instancing
 
 ---
 ### Bloom 
