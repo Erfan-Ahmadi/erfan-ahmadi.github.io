@@ -27,6 +27,7 @@ Here is the 3 different methods implemented explained briefly:
 
 # Techniques Brief Description:
 
+---
 ### 1. Circular Seperable Depth of Field
 
 - [x] Computation in 1/2 Resolution
@@ -45,6 +46,7 @@ In his paper some important notes were missing like how we do the "blending" so 
 
 This method is operating on Near, Far Field Seperatly on multiple passes 
 
+---
 ### 2. Practical Gather-based Bokeh Depth of Field
 
 - [x] Computation in 1/2 Resolution
@@ -57,6 +59,7 @@ This method is operating on Near, Far Field Seperatly on multiple passes
 
 This approach is also Gather-Based but the sampling and computation is **not** seperable and is circular sampling with 48 samples.
 
+---
 ### 3. Single Pass Depth of Field
 
 - [ ] Computation in 1/2 Resolution
@@ -73,6 +76,8 @@ This Depth of Field effect is done in a **Single Pass**.
 Due to this technique being in full-res and needing a lot more sample and calculations It performance is now worse than the other two.
 
 There are a lot of optimizations for this technique but since I forced it to be in a single pass my hands were tight (by myself).
+
+---
 
 # Real-Time Bokeh Screen Shots
 
