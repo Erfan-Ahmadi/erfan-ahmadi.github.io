@@ -7,13 +7,15 @@ This blog is for me to Share my **passion** with you and telling my stories from
 
 **Graphics Programming :)**
 
-
 ## Articles
 - [Introduction to Me](/Introduction)
 
-## Show Cases
-- [Bokeh Depth of Field](/Bokeh)
-- [The Forge Examples](/TheForgeExamples)
+## Portfolio
+ + [Bokeh Depth of Field](/Bokeh)
+ + [The Forge Examples](/TheForgeExamples)
+ + [SIMD/GPGPU Circle Collision](https://github.com/Erfan-Ahmadi/CircleCollision)
+
+Here is summary of all my showcase projects: [Portfolio](/Portfolio)
 
 ## Contact Me at
 - [GitHub](https://github.com/Erfan-Ahmadi)
