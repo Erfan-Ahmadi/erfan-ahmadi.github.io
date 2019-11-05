@@ -82,7 +82,7 @@ Also on Mobile devices it's good to uses subpasses for tile-based rendering inst
 </p>
 
 ---
-# 3. SIMD and GPUGPU Collision Detection
+# 3. SIMD and GPGPU Collision Detection
 
 Implementing Different Methods of Circle to Circle Collision with **Spatial Partitioning** Techniques and Vulkan Graphics Compute and SIMD AVX2 Technologies
 
