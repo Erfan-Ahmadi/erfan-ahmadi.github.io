@@ -16,7 +16,7 @@ permalink: /Introduction/
 I'm Erfan,
 An enthusiastic programmer and self-motivated learner currently located in Iran.
 
-I've worked in the Games Industry for ~2 Years, My first Job was Unity3D programmer but **I didn't wanted to use Unity, I wanted to make It**.
+I've worked in the Games Industry for ~2 Years, My first Job was Unity3D programmer but **I didn't wanted to use Unity, I wanted to help make It**.
 and my second job was C++ Programmer I used imgui to develop app ui and sometimes I had to work with dx and opengl stuff but I never had chance to understand them.
 
 
@@ -40,12 +40,12 @@ In my case, Hello Triangle
 - Writing high-performance applications 
 - Data-Oriented programming.
 - Living Healthy
-- Converstation with people about heir passion
+- Converstation with people about their passion
 - Gaming, such little time to play all these exciting new games. currently on Detroit: Become Human on PS4 about a month now.
 - Playing guitar. started it exactly a year ago but still a complete beginner.
 
 ## What are my experiences?
-- Programming C++ for a lot of time now. Started  C++ ~5 years ago on and off but everyday programming for more than a year now)
+- Programming C++ for a lot of time now. Started  C++ ~2013 on and off but everyday programming since 2017)
 - Worked and did some Unity3D projects with C#.
 - PlayPod PC Client (Cloud Gaming Platform in Iran)
 - Played around with dear ImGui a lot
