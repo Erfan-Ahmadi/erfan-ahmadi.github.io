@@ -127,6 +127,7 @@ High-level renderer user declares what passes need to be done and it implicitly 
 It the gives us the oportunity to compile this graph before executing it, compiling it allows 1. aliasing transient memories (render targets) 2. Possibility of Async Compute 3. Optimizing away outputs that don't take part in the final results.
 
 -[Tiago Rodrigues, Advanced Graphics Tech: Moving to DirectX 12: Lessons Learned, GDC 2017](https://www.gdcvault.com/play/1024656/Advanced-Graphics-Tech-Moving-to)
+
 -[Yuriy O’Donnell, FrameGraph: Extensible Rendering Architecture in Frostbite, GDC 2017](https://www.gdcvault.com/play/1024612/FrameGraph-Extensible-Rendering-Architecture-in)
 
 2. **Material/Shader System**
