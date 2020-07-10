@@ -1,123 +1,105 @@
 ---
-title: Bokeh Depth Of Field Project
-permalink: /Bokeh/
----
-It's been a month since I decided to challenge my self with implementing **Bokeh Depth of Field** effect
-and began learning complex postfx pipelines.
-
-I've learned a lot about post processing and I'm a lot more comfortable with Scatter-as-Gather thinking.
-
-This project is going to be on [The Forge Rendering API](https://github.com/ConfettiFX/The-Forge) as a **UnitTest** and is currently available in my github respository: [Bokeh Depth of Field](https://github.com/Erfan-Ahmadi/BokehDepthOfField)
-
-# Bokeh Depth Of Field
-
-Bokeh Depth Of Field is a Physical Camera Effect created due to Focal Length, Aperture size, shape
-
-<p align="center">
-  <img src="https://github.com/Erfan-Ahmadi/BokehDepthOfField/raw/master/screenshots/real/newyork_maybe.jpg" alt="" width="250"/>
-</p>
-
-Implementing Different Algorithms to mimic 
-This Project is using [The Forge Rendering API](https://github.com/ConfettiFX/The-Forge), a cross-platform rendering, and targeted for these devices: PC, Android, macOS, IOS, IPad OS devices.
-
-Here is the 3 different methods implemented explained briefly:
-
-*I will soon write a blog post with a lot more detail and pros-and-cons on it.*
-
-
-# Techniques Brief Description:
-
----
-### 1. Circular Seperable Depth of Field
-
-- [x] Computation in 1/2 Resolution
-- [x] Seperable Filter
-- [x] Seperate Near and Far
-- [x] Multiple Passess
-- [x] Scatter-as-Gather
-
-**Circular Sperable DOF** by [Kleber Garcia](https://github.com/kecho/CircularDofFilterGenerator/blob/master/circulardof.pdf) at Frostbite EA which was shipped with **FIFA17** , **NHS**, **Mass Effect Andromeda**, **Anthem** and is going to be shipped with the new **Need For Speed Heat**.
-
-This technique is a seperable convolution filter like the Gaussian Filter and this makes it super faster than the "1-Pass 2D Kernel".
-
-Derivation of the Kernel Weights and the Math includes **Complex Numbers** and **Fourier Transforms** explained in [Olli Niemitalo's blog post](http://yehar.com/blog/?p=1495).
-
-In his paper some important notes were missing like how we do the "blending" so I had to get creative and do a lot of thinking myself.
-
-This method is operating on Near, Far Field Seperatly on multiple passes 
-
----
-### 2. Practical Gather-based Bokeh Depth of Field
-
-- [x] Computation in 1/2 Resolution
-- [ ] Seperable Filter
-- [x] Seperate Near and Far
-- [x] Multiple Passess
-- [x] Scatter-as-Gather
-
-**Practical Gather-Based Depth of Field** which is fully described in [GPU-Zen Book](https://www.amazon.com/GPU-Zen-Advanced-Rendering-Techniques-ebook/dp/B0711SD1DW). 
-
-This approach is also Gather-Based but the sampling and computation is **not** seperable and is circular sampling with 48 samples.
-
----
-### 3. Single Pass Depth of Field
-
-- [ ] Computation in 1/2 Resolution
-- [x] Computation in Full Resolution
-- [ ] Seperable Filter
-- [ ] Seperate Near and Far
-- [x] Single Pass
-- [x] Scatter-as-Gather
-
-**Depth of Field in a Single Pass** which is described in Dennis Gustafsson awsome [blog post](http://blog.tuxedolabs.com/2018/05/04/bokeh-depth-of-field-in-single-pass.html).
-
-This Depth of Field effect is done in a **Single Pass**.
-
-Due to this technique being in full-res and needing a lot more sample and calculations It performance is now worse than the other two.
-
-There are a lot of optimizations for this technique but since I forced it to be in a single pass my hands were tight (by myself).
-
+title: Yugen Engine Introduction
+permalink: /Yugen/Introduction
 ---
 
-# Real-Time Bokeh Screen Shots
+# Yugen Engine 
 
-- [Circular Seperable Depth of Field](https://github.com/Erfan-Ahmadi/BokehDepthOfField/tree/master/src/CircularDOF) 
-<p align="center">
-  <img src="https://github.com/Erfan-Ahmadi/BokehDepthOfField/raw/master/screenshots/simulation/circular-dof/1.jpg" alt="" width="400"/>
-  <img src="https://github.com/Erfan-Ahmadi/BokehDepthOfField/raw/master/screenshots/simulation/circular-dof/2.jpg" alt="" width="400"/>
-</p>
+Yugen Engine is an In-House Game Engine we're developing at DeadMage which is in it's early stages of development.
 
-- [Practical Gather-based Bokeh Depth of Field](https://github.com/Erfan-Ahmadi/BokehDepthOfField/tree/master/src/GatherBasedBokeh)
-<p align="center">
-  <img src="https://github.com/Erfan-Ahmadi/BokehDepthOfField/raw/master/screenshots/simulation/gather-based/1.jpg" alt="" width="400"/>
-  <img src="https://github.com/Erfan-Ahmadi/BokehDepthOfField/raw/master/screenshots/simulation/gather-based/3.jpg" alt="" width="400"/>
-</p>
+## What is interesting about Yugen?
 
-- [Single Pass Depth of Field](https://github.com/Erfan-Ahmadi/BokehDepthOfField/tree/master/src/SinglePassBokeh)
-<p align="center">
-  <img src="https://github.com/Erfan-Ahmadi/BokehDepthOfField/raw/master/screenshots/simulation/single-pass/2.jpg" alt="" width="400"/>
-  <img src="https://github.com/Erfan-Ahmadi/BokehDepthOfField/raw/master/screenshots/simulation/single-pass/4.jpg" alt="" width="400"/>
-</p>
+1. We started it from scratch for the next title of DeadMage Studios (hopefully) and there is no legacy code to wrestle with!
+2. We decided to have Vulkan as our First Rendering API to develop on and we have a minimal rendering abstraction on top of it.
 
-# Implemented Techniques
+In these series of blog posts that come out as a journal for me I'm going to focus mostly on Our Rendering System. 
+My friends are working on exciting subsystems such as World Editor, Scripting System, Job system, ECS; I hope they blog about it and share their knowledge too. 
 
-- [Circular Seperable Depth of Field](https://github.com/Erfan-Ahmadi/BokehDepthOfField/tree/master/src/CircularDOF) - [Resources](#CircularDOF)
-- [Practical Gather-based Bokeh Depth of Field](https://github.com/Erfan-Ahmadi/BokehDepthOfField/tree/master/src/GatherBasedBokeh) - [Resources](#GatherBased)
-- [Single Pass Depth of Field](https://github.com/Erfan-Ahmadi/BokehDepthOfField/tree/master/src/SinglePassBokeh) - [Resources](#SinglePass)
+## What is already developed on Yugen Rendering System ?
 
-# Issues
+**Yugen Renderer Backend** is a thin layer of abstraction on top of vulkan getting rid of lots of boiler plate code, And we have the convenience to Update Descriptor Sets and Push Constants with their names with the help of our SPV Reflector (shout out to @Yzt)
 
-Report any bug on your devices with most detail [here](https://github.com/Erfan-Ahmadi/BokehDepthOfField/issues)
+### Core Rendering System and Binding Model  
+Concepts such as SwapChain, Image, Buffer, CommandBuffer, Queues, DescriptorSets, Push Constants, Semaphores and Fences are all exposed in this abstraction layer.
+Our biggest structure in **YRB**  is PipelineLayout which holds the most data, I'm going through this and the binding model for **Yugen Renderer Backend** in another blog post.
 
-# Resources 
+### Dear Imgui Integration
+We also integrated [dear imgui]() and we have a imgui_yugen_impl that we can have so much fun with later (online profilers, statistics and runtime debugging tools)
 
-All Bokeh Links and Book Chapters gathered for R&D are in [this github gist](https://gist.github.com/Erfan-Ahmadi/e27842ce9daa163ec10e28ee1fc72659); for detailed resources and links see below:
+### DemoFramework System
+We have a really simple and cool demo-framework system which I'm very proud of that allows us to add techdemos really easy.
+1. You create a class and inherit from DemoFramework and start implementing a techdemo
+2. You Register that class and give it a name.
+And when you select a techdemo from the command line or the command arguments it will construct the selected demo and will run it.
 
-- <a name="CircularDOF"></a>Circular Depth of Field (Kleber Garcia)
-  - [Circular Separable Convolution Depth of Field Paper - Keleber Garcia](https://github.com/kecho/CircularDofFilterGenerator/blob/master/circulardof.pdf)
-  - [Circularly Symmetric Convolution and Lens Blur - Olli Niemitalo](http://yehar.com/blog/?p=1495)
-- <a name="GatherBased"></a>GPU Zen (Wolfgang Engel) : Screen Space/Practical Gather-based Bokeh Depth of Field
-  - [Book Amazon](https://www.amazon.com/GPU-Zen-Advanced-Rendering-Techniques-ebook/dp/B0711SD1DW)
-  - [GitHub](https://github.com/wolfgangfengel/GPUZen)
-- <a name="SinglePass"></a>[Bokeh depth of field in a single pass - Dennis Gustafsson](http://blog.tuxedolabs.com/2018/05/04/bokeh-depth-of-field-in-single-pass.html)
-  
+Here is an example simplified demo code :
+
+[[
+
+class Demo009_MSAA : public DemoFramework 
+{
+protected:
+    virtual bool DoInitResources() override;
+    virtual bool DoExitResources() override;
+    virtual void OnUI() override;
+    virtual void DoDraw(uint32_t frame_index, float dt) override;
+    virtual char const * GetWindowTitle() const override { return "MultiSampling"; }
+    virtual void OnResize(uint32_t new_width, uint32_t new_height) { Unload(); Load(new_width, new_height); }
+    virtual void OnClose() override { should_quit = true; }
+    virtual bool ShouldQuit() override { return should_quit; }
+    ...
+    ...
+    ...
+private:
+    YRB::GraphicsPipeline   graphics_pipeline_simple = {};
+    YRB::GraphicsPipeline   graphics_pipeline_msaa = {};
+    YRB::GraphicsPipeline   graphics_pipeline_sample_rate_shading = {};
+
+    // Render Targets:
+    YRB::Texture depth_rt_texture[YRB::Swapchain::MaxImages];
+    YRB::Texture multisampling_depth_rt_texture[YRB::Swapchain::MaxImages];
+    YRB::Texture multisampling_color_rt_texture[YRB::Swapchain::MaxImages];
+    
+    YRB::Swapchain swap_chain = {};
+
+    YRB::CommandPool onetime_transfer_cmd_pool = {};
+    YRB::CommandPool onetime_graphics_cmd_pool = {};
+
+    YRB::Fence      fences_framedone[YRB::Swapchain::MaxImages] = {};
+    YRB::Semaphore  semaphore_imageacquire[YRB::Swapchain::MaxImages] = {};
+    YRB::Semaphore  semaphore_readytopresent[YRB::Swapchain::MaxImages] = {};
+    YRB::CommandPool graphics_cmd_pool = {};
+    
+    YRB::Buffer             view_proj_uniform_buffer[YRB::Swapchain::MaxImages] = {};
+    YRB::Buffer             models_uniform_buffer[YRB::Swapchain::MaxImages];
+}
+
+static auto _ = Demo_Register("MultiSampling", [] { return new Demo009_MSAA(); });
+
+]]
+
+[TechDemo Selection Image]
+
+## Interesting Demos
+
+These techdemos are ran on **YRB** (Yugen Renderer Backend) on Vulkan.
+
+They are still written pretty low-level and one needs understanding of Modern Graphics APIs like D3D12 or Vulkan to be able to work with it because the concepts are the same no matter how many hundreds of lines it hides.
+
+Some Gifs
+
+## What is under develop?
+
+1. High-Level Rendering System
+
+Our high-level rendering system is inspired by the idea of frame graphs (or some call it render graphs).
+High-level renderer user declares what passes need to be done and it implicitly defines dependencies between those passes by declaring resources and connecting inputs and outputs via handles or names(strings).
+It the gives us the oportunity to compile this graph before executing it, compiling it allows 1. aliasing transient memories (render targets) 2. Possibility of Async Compute 3. Optimizing away outputs that don't take part in the final results.
+
+-[Resources]()
+
+2. Material/Shader System
+Needs research about what we need for the game we're developing.
+
+3. A Good GPU Memory Manager
+  We currently use VMA tool for the underlying memory management but we need to expose extra features to be able to do some low-level jobs like memory aliasing.
