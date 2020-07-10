@@ -7,11 +7,11 @@ permalink: /Yugen/Introduction
 
 Yūgen (幽玄) is an important concept in traditional Japanese aesthetics. The exact translation of the word depends on the context. In the Chinese philosophical texts the term was taken from, yūgen meant "dim", "deep" or "mysterious".
 
-Yugen Engine is an In-House Game Engine we're developing at DeadMage which is in it's early stages of development.
+Yugen Engine is an In-House Game Engine we're developing at [Dead Mage Studios](https://deadmage.com/) which is in it's early stages of development.
 
 ## What is interesting about Yugen?
 
-1. We started it from scratch for the next title of DeadMage Studios (hopefully) and there is no legacy code to wrestle with!
+1. We started it from scratch and there is no legacy code to wrestle with!
 2. We decided to have Vulkan as our First Rendering API to develop on and we have a minimal rendering abstraction on top of it.
 
 In these series of blog posts that come out as a journal for me I'm going to focus mostly on Our Rendering System. 
@@ -126,9 +126,9 @@ Our high-level rendering system is inspired by the idea of frame graphs (or some
 High-level renderer user declares what passes need to be done and it implicitly defines dependencies between those passes by declaring resources and connecting inputs and outputs via handles or names(strings).
 It the gives us the oportunity to compile this graph before executing it, compiling it allows 1. aliasing transient memories (render targets) 2. Possibility of Async Compute 3. Optimizing away outputs that don't take part in the final results.
 
--[Tiago Rodrigues, Advanced Graphics Tech: Moving to DirectX 12: Lessons Learned, GDC 2017](https://www.gdcvault.com/play/1024656/Advanced-Graphics-Tech-Moving-to)
+- [Tiago Rodrigues, Advanced Graphics Tech: Moving to DirectX 12: Lessons Learned, GDC 2017](https://www.gdcvault.com/play/1024656/Advanced-Graphics-Tech-Moving-to)
 
--[Yuriy O’Donnell, FrameGraph: Extensible Rendering Architecture in Frostbite, GDC 2017](https://www.gdcvault.com/play/1024612/FrameGraph-Extensible-Rendering-Architecture-in)
+- [Yuriy O’Donnell, FrameGraph: Extensible Rendering Architecture in Frostbite, GDC 2017](https://www.gdcvault.com/play/1024612/FrameGraph-Extensible-Rendering-Architecture-in)
 
 2. **Material/Shader System**
    - Needs research about what we need for the game we're developing.
