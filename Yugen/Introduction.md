@@ -34,8 +34,7 @@ And when you select a techdemo from the command line or the command arguments it
 
 Here is an example simplified demo code :
 
-[[
-
+```
 class Demo009_MSAA : public DemoFramework 
 {
 protected:
@@ -75,8 +74,7 @@ private:
 }
 
 static auto _ = Demo_Register("MultiSampling", [] { return new Demo009_MSAA(); });
-
-]]
+```
 
 [TechDemo Selection Image]
 
