@@ -123,8 +123,11 @@ For example our Bokeh Depth of Field Demo is ~1400 SLOC which has 7 Render Passe
 1. **High-Level Rendering System**
 
 Our high-level rendering system is inspired by the idea of frame graphs (or some call it render graphs).
-High-level renderer user declares what passes need to be done and it implicitly defines dependencies between those passes by declaring resources and connecting inputs and outputs via handles or names(strings).
-It the gives us the oportunity to compile this graph before executing it, compiling it allows 1. aliasing transient memories (render targets) 2. Possibility of Async Compute 3. Optimizing away outputs that don't take part in the final results.
+High-level renderer user declares what passes need to be done and it implicitly defines dependencies between those passes by declaring resources and connecting inputs and outputs via strings or handles.
+
+It the gives us the opportunity to compile this graph before executing it.
+
+Compiling it allows 1. aliasing transient memories (render targets) 2. Possibility of Async Compute 3. Optimizing away outputs that don't take part in the final results.
 
 - [Tiago Rodrigues, Advanced Graphics Tech: Moving to DirectX 12: Lessons Learned, GDC 2017](https://www.gdcvault.com/play/1024656/Advanced-Graphics-Tech-Moving-to)
 
