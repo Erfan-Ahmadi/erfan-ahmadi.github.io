@@ -78,7 +78,7 @@ private:
 static auto _ = Demo_Register("MultiSampling", [] { return new Demo009_MSAA(); });
 ```
 <p align="center">
-  <img src="https://github.com/Erfan-Ahmadi/BokehDepthOfField/raw/master/screenshots/real/newyork_maybe.jpg" alt="" width="600"/>
+  <img src="https://github.com/Erfan-Ahmadi/BokehDepthOfField/raw/master/screenshots/real/techdemo_selection.png" alt="" width="600"/>
 </p>
 
 ## Demos
@@ -89,18 +89,30 @@ They are still written pretty low-level and one needs understanding of Modern Gr
 
 For example our Bokeh Depth of Field Demo is ~1400 SLOC which has 7 Render Passes and 14 Render Targets.
 
-### This Demo that challenges the Backend Renderer with lots of PipelineBarriers. RenderTargets and Graphics Pipelines and DescriptorSets 
-
-<p align="center">
-  <img src="https://github.com/Erfan-Ahmadi/BokehDepthOfField/raw/master/screenshots/real/newyork_maybe.jpg" alt="" width="500"/>
-</p>
-
 ### This Demo shows loading the YUGA Mesh and sending it's data to YRB, We have our own Asset Format named YUGA which is gltf importable.
 
 <p align="center">
-  <img src="https://github.com/Erfan-Ahmadi/BokehDepthOfField/raw/master/screenshots/real/newyork_maybe.jpg" alt="" width="500"/>
+  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/yuga_mesh.png" alt="" width="500"/>
 </p>
 
+
+### This Demo uses Dynamic Uniform Buffers in Vulkan. Offsets into a big memory instead of having a descriptor set for each object. 
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/dynamic_uniform_buffers.png" alt="" width="500"/>
+</p>
+
+### This Demo that challenges the Backend Renderer with lots of PipelineBarriers. RenderTargets and Graphics Pipelines and DescriptorSets 
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/dof_c.png" alt="" width="500"/>
+</p>
+
+### Other Demos
+
+<p align="center">
+  <img src="https://github.com/Erfan-Ahmadi/BokehDepthOfField/raw/master/screenshots/real/msaa.png" alt="" width="300"/>
+</p>
 
 ## What is under develop?
 
@@ -120,5 +132,6 @@ Needs research about what we need for the game we're developing.
   We currently use VMA tool for the underlying memory management but we need to expose extra features to be able to do some low-level jobs like memory aliasing.
 
 ## Wrap-Up
+
 I'm learning a lot by contributing to this engine and I want to share it here as a journal and I hope someone enjoys reading it.
 This post wasn't technical but I have many many technical ideas to post about Yugen here and I'm excited about it.
