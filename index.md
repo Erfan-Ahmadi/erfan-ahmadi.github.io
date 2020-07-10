@@ -10,6 +10,9 @@ This blog is for me to Share my **passion** with you and telling my stories from
 ## Articles
 - [Introduction to Me](/Introduction)
 
+## Yugen Engine
+- [What is Yugen Engine](/YugenEngine)
+
 ## Portfolio
  + [Bokeh Depth of Field](/Bokeh)
  + [The Forge Examples](/TheForgeExamples)
