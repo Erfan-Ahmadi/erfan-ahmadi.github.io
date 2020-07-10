@@ -5,6 +5,8 @@ permalink: /Yugen/Introduction
 
 # Yugen Engine 
 
+Yūgen (幽玄) is an important concept in traditional Japanese aesthetics. The exact translation of the word depends on the context. In the Chinese philosophical texts the term was taken from, yūgen meant "dim", "deep" or "mysterious".
+
 Yugen Engine is an In-House Game Engine we're developing at DeadMage which is in it's early stages of development.
 
 ## What is interesting about Yugen?
@@ -17,25 +19,24 @@ My friends are working on exciting subsystems such as World Editor, Scripting Sy
 
 ## What is already developed on Yugen Rendering System ?
 
-**Yugen Renderer Backend** is a thin layer of abstraction on top of vulkan getting rid of lots of boiler plate code, And we have the convenience to Update Descriptor Sets and Push Constants with their names with the help of our SPV Reflector (shout out to @Yzt)
+**Yugen Renderer Backend** is a thin layer of abstraction on top of vulkan getting rid of lots of boiler plate code, And we have the convenience to Update Descriptor Sets and Push Constants with their names with the help of our SPV Reflector (shout out to [@Yzt](https://github.com/yzt/spvreflect))
 
 ### Core Rendering System and Binding Model  
 Concepts such as SwapChain, Image, Buffer, CommandBuffer, Queues, DescriptorSets, Push Constants, Semaphores and Fences are all exposed in this abstraction layer.
 Our biggest structure in **YRB**  is PipelineLayout which holds the most data, I'm going through this and the binding model for **Yugen Renderer Backend** in another blog post.
 
 ### Dear Imgui Integration
-We also integrated [dear imgui]() and we have a imgui_yugen_impl that we can have so much fun with later (online profilers, statistics and runtime debugging tools)
+We also integrated [dear imgui](https://github.com/ocornut/imgui) and we have a imgui_yugen_impl that we can have so much fun with later (online profilers, statistics and runtime debugging tools)
 
-### DemoFramework System
-We have a really simple and cool demo-framework system which I'm very proud of that allows us to add techdemos really easy.
-1. You create a class and inherit from DemoFramework and start implementing a techdemo
+### Demo Framework System
+We have a really simple and cool demo-framework system which I'm very proud of that allows us to add Demos really easy.
+1. You create a class and inherit from DemoFramework and start implementing a Demo
 2. You Register that class and give it a name.
-And when you select a techdemo from the command line or the command arguments it will construct the selected demo and will run it.
+And when you select a Demo from the command line or the command arguments it will construct the selected demo and will run it.
 
 Here is an example simplified demo code :
 
-[[
-
+```
 class Demo009_MSAA : public DemoFramework 
 {
 protected:
@@ -75,18 +76,31 @@ private:
 }
 
 static auto _ = Demo_Register("MultiSampling", [] { return new Demo009_MSAA(); });
+```
+<p align="center">
+  <img src="https://github.com/Erfan-Ahmadi/BokehDepthOfField/raw/master/screenshots/real/newyork_maybe.jpg" alt="" width="600"/>
+</p>
 
-]]
+## Demos
 
-[TechDemo Selection Image]
+These Demos are ran on **YRB** (Yugen Renderer Backend) on Vulkan.
 
-## Interesting Demos
+They are still written pretty low-level and one needs understanding of Modern Graphics APIs like D3D12 or Vulkan to be able to work with it because the concepts are 99% similar.
 
-These techdemos are ran on **YRB** (Yugen Renderer Backend) on Vulkan.
+For example our Bokeh Depth of Field Demo is ~1400 SLOC which has 7 Render Passes and 14 Render Targets.
 
-They are still written pretty low-level and one needs understanding of Modern Graphics APIs like D3D12 or Vulkan to be able to work with it because the concepts are the same no matter how many hundreds of lines it hides.
+### This Demo that challenges the Backend Renderer with lots of PipelineBarriers. RenderTargets and Graphics Pipelines and DescriptorSets 
 
-Some Gifs
+<p align="center">
+  <img src="https://github.com/Erfan-Ahmadi/BokehDepthOfField/raw/master/screenshots/real/newyork_maybe.jpg" alt="" width="500"/>
+</p>
+
+### This Demo shows loading the YUGA Mesh and sending it's data to YRB, We have our own Asset Format named YUGA which is gltf importable.
+
+<p align="center">
+  <img src="https://github.com/Erfan-Ahmadi/BokehDepthOfField/raw/master/screenshots/real/newyork_maybe.jpg" alt="" width="500"/>
+</p>
+
 
 ## What is under develop?
 
@@ -96,10 +110,15 @@ Our high-level rendering system is inspired by the idea of frame graphs (or some
 High-level renderer user declares what passes need to be done and it implicitly defines dependencies between those passes by declaring resources and connecting inputs and outputs via handles or names(strings).
 It the gives us the oportunity to compile this graph before executing it, compiling it allows 1. aliasing transient memories (render targets) 2. Possibility of Async Compute 3. Optimizing away outputs that don't take part in the final results.
 
--[Resources]()
+-[Tiago Rodrigues, Advanced Graphics Tech: Moving to DirectX 12: Lessons Learned, GDC 2017](https://www.gdcvault.com/play/1024656/Advanced-Graphics-Tech-Moving-to)
+-[Yuriy O’Donnell, FrameGraph: Extensible Rendering Architecture in Frostbite, GDC 2017](https://www.gdcvault.com/play/1024612/FrameGraph-Extensible-Rendering-Architecture-in)
 
 2. Material/Shader System
 Needs research about what we need for the game we're developing.
 
 3. A Good GPU Memory Manager
   We currently use VMA tool for the underlying memory management but we need to expose extra features to be able to do some low-level jobs like memory aliasing.
+
+## Wrap-Up
+I'm learning a lot by contributing to this engine and I want to share it here as a journal and I hope someone enjoys reading it.
+This post wasn't technical but I have many many technical ideas to post about Yugen here and I'm excited about it.
