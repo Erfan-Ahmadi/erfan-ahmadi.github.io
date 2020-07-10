@@ -78,7 +78,7 @@ private:
 static auto _ = Demo_Register("MultiSampling", [] { return new Demo009_MSAA(); });
 ```
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/techdemo_selection.png" alt="" width="600"/>
+  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/techdemo_selection.png" alt="" width="400"/>
 </p>
 
 ## Demos
@@ -92,26 +92,26 @@ For example our Bokeh Depth of Field Demo is ~1400 SLOC which has 7 Render Passe
 ### This Demo shows loading the YUGA Mesh and sending it's data to YRB, We have our own Asset Format named YUGA which is gltf importable.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/yuga_mesh.png" alt="" width="500"/>
+  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/yuga_mesh.png" alt="" width="400"/>
 </p>
 
 
 ### This Demo uses Dynamic Uniform Buffers in Vulkan. Offsets into a big memory instead of having a descriptor set for each object. 
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/dynamic_uniform_buffers.png" alt="" width="500"/>
+  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/dynamic_uniform_buffers.png" alt="" width="400"/>
 </p>
 
 ### This Demo that challenges the Backend Renderer with lots of PipelineBarriers. RenderTargets and Graphics Pipelines and DescriptorSets 
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/dof_c.png" alt="" width="500"/>
+  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/dof_c.png" alt="" width="400"/>
 </p>
 
 ### Other Demos
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/msaa.png" alt="" width="300"/>
+<p align="left">
+  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/msaa.png" alt="" width="400"/>
 </p>
 
 ## What is under develop?
