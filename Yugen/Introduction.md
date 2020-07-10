@@ -78,7 +78,7 @@ private:
 static auto _ = Demo_Register("MultiSampling", [] { return new Demo009_MSAA(); });
 ```
 <p align="center">
-  <img src="https://github.com/Erfan-Ahmadi/BokehDepthOfField/raw/master/screenshots/real/techdemo_selection.png" alt="" width="600"/>
+  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/techdemo_selection.png" alt="" width="600"/>
 </p>
 
 ## Demos
@@ -111,7 +111,7 @@ For example our Bokeh Depth of Field Demo is ~1400 SLOC which has 7 Render Passe
 ### Other Demos
 
 <p align="center">
-  <img src="https://github.com/Erfan-Ahmadi/BokehDepthOfField/raw/master/screenshots/real/msaa.png" alt="" width="300"/>
+  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/msaa.png" alt="" width="300"/>
 </p>
 
 ## What is under develop?
