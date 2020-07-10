@@ -96,7 +96,7 @@ For example our Bokeh Depth of Field Demo is ~1400 SLOC which has 7 Render Passe
 </p>
 
 
-### This Demo uses Dynamic Uniform Buffers in Vulkan. Offsets into a big memory instead of having a descriptor set for each object. 
+### This Demo uses [Dynamic Uniform Buffers](https://github.com/SaschaWillems/Vulkan/tree/master/examples/dynamicuniformbuffer) in Vulkan. Offsets into a big memory instead of having a descriptor set for each object. 
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/dynamic_uniform_buffers.png" alt="" width="600"/>
@@ -116,7 +116,7 @@ For example our Bokeh Depth of Field Demo is ~1400 SLOC which has 7 Render Passe
 
 ## What is under develop?
 
-1. High-Level Rendering System
+1. **High-Level Rendering System**
 
 Our high-level rendering system is inspired by the idea of frame graphs (or some call it render graphs).
 High-level renderer user declares what passes need to be done and it implicitly defines dependencies between those passes by declaring resources and connecting inputs and outputs via handles or names(strings).
@@ -125,11 +125,11 @@ It the gives us the oportunity to compile this graph before executing it, compil
 -[Tiago Rodrigues, Advanced Graphics Tech: Moving to DirectX 12: Lessons Learned, GDC 2017](https://www.gdcvault.com/play/1024656/Advanced-Graphics-Tech-Moving-to)
 -[Yuriy O’Donnell, FrameGraph: Extensible Rendering Architecture in Frostbite, GDC 2017](https://www.gdcvault.com/play/1024612/FrameGraph-Extensible-Rendering-Architecture-in)
 
-2. Material/Shader System
-Needs research about what we need for the game we're developing.
+2. **Material/Shader System**
+   - Needs research about what we need for the game we're developing.
 
-3. A Good GPU Memory Manager
-  We currently use VMA tool for the underlying memory management but we need to expose extra features to be able to do some low-level jobs like memory aliasing.
+3. **A Good GPU Memory Manager**
+   - We currently use [VMA](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator) for the underlying memory management but we need to expose extra features to be able to do some low-level jobs like memory aliasing.
 
 ## Wrap-Up
 
