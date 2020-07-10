@@ -11,7 +11,7 @@ This blog is for me to Share my **passion** with you and telling my stories from
 - [Introduction to Me](/Introduction)
 
 ## Yugen Engine
-- [What is Yugen Engine](/YugenEngine)
+- [Yugen Engine Introduction - Rendering System](/YugenEngine)
 
 ## Portfolio
  + [Bokeh Depth of Field](/Bokeh)
