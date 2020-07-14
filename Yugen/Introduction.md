@@ -7,11 +7,11 @@ permalink: /Yugen/Introduction
 
 Yūgen (幽玄) is an important concept in traditional Japanese aesthetics. The exact translation of the word depends on the context. In the Chinese philosophical texts the term was taken from, yūgen meant "dim", "deep" or "mysterious".
 
-Yugen Engine is an In-House Game Engine we're developing at DeadMage which is in it's early stages of development.
+Yugen Engine is an In-House Game Engine we're developing at [Dead Mage Studios](https://deadmage.com/) which is in it's early stages of development.
 
 ## What is interesting about Yugen?
 
-1. We started it from scratch for the next title of DeadMage Studios (hopefully) and there is no legacy code to wrestle with!
+1. We started it from scratch and there is no legacy code to wrestle with!
 2. We decided to have Vulkan as our First Rendering API to develop on and we have a minimal rendering abstraction on top of it.
 
 In these series of blog posts that come out as a journal for me I'm going to focus mostly on Our Rendering System. 
@@ -19,7 +19,11 @@ My friends are working on exciting subsystems such as World Editor, Scripting Sy
 
 ## What is already developed on Yugen Rendering System ?
 
-**Yugen Renderer Backend** is a thin layer of abstraction on top of vulkan getting rid of lots of boiler plate code, And we have the convenience to Update Descriptor Sets and Push Constants with their names with the help of our SPV Reflector (shout out to [@Yzt](https://github.com/yzt/spvreflect))
+<p align="center">
+<img src="https://www.khronos.org/assets/uploads/apis/vulkan2.svg" align="center" alt="" height="80" hspace="20"/>
+</p>
+
+**Yugen Renderer Backend** is a thin layer of abstraction currently on top of Vulkan getting rid of lots of boiler plate code, And we have the convenience to Update Descriptor Sets and Push Constants with their names with the help of our SPV Reflector (shout out to [@Yzt](https://github.com/yzt/spvreflect))
 
 ### Core Rendering System and Binding Model  
 Concepts such as SwapChain, Image, Buffer, CommandBuffer, Queues, DescriptorSets, Push Constants, Semaphores and Fences are all exposed in this abstraction layer.
@@ -78,7 +82,7 @@ private:
 static auto _ = Demo_Register("MultiSampling", [] { return new Demo009_MSAA(); });
 ```
 <p align="center">
-  <img src="https://github.com/Erfan-Ahmadi/BokehDepthOfField/raw/master/screenshots/real/newyork_maybe.jpg" alt="" width="600"/>
+  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/techdemo_selection.png" alt="" width="400"/>
 </p>
 
 ## Demos
@@ -89,36 +93,53 @@ They are still written pretty low-level and one needs understanding of Modern Gr
 
 For example our Bokeh Depth of Field Demo is ~1400 SLOC which has 7 Render Passes and 14 Render Targets.
 
-### This Demo that challenges the Backend Renderer with lots of PipelineBarriers. RenderTargets and Graphics Pipelines and DescriptorSets 
-
-<p align="center">
-  <img src="https://github.com/Erfan-Ahmadi/BokehDepthOfField/raw/master/screenshots/real/newyork_maybe.jpg" alt="" width="500"/>
-</p>
-
 ### This Demo shows loading the YUGA Mesh and sending it's data to YRB, We have our own Asset Format named YUGA which is gltf importable.
 
 <p align="center">
-  <img src="https://github.com/Erfan-Ahmadi/BokehDepthOfField/raw/master/screenshots/real/newyork_maybe.jpg" alt="" width="500"/>
+  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/yuga_mesh.png" alt="" width="600"/>
 </p>
 
 
+### This Demo uses [Dynamic Uniform Buffers](https://github.com/SaschaWillems/Vulkan/tree/master/examples/dynamicuniformbuffer) in Vulkan. Offsets into a big memory instead of having a descriptor set for each object. 
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/dynamic_uniform_buffers.png" alt="" width="600"/>
+</p>
+
+### This Demo that challenges the Backend Renderer with lots of PipelineBarriers. RenderTargets and Graphics Pipelines and DescriptorSets 
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/dof_c.png" alt="" width="600"/>
+</p>
+
+### Other Demos
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/msaa.png" alt="" width="600"/>
+</p>
+
 ## What is under develop?
 
-1. High-Level Rendering System
+1. **High-Level Rendering System**
 
 Our high-level rendering system is inspired by the idea of frame graphs (or some call it render graphs).
-High-level renderer user declares what passes need to be done and it implicitly defines dependencies between those passes by declaring resources and connecting inputs and outputs via handles or names(strings).
-It the gives us the oportunity to compile this graph before executing it, compiling it allows 1. aliasing transient memories (render targets) 2. Possibility of Async Compute 3. Optimizing away outputs that don't take part in the final results.
+High-level renderer user declares what passes need to be done and it implicitly defines dependencies between those passes by declaring resources and connecting inputs and outputs via strings or handles.
 
--[Tiago Rodrigues, Advanced Graphics Tech: Moving to DirectX 12: Lessons Learned, GDC 2017](https://www.gdcvault.com/play/1024656/Advanced-Graphics-Tech-Moving-to)
--[Yuriy O’Donnell, FrameGraph: Extensible Rendering Architecture in Frostbite, GDC 2017](https://www.gdcvault.com/play/1024612/FrameGraph-Extensible-Rendering-Architecture-in)
+It the gives us the opportunity to compile this graph before executing it.
 
-2. Material/Shader System
-Needs research about what we need for the game we're developing.
+Compiling it allows 1. aliasing transient memories (render targets) 2. Possibility of Async Compute 3. Optimizing away outputs that don't take part in the final results.
 
-3. A Good GPU Memory Manager
-  We currently use VMA tool for the underlying memory management but we need to expose extra features to be able to do some low-level jobs like memory aliasing.
+- [Tiago Rodrigues, Advanced Graphics Tech: Moving to DirectX 12: Lessons Learned, GDC 2017](https://www.gdcvault.com/play/1024656/Advanced-Graphics-Tech-Moving-to)
+
+- [Yuriy O’Donnell, FrameGraph: Extensible Rendering Architecture in Frostbite, GDC 2017](https://www.gdcvault.com/play/1024612/FrameGraph-Extensible-Rendering-Architecture-in)
+
+2. **Material/Shader System**
+   - Needs research about what we need for the game we're developing.
+
+3. **A Good GPU Memory Manager**
+   - We currently use [VMA](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator) for the underlying memory management but we need to expose extra features to be able to do some low-level jobs like memory aliasing.
 
 ## Wrap-Up
+
 I'm learning a lot by contributing to this engine and I want to share it here as a journal and I hope someone enjoys reading it.
 This post wasn't technical but I have many many technical ideas to post about Yugen here and I'm excited about it.
