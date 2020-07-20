@@ -1,4 +1,9 @@
-## YUGA Introduction
+---
+title: YUGA
+permalink: /Yugen/YUGA
+---
+
+# YUGA Introduction
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/YUGA.png" alt="" width="600"/>
@@ -26,9 +31,46 @@ YUGA files are files that contain multiple resources inside them such as Meshes,
   ```
 </details>
 
-## Chunk Header
+## Meta Data and Chunk Header
 
-Those resources each have a "chunk" header before them describing the size of the data that comes after, whether it's compressed or not, revision number and other data that we need or comes in handy.
+Each Resource in a YUGA File has a Meta Data that comes before them in memory.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/YUGA_MetaData.png" alt="" width="600"/>
+</p>
+
+Data such as:
+- Size of meta data
+- Offset of header in file
+- File name
+- Chunk Header
+    - Size of the data that comes after
+    - Whether it's compressed or not
+    - Revision number.
+
+**Meta Data** in our header file:
+
+<details>
+  <summary>MetaData Struct</summary>
+  
+  ```
+struct  Metadata {
+    bool valid = false;
+    bool is_remote = false;
+    uint16_t number_in_file = 0;
+    uint32_t copy_size = 0;             // If you want a copy of the chunk meta data (i.e. everything,) this is the total size
+    uint64_t offset_of_header_in_file = 0;
+    uint64_t offset_of_asset_in_file = 0;
+    ChunkHeader chunk_header;
+    char reserved [6] = {};
+    uint16_t file_name_size = 0;
+    char const * file_name = nullptr;   // Nul-terminated, but size (plus the nul) is in file_name_size.
+    char const * asset_name = nullptr;  // size (including the NUL) is in the header. If that is zero, then this will be nullptr.
+    char const ** tag_names = nullptr;  // array of nul-terminated strings, count is in the header. If that is zero, then this will be nullptr.
+    char const ** tag_values = nullptr; // ditto
+};
+  ```
+</details>
 
 **Chunk Header** in our header file:
 
@@ -102,6 +144,10 @@ writer.chunk_emit_data({ string_table.data(), string_table.size() });
 
 ## YUGA Shaders 
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/YUGA_Shaders.png" alt="" width="600"/>
+</p>
+
 **Shader** is an Asset in our Asset System, YUGA.
 
 It contains 
@@ -119,7 +165,7 @@ All the variables in shader buffers
 Byte-code, currently in SPIRV
 #### Defines
 Macro definitions that the shader is compiled with
-#### String Table
+#### Strings Data
 The memory that we put all our strings in: entry_point_name, source_code, blocks names, defines name and value, variable names.
 
 ## Shader Header
