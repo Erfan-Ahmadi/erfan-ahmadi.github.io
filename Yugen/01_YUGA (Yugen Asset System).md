@@ -57,6 +57,8 @@ Data such as:
 <details>
   <summary>MetaData Struct</summary>
   
+<p>
+
   ```C++
 struct  Metadata {
     bool valid = false;
@@ -74,6 +76,9 @@ struct  Metadata {
     char const ** tag_values = nullptr; // ditto
 };
   ```
+
+</p>
+
 </details>
 
 **Chunk Header** in our header file:
@@ -81,6 +86,8 @@ struct  Metadata {
 <details>
   <summary>ChunkHeader Struct</summary>
   
+<p>
+
   ```C++
 struct ChunkHeader {
     uint8_t signature [4] = {'Y','U','G','A'};  //  0
@@ -97,6 +104,10 @@ struct ChunkHeader {
                                                 // 32
 }
   ```
+
+  
+</p>
+
 </details>
 
 ## How We Write Assets
@@ -106,6 +117,8 @@ We write the assets using a FileWriter Class.
 <details>
   <summary>File Writer Interface</summary>
   
+<p>
+
   ```C++
 class FileWriter {
     bool ok () const {return m_out.ok();}
@@ -129,11 +142,16 @@ class FileWriter {
     bool chunk_emit_data_texture_data (CBlob const & data);
 };
   ```
+
+</p>
+
 </details>
 
 
 Here is an example on how we write a Shader Asset to a YUGA File:
 
+
+<p>
 
 ```C++
 writer.chunk_start(YUGA::AssetType::Shader, asset_name, (uint16_t)asset_revision, YUGA::ChunkFlags::Compressed);
@@ -145,6 +163,9 @@ writer.chunk_emit_data(compiler_result.spirv);
 writer.chunk_emit_data({ defines.data(), defines.size() * sizeof(YUGA::ShaderDefine) });
 writer.chunk_emit_data({ string_table.data(), string_table.size() });
 ```
+
+</p>
+
 
 ## YUGA Shaders 
 
@@ -190,6 +211,8 @@ It contains compiled shader's hash, shader stage, shader language, and data that
 <details>
   <summary>Shader Header</summary>
   
+<p>
+
 ```C++
 struct ShaderHeader {
     uint64_t        key;
@@ -212,6 +235,9 @@ struct ShaderHeader {
     char            reserved[2];
 }
 ```
+
+</p>
+
 </details>
 
 ## YUGA::Asset::Shader
@@ -219,6 +245,8 @@ struct ShaderHeader {
 And here is the YUGA::Asset::Shader which is fundamentally pointer arithmetics for our asset memory to get requested properties:
 
 We will be using this class to extract reflection info and using it to update our descriptor sets and shader resources.
+
+<p>
 
 ```C++
 class Shader : public GenericAsset {
@@ -274,3 +302,5 @@ public:
 private:
 };
 ```
+
+</p>
