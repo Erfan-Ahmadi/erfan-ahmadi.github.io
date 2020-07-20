@@ -36,7 +36,7 @@ YUGA files are files that contain multiple resources inside them such as Meshes,
 Each Resource in a YUGA File has a Meta Data that comes before them in memory.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/YUGA_MetaData.png" alt="" width="600"/>
+  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/YUGA_MetaData.png" alt="" width="300"/>
 </p>
 
 Data such as:
@@ -144,11 +144,11 @@ writer.chunk_emit_data({ string_table.data(), string_table.size() });
 
 ## YUGA Shaders 
 
+**Shader** is an AssetType in our Asset System, YUGA.
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/YUGA_Shaders.png" alt="" width="600"/>
 </p>
-
-**Shader** is an Asset in our Asset System, YUGA.
 
 It contains 
 - Compiled Shader (Intermediate Language like SPIR-V) for a Shader Stage.
