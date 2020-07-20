@@ -14,10 +14,8 @@ YUGA files are files that contain multiple resources inside them such as Meshes,
 <details>
   <summary>Asset Type</summary>
   
-  <p>
-  
-```c++
-enum class AssetType : uint8_t {
+  ```C++
+  enum class AssetType : uint8_t {
     Unknown         = 0,
     Description     = 1,
     Mesh            = 2,
@@ -26,11 +24,11 @@ enum class AssetType : uint8_t {
     Shader          = 5,
     Material        = 6,
     AssetList       = 7,
-    ...
+    .
+    .
+    .
 }
-```
-
-</p>
+  ```
 </details>
 
 ## Meta Data and Chunk Header
@@ -55,7 +53,7 @@ Data such as:
 <details>
   <summary>MetaData Struct</summary>
   
-  ```
+  ```C++
 struct  Metadata {
     bool valid = false;
     bool is_remote = false;
@@ -79,7 +77,7 @@ struct  Metadata {
 <details>
   <summary>ChunkHeader Struct</summary>
   
-  ```
+  ```C++
 struct ChunkHeader {
     uint8_t signature [4] = {'Y','U','G','A'};  //  0
     uint64_t skip_bytes = 0;                    //  4
@@ -104,7 +102,7 @@ We write the assets using a FileWriter Class.
 <details>
   <summary>File Writer Interface</summary>
   
-  ```
+  ```C++
 class FileWriter {
     bool ok () const {return m_out.ok();}
     bool in_chunk () const {return m_chunk_state.in_chunk;}
@@ -133,7 +131,7 @@ class FileWriter {
 Here is an example on how we write a Shader Asset to a YUGA File:
 
 
-```
+```C++
 writer.chunk_start(YUGA::AssetType::Shader, asset_name, (uint16_t)asset_revision, YUGA::ChunkFlags::Compressed);
 writer.chunk_emit_tag("source_file_name", std::filesystem::path(input_path).filename().string().c_str());
 writer.chunk_emit_data(CBlobAliasOf(header));
@@ -159,26 +157,36 @@ It contains
 - Source Code of the Shader
 - Defines 
 
-#### Blocks
-All the shader blocks like uniform buffers and textures and samplers.
-#### Variables
-All the variables in shader buffers 
-#### IR
-Byte-code, currently in SPIRV
-#### Defines
-Macro definitions that the shader is compiled with
-#### Strings Data
-The memory that we put all our strings in: entry_point_name, source_code, blocks names, defines name and value, variable names.
+### Shader Data
+- Blocks
+
+  All the shader blocks like uniform buffers and textures and samplers.
+
+- Variables
+
+  All the variables in shader buffers 
+
+- IR
+
+  Byte-code, currently in SPIRV
+
+- Defines
+
+  Macro definitions that the shader is compiled with
+
+- Strings Data
+
+  The memory that we put all our strings in: entry_point_name, source_code, blocks names, defines name and value, variable names.
 
 ## Shader Header
-It is the header we put at the beginning of our asset memory. (see **asset()** in graph above)
+It is the header we put at the beginning of our asset memory.
 
 It contains compiled shader's hash, shader stage, shader language, and data that will help us navigate through the raw data to find what we're looking for, such as offsets and sizes.
 
 <details>
   <summary>Shader Header</summary>
   
-```
+```C++
 struct ShaderHeader {
     uint64_t        key;
     ShaderStage     stage;
@@ -208,7 +216,7 @@ And here is the YUGA::Asset::Shader which is fundamentally pointer arithmetics f
 
 We will be using this class to extract reflection info and using it to update our descriptor sets and shader resources.
 
-```
+```C++
 class Shader : public GenericAsset {
 public:
     explicit Shader (Metadata const * meta_data, Blob const & asset_mem);
