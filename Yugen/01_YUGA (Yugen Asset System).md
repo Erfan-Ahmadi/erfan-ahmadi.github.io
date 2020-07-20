@@ -16,7 +16,7 @@ YUGA files are files that contain multiple resources inside them such as Meshes,
 
 <p>
 
-  ```
+```
   enum class AssetType : uint8_t {
     Unknown         = 0,
     Description     = 1,
@@ -29,8 +29,8 @@ YUGA files are files that contain multiple resources inside them such as Meshes,
     .
     .
     .
-}
-  ```
+  }
+```
 
 </p>
 </details>
@@ -59,7 +59,7 @@ Data such as:
   
 <p>
 
-  ```C++
+```C++
 struct  Metadata {
     bool valid = false;
     bool is_remote = false;
@@ -75,10 +75,9 @@ struct  Metadata {
     char const ** tag_names = nullptr;  // array of nul-terminated strings, count is in the header. If that is zero, then this will be nullptr.
     char const ** tag_values = nullptr; // ditto
 };
-  ```
+```
 
 </p>
-
 </details>
 
 **Chunk Header** in our header file:
@@ -88,7 +87,7 @@ struct  Metadata {
   
 <p>
 
-  ```C++
+```C++
 struct ChunkHeader {
     uint8_t signature [4] = {'Y','U','G','A'};  //  0
     uint64_t skip_bytes = 0;                    //  4
@@ -102,12 +101,10 @@ struct ChunkHeader {
     uint32_t asset_uncompressed_size = 0;       // 24
     uint32_t asset_uncompressed_hash = 0;       // 28   // Doesn't cover chunk header or name or tags; only content (i.e. the asset.)
                                                 // 32
-}
-  ```
-
+};
+```
   
 </p>
-
 </details>
 
 ## How We Write Assets
@@ -237,7 +234,6 @@ struct ShaderHeader {
 ```
 
 </p>
-
 </details>
 
 ## YUGA::Asset::Shader
