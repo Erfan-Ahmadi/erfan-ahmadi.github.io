@@ -13,8 +13,10 @@ YUGA files are files that contain multiple resources inside them such as Meshes,
 
 <details>
   <summary>Asset Type</summary>
-  
-  ```C++
+
+<p>
+
+  ```
   enum class AssetType : uint8_t {
     Unknown         = 0,
     Description     = 1,
@@ -29,6 +31,8 @@ YUGA files are files that contain multiple resources inside them such as Meshes,
     .
 }
   ```
+
+</p>
 </details>
 
 ## Meta Data and Chunk Header
