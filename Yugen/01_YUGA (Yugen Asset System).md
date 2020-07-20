@@ -295,7 +295,6 @@ public:
     }
     char const * entry_point_name() const {return string(header().entry_point_name_str_offset);}
     char const * source() const {return string(header().source_str_offset);}
-private:
 };
 ```
 
