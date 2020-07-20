@@ -5,11 +5,11 @@ permalink: /Yugen/YUGA
 
 # YUGA Introduction
 
+YUGA files are files that contain multiple resources inside them such as Meshes, Textures and Shaders that we call **chunks**.
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/YUGA.png" alt="" width="800"/>
 </p>
-
-YUGA files are files that contain multiple resources inside them such as Meshes, Textures and Shaders that we call **chunks**.
 
 <details>
   <summary>Asset Type</summary>
