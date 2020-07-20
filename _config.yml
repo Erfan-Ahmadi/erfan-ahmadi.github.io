@@ -1,9 +1,7 @@
 theme: jekyll-theme-cayman
 title: Graphics Coder
-markdown: kramdown
-kramdown:
-    parse_block_html: true
-    input: GFM
+markdown: CommonMarkGhPages
+CommonMarkGhPages:
     syntax_highlighter: rouge
     syntax_highlighter_opts:
         css_class: 'highlight'
