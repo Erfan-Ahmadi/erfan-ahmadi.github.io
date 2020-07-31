@@ -33,23 +33,6 @@ YUGA files are files that contain multiple resources inside them such as Meshes,
 
 </details>
 
-{% highlight c++ %}
-
-  enum class AssetType : uint8_t {
-    Unknown         = 0,
-    Description     = 1,
-    Mesh            = 2,
-    Texture         = 3,
-    RawFile         = 4,
-    Shader          = 5,
-    Material        = 6,
-    AssetList       = 7,
-    .
-    .
-    .
-  }
-{% endhighlight %}
-
 ## Meta Data and Chunk Header
 
 Each Resource in a YUGA File has a Meta Data that comes before them in memory.
@@ -72,9 +55,8 @@ Data such as:
 <details>
   <summary>MetaData Struct</summary>
   
-<p>
+{% highlight c++ %}
 
-```c++
 struct  Metadata {
     bool valid = false;
     bool is_remote = false;
@@ -90,19 +72,18 @@ struct  Metadata {
     char const ** tag_names = nullptr;  // array of nul-terminated strings, count is in the header. If that is zero, then this will be nullptr.
     char const ** tag_values = nullptr; // ditto
 };
-```
 
-</p>
+{% endhighlight %}
+
 </details>
 
 **Chunk Header** in our header file:
 
 <details>
   <summary>ChunkHeader Struct</summary>
-  
-<p>
 
-```C++
+{% highlight c++ %}
+
 struct ChunkHeader {
     uint8_t signature [4] = {'Y','U','G','A'};  //  0
     uint64_t skip_bytes = 0;                    //  4
@@ -117,9 +98,9 @@ struct ChunkHeader {
     uint32_t asset_uncompressed_hash = 0;       // 28   // Doesn't cover chunk header or name or tags; only content (i.e. the asset.)
                                                 // 32
 };
-```
   
-</p>
+{% endhighlight %}
+
 </details>
 
 ## How We Write Assets
@@ -131,7 +112,8 @@ We write the assets using a FileWriter Class.
   
 <p>
 
-  ```C++
+{% highlight c++ %}
+
 class FileWriter {
     bool ok () const {return m_out.ok();}
     bool in_chunk () const {return m_chunk_state.in_chunk;}
@@ -153,9 +135,8 @@ class FileWriter {
     bool chunk_emit_data_texture_start (TextureHeader const & texture_header);
     bool chunk_emit_data_texture_data (CBlob const & data);
 };
-  ```
 
-</p>
+{% endhighlight %}
 
 </details>
 
@@ -163,9 +144,7 @@ class FileWriter {
 Here is an example on how we write a Shader Asset to a YUGA File:
 
 
-<p>
-
-```C++
+{% highlight c++ %}
 writer.chunk_start(YUGA::AssetType::Shader, asset_name, (uint16_t)asset_revision, YUGA::ChunkFlags::Compressed);
 writer.chunk_emit_tag("source_file_name", std::filesystem::path(input_path).filename().string().c_str());
 writer.chunk_emit_data(CBlobAliasOf(header));
@@ -174,9 +153,7 @@ writer.chunk_emit_data({ variables.data(), variables.size() * sizeof(YUGA::Shade
 writer.chunk_emit_data(compiler_result.spirv);
 writer.chunk_emit_data({ defines.data(), defines.size() * sizeof(YUGA::ShaderDefine) });
 writer.chunk_emit_data({ string_table.data(), string_table.size() });
-```
-
-</p>
+{% endhighlight %}
 
 
 ## YUGA Shaders 
@@ -223,9 +200,9 @@ It contains compiled shader's hash, shader stage, shader language, and data that
 <details>
   <summary>Shader Header</summary>
   
-<p>
 
-```C++
+{% highlight c++ %}
+
 struct ShaderHeader {
     uint64_t        key;
     ShaderStage     stage;
@@ -246,9 +223,9 @@ struct ShaderHeader {
     uint16_t        defines_count;
     char            reserved[2];
 }
-```
 
-</p>
+{% endhighlight %}
+
 </details>
 
 ## YUGA::Asset::Shader
@@ -257,9 +234,8 @@ And here is the YUGA::Asset::Shader which is fundamentally pointer arithmetics f
 
 We will be using this class to extract reflection info and using it to update our descriptor sets and shader resources.
 
-<p>
+{% highlight c++ %}
 
-```C++
 class Shader : public GenericAsset {
 public:
     explicit Shader (Metadata const * meta_data, Blob const & asset_mem);
@@ -311,6 +287,4 @@ public:
     char const * entry_point_name() const {return string(header().entry_point_name_str_offset);}
     char const * source() const {return string(header().source_str_offset);}
 };
-```
-
-</p>
+{% endhighlight %}
