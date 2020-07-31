@@ -32,3 +32,5 @@ Also there is a flag to enable/disable using Graphics or Compute Queue, I didn't
 ```
 
 There seemed to be no difference as expected :)
+
+Also make sure to checkout my other posts on [Yugen Engine](/Home)

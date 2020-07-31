@@ -1,5 +1,6 @@
 ---
 title: Graphics Coder
+permalink: /Home
 ---
 
 # What is this blog about?
