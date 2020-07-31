@@ -1,7 +1,6 @@
 ---
 title: Graphics Coder
-permalink: /blog/
-redirect_from: "/"
+redirect_from: /blog/
 ---
 
 # What is this blog about?
