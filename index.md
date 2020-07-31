@@ -10,7 +10,7 @@ This blog is for me to Share my **passion** with you and telling my stories from
 ## Articles
 - [Introduction to Me](/blog/Introduction)
 
-## [Yugen Engine](/Yugen/)
+## [Yugen Engine](/blog/Yugen/)
 - [Yugen Engine Introduction - Rendering System](/blog/Yugen/Introduction)
 - [Yugen Engine - Asset System and YUGA Shaders](/blog/Yugen/YUGA)
 - [Yugen Engine - New Demo : Compute Shader](/blog/Yugen/ComputeTechDemo)
