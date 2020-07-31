@@ -19,8 +19,8 @@ Here is our 11th TechDemo which is updating **2 milion** cubes positions in a Co
   <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/ComputeDemo.gif" alt="" width="800"/>
 </p>
 
-Also there is a flag to enable to either use Graphics or Compute Queue to see any difference, I didn't expect much difference due to several reasons:
-1. The job is heavy but the CommandBuffer is actually light-weight(Dispatch+some setup) 
+Also there is a flag to enable/disable using Graphics or Compute Queue, I didn't expect much difference due to several reasons:
+1. The job is heavy but the CommandBuffer is actually light-weight (Dispatch+some setup) 
 2. Our 2 passes are linear and dependant on eachother, so nothing good unless we try async compute in a more complex rendering pipeline.
 
 ```c++
