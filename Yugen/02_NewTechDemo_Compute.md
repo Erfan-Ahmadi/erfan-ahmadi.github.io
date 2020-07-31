@@ -3,7 +3,7 @@ title: YUGA
 permalink: /Yugen/ComputeTechDemo
 ---
 
-Our Renderer is very new and all 10 previous techdemos were ran on Graphics Queue and has Graphics work only.
+Our Renderer is very new and all 10 previous techdemos run on Graphics Queue and have Graphics work only.
 
 I spent a few days adding multi-queue submission to YugenRendererBackend or as we like to call it **YRB**.
 
