@@ -1,6 +1,6 @@
 ---
 title: YUGA
-permalink: /Yugen/YUGA
+permalink: /blog/Yugen/YUGA
 ---
 
 # YUGA Introduction

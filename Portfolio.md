@@ -1,6 +1,6 @@
 ---
 title: Erfan Ahmadi Projects
-permalink: /Portfolio/
+permalink: /blog/Portfolio/
 ---
 
 Here are my Graphics Projects sorted from latest to oldest.

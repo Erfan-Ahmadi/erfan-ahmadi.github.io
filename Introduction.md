@@ -1,6 +1,6 @@
 ---
 title: Introduction To Me
-permalink: /Introduction/
+permalink: /blog/Introduction/
 ---
 
 <p align="center">

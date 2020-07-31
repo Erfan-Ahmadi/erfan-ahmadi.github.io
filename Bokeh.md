@@ -1,6 +1,6 @@
 ---
 title: Bokeh Depth Of Field Project
-permalink: /Bokeh/
+permalink: /blog/Bokeh/
 ---
 It's been a month since I decided to challenge my self with implementing **Bokeh Depth of Field** effect
 and began learning complex postfx pipelines.

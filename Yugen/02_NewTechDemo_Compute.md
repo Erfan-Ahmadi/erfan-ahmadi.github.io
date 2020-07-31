@@ -1,6 +1,6 @@
 ---
 title: YUGA
-permalink: /Yugen/ComputeTechDemo
+permalink: /blog/Yugen/ComputeTechDemo
 ---
 
 Our Renderer is very new and all 10 previous techdemos run on Graphics Queue and have Graphics work only.

@@ -1,6 +1,6 @@
 ---
 title: Yugen Engine Introduction
-permalink: /Yugen/Introduction
+permalink: /blog/Yugen/Introduction
 ---
 
 # Yugen Engine 

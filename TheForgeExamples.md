@@ -1,6 +1,6 @@
 ---
 title: The Forge Examples
-permalink: /TheForgeExamples/
+permalink: /blog/TheForgeExamples/
 ---
 
 It's been a wonderful couple of weekends for me and I learned a lot of Graphics Techniques and GLSL and HLSL along the way.
