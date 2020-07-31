@@ -1,6 +1,6 @@
 ---
-title: Introduction To Me
-permalink: /blog/Introduction/
+title: Introduction To Me (April 04, 2019)
+permalink: /blog/IntroductionApril2019/
 ---
 
 <p align="center">
