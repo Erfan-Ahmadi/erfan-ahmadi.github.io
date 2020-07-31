@@ -1,6 +1,5 @@
 ---
 title: Graphics Coder
-permalink: /Home
 ---
 
 # What is this blog about?
@@ -11,7 +10,7 @@ This blog is for me to Share my **passion** with you and telling my stories from
 ## Articles
 - [Introduction to Me](/Introduction)
 
-## Yugen Engine
+## [Yugen Engine](/Yugen/)
 - [Yugen Engine Introduction - Rendering System](/Yugen/Introduction)
 - [Yugen Engine - Asset System and YUGA Shaders](/Yugen/YUGA)
 - [Yugen Engine - New Demo : Compute Shader](/Yugen/ComputeTechDemo)
