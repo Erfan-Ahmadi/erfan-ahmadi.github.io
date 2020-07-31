@@ -12,7 +12,7 @@ Yugen Engine is an In-House Game Engine we're developing at our company which is
 ## What is interesting about Yugen?
 
 1. We started it from scratch and there is no legacy code to wrestle with!
-2. We decided to have Vulkan as our First Rendering API to develop on and we have a minimal rendering abstraction on top of it.
+2. We decided to have Vulkan as our First Rendering API to develop on and we have a thin rendering abstraction on top of it.
 
 In these series of blog posts that come out as a journal for me I'm going to focus mostly on Our Rendering System. 
 My friends are working on exciting subsystems such as World Editor, Scripting System, Job system, ECS; I hope they blog about it and share their knowledge too. 
