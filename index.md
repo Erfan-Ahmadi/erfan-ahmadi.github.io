@@ -21,7 +21,7 @@ This blog is for me to Share my **passion** with you and telling my stories from
  + [The Forge Examples](/blog/TheForgeExamples)
  + [SIMD/GPGPU Circle Collision](https://github.com/Erfan-Ahmadi/CircleCollision)
 
-Here is summary of all my showcase projects: [Portfolio](/Portfolio)
+Here is summary of all my showcase projects: [Portfolio](/blog/Portfolio)
 
 ## Contact Me at
 - [GitHub](https://github.com/Erfan-Ahmadi)
