@@ -7,7 +7,7 @@ permalink: /Yugen/Introduction
 
 Yūgen (幽玄) is an important concept in traditional Japanese aesthetics. The exact translation of the word depends on the context. In the Chinese philosophical texts the term was taken from, yūgen meant "dim", "deep" or "mysterious".
 
-Yugen Engine is an In-House Game Engine we're developing at [Dead Mage Studios](https://deadmage.com/) which is in it's early stages of development.
+Yugen Engine is an In-House Game Engine we're developing at our company which is in it's early stages of development.
 
 ## What is interesting about Yugen?
 
