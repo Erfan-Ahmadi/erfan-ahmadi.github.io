@@ -1,5 +1,7 @@
 theme: jekyll-theme-cayman
 title: Graphics Coder
+plugins:
+  - jekyll-redirect-from
 markdown: CommonMarkGhPages
 CommonMarkGhPages:
     syntax_highlighter: rouge
