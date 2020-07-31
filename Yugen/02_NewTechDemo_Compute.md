@@ -11,7 +11,7 @@ Also spent good amount of time completing our **SPVReflector** to deduce SPIR-V 
 
 Thanks to [this wiki page](https://github.com/Microsoft/DirectXShaderCompiler/blob/master/docs/SPIR-V.rst#introduction) by **DirectXShaderCompiler**.
 
-Finally YRB now has the feature to submit to different Queues and submit compute work and Put Cross-Queue Barriers.
+Finally YRB now has the feature to submit to different queues and submit compute work and put Cross-Queue barriers.
 
 Here is our 11th TechDemo which is updating **2 milion** cubes positions in a Compute Pass and Will Render them instanced in a Graphics Pass. 
 
