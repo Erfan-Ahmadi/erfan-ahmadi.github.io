@@ -1,6 +1,5 @@
 ---
 title: Graphics Coder
-permalink: /blog/
 ---
 
 # What is this blog about?
