@@ -16,7 +16,7 @@ Finally YRB now has the feature to submit to different queues and submit compute
 Here is our 11th TechDemo which is updating **2 milion** cubes positions in a Compute Pass and Will Render them instanced in a Graphics Pass. 
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/ComputeDemo.gif" alt="" width="800"/>
+  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Yugen/ComputeDemo2.gif" alt="" width="800"/>
 </p>
 
 Also there is a flag to enable/disable using Graphics or Compute Queue, I didn't expect much difference due to several reasons:
