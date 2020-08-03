@@ -1,4 +1,4 @@
-theme: jekyll-theme-dinky
+theme: jekyll-theme-hacker
 title: Graphics Coder
 plugins:
   - jekyll-redirect-from
