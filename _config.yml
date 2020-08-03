@@ -1,4 +1,4 @@
-theme: jekyll-theme-cayman
+theme: jekyll-theme-midnight
 title: Graphics Coder
 plugins:
   - jekyll-redirect-from
