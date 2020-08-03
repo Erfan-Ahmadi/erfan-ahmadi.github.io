@@ -1,5 +1,5 @@
 ---
-title: YUGA
+title: Compute Demo
 permalink: /blog/Yugen/ComputeTechDemo
 ---
 
