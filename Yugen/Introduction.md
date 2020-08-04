@@ -9,16 +9,23 @@ Yūgen (幽玄) is an important concept in traditional Japanese aesthetics. The 
 
 Yugen Engine is an In-House Game Engine we're developing at our company which is in it's early stages of development.
 
-## What is interesting about Yugen?
-
-1. We started it from scratch and there is no legacy code to wrestle with!
-2. We decided to have Vulkan as our First Rendering API to develop on and we have a thin rendering abstraction on top of it.
-3. It's in a serious production pipeline and you're going to see in real-time the mistakes we make or I specifically make on the rendering part.
+## Yugen Journal
 
 In these series of blog posts that come out as a journal for me I'm going to focus mostly on Our Rendering System. 
 My friends are working on exciting subsystems such as World Editor, Scripting System, Job system, ECS; I hope they blog about it and share their knowledge too. 
 
+## What is interesting about Yugen?
+
+I'm so excited about this series of blog posts because unlike my other posts these are in a serious production pipeline and you will see in real-time mistakes I make (on the rendering system) and hard decisions I had to make and trade-offs I encountered.
+
+I hope my journal on Rendering System of Yugen becomes usefull enough to help others, for both technical and non technical problems.
+
+We also started it from scratch and there is no legacy code to wrestle with!
+
 ## What is already developed on Yugen Rendering System ?
+
+We decided to have Vulkan as our First Rendering API to develop on and we have a thin rendering abstraction on top of it.
+
 
 <p align="center">
 <img src="https://www.khronos.org/assets/uploads/apis/vulkan2.svg" align="center" alt="" height="80" hspace="20"/>
