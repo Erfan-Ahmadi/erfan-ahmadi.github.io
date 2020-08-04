@@ -13,6 +13,7 @@ Yugen Engine is an In-House Game Engine we're developing at our company which is
 
 1. We started it from scratch and there is no legacy code to wrestle with!
 2. We decided to have Vulkan as our First Rendering API to develop on and we have a thin rendering abstraction on top of it.
+3. It's in a serious production pipeline and you're going to see in real-time the mistakes we make or I specifically make on the rendering part.
 
 In these series of blog posts that come out as a journal for me I'm going to focus mostly on Our Rendering System. 
 My friends are working on exciting subsystems such as World Editor, Scripting System, Job system, ECS; I hope they blog about it and share their knowledge too. 
@@ -37,6 +38,8 @@ We have a really simple and cool demo-framework system which I'm very proud of t
 1. You create a class and inherit from DemoFramework and start implementing a Demo
 2. You Register that class and give it a name.
 And when you select a Demo from the command line or the command arguments it will construct the selected demo and will run it.
+
+It also supports a very simple hot-reloading functionality for fast shader writing iterations.
 
 Here is an example simplified demo code :
 
