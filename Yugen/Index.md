@@ -13,3 +13,4 @@ Yugen Engine is an In-House Game Engine we're developing at our company which cu
 - [Yugen Engine Introduction - Rendering System](/blog/Yugen/Introduction)
 - [Yugen Engine - Asset System and YUGA Shaders](/blog/Yugen/YUGA)
 - [Yugen Engine - New Demo : Compute Shader](/blog/Yugen/ComputeTechDemo)
+- [Yugen Engine - Abstraction for Render Targets over Vulkan and D3D12](/blog/Yugen/RenderTargets)
