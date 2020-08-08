@@ -9,7 +9,9 @@ This is the following of this [tweet](https://twitter.com/ahmadierfan999/status/
 
 A good usable interface and abstraction for binding/creating/using render targets over Modern Graphics APIs considering following limitation(s):
 - We are not going to support subpasses and tiled-based rendering.
-- Minimizing extra memory and state handling by RenderBackend Implementation. 
+- Minimizing extra memory and state handling in RenderBackend Implementation. 
+
+Note that this design problem is when desiging a Rendering Architecture over Modern Graphics APIs specifically Vulkan and D3D12 for now.
 
 # Vulkan and D3D12
 
@@ -46,5 +48,36 @@ Let's first talk about what is already available in YRB to render to textures wh
 3. Framebuffers are exposed very similar to Vulkan
 4. PSO creation needs a RenderPass
 
+Pros: Really easy vulkan and d3d12 implementation
+Cons: Too many objects to handle to be able to render to something, also textures might not be a good handle for RenderTarget resource types 
+
 ## #1 : Let's make the names a bit better.
-1. Since RenderPass
+
+Pros: Better namings than before, explicit RenderTarget type exposed (but handled like a texture in the implementation)
+Cons: Still many objects to handle to be able to render to something, and they are all needed.
+
+## #2 : Let's use less objects to handle
+
+Try to merge Framebuffer and RenderPass -> Fail -> Reason: PSO would then need Actual GPU Allocations for RenderTargets to happen before creation.
+Tackle this again -> Try to create PSO with a temprory compatible renderpass (only format data is needed from user which is fine) -> Fail -> Reasons:
+1. A Temp RenderPass is created and deleted each time a PSO is going to be created. wouldn't this be better if we hashed those for later usages?
+2. How do we handle Load/Store operations then, are they going to be defined at Framebuffer create time by user? (Can't reuse RenderPasses and Framebuffers would be much larger than their name indicates which are a bunch of render targets grouped together)
+
+## #3 : Let's use EVEN less objects to handle
+
+To achieve re-use of these objects and simpler interface for the user. we will have no such concepts as RenderPass and Framebuffers.
+- We have RenderTargets and we create those very similar to textures
+- PSO creation only needs RenderTarget Formats
+- Binding of RenderTargets happens with a function like this: ``Cmd_BindRenderTargets(CommandBuffer & cmd, RenderTarget * rts, uint32_t count)``
+
+Pros:
+- Maps really well to D3D12
+- Simple Interface and Ease of use
+Cons:
+- Extra state handling and thread-safe operations/lookups for Vulkan Implementation (gets dirty)
+- Extra memory to manage and hold for each command buffer.
+    
+Vulkan Implementation Details :
+
+Framebuffers are fetched/created from a hashmap of RenderTargetHandles -> FrameBuffer.
+RenderPass is fetched from a similar hashmap of the current state of command buffer -> RenderPass.
