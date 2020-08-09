@@ -49,7 +49,14 @@ Let's first talk about what is already available in YRB to render to textures wh
 Pros: Simple vulkan and d3d12 implementation
 Cons: Too many objects to handle to be able to render to something, also textures might not be a good handle for RenderTarget resource types 
 
-## #1 : Let's make the names a bit better.
+## #1 : Let's use less objects to handle (failed attempt)
+
+Merge Framebuffer and RenderPass -> Fail -> Reason: PSO would then need Actual GPU Allocations for RenderTargets to happen before creation.
+Tackle this again -> Try to create PSO with a temprory compatible renderpass (only format data is needed from user which is fine) 
+
+As you can see things will start to look dirty and handling small things such as Load/Store ops would not be in their correct position, also for each PSO creation a renderpass is created and destroyed which no matter the small time it takes It's a waste of resources and I don't like it :( 
+
+## #2 : Let's first make the names and interface a bit better.
 
 1. Expose Render Targets as a ResourceType instead of using textures, For explicity and clarity of the Renderer
 2. RenderPass is a bit misleading and this name has thousands of meaning in Rendering System Design. and since we don't handle subpasses the better name would be **FramebufferBindings** (Thanks to one of the replies to my comments, FrameGraphBindings [@MGDev91](https://twitter.com/MGDev91))
@@ -59,28 +66,18 @@ PSO then will need a **FramebufferBindings** object to be created (format data f
 Pros: Simple Interface, Better namings than before, explicit RenderTarget type exposed (but handled like a texture in the implementation)
 Cons: Still many objects to handle to be able to render to something, and they are all needed.
 
-## #2 : Getting rid of Framebuffer
+## #3 : Getting rid of Framebuffer
 
 We would still have **FramebufferBindings** but Framebuffers are created and looked up internally from render target handles to Framebuffer.
 Binding render targets would be like : ``Cmd_BindRenderTargets(CommandBuffer cmd, FramebufferBindings bindings, RenderTarget * rts, uint32_t count)`` and bindings will have VkRenderPass for Vulkan and won't be used for D3D12
 
+ This is only to avoid using Framebuffer object and moving it around by user.
+
 Pros: Less objects to handle, Simpler to use
-Cons: Why though? just create your framebuffer It's only a few lines more than setting up an array of RenderTargets
+Cons: Nothing big.
 
-### Getting Rid Of FrameBuffers:
-
-{% highlight c++ %}
-
-// Not Setup
-
-// Recording Command Buffer
-YRB::RenderTarget targets[2] = {swap_chain.images[i], depth_stencil_textures[i]};
-YRB::Cmd_BindRenderTargets(cmd, targets, 2)
-
-{% endhighlight %}
-
-### Not Getting Rid Of FrameBuffers:
-
+<details>
+  <summary>Before</summary>
 {% highlight c++ %}
 
 // Setup
@@ -96,14 +93,33 @@ YRB::Framebuffer_Create(&framebuffers[i], framebuffer_ci);
 Cmd_BeginUseFrameBuffer(cmd, my_fb_bindings, framebuffers[frame_id])
 Cmd_EndUseFrameBuffer(cmd)
 {% endhighlight %}
+</details>
 
+<details>
+  <summary>After</summary>
+{% highlight c++ %}
 
-## #3 : Let's use less objects to handle (failed attempt)
+// Not Setup
 
-Merge Framebuffer and RenderPass -> Fail -> Reason: PSO would then need Actual GPU Allocations for RenderTargets to happen before creation.
-Tackle this again -> Try to create PSO with a temprory compatible renderpass (only format data is needed from user which is fine) -> Fail -> Reasons:
-1. A Temp RenderPass is created and deleted each time a PSO is going to be created. wouldn't this be better if we hashed those for later usages?
-2. How do we handle Load/Store operations then, are they going to be defined at Framebuffer create time by user? (Can't reuse RenderPasses and Framebuffers would be much larger than their name indicates which are a bunch of render targets grouped together)
+// Recording Command Buffer
+YRB::RenderTarget targets[2] = {swap_chain.images[i], depth_stencil_textures[i]};
+YRB::Cmd_BindRenderTargets(cmd, fb_bindings, targets, 2)
+
+{% endhighlight %}
+</details>
+
+## #3.5 Getting Rid Of Framebuffers in a better way.
+
+Thanks to [Alex Tardif](https://twitter.com/longbool), He introduced me to [VK_KHR_imageless_framebuffer](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_imageless_framebuffer.html) and shared very valuable info in the [thread](https://twitter.com/ahmadierfan999/status/1292069752924524544).
+
+Vulkan Spec Says it All:
+```
+This extension allows framebuffers to be created without the need for creating images first, allowing more flexibility in how they are used, and avoiding the need for many of the confusing compatibility rules.
+
+Framebuffers are now created with a small amount of additional metadata about the image views that will be used in VkFramebufferAttachmentsCreateInfoKHR, and the actual image views are provided at render pass begin time via VkRenderPassAttachmentBeginInfoKHR.
+```
+
+Interface would not change from #2 but implementation is much simpler.
 
 ## #4 : Let's use EVEN less objects to handle
 
@@ -145,4 +161,5 @@ This is post the following of this [tweet](https://twitter.com/ahmadierfan999/st
 - [D3D12_GRAPHICS_PIPELINE_STATE_DESC structure](https://docs.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_graphics_pipeline_state_desc)
 - [VK Spec : 9.2. Graphics Pipelines](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/chap10.html#pipelines-graphics)
 - [VK Spec : Render Pass Compatibility](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/chap8.html#renderpass-compatibility)
+- [An Opinionated Post on Modern Rendering Abstraction Layers](http://alextardif.com/RenderingAbstractionLayers.html)
 - [Tweet](https://twitter.com/ahmadierfan999/status/1292069752924524544)
