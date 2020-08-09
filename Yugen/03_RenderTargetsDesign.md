@@ -15,7 +15,7 @@ A good usable interface and abstraction for binding/creating/using render target
 Vulkan and D3D12 use different concepts and ideas to render to a resource.
 
 In Vulkan Tiled-Base Rendering is a first-class citizen and that's why the concept of a **RenderPass** exists,
-In Vulkan we have multiple objects to handle what we're going to render to and the most important one is RenderPasses.
+In Vulkan we have multiple objects to handle rendering to a resource. (RenderPass, Framebuffer, ImageView, GraphicsPipeline).
 
 ## Vulkan
 Assuming we **ignore subpasses** in Vulkan: 
