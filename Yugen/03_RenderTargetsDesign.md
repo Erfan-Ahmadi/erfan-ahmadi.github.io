@@ -75,7 +75,7 @@ PSO then will need a **FramebufferBindings** object to be created (format data f
 
 ## #3 : Getting rid of Framebuffer
 
-We would still have **FramebufferBindings** but Framebuffers are created and looked up internally from render target handles to Framebuffer.
+We would still have **FramebufferBindings** but Framebuffers are created and looked up internally from RenderTarget handles/ids to Framebuffer.
 Binding render targets would be like : ``Cmd_BindRenderTargets(CommandBuffer cmd, FramebufferBindings bindings, RenderTarget * rts, uint32_t count)`` and bindings will have VkRenderPass for Vulkan and won't be used for D3D12
 
  This is only to avoid using Framebuffer object and moving it around by user.
