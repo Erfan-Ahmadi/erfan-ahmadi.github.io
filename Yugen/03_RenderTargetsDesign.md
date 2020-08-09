@@ -156,14 +156,14 @@ For Vulkan's Implementation:
 
 # Conclusion
 
-## Going with the nice interface #3 ?
-If I decide to go with #3 which has a really nice looking interface. The Renderer implementation for Vulkan will get much harder to manage especially with multi-thread command buffer recording and I think I'm not experienced/ready to implement this yet although it seems very appealing if done correctly, who cares if those lookups take some nano-seconds (hopefully :D). 
+## Going with the nice interface #4 ?
+If I decide to go with #4 which has a really nice looking interface. The Renderer implementation for Vulkan will get much harder to manage especially with multi-thread command buffer recording and I think I'm not experienced/ready to implement this yet although it seems very appealing if done correctly, who cares if those lookups take some nano-seconds (hopefully :D). 
 
-Plus if i implement this, going back becomes very hard, I need a middle ground implementation to stay happy for now and I need to know I can easily move to #3 solution which seems nice.
+Plus if i implement this, going back becomes very hard, I need a middle ground implementation to stay happy for now and I need to know I can easily move to #4 solution which seems nice.
 
 Since our Higher-Level Renderer uses [FrameGraphs](https://www.gdcvault.com/play/1024612/FrameGraph-Extensible-Rendering-Architecture-in) these are mostly the job of the FrameGraph to handle these objects related to using/allocating render targets and objects around it, maybe It would be a waste of time implementing what I don't really need right now.
 
-Because of the reasons above and the "Cons" of #3 I will start with #2 or #3.5 Solutions knowing I can make the interface simpler later on.
+Because of the reasons above and the "Cons" of #4 I will start with #3 or #3.5 Solutions knowing I can make the interface simpler later on.
 
 This is post the following of this [tweet](https://twitter.com/ahmadierfan999/status/1292069752924524544), and thanks to all the people for replying and helping me gather my thoughts :)
 
