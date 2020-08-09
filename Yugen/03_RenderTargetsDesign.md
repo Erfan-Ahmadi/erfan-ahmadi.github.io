@@ -17,6 +17,7 @@ Vulkan and D3D12 use different concepts and ideas to render to a resource.
 In Vulkan Tiled-Base Rendering is a first-class citizen and that's why the concept of a **RenderPass** exists,
 In Vulkan we have multiple objects to handle what we're going to render to and the most important one is RenderPasses.
 
+## Vulkan
 Assuming we **ignore subpasses** in Vulkan: 
 
 1. Create the **RenderPass**, describing 2 main things:
@@ -28,6 +29,7 @@ Assuming we **ignore subpasses** in Vulkan:
 
 4. Then we will bind our RenderPass+FrameBuffer (vkCmdRenderPassBegin) and use our PSO to render stuff. (which was created with a compatible RenderPass)
 
+## D3D12
 In D3D12 It's much simpler : 
 
 1. You create your RenderTarget resources 
@@ -37,7 +39,7 @@ In D3D12 It's much simpler :
 
 # Solutions
 
-## #0 : Initial Idea
+## #0 : Initial Idea (already implemented)
 
 Let's first talk about what is already available in YRB to render to textures which is very similar to Vulkan (becuase it's the initial backend).
 
@@ -118,6 +120,14 @@ This extension allows framebuffers to be created without the need for creating i
 
 Framebuffers are now created with a small amount of additional metadata about the image views that will be used in VkFramebufferAttachmentsCreateInfoKHR, and the actual image views are provided at render pass begin time via VkRenderPassAttachmentBeginInfoKHR.
 ```
+
+Here is the GPU support for this feature : [VK_KHR_imageless_framebuffer Support](https://vulkan.gpuinfo.org/displayextension.php?name=VK_KHR_imageless_framebuffer)
+
+This feature seems to be not well supported by many GPU Drivers, probably the ones with no Vulkan 1.2 support yet.
+
+This feature is in core Vulkan 1.2 :)
+
+Our current SDK version is 1.1.130 and If we know for sure we're going to move to Vulkan 1.2 I will add this feature.
 
 Interface would not change from #2 but implementation is much simpler.
 
