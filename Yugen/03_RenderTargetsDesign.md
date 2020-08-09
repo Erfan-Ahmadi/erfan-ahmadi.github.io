@@ -163,7 +163,7 @@ Plus if i implement this, going back becomes very hard, I need a middle ground i
 
 Since our Higher-Level Renderer uses [FrameGraphs](https://www.gdcvault.com/play/1024612/FrameGraph-Extensible-Rendering-Architecture-in) these are mostly the job of the FrameGraph to handle these objects related to using/allocating render targets and objects around it, maybe It would be a waste of time implementing what I don't really need right now.
 
-
+Because of the reasons above and the "Cons" of #3 I will start with #2 or #3.5 Solutions knowing I can make the interface simpler later on.
 
 This is post the following of this [tweet](https://twitter.com/ahmadierfan999/status/1292069752924524544), and thanks to all the people for replying and helping me gather my thoughts :)
 
