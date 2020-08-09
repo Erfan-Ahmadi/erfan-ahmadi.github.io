@@ -43,13 +43,14 @@ In D3D12 It's much simpler :
 
 Let's first talk about what is already available in YRB to render to textures which is very similar to Vulkan (becuase it's the initial backend).
 
-1. RenderTarget is exposed as Textures/Images just like Vulkan.s
+1. RenderTarget is exposed as Textures/Images just like Vulkan.
 2. RenderPass is exposed but subpasses are ignored, So it will become only bunch of formats and their load/store operations
 3. Framebuffers are exposed very similar to Vulkan
 4. PSO creation needs a RenderPass
 
-Pros: Simple vulkan and d3d12 implementation
-Cons: Too many objects to handle to be able to render to something, also textures might not be a good handle for RenderTarget resource types 
+**Pros:** Simple vulkan and d3d12 implementation
+
+**Cons:** Too many objects to handle to be able to render to something, also textures might not be a good handle for RenderTarget resource types 
 
 ## #1 : Let's use less objects to handle (failed attempt)
 
@@ -63,10 +64,11 @@ As you can see things will start to look dirty and handling small things such as
 1. Expose Render Targets as a ResourceType instead of using textures, For explicity and clarity of the Renderer
 2. RenderPass is a bit misleading and this name has thousands of meaning in Rendering System Design. and since we don't handle subpasses the better name would be **FramebufferBindings** (Thanks to one of the replies to my comments, FrameGraphBindings [@MGDev91](https://twitter.com/MGDev91))
 
-PSO then will need a **FramebufferBindings** object to be created (format data for D3D12 and )
+PSO then will need a **FramebufferBindings** object to be created (format data for D3D12 and RenderPass for Vulkan)
 
-Pros: Simple Interface, Better namings than before, explicit RenderTarget type exposed (but handled like a texture in the implementation)
-Cons: Still many objects to handle to be able to render to something, and they are all needed.
+**Pros:** Simple Interface, Better namings than before, explicit RenderTarget type exposed (but handled like a texture in the implementation)
+
+**Cons:** Still many objects to handle to be able to render to something, and they are all needed.
 
 ## #3 : Getting rid of Framebuffer
 
@@ -75,8 +77,9 @@ Binding render targets would be like : ``Cmd_BindRenderTargets(CommandBuffer cmd
 
  This is only to avoid using Framebuffer object and moving it around by user.
 
-Pros: Less objects to handle, Simpler to use
-Cons: Nothing big.
+**Pros:** Less objects to handle, Simpler to use
+
+**Cons:** Nothing noticable.
 
 <details>
   <summary>Before</summary>
@@ -129,7 +132,9 @@ This feature is in core Vulkan 1.2 :)
 
 Our current SDK version is 1.1.130 and If we know for sure we're going to move to Vulkan 1.2 I will add this feature.
 
-Interface would not change from #2 but implementation is much simpler.
+Interface would not change from #3 but implementation is much simpler.
+
+**Pros:** no internal lookups and runtime framebuffer management. 
 
 ## #4 : Let's use EVEN less objects to handle
 
