@@ -61,12 +61,15 @@ As you can see things will start to look dirty and handling small things such as
 
 ## #2 : Let's first make the names and interface a bit better.
 
-1. Expose Render Targets as a ResourceType instead of using textures, For explicity and clarity of the Renderer
+1. For explicity and clarity of the Renderer, expose RenderTarget as a ResourceType instead of using Textures for RenderTargets,
 2. RenderPass is a bit misleading and this name has thousands of meaning in Rendering System Design. and since we don't handle subpasses the better name would be **FramebufferBindings** (Thanks to one of the replies to my comments, [@MGDev91](https://twitter.com/MGDev91))
 
 PSO then will need a **FramebufferBindings** object to be created (format data for D3D12 and RenderPass for Vulkan)
 
-**Pros:** Simple Interface, Better namings than before, explicit RenderTarget type exposed (but handled like a texture in the implementation)
+**Pros:** 
+1. Simple Interface
+2. Better namings than before
+3. Explicit RenderTarget type exposed which enables compile time and runtime validation for those types and good things will happen :) (but handled like a texture in the implementation)
 
 **Cons:** Still many objects to handle to be able to render to something, and they are all needed.
 
