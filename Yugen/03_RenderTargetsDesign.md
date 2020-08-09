@@ -170,7 +170,7 @@ For Vulkan's Implementation:
 # Conclusion
 
 ## Going with the nice interface #4 ?
-If I decide to go with #4 which has a really nice looking interface. The Renderer implementation for Vulkan will get much harder to manage especially with multi-thread command buffer recording and I think I'm not experienced/ready to implement this yet although it seems very appealing if done correctly, who cares if those lookups take some nano-seconds (hopefully :D). 
+If I decide to go with #4 which has a really nice looking interface. The Renderer implementation for Vulkan will get much harder to manage especially with multi-thread command buffer recording and I think I'm not experienced/ready to implement this yet although it seems very appealing if done correctly, who cares if those lookups take some micro-seconds (hopefully :D). 
 
 Plus, if i implement this, going back becomes very hard, I need a middle ground implementation to stay happy for now and I need to know I can easily move to #4 solution which seems nice.
 
