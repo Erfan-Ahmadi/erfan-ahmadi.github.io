@@ -24,7 +24,7 @@ Assuming we **ignore subpasses** in Vulkan:
     - Attachments Formats (Color and Depth)
     - Load/Store Operations (LOAD/CLEAR/DONT_CARE)
 2. Create PSOs using this RenderPass
-    - Note that the PSO can be used with another RenderPass it only has to be Compatible (see [Render Pass Compatibility](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/chap8.html#renderpass-compatibility)), and just like D3D12 only render target formats are needed to create a PSO.
+    - Note that the PSO can be used with another RenderPass it only has to be Compatible (see [Render Pass Compatibility](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/chap8.html#renderpass-compatibility)), and just like D3D12, only render target formats are needed to create a PSO.
 3. Create FrameBuffer which has actual references to ImageViews (Texture handle already available on the GPU)
 
 4. Then we will bind our RenderPass+FrameBuffer (vkCmdRenderPassBegin) and use our PSO to render stuff. (which was created with a compatible RenderPass)
@@ -62,7 +62,7 @@ As you can see things will start to look dirty and handling small things such as
 ## #2 : Let's first make the names and interface a bit better.
 
 1. Expose Render Targets as a ResourceType instead of using textures, For explicity and clarity of the Renderer
-2. RenderPass is a bit misleading and this name has thousands of meaning in Rendering System Design. and since we don't handle subpasses the better name would be **FramebufferBindings** (Thanks to one of the replies to my comments, FrameGraphBindings [@MGDev91](https://twitter.com/MGDev91))
+2. RenderPass is a bit misleading and this name has thousands of meaning in Rendering System Design. and since we don't handle subpasses the better name would be **FramebufferBindings** (Thanks to one of the replies to my comments, [@MGDev91](https://twitter.com/MGDev91))
 
 PSO then will need a **FramebufferBindings** object to be created (format data for D3D12 and RenderPass for Vulkan)
 
@@ -164,7 +164,7 @@ For Vulkan's Implementation:
 ## Going with the nice interface #4 ?
 If I decide to go with #4 which has a really nice looking interface. The Renderer implementation for Vulkan will get much harder to manage especially with multi-thread command buffer recording and I think I'm not experienced/ready to implement this yet although it seems very appealing if done correctly, who cares if those lookups take some nano-seconds (hopefully :D). 
 
-Plus if i implement this, going back becomes very hard, I need a middle ground implementation to stay happy for now and I need to know I can easily move to #4 solution which seems nice.
+Plus, if i implement this, going back becomes very hard, I need a middle ground implementation to stay happy for now and I need to know I can easily move to #4 solution which seems nice.
 
 Since our Higher-Level Renderer uses [FrameGraphs](https://www.gdcvault.com/play/1024612/FrameGraph-Extensible-Rendering-Architecture-in) these are mostly the job of the FrameGraph to handle these objects related to using/allocating render targets and objects around it, maybe It would be a waste of time implementing what I don't really need right now.
 
