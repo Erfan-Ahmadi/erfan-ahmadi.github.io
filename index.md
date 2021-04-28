@@ -5,9 +5,7 @@ redirect_from: "/"
 ---
 
 # What is this blog about?
-This blog is for me to Share my **passion** with you and telling my stories from the day I decided to start doing It.
-
-**Graphics Programming :)**
+This blog is for me to share my passion with you and telling my stories from the day I decided to start doing It.
 
 ## Articles
 - [Introduction to Me (April 04, 2019)](/blog/IntroductionApril2019)
@@ -19,6 +17,7 @@ This blog is for me to Share my **passion** with you and telling my stories from
 - [Yugen Engine - Abstraction for Render Targets over Vulkan and D3D12](/blog/Yugen/RenderTargets)
 
 ## Portfolio
+ + Computing FFT using Compute Shaders for Image Convolution (...)
  + [Bokeh Depth of Field](/blog/Bokeh)
  + [The Forge Examples](/blog/TheForgeExamples)
  + [SIMD/GPGPU Circle Collision](https://github.com/Erfan-Ahmadi/CircleCollision)
