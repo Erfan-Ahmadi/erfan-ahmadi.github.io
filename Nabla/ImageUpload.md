@@ -26,7 +26,7 @@ Let's get started.
 Here is a high level descriptions on the simplest approach to transferring your textures to the GPU:
 
 1. Image is loaded into CPU Memory
-2. Create a CPU-mappable GPU buffer and allocate memory for it, sometimes referred to as `StagingBuffer` or `StagingMemory` with the size of the loaded image (in vulkan terms is `HOST_VISIBLE` and sometimes additionally `DEVICE_LOCAL`)
+2. Create a CPU-mappable buffer + memory for it, sometimes referred to as `StagingBuffer` or `StagingMemory` with the size of the loaded image (in vulkan terms is `HOST_VISIBLE` and sometimes additionally `DEVICE_LOCAL`)
 3. Record a copy command from a Buffer to GPU-side Image into a commandbuffer 
 4. Submit that command buffer to a "Transfer" capable Queue 
 5. Wait for the submission to complete using a fence or semaphore indicating the transfer is done!
