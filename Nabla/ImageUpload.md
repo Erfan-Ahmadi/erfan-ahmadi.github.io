@@ -23,7 +23,7 @@ Let's get started.
 Here is a high level descriptions on the simplest approach to transferring your textures to the GPU:
 
 1. Image is loaded into CPU Memory
-2. Create a CPU-mappable GPU buffer and allocate memory for it, sometimes referred to as `StagingBuffer` or `StagingMemory` with the size of the loaded image (in vulkan terms is `HOST_VISIBLE` and `DEVICE_LOCAL`)
+2. Create a CPU-mappable GPU buffer and allocate memory for it, sometimes referred to as `StagingBuffer` or `StagingMemory` with the size of the loaded image (in vulkan terms is `HOST_VISIBLE` and sometimes additionally `DEVICE_LOCAL`)
 3. Record a copy command from a Buffer to GPU-side Image into a commandbuffer 
 4. Submit that command buffer to a "Transfer" capable Queue 
 5. Wait for the submission to complete using a fence or semaphore indicating the transfer is done!
@@ -37,6 +37,9 @@ The most important thing to tackle is that on Dedicated GPUs the amount of HOST_
 Also we want predictable memory usage, you don't want 1GB memory usage spikes.
 
  # Uploading Textures - The Good Way
+
+Before we get into this I should note that its irrelevant and triviality what we create and where, as its completely user configurable, the article focuses on getting very large resources in possibly unsupported formats across a fixed size reusable multithreaded staging buffer
+its not a benchmark or analysis of best heap and memory type for a staging buffer.
 
 1. Our tool, unlike the simple method, creates a single host-mappable buffer (default 64MB) in DEVICE_LOCAL memory if possible and creates a "range allocator" over it or as we like to call it `GeneralpurposeAddressAllocator`, which basically allocates you an offset+size into the buffer.
 The size of this buffer may be much more than the texture you want to upload or much less, that doesn't matter to our tool.
