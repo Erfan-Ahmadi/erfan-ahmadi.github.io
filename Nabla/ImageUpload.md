@@ -16,8 +16,8 @@ Additionally I use "copy" and "transfer" interchangeably.
 
 Before going into this blog, It's best if you have an understanding how "Modern" Rendering APIs work with memory and submission of work to GPU.
 
-And also I should note that the article focuses on getting very large resources in possibly unsupported formats across a fixed size reusable multithreaded staging buffer
-its not a benchmark or analysis of best heap and memory type for a staging buffer; here its irrelevant and triviality what buffers we create and where with which memory flags, as its completely user configurable.
+And also I should note that the article focuses on transferring very large resources in possibly unsupported formats across a fixed size reusable multithreaded staging buffer.
+Its not a benchmark or analysis of best heap and memory type for a staging buffer; here its irrelevant and triviality what buffers we create and where with which memory flags, as its completely user configurable.
 
 Let's get started.
 
