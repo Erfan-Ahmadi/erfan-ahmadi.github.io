@@ -3,7 +3,7 @@ title: Uploading Textures to GPU - The Good Way
 permalink: /blog/Nabla/imageupload
 ---
 
-![image](https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Nabla/image_transfer.png)
+![image](https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Nabla/image_transfer_1.png)
 
 
 In this short blog post, I will explain the new utility I added to our open-source [Nabla](https://github.com/Devsh-Graphics-Programming/Nabla) Framework, which is a tool used to upload a texture asset to the GPU over a staging buffer.
