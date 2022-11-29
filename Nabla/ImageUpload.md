@@ -38,7 +38,7 @@ Also we want predictable memory usage, you don't want 1GB memory usage spikes.
 
  # Uploading Textures - The Good Way
 
-1. Our tool, unlike the simple method, creates a single host-mappable buffer (default 64MB) in DEVICE_LOCAL memory if possible and creates a "range allocator" over it or as we like to call it `GeneralpurposeAddressAllocator`, which basically allocates you a offset+size into the buffer.
+1. Our tool, unlike the simple method, creates a single host-mappable buffer (default 64MB) in DEVICE_LOCAL memory if possible and creates a "range allocator" over it or as we like to call it `GeneralpurposeAddressAllocator`, which basically allocates you an offset+size into the buffer.
 The size of this buffer may be much more than the texture you want to upload or much less, that doesn't matter to our tool.
 
 2. try to allocate `min(neededSizeToFinishTransferInOneSubmit, maximumPossibleAllocationSize)` from the range allocator and get an address into our buffer 
