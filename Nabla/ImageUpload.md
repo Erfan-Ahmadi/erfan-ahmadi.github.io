@@ -3,9 +3,8 @@ title: Uploading Textures to GPU - The Good Way
 permalink: /blog/Nabla/imageupload
 ---
 
-
 <p align="center">
-<img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Nabla/image_transfer.png" align="center" alt="" hspace="20"/>
+<img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Nabla/image_transfer.png" alt=""/>
 </p>
 
 In this short blog post, I will explain the new utility I added to our open-source [Nabla](https://github.com/Devsh-Graphics-Programming/Nabla) Rendering API, which is a tool used to upload a texture asset to the GPU over a staging buffer.
@@ -35,12 +34,15 @@ Even if you're using tools such as [VulkanMemoryAllocator](https://gpuopen.com/v
 
  What if there is not enough "Staging" memory available at the moment for you to allocate? Due to it being currently in use by other processes or threads. or even if the GPU has not enough "Staging" memory available for your big MEGA texture.
 
+The most important thing to tackle is that on Dedicated GPUs the amount of HOST_VISIBLE and DEVICE_LOCAL memory used to be very limited, for example 256 MB, and that's what you want to use for staging, so the CPU is already writing to VRAM and GPU doesn't need to pull across PCIE.
+Also we want predictable memory usage, you don't want 1GB memory usage spikes.
+
  # Uploading Textures - The Good Way
 
-1. Our tool, unlike the simple method, creates a single host-mappable buffer (default 64MB) and creates a Pool over it or as we like to call it `GeneralpurposeAddressAllocator`.
+1. Our tool, unlike the simple method, creates a single host-mappable buffer (default 64MB) in DEVICE_LOCAL memory if possible and creates a "range allocator" over it or as we like to call it `GeneralpurposeAddressAllocator`, which basically allocates you a offset+size into the buffer.
 The size of this buffer may be much more than the texture you want to upload or much less, that doesn't matter to our tool.
 
-2. try to allocate `min(neededSizeToFinishTransferInOneSubmit, maximumPossiblePoolAllocationSize)` from the pool and get an address into our buffer 
+2. try to allocate `min(neededSizeToFinishTransferInOneSubmit, maximumPossibleAllocationSize)` from the range allocator and get an address into our buffer 
 
 3. Record the copy commands in this order 
    - Try to upload as much arrayLayers as possible 
@@ -63,13 +65,15 @@ This brought certain implementation and interface challenges mentioned in the ne
 
 ## 1. Format Promotion
 
-As you may already know there is a lot constraints/limits by your PhysicalDevice/GPU you should look out for in your applications; One of these constraints include the formats and other properties you can create your images with.
+There is a lot constraints/limits by your PhysicalDevice/GPU you should look out for in your applications; One of these constraints include the formats and other properties you can create your images with.
 
 Your loaded assets may not be in the format you can use on the GPU.
 A simple solution is to convert your assets at runtime on the CPU, that requires allocating a possibly bigger CPU-side memory, for your already MEGA texture.
 
 Our nice solution converts the format WHILE copying to the Staging memory, and there is no need for additional allocations!
 So for example you could have `RGB32` asset and upload that to a `BGRA32` gpu texture, or even to block compressed formats :)
+
+
 
 ## 2. Taking Advantage of Physical Device Information
 
@@ -78,7 +82,7 @@ We take advantage of `optimalBufferCopyRowPitchAlignment` and `optimalBufferCopy
 Also noting that this tool is very Vulkan conformant and considers `minImageTransferGranularity` of the Queue you're using for your command submission along with `nonCoherentAtomSize` if the staging buffer is not Coherent (needs manual cash flush/invalidate)
 
 ## 3. Our StreamingBuffer is Async
-That means you can submit texture transfers in multiple threads and the allocation in the pool will be available/freed once the submission fence/semaphore has been hit, indicating the GPU is done with the transfer
+That means you can submit texture transfers in multiple threads and the allocation in the range allocator will be available/freed once the submission fence/semaphore has been hit, indicating the GPU is done with the transfer
 
 # Implementation Details (for curious minds)
 
@@ -101,4 +105,9 @@ Additionally, after an in-between submit has happened, we should nullify `waitSe
 [Here](https://github.com/Devsh-Graphics-Programming/Nabla/blob/dac9855ab4a98d764130e41a69abdc605a91092c/include/nbl/video/utilities/IUtilities.h#L424) is the final interface we decided to go with that includes additional commments and notes above the function.
 
 ## Q&A
-You can reach me and ask more about Nabla and this tool in our [discord channel](https://discord.gg/arGkDxVh)
+You can reach us and ask more about Nabla and this tool in our [discord channel](https://discord.gg/arGkDxVh)
+
+## Credits
+- [Me](https://www.linkedin.com/in/erfan-ahmadi/)
+- [My Boss](https://www.linkedin.com/in/matt-kielan-9b054a165/) for the reviewing the blog and suggestions :D
+- and every Nabla contributor up to this point :)
