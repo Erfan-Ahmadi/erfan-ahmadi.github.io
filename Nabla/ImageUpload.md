@@ -16,6 +16,9 @@ Additionally I use "copy" and "transfer" interchangeably.
 
 Before going into this blog, It's best if you have an understanding how "Modern" Rendering APIs work with memory and submission of work to GPU.
 
+And also I should note that the article focuses on getting very large resources in possibly unsupported formats across a fixed size reusable multithreaded staging buffer
+its not a benchmark or analysis of best heap and memory type for a staging buffer; here its irrelevant and triviality what buffers we create and where with which memory flags, as its completely user configurable.
+
 Let's get started.
 
 # Uploading Textures - The Bad/Tutorial Way
@@ -37,9 +40,6 @@ The most important thing to tackle is that on Dedicated GPUs the amount of HOST_
 Also we want predictable memory usage, you don't want 1GB memory usage spikes.
 
  # Uploading Textures - The Good Way
-
-Before we get into this I should note that its irrelevant and triviality what we create and where, as its completely user configurable, the article focuses on getting very large resources in possibly unsupported formats across a fixed size reusable multithreaded staging buffer
-its not a benchmark or analysis of best heap and memory type for a staging buffer.
 
 1. Our tool, unlike the simple method, creates a single host-mappable buffer (default 64MB) in DEVICE_LOCAL memory if possible and creates a "range allocator" over it or as we like to call it `GeneralpurposeAddressAllocator`, which basically allocates you an offset+size into the buffer.
 The size of this buffer may be much more than the texture you want to upload or much less, that doesn't matter to our tool.
