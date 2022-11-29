@@ -3,15 +3,14 @@ title: Uploading Textures to GPU - The Good Way
 permalink: /blog/Nabla/imageupload
 ---
 
-<p align="center">
-<img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Nabla/image_transfer.png" alt=""/>
-</p>
+![image](https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Nabla/image_transfer.png)
 
-In this short blog post, I will explain the new utility I added to our open-source [Nabla](https://github.com/Devsh-Graphics-Programming/Nabla) Rendering API, which is a tool used to upload a texture asset to the GPU over a staging buffer.
+
+In this short blog post, I will explain the new utility I added to our open-source [Nabla](https://github.com/Devsh-Graphics-Programming/Nabla) Framework, which is a tool used to upload a texture asset to the GPU over a staging buffer.
 
 This tool can upload your texture in batches, meaning when there is not enough "transfer" memory we submit every single block of texture we can and pick up where we left off after the upload to GPU is finished.
 
-[Nabla](https://github.com/Devsh-Graphics-Programming/Nabla) Rendering API has a very similar front-end as Vulkan, and actually has Vulkan as one of it's backends! so expect a lot a vulkan literature from me here.
+[Nabla](https://github.com/Devsh-Graphics-Programming/Nabla) Framework has a very similar front-end as Vulkan, and actually has Vulkan as one of it's backends! so expect a lot a vulkan literature from me here.
 
 Additionally I use "copy" and "transfer" interchangeably.
 
@@ -102,7 +101,7 @@ That means you can submit texture transfers in multiple threads and the allocati
 One of the core parts of this tool is `ImageRegionIterator` that acts as an iterator over the region intended for transfer, based on availableMemory. you can think of it as a state to be resumed later.
 You can see interface [here](https://github.com/Devsh-Graphics-Programming/Nabla/blob/dac9855ab4a98d764130e41a69abdc605a91092c/include/nbl/video/utilities/IUtilities.h#L1005) and implementation [here](https://github.com/Devsh-Graphics-Programming/Nabla/blob/dac9855ab4a98d764130e41a69abdc605a91092c/src/nbl/video/utilities/IUtilities.cpp#L466).
 
-The main challenges with this tool was that it needed to do in between submits, and in a low-level rendering api that might come out as quite unpleasant, because:
+The main challenges with this tool was that it needed to do in between submits, and in a low-level framework such as `Nabla` might come out as quite unpleasant, because:
 
 - We don't want to create command buffers + fence each time and upload is requested
 - Ideally, We want the use to give us a command buffer to record copy command into and then let them submit themselves
@@ -120,9 +119,9 @@ Additionally, after an in-between submit has happened, we should nullify `waitSe
 We also have the exact system in place for [uploading](https://github.com/Devsh-Graphics-Programming/Nabla/blob/dac9855ab4a98d764130e41a69abdc605a91092c/include/nbl/video/utilities/IUtilities.h#L424)/[downloading](https://github.com/Devsh-Graphics-Programming/Nabla/blob/dac9855ab4a98d764130e41a69abdc605a91092c/include/nbl/video/utilities/IUtilities.h#L624) buffers to/from GPU :)
 
 ## Q&A
-You can reach us and ask more about Nabla and this tool in our [discord channel](https://discord.gg/arGkDxVh)
+You can reach us and ask more about `Nabla` and this tool in our [discord channel](https://discord.gg/arGkDxVh)
 
 ## Credits
 - [Me](https://www.linkedin.com/in/erfan-ahmadi/)
 - [My Boss](https://www.linkedin.com/in/matt-kielan-9b054a165/) for the reviewing the blog and suggestions :D
-- and every Nabla contributor up to this point :)
+- and every `Nabla` contributor up to this point :)
