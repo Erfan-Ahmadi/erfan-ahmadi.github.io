@@ -100,3 +100,5 @@ Additionally, after an in-between submit has happened, we should nullify `waitSe
 
 [Here](https://github.com/Devsh-Graphics-Programming/Nabla/blob/dac9855ab4a98d764130e41a69abdc605a91092c/include/nbl/video/utilities/IUtilities.h#L424) is the final interface we decided to go with that includes additional commments and notes above the function.
 
+## Q&A
+You can reach me and ask more about Nabla and this tool in our [discord channel](https://discord.gg/arGkDxVh)
