@@ -1,6 +1,6 @@
 ---
 title: Uploading Textures to GPU - The Good Way
-permalink: /blog/Nabla/imageuplaod
+permalink: /blog/Nabla/imageupload
 ---
 
 
