@@ -106,8 +106,8 @@ You can see interface [here](https://github.com/Devsh-Graphics-Programming/Nabla
 
 The main challenges with this tool was that it needed to do in between submits, and in a low-level framework such as `Nabla` might come out as quite unpleasant, because:
 
-- We don't want to create command buffers + fence each time and upload is requested
-- Ideally, We want the use to give us a command buffer to record copy command into and then let them submit themselves
+- We don't want to create command buffers + fence each time an upload is requested
+- Ideally, We want the user to give us a command buffer to record copy command into and then let them submit themselves
 - We want the user to be able to take advantage of certain synchronization features:
   - be able to wait for semaphores before copy starts
   - be able to signal certain semaphores after the copy finished
