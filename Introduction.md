@@ -32,9 +32,7 @@ In my case, Hello Triangle
 
 
 ## I Love...
-- My Girlfriend :D
 - Learning 
-- Creating new and creative things
 - Low-Level Graphics Programming
 - Applying Math to my Programs, simply I love math :) 
 - Writing high-performance applications 
