@@ -82,11 +82,10 @@ auto cmdbuf = commandBuffers[frameNumber%MaxFramesInFlight];
 // 2) CPU Block until command buffer is available
 if (frameNumber>=3u) // no need to wait for anything for the very first frames.
 {
-    ISemaphore::SWaitInfo submitDonePending = {
-        { 
+    ISemaphore::SWaitInfo submitDonePending =
+    {
             .semaphore = sema,
             .value = (frameNumber-MaxFramesInFlight) + 1, // submit number frameNumber-MaxFramesInFlight OR commandBuffer[frameNumber%MaxFramesInFlight] signalled this value previously and we must wait/block on it
-        }
     };
     device->blockForSemaphores(submitDonePending);
 }
