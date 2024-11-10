@@ -9,6 +9,7 @@ This blog is for me to share my passion with you and telling my stories from the
 
 ## Nabla
 - [Uploading Textures to GPU - The Good Way](/blog/Nabla/imageupload)
+- [Frames In Flight Explained](/blog/Nabla/fif)
 ## [Yugen Engine](/blog/Yugen/)
 - [Yugen Engine Introduction - Rendering System](/blog/Yugen/Introduction)
 - [Yugen Engine - Asset System and YUGA Shaders](/blog/Yugen/YUGA)
