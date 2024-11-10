@@ -3,8 +3,6 @@ title: Frames In Flight Explained
 permalink: /blog/Nabla/fif
 ---
 
-## Frames In Flight Explained
-
 ![image](https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Nabla/fif/cpugpu.png)
 
 For most of my career as a rendering engineer working with Vulkan, I've been confused about synchronization in CPU-GPU environments, adding to that confusion were terms like "Frames In Flight" thrown around, sometimes having different meanings for different people. In this post, I want to talk about what "Frames In Flight" means for me, how we handle it using [timeline semaphores](https://www.khronos.org/blog/vulkan-timeline-semaphores) and understand how to tweak it for more complex scenarios.

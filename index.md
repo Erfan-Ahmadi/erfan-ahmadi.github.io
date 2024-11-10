@@ -1,5 +1,5 @@
 ---
-title: Graphics Coder
+title: Erfan Ahmadi
 permalink: /blog/
 redirect_from: "/"
 ---
