@@ -21,7 +21,7 @@ Most of the code written here shows a simplified usage of [Nabla API](https://gi
 It helps when I start to think about the dumbest scenario possible first and move my way up from there.
 
 Here is how each "frame"/iteration in our draw **loop** looks:
-```c++
+```cpp
 // 1) Record CommandBuffer for frame
 cmdbuf->begin();
 //  record draws, dispatches, renderpasses, subpasses, barriers, or anything you can record into a command buffer
@@ -71,7 +71,7 @@ As you can see in the example figure above, CPU and GPU can have much better ove
 
 Now let's break down the code for this:
 
-```c++
+```cpp
 const uint32_t MaxFramesInFlight = 3; // this is also the number of command buffers we have.
 
 // 1) Selects which of the 3 command buffers to use for a given frame by cycling through the 3 command buffers based on the current frameNumber.
@@ -128,7 +128,7 @@ In more complex scenarios in real-world applications, a single frame may include
 In these situations, each of those submits in a single frame has its own set of command buffers, and we perform `blockForSemaphores` just before we start recording into them.
 
 We do this before every submit to ensure that the command buffer for the submit is safe for re-use:
-```c++
+```cpp
 if (frameNumber>=MaxFramesInFlight)
 {
     // waits for MaxFramesInFlight submits ago and makes sure `renderCommandBuffers[frameNumber%MaxFramesInFlight]` is done executing.
@@ -156,7 +156,7 @@ In this case, you might want to try to ask for more images when creating your sw
 In Nabla, due to many reasons, the number of swapchain images is a hard limit on how many acquires you can have in flight (calling acquire before previous ones have not signalled their semaphores).
 
 That's why you can see this pattern in Nabla examples' render loops:
-```c++
+```cpp
 // 1) Selects which of the command buffers to use for a given frame by cycling through the `MaxFramesInFlight` command buffers based on the current frameNumber.
 uint32_t resourceIx = frameNumber%MaxFramesInFlight
 auto cmdbuf = commandBuffers[resourceIx];
@@ -176,7 +176,7 @@ swapchain->acquireNextImage(&outImageIndex, currentAcquireSignalSemaphore);
 ```
 
 Just like before, we're indexing our resource/command buffer using `MaxFramesInFlight`, but we've introduced a new variable that's only used for semaphore block:
-```c++
+```cpp
 const uint32_t framesInFlight = core::min(MaxFramesInFlight, swapchain->getMaxAcquiresInFlight());
 ```
 If you think about it, it makes sense, assume you want to have 3 commmand buffers `MaxFramesInFlight = 3` but you have only a single swapchain image `maxAcquiresInFlight = 1`. then instead of blocking for `frame N-3` (submitOffset = 3), we should block for `frame N-1` (submitOffset = 1).
