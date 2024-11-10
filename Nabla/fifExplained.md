@@ -117,7 +117,7 @@ When I started learning Vulkan in 2019, I used to look at Vulkan examples that f
 Multiple frames executing in parallel on the GPU might seem like a great idea, but I came to learn that it requires duplicates of all your dynamic frame resources to avoid WAR, WAW, and RAW hazards. This is not feasible in the real world because:
 
 1. VRAM limitations and the complexity of managing several copies of the same dynamic resources (broadcasting updates).
-2. More GPU occupancy doesn't always mean better performance, especially with similar workloads. [[5]](https://gpuopen.com/wp-content/uploads/2017/03/GDC2017-Asynchronous-Compute-Deep-Dive.pdf)
+2. More GPU occupancy doesn't always mean better performance, especially with similar workloads. [[4]](https://gpuopen.com/wp-content/uploads/2017/03/GDC2017-Asynchronous-Compute-Deep-Dive.pdf)
 
 This is why "Frames in Flight," for me, means CPU recording and enqueueing work for the next frames while the GPU is executing a single frame, and NOT the parallel execution of commands from different frames on the GPU.
 
