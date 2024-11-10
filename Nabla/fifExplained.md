@@ -139,7 +139,7 @@ auto renderCmdBuffer = renderCommandBuffers[frameNumber%MaxFramesInFlight];
 ```
 If you have six different submits in your frame, you'll most likely see a similar piece of code in six different places before their command buffer begins recording.
 
-## Swapchain AcquireNextImage
+## Swapchain AcquireNextImage [TODO/SKIP READING]
 
 ![image](https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Nabla/fif/acquirepresent.png)
 
