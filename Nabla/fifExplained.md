@@ -38,8 +38,7 @@ graphicsQueue->submit(submitInfo);
 // we have submitted our commands to the GPU, it will signal frameNumber+1 on our timeline semaphore when it's finished
 
 // 3) CPU Block on value = frameNumber+1
-ISemaphore::SWaitInfo submitDonePending = 
-{
+ISemaphore::SWaitInfo submitDonePending = {
     .semaphore = sema,
     .value = frameNumber + 1,
 };
@@ -47,13 +46,18 @@ device->blockForSemaphores(submitDonePending);
 // After this, we're sure the submission has finalized and we can proceed safely on the next iteration/frame
 frameNumber++;
 ```
+
 ![image](https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Nabla/fif/dumb.png)
 
 This is dumb for two reasons:
  - CPU Stalls: CPU doesn't do anything when GPU is executing the commands.
  - GPU Stalls: GPU doens't do anything when CPU is recording the commands.
 
-If you're new to all this, you might ask "why even block on the CPU and wait for GPU job to finish?" or "can't we just submit the frame and move on to the next?", Well it's because of a very important basic fact:
+Note that `.waitSemaphore = { sema, frameNumber }` is not the main focus here. This is a GPU wait, ensuring that the current frame only starts execution after the previous frame has completed and released its resources.
+
+The key point for us is the CPU-side blocking with blockForSemaphores.
+
+If you're new to this, you might wonder, "why even block on the CPU and wait for GPU job to finish?" or "can't we just submit the frame and move on to the next?", Well it's because of a very important basic fact:
 
 "You can't record into a command buffer while it's being executed on the GPU", or as [Vulkan puts it](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkBeginCommandBuffer.html#VUID-vkBeginCommandBuffer-commandBuffer-00049): "Whilst in the pending state, applications must not attempt to modify the command buffer in any way - as the device may be processing the commands recorded to it. "
 
