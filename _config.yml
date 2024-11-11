@@ -4,6 +4,6 @@ plugins:
 - jekyll-redirect-from
 title: Erfan Ahmadi
 description: Sharing my journey and experience in Graphics, Rendering and GPU Programming
-#kramdown:
-#  syntax_highlighter_opts:
-#    disable : true
+kramdown:
+    syntax_highlighter_opts:
+       disable : true
