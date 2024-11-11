@@ -22,7 +22,7 @@ It helps when I start to think about the dumbest scenario possible first and mov
 
 Here is how each "frame"/iteration in our draw **loop** looks:
 
-<pre><code class="language-cpp">
+```cpp
 // 1) Record CommandBuffer for frame
 cmdbuf->begin();
 //  record draws, dispatches, renderpasses, subpasses, barriers, or anything you can record into a command buffer
@@ -46,7 +46,7 @@ ISemaphore::SWaitInfo submitDonePending = {
 device->blockForSemaphores(submitDonePending);
 // After this, we're sure the submission has finalized and we can proceed safely on the next iteration/frame
 frameNumber++;
-</code></pre>
+```
 
 ![image](https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Nabla/fif/dumb.png)
 
