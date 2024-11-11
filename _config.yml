@@ -1,4 +1,6 @@
 theme: minima
+minima:
+  skin: dark
 plugins:
 - jekyll-remote-theme # add this line to the plugins list if you already have one
 - jekyll-redirect-from
@@ -7,5 +9,3 @@ description: Sharing my journey and experience in Graphics, Rendering and GPU Pr
 kramdown:
     syntax_highlighter_opts:
        disable : true
-minima:
-  skin: dark
