@@ -171,7 +171,9 @@ Similar to the example, even though you only have limited number of swapchain im
 
 However, if your application is polling inputs --> recording --> submitting frames very quickly, there could be a noticeable lag between the frame being presented on the screen and the one you're currently processing. This makes your application feel delayed, as the frame being presented corresponds to input from several steps behind. If you're curious about why sleeping the CPU thread can sometimes help reduce this lag, check out this [discussion on Graphics Programming Discord](https://discord.com/channels/318590007881236480/318783283984990210/1263839794413305866).
 
-<iframe width="100%" height="auto" src="https://www.youtube.com/embed/ivAFYHkj9_k" title="latency" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+<div style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; max-width:100%; background:#000;">
+<iframe width="100%" height=100% src="https://www.youtube.com/embed/ivAFYHkj9_k" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+</div>
 
 Video is courtesy of [Timo Suoranta](https://x.com/tksuoran) 
 
