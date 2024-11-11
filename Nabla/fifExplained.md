@@ -171,9 +171,7 @@ Similar to the example, even though you only have limited number of swapchain im
 
 However, if your application is polling inputs --> recording --> submitting frames very quickly, there could be a noticeable lag between the frame being presented on the screen and the one you're currently processing. This makes your application feel delayed, as the frame being presented corresponds to input from several steps behind. If you're curious about why sleeping the CPU thread can sometimes help reduce this lag, check out this [discussion on Graphics Programming Discord](https://discord.com/channels/318590007881236480/318783283984990210/1263839794413305866).
 
-<video width="100%" height="auto" controls>
-  <source src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Nabla/fif/latency.mp4" type="video/mp4">
-</video>
+<iframe width="2543" height="1102" src="https://www.youtube.com/embed/ivAFYHkj9_k" title="latency" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 This is why we recommend that **FramesInFlight** also take into account the number of swapchain images, as well as the number of command buffers per submit.
 
