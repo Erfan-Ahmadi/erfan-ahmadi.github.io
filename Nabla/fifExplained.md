@@ -152,11 +152,13 @@ We mainly focused on command buffers, which is the primary limiter of how many s
 
 Another limitation comes up when you're rendering to a monitor using swapchains and surfaces. If you have worked with swapchains before, you're likely familiar with the typical "AcquireNextImage ---> Render To Image ---> Present Image".
 
-The number of images a swapchain has, is another limiter on how many frames you can have in flight, let's break it down.
+The [number of images a swapchain has](https://docs.vulkan.org/samples/latest/samples/performance/swapchain_images/README.html), is another limiter on how many frames you can have in flight, let's break it down.
 
 `AcquireNextImage` provides an index to one of the multiple images available in the swapchain, then you use that index to retrieve and **render into that swapchain image** and eventually **Present** it to the display.
 
-[This cool animation](https://youtu.be/nSzQcyQTtRY?t=55) from **TU Wien's Vulkan Lecture Series** visually demonstrates this pattern. However, there’s something the visualization doesn’t show: [AcquireNextImage](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkAcquireNextImageKHR.html) gives you the index of the next image to use, but that doesn’t mean the image is immediately ready (depends on driver implementation). So how do you know it’s ready? This function accepts a semaphore, which it will signal once the image is ready. Waiting on that semaphore ensures the image is good to go. This semaphore is typically waited on by the GPU through the `waitSemaphores` parameter in the Submit.
+[This cool animation](https://youtu.be/nSzQcyQTtRY?t=55) from **TU Wien's Vulkan Lecture Series** visually demonstrates this pattern.
+
+ However, there’s something the visualization doesn’t show: [AcquireNextImage](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkAcquireNextImageKHR.html) gives you the index of the next image to use, but that doesn’t mean the image is immediately ready (depends on driver implementation). So how do you know it’s ready? This function accepts a semaphore, which it will signal once the image is ready. Waiting on that semaphore ensures the image is good to go. This semaphore is typically waited on by the GPU through the `waitSemaphores` parameter in the Submit.
 
 Assume you have 3 command buffers but your swapchain has only 1 image, then a good scenario would be:
  - 1 frame is executing on GPU and eventually presents
