@@ -158,18 +158,22 @@ The number of images a swapchain has, is another limiter on how many frames you 
 
 [This cool animation](https://youtu.be/nSzQcyQTtRY?t=55) from **TU Wien's Vulkan Lecture Series** visually demonstrates this pattern. However, there’s something the visualization doesn’t show: [AcquireNextImage](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkAcquireNextImageKHR.html) gives you the index of the next image to use, but that doesn’t mean the image is immediately ready (depends on driver implementation). So how do you know it’s ready? This function accepts a semaphore, which it will signal once the image is ready. Waiting on that semaphore ensures the image is good to go. This semaphore is typically waited on by the GPU through the `waitSemaphores` parameter in the Submit.
 
+Assume you have 3 command buffers but your swapchain has only 1 image, then a good scenario would be:
+ - 1 frame is executing on GPU and eventually presents
+ - 1 frame is pending execution waiting on Acquire of Swapchain Image after previous present is done
+ - 1 frame is recording it's command buffers not submitted yet
 
-If your swapchain has only 1 image, then you cannot really start recording until the previous frame has rendered. the reason for that is Acquire will block until the single swapchain image is ready for re-use.
+Similar to the example, even though you only have limited number of swapchain images, you may have multiple frames waiting to execute, all waiting for the swapchain image to be available. 
 
-One doesn't have to handle this explicitly as [Acquire with infinite timeout](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap34.html#swapchain-acquire-forward-progress) will block until the image is available for use, but we must be aware of this. For example having 5 command buffers (framesInFlight=5) while you swapchain image count is 1 won't help you much.
+However, if your application is polling inputs --> recording --> submitting frames very quickly, there could be a noticeable lag between the frame being presented on the screen and the one you're currently processing. This makes your application feel delayed, as the frame being presented corresponds to input from several steps behind. If you're curious about why sleeping the CPU thread can sometimes help reduce this lag, check out this [discussion on Graphics Programming Discord](https://discord.com/channels/318590007881236480/318783283984990210/1263839794413305866).
 
-In this case, you might want to try to ask for more images when creating your swapchain or consider drawing to offscreen render target and blitting to swapchain in separate submit so you could start recording your draws without waiting for `AcquireNextImage` to return.
+This is why we recommend that **FramesInFlight** also take into account the number of swapchain images, as well as the number of command buffers per submit.
 
-In Nabla, due to many reasons, the number of swapchain images is a hard limit on how many acquires you can have in flight (calling acquire before previous ones have not signalled their semaphores).
+In Nabla, unlike Vulkan, this is not just a recommendation—there is a strict limit on how many acquires can be in flight (i.e., you cannot call `AcquireNextImage` before the previous ones have signaled their semaphores). The primary reason for this limitation is that Nabla emulates timeline semaphores through adaptor binary semaphores and empty submits. This is necessary because Vulkan’s AcquireNextImage can only [signal binary semaphores, not timeline semaphores](https://www.khronos.org/blog/vulkan-timeline-semaphores).
 
 That's why you can see this pattern in Nabla examples' render loops:
 ```cpp
-// 1) Selects which of the command buffers to use for a given frame by cycling through the `MaxFramesInFlight` command buffers based on the current frameNumber.
+// 1) Same as before, Selects which of the command buffers to use for a given frame by cycling through the `MaxFramesInFlight` command buffers based on the current frameNumber.
 uint32_t resourceIx = frameNumber%MaxFramesInFlight
 auto cmdbuf = commandBuffers[resourceIx];
 
@@ -177,7 +181,7 @@ auto cmdbuf = commandBuffers[resourceIx];
 const uint32_t framesInFlight = core::min(MaxFramesInFlight, swapchain->getMaxAcquiresInFlight());
 if (frameNumber>=framesInFlight)
 {
-    // waits for framesInFlight submits ago making sure safe usage of command buffer and not calling acquire more than we should
+    // waits for `framesInFlight submits ago` making sure safe usage of command buffer and not calling acquire more than we should
     const ISemaphore::SWaitInfo submitDonePending = getWaitInfoForSubmitOffset({.submitOffset = framesInFlight }); // Note: using framesInFlight here instead of MaxFramesInFlight
     device->blockForSemaphores(submitDonePending);
 }
@@ -191,15 +195,22 @@ Just like before, we're indexing our resource/command buffer using `MaxFramesInF
 ```cpp
 const uint32_t framesInFlight = core::min(MaxFramesInFlight, swapchain->getMaxAcquiresInFlight());
 ```
-If you think about it, it makes sense, assume you want to have 3 commmand buffers `MaxFramesInFlight = 3` but you have only a single swapchain image `maxAcquiresInFlight = 1`. then instead of blocking for `frame N-3` (submitOffset = 3), we should block for `frame N-1` (submitOffset = 1).
+
+Currently `swapchain->getMaxAcquiresInFlight()` returns `imageCount+2u`.
+
+For example if your imageCount is 3, and you have 8 command buffers, the maximum number of frames in flight would be limited to `5` `= min(3+2, 8)` and `blockForSemaphores` ensures that you do not exceed this limit.
 
 We calculate this `framesInFlight` dynamically at runtime within the loop as the swapchain can be recreated during execution, for instance, due to events like window resizing.
+
+Most importantly, the swapchain tells you how many images it has after creation. You provide a minImageCount, but the swapchain can give you more images than that. The reason we don't cache this value is because the swapchain can be recreated, and when it's recreated, it’s not obligated to give you the same number of images as before.
 
 ## Conclusion
 
 We've explored how the concept of frames in flight enhances CPU-GPU work overlap, FramesInFlight can be thought of as the CPU telling the GPU: "You go ahead and render this frame, I'll try to prepare the next frame for you while you're doing that." and we examined how timeline semaphores in Vulkan/Nabla are used to achieve this.
 
 We also highlighted how factors like the number of swapchain images can impact the ability to keep multiple frames in flight. 
+
+I hope this helps anyone looking to improve CPU-GPU synchronization in their applications and I'd be more than pleased to hear [feedbacks](mailto:ahmadierfan99@gmail.com).
 
 ## Resources
 
@@ -208,3 +219,4 @@ We also highlighted how factors like the number of swapchain images can impact t
 - [3] [Vulkan Swapchain Acquire Forward Progress](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap34.html#swapchain-acquire-forward-progress)
 - [4] [Deep Dive: Asynchronous Compute](https://gpuopen.com/wp-content/uploads/2017/03/GDC2017-Asynchronous-Compute-Deep-Dive.pdf)
 - [5] [Youtube: Swap Chain | "Presentation Modes and Swap Chain Setup in Vulkan at 0:57](https://youtu.be/nSzQcyQTtRY?t=55)
+- [6] [Choosing the right number of swapchain images](https://docs.vulkan.org/samples/latest/samples/performance/swapchain_images/README.html)
