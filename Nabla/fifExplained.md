@@ -149,7 +149,7 @@ If you have six different submits in your frame, you'll most likely see a simila
 
 We mainly focused on command buffers, which is the primary limiter of how many submits/frames we can have in flight, if you have 3 command buffers then you can't have 4 frames in flight. but this is not the only resource limiting us to have more submits or frames in flight. Another limitation comes up when working with swapchains. If you have worked with swapchains before, you know the pattern of "AcquireNextImage ---> Render To Image ---> Present Image".
 
-`AcquireNextImage` gives you an index of many images from the swapchain, then you use that index to retrieve and **render into that swapchain image** and eventually **Present** it to the display.
+`AcquireNextImage` provides an index to one of the multiple images available in the swapchain, then you use that index to retrieve and **render into that swapchain image** and eventually **Present** it to the display.
 
 The number of images a swapchain has, is another limiter on how many frames you can have in flight, If your swapchain has only 1 image, then you cannot really start recording until the previous frame has rendered. the reason for that is Acquire will block until the single swapchain image is ready for re-use.
 
