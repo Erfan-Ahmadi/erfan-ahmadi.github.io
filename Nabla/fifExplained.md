@@ -216,7 +216,7 @@ We've explored how the concept of frames in flight enhances CPU-GPU work overlap
 
 We also highlighted how factors like the number of swapchain images can impact the ability to keep multiple frames in flight. 
 
-I hope this helps anyone looking to improve CPU-GPU synchronization in their applications and I'd be more than pleased to hear [feedbacks](mailto:ahmadierfan99@gmail.com).
+I hope this helps anyone looking to improve CPU-GPU synchronization in their applications and I'd be more than pleased to hear [feedbacks](https://x.com/ahmadierfan999).
 
 ## Resources
 
