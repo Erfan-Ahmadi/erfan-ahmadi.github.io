@@ -1,4 +1,5 @@
 ---
+layout: post
 title: Introduction To Me (April 04, 2019)
 permalink: /blog/IntroductionApril2019/
 ---

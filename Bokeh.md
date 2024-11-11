@@ -1,4 +1,5 @@
 ---
+layout: post
 title: Bokeh Depth Of Field Project
 permalink: /blog/Bokeh/
 ---

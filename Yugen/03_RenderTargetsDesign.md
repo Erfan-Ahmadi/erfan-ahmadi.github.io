@@ -1,4 +1,5 @@
 ---
+layout: post
 title: Render Targets Abstraction
 permalink: /blog/Yugen/RenderTargets
 ---

@@ -1,4 +1,5 @@
 ---
+layout: post
 title: Erfan Ahmadi Projects
 permalink: /blog/Portfolio/
 ---

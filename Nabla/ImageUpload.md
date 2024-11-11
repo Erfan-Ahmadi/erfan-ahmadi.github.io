@@ -1,4 +1,5 @@
 ---
+layout: post
 title: Uploading Textures to GPU - The Good Way
 permalink: /blog/Nabla/imageupload
 ---

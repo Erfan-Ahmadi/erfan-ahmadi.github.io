@@ -1,4 +1,5 @@
 ---
+layout: post
 title: The Forge Examples
 permalink: /blog/TheForgeExamples/
 ---

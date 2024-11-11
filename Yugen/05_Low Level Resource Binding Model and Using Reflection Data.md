@@ -1,4 +1,5 @@
 ---
+layout: post
 title: Low-Level Resource Binding Model
 permalink: /blog/Yugen/LowLevelResourceBinding
 ---

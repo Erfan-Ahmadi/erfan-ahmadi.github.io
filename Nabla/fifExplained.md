@@ -1,4 +1,5 @@
 ---
+layout: post
 title: Frames In Flight Explained
 permalink: /blog/Nabla/fif
 ---

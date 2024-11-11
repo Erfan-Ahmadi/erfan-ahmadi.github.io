@@ -1,4 +1,5 @@
 ---
+layout: post
 title: Yugen Engine Introduction
 permalink: /blog/Yugen/Introduction
 ---

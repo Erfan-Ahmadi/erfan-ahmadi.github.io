@@ -1,4 +1,5 @@
 ---
+layout: post
 title: YUGA
 permalink: /blog/Yugen/YUGA
 ---

@@ -1,4 +1,5 @@
 ---
+layout: post
 title: Compute Demo
 permalink: /blog/Yugen/ComputeTechDemo
 ---
