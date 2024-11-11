@@ -220,5 +220,5 @@ I hope this helps anyone looking to improve CPU-GPU synchronization in their app
 - [2] [Nabla](https://github.com/Devsh-Graphics-Programming/Nabla)
 - [3] [Vulkan Swapchain Acquire Forward Progress](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap34.html#swapchain-acquire-forward-progress)
 - [4] [Deep Dive: Asynchronous Compute](https://gpuopen.com/wp-content/uploads/2017/03/GDC2017-Asynchronous-Compute-Deep-Dive.pdf)
-- [5] [Youtube: Swap Chain | "Presentation Modes and Swap Chain Setup in Vulkan at 0:57](https://youtu.be/nSzQcyQTtRY?t=55)
+- [5] [Presentation Modes and Swap Chain Setup in Vulkan](https://youtu.be/nSzQcyQTtRY?t=55)
 - [6] [Choosing the right number of swapchain images](https://docs.vulkan.org/samples/latest/samples/performance/swapchain_images/README.html)
