@@ -120,8 +120,9 @@ Note that we moved the semaphore blocking to the beginning of the frame, it is s
 
 When I started learning Vulkan in 2019, I used to look at Vulkan examples that followed a similar pattern (but with fences instead of timeline semaphores). Those examples were written in a way that made you think "frames in flight" means parallel execution on the GPU.
 
-Multiple frames executing in parallel on the GPU might seem like a great idea, but I came to learn that it requires duplicates of all your dynamic frame resources to avoid WAR, WAW, and RAW hazards. This is not feasible in the real world because:
+Running multiple tasks [in parallel](https://stackoverflow.com/questions/1050222/what-is-the-difference-between-concurrency-and-parallelism#:~:text=Concurrency%20is%20when%20two%20or,e.g.%2C%20on%20a%20multicore%20processor.) on the GPU can theoretically improve throughput by allowing more tasks to be executed simultaneously, However when talking about executing entire frames in parllel, it requires duplicates of all your dynamic frame resources to prevent Write-After-Read (WAR), Write-After-Write (WAW), and Read-After-Write (RAW) hazards.
 
+In practice, running multiple frames in parallel on the GPU isn't feasible for several reasons:
 1. VRAM limitations and the complexity of managing several copies of the same dynamic resources (broadcasting updates).
 2. More GPU occupancy doesn't always mean better performance, especially with similar workloads. [[4]](https://gpuopen.com/wp-content/uploads/2017/03/GDC2017-Asynchronous-Compute-Deep-Dive.pdf)
    -  it means a later frame causes an earlier frame to contend for execution resources, and the earlier frame finishes rendering later than it otherwise would have.
@@ -228,3 +229,4 @@ I hope this helps anyone looking to improve CPU-GPU synchronization in their app
 - [4] [Deep Dive: Asynchronous Compute](https://gpuopen.com/wp-content/uploads/2017/03/GDC2017-Asynchronous-Compute-Deep-Dive.pdf)
 - [5] [Presentation Modes and Swap Chain Setup in Vulkan](https://youtu.be/nSzQcyQTtRY?t=55)
 - [6] [Choosing the right number of swapchain images](https://docs.vulkan.org/samples/latest/samples/performance/swapchain_images/README.html)
+- [7] [What is the difference between concurrency and parallelism?](https://stackoverflow.com/questions/1050222/what-is-the-difference-between-concurrency-and-parallelism#:~:text=Concurrency%20is%20when%20two%20or,e.g.%2C%20on%20a%20multicore%20processor.)
