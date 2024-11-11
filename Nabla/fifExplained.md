@@ -21,7 +21,8 @@ Most of the code written here shows a simplified usage of [Nabla API](https://gi
 It helps when I start to think about the dumbest scenario possible first and move my way up from there.
 
 Here is how each "frame"/iteration in our draw **loop** looks:
-```cpp
+
+<pre><code class="language-cpp">
 // 1) Record CommandBuffer for frame
 cmdbuf->begin();
 //  record draws, dispatches, renderpasses, subpasses, barriers, or anything you can record into a command buffer
@@ -45,7 +46,7 @@ ISemaphore::SWaitInfo submitDonePending = {
 device->blockForSemaphores(submitDonePending);
 // After this, we're sure the submission has finalized and we can proceed safely on the next iteration/frame
 frameNumber++;
-```
+</code></pre>
 
 ![image](https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Nabla/fif/dumb.png)
 
