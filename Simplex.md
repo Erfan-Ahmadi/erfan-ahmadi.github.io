@@ -1,0 +1,86 @@
+---
+layout: post
+title: Effortless Triangle Grids with Simplex Transformation
+permalink: /blog/simplex/
+---
+
+## Background
+
+[PICTURE of SIMPLEX GRID]
+
+Recently at work, I needed to draw an infinite simplex grid in the fragment shader to prototype height shading and contours of DTM models in [shadertoy](https://www.shadertoy.com/view/3cXXDl). While searching for an efficient approach I stumbled upon this [lovely shader](https://www.shadertoy.com/view/WtfGDX) by [Shane](https://www.shadertoy.com/user/Shane). First I was very confused by the values and magic numbers used to do that in the shadertoy. But, with a little help from my good friend ChatGPT, I realized that the values originate from the Simplex noise algorithm—a technique devised by Ken Perlin in 2001. The transformation squashes a uniform grid in a way that forms equilateral triangles.
+
+[GIF of SQUASHing animation]
+
+Now, if you know me, you know that I can't just use an algorithm without mathematically proving why it works or at least gain a deeper intuition of why it works. So the focus of this post is to derive this transformation and demonstrate why it's so elegant.
+
+So the main focus of is to actually derive this transformation and prove why it works and show how elegant and simple this solution truly is.
+
+## Intuition
+
+In order to draw a triangle grid we need to first figure out the triangle our point `p` resides in, and then retrieve it's vertices. So how do we do that?
+
+In a uniform grid, if we want to determine which square cell a point belongs to, we simply take `floor(x)` and `floor(y)`, which gives us the coordinates of the bottom-left corner of the cell. Makes us wonder—can we do something similar for an equilateral triangle grid?
+
+[GIF of moving a point and highlighting a block]
+
+If only we could just `floor()` our point and instantly get the nearest triangle corner! Unfortunately, life isn’t that simple... or is it?
+
+This is exactly where the simplex transformation comes in. We stretch and shear our space so that the equilateral triangles lie perfectly with the square grids. Now in this transform space we simple `floor()` our point in question to snap it to the closest grid corner—just like we would in a uniform grid.
+We then transform that snapped corner back into our original space where it now represents the triangle corner.
+
+[Step by Step image of this processs to get the triangle corner]
+
+## Derivation of this transformation
+
+Now, let's derive this transformation based on assumptions on how it should behave:
+
+### Observation 1: Linearity and Matrix Representation
+The transformation preserves straight lines and maintains parallelism without translation, it must be a linear transformation.
+
+It is a linear transformation in 2D, so it can be represented by a 2×2 matrix:
+
+// TODO: Maths
+
+### Observation 2: Points on the x=y line stay on the x=y line.
+We're squashing perperndicular to the x=y diagonal,   
+
+// TODO: Maths
+
+### Observation 3: Lines perpendicular to x=y, stay perperndicular to x=y line
+We're squashing perperndicular to the x=y diagonal,   
+
+// TODO: Maths
+
+### Observation 4: Lines parallel to the x=y will not be affected by the transformation
+We're squashing perperndicular to the x=y diagonal, any line parallel to it will remain on it's position. for example let's see how y=x+1 is affected:
+
+// TODO: Image
+
+// TODO: Maths
+
+### Deriving the value
+
+based on the constraints and observations above we have discovered that the whole 2x2 linear transformation depends on a single value. let's see how changing this value will affect the transformation:
+
+// TODO: GIF
+
+We just need to find the value that will result in equilateral triangles, or putting it in terms of math:
+
+// TODO: some helper image of the vectors involved
+
+We have found the value used to transform a grid! here is the transformation used to get the uniform grid into simplex space.
+// TOOD: Matrix
+
+and the inverse:
+// TODO: Matrix
+
+
+## Final Words
+// TODO write something to wrap everything up. and point that this is not only for 2D, and that I would love to see more robust similar intuition for higher dimensions
+
+## References
+// TODO
+- https://www.shadertoy.com/view/WtfGDX
+- https://en.wikipedia.org/wiki/Simplex_noise
+
