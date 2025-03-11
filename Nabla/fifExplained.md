@@ -120,8 +120,9 @@ Note that we moved the semaphore blocking to the beginning of the frame, it is s
 
 When I started learning Vulkan in 2019, I used to look at Vulkan examples that followed a similar pattern (but with fences instead of timeline semaphores). Those examples were written in a way that made you think "frames in flight" means parallel execution on the GPU.
 
-Multiple frames executing in parallel on the GPU might seem like a great idea, but I came to learn that it requires duplicates of all your dynamic frame resources to avoid WAR, WAW, and RAW hazards. This is not feasible in the real world because:
+Running multiple tasks [in parallel](https://stackoverflow.com/questions/1050222/what-is-the-difference-between-concurrency-and-parallelism#:~:text=Concurrency%20is%20when%20two%20or,e.g.%2C%20on%20a%20multicore%20processor.) on the GPU can theoretically improve throughput by allowing more tasks to be executed simultaneously, However when talking about executing entire frames in parallel, it requires duplicates of all your dynamic frame resources to prevent Write-After-Read (WAR), Write-After-Write (WAW), and Read-After-Write (RAW) hazards.
 
+In practice, running multiple frames in parallel on the GPU isn't feasible for several reasons:
 1. VRAM limitations and the complexity of managing several copies of the same dynamic resources (broadcasting updates).
 2. More GPU occupancy doesn't always mean better performance, especially with similar workloads. [[4]](https://gpuopen.com/wp-content/uploads/2017/03/GDC2017-Asynchronous-Compute-Deep-Dive.pdf)
    -  it means a later frame causes an earlier frame to contend for execution resources, and the earlier frame finishes rendering later than it otherwise would have.
@@ -171,6 +172,10 @@ Similar to the example, even though you only have limited number of swapchain im
 
 However, if your application is polling inputs --> recording --> submitting frames very quickly, there could be a noticeable lag between the frame being presented on the screen and the one you're currently processing. This makes your application feel delayed, as the frame being presented corresponds to input from several steps behind. If you're curious about why sleeping the CPU thread can sometimes help reduce this lag, check out this [discussion on Graphics Programming Discord](https://discord.com/channels/318590007881236480/318783283984990210/1263839794413305866).
 
+<iframe style="width: 100%; aspect-ratio: 16/9; height: auto;" src="https://www.youtube.com/embed/ivAFYHkj9_k" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+Video is courtesy of [Timo Suoranta](https://x.com/tksuoran) 
+
 This is why we recommend that **FramesInFlight** also take into account the number of swapchain images, as well as the number of command buffers per submit.
 
 In Nabla, unlike Vulkan, this is not just a recommendation—there is a strict limit on how many acquires can be in flight (i.e., you cannot call `AcquireNextImage` before the previous ones have signaled their semaphores). The primary reason for this limitation is that Nabla emulates timeline semaphores through adaptor binary semaphores and empty submits. This is necessary because Vulkan’s AcquireNextImage can only [signal binary semaphores, not timeline semaphores](https://www.khronos.org/blog/vulkan-timeline-semaphores).
@@ -214,7 +219,7 @@ We've explored how the concept of frames in flight enhances CPU-GPU work overlap
 
 We also highlighted how factors like the number of swapchain images can impact the ability to keep multiple frames in flight. 
 
-I hope this helps anyone looking to improve CPU-GPU synchronization in their applications and I'd be more than pleased to hear [feedbacks](mailto:ahmadierfan99@gmail.com).
+I hope this helps anyone looking to improve CPU-GPU synchronization in their applications and I'd be more than pleased to hear [feedbacks](https://x.com/ahmadierfan999).
 
 ## Resources
 
@@ -224,3 +229,4 @@ I hope this helps anyone looking to improve CPU-GPU synchronization in their app
 - [4] [Deep Dive: Asynchronous Compute](https://gpuopen.com/wp-content/uploads/2017/03/GDC2017-Asynchronous-Compute-Deep-Dive.pdf)
 - [5] [Presentation Modes and Swap Chain Setup in Vulkan](https://youtu.be/nSzQcyQTtRY?t=55)
 - [6] [Choosing the right number of swapchain images](https://docs.vulkan.org/samples/latest/samples/performance/swapchain_images/README.html)
+- [7] [What is the difference between concurrency and parallelism?](https://stackoverflow.com/questions/1050222/what-is-the-difference-between-concurrency-and-parallelism#:~:text=Concurrency%20is%20when%20two%20or,e.g.%2C%20on%20a%20multicore%20processor.)
