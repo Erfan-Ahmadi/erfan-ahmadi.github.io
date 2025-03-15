@@ -90,6 +90,7 @@ $$
 the result still should be on the $y=x+1$ line, For this to hold true we must have $a=b+1$
 
 The matrix transformation now has reduced to this:
+
 $$
 \begin{bmatrix} b+1 & b \\ b & b+1 \end{bmatrix}
 $$
