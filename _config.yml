@@ -9,3 +9,4 @@ description: Sharing my journey and experience in Graphics, Rendering and GPU Pr
 kramdown:
     syntax_highlighter_opts:
        disable : true
+    math_engine: mathjax
