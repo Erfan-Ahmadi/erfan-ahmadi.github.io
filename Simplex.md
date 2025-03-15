@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Effortless 2D Triangle Grid with Simplex Transformation
+title: Understanding the Simplex Transformation (in 2D)
 permalink: /blog/simplex/
 ---
 
@@ -16,9 +16,9 @@ Recently at work, I needed to draw an infinite simplex grid in the fragment shad
   <a href="https://www.desmos.com/calculator/azj9ewvl5b">Play in Desmos!</a>
 </p>
 
-Now, if you know me, you know that I can't just use something without mathematically proving why it works or at least gain a deeper intuition of why it works. So the focus of this post is to derive this transformation and demonstrate why it's so elegant.
+Now, if you know me, you know that I can't just use something without mathematically proving why it works or at least gain a deeper intuition of why it works. So the focus of this post is to derive this 2D transformation.
 
-So the main focus of is to actually derive this transformation and prove why it works and show how elegant and simple this solution truly is.
+But first, let's build some intuition
 
 ## Intuition
 
