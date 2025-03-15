@@ -61,8 +61,8 @@ $$
 ### Observation 2: It is a symmetric transformation!
 
 We're squashing perperndicular to the $x=y$ diagonal. This is a shear along diagonal where:
-1. Points on the x=y line stay on the x=y line.
-2. Lines perpendicular to x=y, stay perperndicular to x=y line (such as x=-y)
+1. Points on the x=y line stay on the $x=y$ line.
+2. Lines perpendicular to x=y, stay perperndicular to x=y line (and Points on the $x=-y$ line stay on the $x=-y$ line)
 
 Based on the facts above we can deduce that the transformation is a symmetrical one!
 
@@ -70,7 +70,7 @@ $$
 \begin{bmatrix} a & b \\ b & a \end{bmatrix}
 $$
 
-### Observation 4: Lines parallel to the x=y will not be affected by the transformation
+### Observation 3: Lines parallel to the x=y will not be affected by the transformation
 We're squashing perperndicular to the x=y diagonal, any line parallel to it will remain on it's position.
 
 <p align="center">
@@ -89,29 +89,69 @@ $$
 
 the result still should be on the $y=x+1$ line, For this to hold true we must have $a=b+1$
 
+The matrix transformation now has reduced to this:
+$$
+\begin{bmatrix} b+1 & b \\ b & b+1 \end{bmatrix}
+$$
+
 ### Deriving the value
 
-based on the constraints and observations above we have discovered that the whole 2x2 linear transformation depends on a single value. let's see how changing this value will affect the transformation:
+Based on the constraints and observations above we have discovered that the whole 2x2 linear transformation depends on a single value. [see how changing this value will affect the transformation](https://www.desmos.com/calculator/azj9ewvl5b).
 
-// TODO: GIF
+Now, we need to find the value that will result in equilateral triangles. In other words, we need to find the value of $b$ for which the diagonal of the grid cell will have the same length as its sides.
 
-We just need to find the value that will result in equilateral triangles, or putting it in terms of math:
-
-// TODO: some helper image of the vectors involved
-
-We have found the value used to transform a grid! here is the transformation used to get the uniform grid into simplex space.
-// TOOD: Matrix
-
-and the inverse:
-// TODO: Matrix
+To put it another way: find for what value of $b$, length of the transformed $(1, 0)$ will be equal to transformed $(1, 1)$
 
 
-## Final Words
-// TODO write something to wrap everything up. and point that this is not only for 2D, and that I would love to see more robust similar intuition for higher dimensions
+2. Transforming $ (1, 1) $
+
+$$
+\begin{bmatrix} b+1 & b \\ b & b+1 \end{bmatrix}
+\begin{bmatrix} 1 \\ 1 \end{bmatrix}
+=
+\begin{bmatrix} 2b+1 \\ 2b+1 \end{bmatrix}
+$$
+
+2. Transforming $ (0, 1) $
+
+$$
+\begin{bmatrix} b+1 & b \\ b & b+1 \end{bmatrix}
+\begin{bmatrix} 0 \\ 1 \end{bmatrix}
+=
+\begin{bmatrix} b \\ b+1 \end{bmatrix}
+$$
+
+We want these two to have the same length, we solve for $$b$$ in the equation below:
+
+$$
+\sqrt{(2b+1)^2 + (2b+1)^2} = \sqrt{b^2 + (b+1)^2}
+$$
+
+One of the two solutions to this is:
+
+$$
+\frac{\sqrt{3}-3}{6}
+$$
+
+The other solution mirrors the grid.
+
+We have found the value used to transform a grid! 
+
+Here is the final transformation used to get the uniform grid into simplex space:
+
+\begin{bmatrix}
+\frac{\sqrt{3}-3}{6} + 1 & \frac{\sqrt{3}-3}{6} \\
+\frac{\sqrt{3}-3}{6} & \frac{\sqrt{3}-3}{6} + 1
+\end{bmatrix}
+
+### Final words
+
+I hope you have found this blog post useful. I’ve tried, in my own way, to show how some problems can be solved in a simple way. If you’ve found any errors in my logic or math, please contact me.
 
 ## References
-// TODO
-- https://www.shadertoy.com/view/WtfGDX
-- https://en.wikipedia.org/wiki/Simplex_noise
-- https://en.wikipedia.org/wiki/Symmetric_matrix
+- [Shadertoy that motivated me to write this - by user Shane](https://www.shadertoy.com/view/WtfGDX)
+- [Simplex Noise](https://en.wikipedia.o[rg/wiki/Simplex_noise)
+- [Ken Perlin](https://en.wikipedia.org/wiki/Ken_Perlin)
+- [Symmetric_matrix](https://en.wikipedia.org/wiki/Symmetric_matrix)
+- [Linear Transformation](https://en.wikipedia.org/wiki/Linear_map)
 
