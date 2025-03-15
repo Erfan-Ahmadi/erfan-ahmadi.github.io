@@ -140,10 +140,12 @@ We have found the value used to transform a grid!
 
 Here is the final transformation used to get the uniform grid into simplex space:
 
+$$
 \begin{bmatrix}
 \frac{\sqrt{3}-3}{6} + 1 & \frac{\sqrt{3}-3}{6} \\
 \frac{\sqrt{3}-3}{6} & \frac{\sqrt{3}-3}{6} + 1
 \end{bmatrix}
+$$
 
 ### Final words
 
