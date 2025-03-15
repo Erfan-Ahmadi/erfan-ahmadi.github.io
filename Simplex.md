@@ -8,8 +8,6 @@ permalink: /blog/simplex/
 
 [PICTURE of SIMPLEX GRID]
 
-Test Math Expression: $\sqrt{3x-1}+(1+x)^2$
-
 Recently at work, I needed to draw an infinite simplex grid in the fragment shader to prototype height shading and contours of Digital Terrain Models in [shadertoy](https://www.shadertoy.com/view/3cXXDl). While searching for an efficient approach I stumbled upon this [lovely shader](https://www.shadertoy.com/view/WtfGDX) by [Shane](https://www.shadertoy.com/user/Shane). First I was very confused by the values and magic numbers used to do that in the shadertoy. But, with a little help from my good friend ChatGPT, I realized that the values originate from the Simplex noise algorithm—a technique devised by Ken Perlin in 2001. The transformation squashes a uniform grid in a way that forms equilateral triangles.
 
 [GIF of SQUASHing animation]
@@ -41,6 +39,21 @@ Now, let's derive this transformation based on assumptions on how it should beha
 The transformation preserves straight lines and maintains parallelism without translation, it must be a linear transformation.
 
 It is a linear transformation in 2D, so it can be represented by a 2×2 matrix:
+
+Test Math Expression: $\sqrt{3x-1}+(1+x)^2$
+\[
+\begin{bmatrix} 2 & 3 \\ 1 & 4 \end{bmatrix} 
+\begin{bmatrix} x \\ y \end{bmatrix}
+=
+\begin{bmatrix} 2x + 3y \\ x + 4y \end{bmatrix}
+\]
+
+\[
+\begin{bmatrix} -1 & 5 \\ 3 & 0 \end{bmatrix} 
+\begin{bmatrix} a \\ b \end{bmatrix}
+=
+\begin{bmatrix} -a + 5b \\ 3a \end{bmatrix}
+\]
 
 // TODO: Maths
 
