@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Effortless Simplex 2D Grid  
+title: Effortless Simplex Grid  
 permalink: /blog/simplex/
 ---
 
@@ -22,7 +22,7 @@ But first, let's build some intuition
 
 ## Intuition
 
-In order to draw a triangle grid we need to first figure out the triangle our point `p` resides in, and then retrieve it's vertices. So how do we do that?
+In order to draw a equilateral triangle grid we need to first figure out the triangle our point `p` resides in, and then retrieve it's vertices. So how do we do that?
 
 In a uniform grid, if we want to determine which square cell a point belongs to, we simply take `floor(x)` and `floor(y)`, which gives us the coordinates of the bottom-left corner of the cell. Makes us wonder—can we do something similar for an equilateral triangle grid?
 
@@ -54,45 +54,40 @@ The transformation preserves straight lines and maintains parallelism without tr
 
 It is a linear transformation in 2D, so it can be represented by a 2×2 matrix:
 
-Test Math Expression: $\sqrt{3x-1}+(1+x)^2$
-<p>
-  
 $$
-\begin{bmatrix} 2 & 3 \\ 1 & 4 \end{bmatrix} 
-\begin{bmatrix} x \\ y \end{bmatrix}
-=
-\begin{bmatrix} 2x + 3y \\ x + 4y \end{bmatrix}
+\begin{bmatrix} a & b \\ c & d \end{bmatrix}
 $$
 
-</p>
+### Observation 2: It is a symmetric transformation!
 
-somethinh
+We're squashing perperndicular to the $x=y$ diagonal. This is a shear along diagonal where:
+1. Points on the x=y line stay on the x=y line.
+2. Lines perpendicular to x=y, stay perperndicular to x=y line (such as x=-y)
+
+Based on the facts above we can deduce that the transformation is a symmetrical one!
 
 $$
-\begin{bmatrix} -1 & 5 \\ 3 & 0 \end{bmatrix} 
-\begin{bmatrix} a \\ b \end{bmatrix}
-=
-\begin{bmatrix} -a + 5b \\ 3a \end{bmatrix}
+\begin{bmatrix} a & b \\ b & a \end{bmatrix}
 $$
-
-// TODO: Maths
-
-### Observation 2: Points on the x=y line stay on the x=y line.
-We're squashing perperndicular to the x=y diagonal,   
-
-// TODO: Maths
-
-### Observation 3: Lines perpendicular to x=y, stay perperndicular to x=y line
-We're squashing perperndicular to the x=y diagonal,   
-
-// TODO: Maths
 
 ### Observation 4: Lines parallel to the x=y will not be affected by the transformation
-We're squashing perperndicular to the x=y diagonal, any line parallel to it will remain on it's position. for example let's see how y=x+1 is affected:
+We're squashing perperndicular to the x=y diagonal, any line parallel to it will remain on it's position.
 
-// TODO: Image
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/84b147b6-de68-4557-96e4-ea1aed9e07c5" style="width: 50%; height: auto;">
+  <br>
+  <a href="https://www.desmos.com/calculator/7qj5todlyv">Play in Desmos!</a>
+</p>
 
-// TODO: Maths
+ for example let's see how $y=x+1$ is affected:
+ 
+$$
+\begin{bmatrix} a & b \\ b & a \end{bmatrix} 
+\begin{bmatrix} x \\ x+1 \end{bmatrix} =
+\begin{bmatrix} ax + b(x+1) \\ bx + a(x+1) \end{bmatrix}
+$$
+
+the result still should be on the $y=x+1$ line, For this to hold true we must have $a=b+1$
 
 ### Deriving the value
 
@@ -118,4 +113,5 @@ and the inverse:
 // TODO
 - https://www.shadertoy.com/view/WtfGDX
 - https://en.wikipedia.org/wiki/Simplex_noise
+- https://en.wikipedia.org/wiki/Symmetric_matrix
 
