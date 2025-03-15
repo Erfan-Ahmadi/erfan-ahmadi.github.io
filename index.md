@@ -8,7 +8,7 @@ redirect_from: "/"
 # What is this blog about?
 This blog is for me to share my passion with you and telling my stories from the day I decided to start doing It.
 
-- [Effortless 2D Triangle Grid with Simplex Transformation](/blog/simplex)
+- [Understanding the Simplex Transformation (in 2D)](/blog/simplex)
 
 
 ## Nabla
