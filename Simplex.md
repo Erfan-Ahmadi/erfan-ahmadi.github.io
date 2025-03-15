@@ -43,6 +43,8 @@ We then transform that snapped corner back into our original space where it now 
   <a href="https://www.desmos.com/calculator/23d2qbuvzm">Play in Desmos!</a>
 </p>
 
+So Effortless and Efficient!
+
 ## Derivation of this transformation
 
 Now, let's derive this transformation based on assumptions on how it should behave:
