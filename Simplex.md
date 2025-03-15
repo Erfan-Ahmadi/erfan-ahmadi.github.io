@@ -151,6 +151,10 @@ I trust the reader can find the inverse of this transformation very easily :)
 
 ### Final words
 
+Similar intuition and arguments work for the 3D version of the algorithm which I didn't have much chance to get into.
+
+Additionaly I would like to note that the derivation is something I worked through based on my existing knowledge. If you know a simpler or more intuitive way to arrive at the final transformation matrix, I'd love to hear it!
+
 I hope you have found this blog post useful. I’ve tried, in my own way, to show how some problems can be solved in a simple way. If you’ve found any errors in my logic or math, please contact me.
 
 ## References
