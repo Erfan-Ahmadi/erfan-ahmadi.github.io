@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Understanding the Simplex Transformation (in 2D)
+title: Effortless Simplex 2D Grid  
 permalink: /blog/simplex/
 ---
 
@@ -11,7 +11,7 @@ permalink: /blog/simplex/
 Recently at work, I needed to draw an infinite simplex grid in the fragment shader to prototype height shading and contours of Digital Terrain Models in [shadertoy](https://www.shadertoy.com/view/3cXXDl). While searching for an efficient approach I stumbled upon this [lovely shader](https://www.shadertoy.com/view/WtfGDX) by [Shane](https://www.shadertoy.com/user/Shane). First I was very confused by the values and magic numbers used to do that in the shadertoy. But, with a little help from my good friend ChatGPT, I realized that the values originate from the Simplex noise algorithm—a technique devised by Ken Perlin in 2001. The transformation squashes a uniform grid in a way that forms equilateral triangles.
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/20d6ba72-33e4-470f-bc85-866884ba9918" style="width: 30%; height: auto;">
+  <img src="https://github.com/user-attachments/assets/20d6ba72-33e4-470f-bc85-866884ba9918" style="width: 50%; height: auto;">
   <br>
   <a href="https://www.desmos.com/calculator/azj9ewvl5b">Play in Desmos!</a>
 </p>
@@ -27,7 +27,7 @@ In order to draw a triangle grid we need to first figure out the triangle our po
 In a uniform grid, if we want to determine which square cell a point belongs to, we simply take `floor(x)` and `floor(y)`, which gives us the coordinates of the bottom-left corner of the cell. Makes us wonder—can we do something similar for an equilateral triangle grid?
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/c2d19064-e4ae-4eaa-9643-0cc97488bd03" style="width: 30%; height: auto;">
+  <img src="https://github.com/user-attachments/assets/c2d19064-e4ae-4eaa-9643-0cc97488bd03" style="width: 50%; height: auto;">
   <br>
   <a href="https://www.desmos.com/calculator/7qj5todlyv">Play in Desmos!</a>
 </p>
@@ -38,7 +38,7 @@ This is exactly where the simplex transformation comes in. We stretch and shear 
 We then transform that snapped corner back into our original space where it now represents the triangle corner.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Simplex/steps.gif" style="width: 30%; height: auto;">
+  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Simplex/steps.gif" style="width: 50%; height: auto;">
   <br>
   <a href="https://www.desmos.com/calculator/23d2qbuvzm">Play in Desmos!</a>
 </p>
