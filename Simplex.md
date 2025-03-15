@@ -147,6 +147,8 @@ $$
 \end{bmatrix}
 $$
 
+I trust the reader can find the inverse of this transformation very easily :)
+
 ### Final words
 
 I hope you have found this blog post useful. I’ve tried, in my own way, to show how some problems can be solved in a simple way. If you’ve found any errors in my logic or math, please contact me.
