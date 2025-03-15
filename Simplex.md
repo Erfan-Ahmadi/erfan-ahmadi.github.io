@@ -38,7 +38,7 @@ This is exactly where the simplex transformation comes in. We stretch and shear 
 We then transform that snapped corner back into our original space where it now represents the triangle corner.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Nabla/Simplex/steps.gif" style="width: 30%; height: auto;">
+  <img src="https://raw.githubusercontent.com/Erfan-Ahmadi/erfan-ahmadi.github.io/master/images/Simplex/steps.gif" style="width: 30%; height: auto;">
   <br>
   <a href="https://www.desmos.com/calculator/23d2qbuvzm">Play in Desmos!</a>
 </p>
