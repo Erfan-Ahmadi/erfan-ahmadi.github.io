@@ -122,7 +122,7 @@ $$
 \begin{bmatrix} b \\ b+1 \end{bmatrix}
 $$
 
-We want these two to have the same length, we solve for $$b$$ in the equation below:
+We want these two to have the same length, we solve for $b$ in the equation below:
 
 $$
 \sqrt{(2b+1)^2 + (2b+1)^2} = \sqrt{b^2 + (b+1)^2}
