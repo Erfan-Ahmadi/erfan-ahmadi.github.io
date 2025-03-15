@@ -8,6 +8,9 @@ redirect_from: "/"
 # What is this blog about?
 This blog is for me to share my passion with you and telling my stories from the day I decided to start doing It.
 
+- [Effortless 2D Triangle Grid with Simplex Transformation](/blog/simplex)
+
+
 ## Nabla
 - [Uploading Textures to GPU - The Good Way](/blog/Nabla/imageupload)
 - [Frames In Flight Explained](/blog/Nabla/fif)

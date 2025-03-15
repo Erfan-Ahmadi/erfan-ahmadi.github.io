@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Effortless Triangle Grids with Simplex Transformation
+title: Effortless 2D Triangle Grid with Simplex Transformation
 permalink: /blog/simplex/
 ---
 
@@ -8,7 +8,7 @@ permalink: /blog/simplex/
 
 [PICTURE of SIMPLEX GRID]
 
-Recently at work, I needed to draw an infinite simplex grid in the fragment shader to prototype height shading and contours of DTM models in [shadertoy](https://www.shadertoy.com/view/3cXXDl). While searching for an efficient approach I stumbled upon this [lovely shader](https://www.shadertoy.com/view/WtfGDX) by [Shane](https://www.shadertoy.com/user/Shane). First I was very confused by the values and magic numbers used to do that in the shadertoy. But, with a little help from my good friend ChatGPT, I realized that the values originate from the Simplex noise algorithm—a technique devised by Ken Perlin in 2001. The transformation squashes a uniform grid in a way that forms equilateral triangles.
+Recently at work, I needed to draw an infinite simplex grid in the fragment shader to prototype height shading and contours of Digital Terrain Models in [shadertoy](https://www.shadertoy.com/view/3cXXDl). While searching for an efficient approach I stumbled upon this [lovely shader](https://www.shadertoy.com/view/WtfGDX) by [Shane](https://www.shadertoy.com/user/Shane). First I was very confused by the values and magic numbers used to do that in the shadertoy. But, with a little help from my good friend ChatGPT, I realized that the values originate from the Simplex noise algorithm—a technique devised by Ken Perlin in 2001. The transformation squashes a uniform grid in a way that forms equilateral triangles.
 
 [GIF of SQUASHing animation]
 
