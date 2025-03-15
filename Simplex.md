@@ -153,6 +153,7 @@ I hope you have found this blog post useful. I’ve tried, in my own way, to sho
 
 ## References
 - [Shadertoy that motivated me to write this - by user Shane](https://www.shadertoy.com/view/WtfGDX)
+- [My Own Shadertoy](https://www.shadertoy.com/view/3cXXDl)
 - [Simplex Noise](https://en.wikipedia.o[rg/wiki/Simplex_noise)
 - [Ken Perlin](https://en.wikipedia.org/wiki/Ken_Perlin)
 - [Symmetric_matrix](https://en.wikipedia.org/wiki/Symmetric_matrix)
