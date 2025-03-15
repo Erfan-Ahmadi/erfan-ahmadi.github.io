@@ -41,19 +41,25 @@ The transformation preserves straight lines and maintains parallelism without tr
 It is a linear transformation in 2D, so it can be represented by a 2×2 matrix:
 
 Test Math Expression: $\sqrt{3x-1}+(1+x)^2$
-\[
+<p>
+  
+$$
 \begin{bmatrix} 2 & 3 \\ 1 & 4 \end{bmatrix} 
 \begin{bmatrix} x \\ y \end{bmatrix}
 =
 \begin{bmatrix} 2x + 3y \\ x + 4y \end{bmatrix}
-\]
+$$
 
-\[
+</p>
+
+somethinh
+
+$$
 \begin{bmatrix} -1 & 5 \\ 3 & 0 \end{bmatrix} 
 \begin{bmatrix} a \\ b \end{bmatrix}
 =
 \begin{bmatrix} -a + 5b \\ 3a \end{bmatrix}
-\]
+$$
 
 // TODO: Maths
 
