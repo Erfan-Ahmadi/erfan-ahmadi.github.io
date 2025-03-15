@@ -99,7 +99,7 @@ $$
 
 Based on the constraints and observations above we have discovered that the whole 2x2 linear transformation depends on a single value. [see how changing this value will affect the transformation](https://www.desmos.com/calculator/azj9ewvl5b).
 
-Now, we need to find the value that will transform uniform grids in such a way that the grid sides and diagonal form equilateral triangles. In other words, we need to find the value of $b$ for which the diagonal of the grid cell will have the same length as its sides.
+Now, we need to find the value that will transform uniform grids in such a way that the grid sides and diagonal form equilateral triangles after transformation. In other words, we need to find the value of $b$ for which the diagonal of the grid cell will have the same length as its sides.
 
 To put it another way: find for what value of $b$, length of the transformed $(1, 0)$ will be equal to transformed $(1, 1)$
 
