@@ -4,6 +4,7 @@ title: Erfan Ahmadi Projects
 permalink: /blog/Portfolio/
 ---
 
+[OUTDATED, 2020]
 Here are my Graphics Projects sorted from latest to oldest.
 
 ---
