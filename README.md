@@ -52,6 +52,10 @@ In the body:
 - Videos: put `clip.mp4` in the folder and use `<video src="clip.mp4" autoplay loop muted playsinline></video>`. Prefer short videos to GIFs: they're about 10× smaller.
 - YouTube (in `.mdx`): `<YouTube id="0G51uoZpU-U" />`.
 
+## YouTube videos
+
+A video is a post with `youtube: <video id>` in its front matter (the id is the part after `watch?v=`). It's listed in the grid with a YouTube badge, its page plays the video at the top, and when it's the newest post the home page features it as "Latest video" instead of "Latest post".
+
 ## Interactive demos and Claude artifacts
 
 Any self-contained HTML page can be embedded in a post, like a demo Claude made for you:
@@ -71,7 +75,7 @@ Remove `draft: true`, commit, and push to `master`. The [Build and deploy](.gith
 | Path | |
 | --- | --- |
 | `src/content/posts/` | One folder per post. |
-| `src/site.ts` | Name, tagline, social links, featured YouTube video. |
+| `src/site.ts` | Name, tagline, social links, YouTube channel. |
 | `src/pages/` | Home page, post pages, archive, RSS feed, sitemap, 404. |
 | `src/layouts/`, `src/components/`, `src/styles/` | The design. |
 | `src/redirects.mjs` | Old URLs that redirect to new ones. Add one if you ever rename a post. |

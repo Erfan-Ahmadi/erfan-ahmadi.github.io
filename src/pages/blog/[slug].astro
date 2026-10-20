@@ -45,7 +45,7 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
         <time datetime={iso(date)}>{formatDate(date, 'long')}</time>
         {updated && <><span class="sep">&middot;</span><span>Updated <time datetime={iso(updated)}>{formatDate(updated)}</time></span></>}
         <span class="sep">&middot;</span>
-        <span>{readingMinutes(post)} min read</span>
+        <span>{youtube ? 'Video' : `${readingMinutes(post)} min read`}</span>
       </div>
     </header>
 

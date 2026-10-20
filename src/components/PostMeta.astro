@@ -7,5 +7,5 @@ const { post } = Astro.props;
 <div class="meta">
   <time datetime={post.data.date.toISOString().slice(0, 10)}>{formatDate(post.data.date)}</time>
   <span class="sep">&middot;</span>
-  <span>{readingMinutes(post)} min read</span>
+  <span>{post.data.youtube ? 'Video' : `${readingMinutes(post)} min read`}</span>
 </div>

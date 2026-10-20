@@ -7,8 +7,6 @@ export const SITE = {
   youtube: {
     channel: 'https://www.youtube.com/@ErFunRender',
     handle: '@ErFunRender',
-    // The video featured on the home page. Swap the id to feature another one.
-    latestVideo: '0G51uoZpU-U',
   },
   socials: [
     { icon: 'github', label: 'Erfan-Ahmadi', title: 'GitHub', href: 'https://github.com/Erfan-Ahmadi' },
