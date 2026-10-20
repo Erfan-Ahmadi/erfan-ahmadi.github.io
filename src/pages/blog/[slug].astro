@@ -1,0 +1,178 @@
+---
+import { render } from 'astro:content';
+import { Image, getImage } from 'astro:assets';
+import 'katex/dist/katex.min.css';
+import '../../styles/prose.css';
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import Artifact from '../../components/Artifact.astro';
+import YouTube from '../../components/YouTube.astro';
+import avatar from '../../assets/avatar.jpg';
+import { SITE } from '../../site';
+import { getAllPosts, postUrl, readingMinutes, formatDate, seriesParts, type Post } from '../../lib/posts';
+
+export async function getStaticPaths() {
+  const posts = await getAllPosts();
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+
+interface Props { post: Post }
+const { post } = Astro.props;
+const { title, description, date, updated, cover, coverAlt, tags, series, part, youtube, draft, unlisted } = post.data;
+const { Content, headings } = await render(post);
+
+const listed = (await getAllPosts()).filter((p) => !p.data.unlisted);
+const index = listed.findIndex((p) => p.id === post.id);
+const newer = index > 0 ? listed[index - 1] : undefined;
+const older = index >= 0 ? listed[index + 1] : undefined;
+const parts = seriesParts(listed, post);
+const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+const ogImage = cover ? (await getImage({ src: cover, width: 1200, format: 'jpeg' })).src : undefined;
+const iso = (d: Date) => d.toISOString().slice(0, 10);
+---
+<Base title={title} description={description} image={ogImage} type="article" published={date} noindex={draft || unlisted}>
+  <article class="post">
+    <header class="post-head wrap">
+      <p class="kicker">
+        {draft && <span class="badge-draft">Draft</span>} {series ? `${series}${part ? ` · Part ${part}` : ''}` : tags.join(' · ')}
+      </p>
+      <h1>{title}</h1>
+      <p class="lede">{description}</p>
+      <div class="byline">
+        <Image src={avatar} alt="" width={64} height={64} />
+        <span class="who">{SITE.name}</span>
+        <span class="sep">&middot;</span>
+        <time datetime={iso(date)}>{formatDate(date, 'long')}</time>
+        {updated && <><span class="sep">&middot;</span><span>Updated <time datetime={iso(updated)}>{formatDate(updated)}</time></span></>}
+        <span class="sep">&middot;</span>
+        <span>{youtube ? 'Video' : `${readingMinutes(post)} min read`}</span>
+      </div>
+    </header>
+
+    {youtube ? (
+      <div class="post-cover wrap"><YouTube id={youtube} title={title} /></div>
+    ) : cover && (
+      <div class="post-cover wrap"><div class="frame"><Image src={cover} alt={coverAlt} widths={[800, 1280]} sizes="(max-width: 1164px) calc(100vw - 36px), 1100px" loading="eager" /></div></div>
+    )}
+
+    <div class:list={['post-body wrap', { 'has-toc': toc.length >= 3 }]}>
+      <div class="prose">
+        <Content components={{ Artifact, YouTube }} />
+      </div>
+      {toc.length >= 3 && (
+        <aside class="toc" aria-label="On this page">
+          <p class="toc-title">On this page</p>
+          <ol>
+            {toc.map((h) => <li class={`d${h.depth}`}><a href={`#${h.slug}`}>{h.text}</a></li>)}
+          </ol>
+        </aside>
+      )}
+    </div>
+
+    <footer class="post-foot wrap">
+      {parts.length > 1 && (
+        <nav class="series-box" aria-label={`${series} series`}>
+          <p class="kicker">Series</p>
+          <h2>{series}</h2>
+          <ol>
+            {parts.map((p) => (
+              <li><a href={postUrl(p)} aria-current={p.id === post.id ? 'page' : undefined}>{p.data.title}</a></li>
+            ))}
+          </ol>
+        </nav>
+      )}
+      <div class="author">
+        <Image src={avatar} alt="" width={160} height={160} />
+        <div>
+          <p class="name">{SITE.name}</p>
+          <p>{SITE.description}</p>
+          <div class="links">
+            {SITE.socials.map((s) => <a href={s.href} title={s.title} aria-label={s.title}><Icon name={s.icon} /></a>)}
+          </div>
+        </div>
+      </div>
+      <nav class="prev-next" aria-label="More posts">
+        {older ? <a href={postUrl(older)}><small><Icon name="arrowLeft" /> Older</small><span>{older.data.title}</span></a> : <span />}
+        {newer ? <a class="next" href={postUrl(newer)}><small>Newer <Icon name="arrowRight" /></small><span>{newer.data.title}</span></a> : <a class="next" href="/"><small>All posts <Icon name="arrowRight" /></small><span>Back to the front page</span></a>}
+      </nav>
+    </footer>
+  </article>
+</Base>
+
+<style is:global>
+  .post-head { padding-top: 72px; padding-bottom: 40px; }
+  .post-head > * { max-width: 860px; }
+  .post-head .kicker { display: flex; gap: 10px; align-items: center; }
+  .post-head h1 { font-family: var(--serif); font-weight: 500; font-size: 60px; line-height: 1.03; letter-spacing: -0.03em; margin: 16px 0 18px; font-variation-settings: 'opsz' 144; }
+  .post-head .lede { font-family: var(--serif); font-size: 24px; line-height: 1.4; color: var(--ink-2); margin: 0 0 28px; font-weight: 380; font-variation-settings: 'opsz' 36; }
+  .byline { display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; font-size: 14.5px; color: var(--muted); }
+  .byline img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+  .byline .who { color: var(--ink); font-weight: 600; }
+  .byline .sep { opacity: 0.55; }
+
+  .post-cover { margin-bottom: 56px; }
+  .post-cover .frame { aspect-ratio: 16 / 7; border-radius: 20px; overflow: hidden; border: 1px solid var(--line); background: var(--paper); }
+  .post-cover .frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .post-body { display: grid; grid-template-columns: minmax(0, 720px); gap: 64px; }
+  .post-body.has-toc { grid-template-columns: minmax(0, 720px) 230px; justify-content: space-between; }
+  .toc { position: sticky; top: 96px; align-self: start; font-size: 14px; }
+  .toc-title { font-size: 12px; font-weight: 650; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
+  .toc ol { list-style: none; margin: 0; padding: 0 0 0 14px; border-left: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+  .toc li.d3 { padding-left: 12px; font-size: 13.5px; }
+  .toc a { color: var(--muted); display: block; line-height: 1.4; }
+  .toc a:hover, .toc a.active { color: var(--ink); }
+  .toc a.active { font-weight: 600; }
+
+  .post-foot { padding-top: 24px; padding-bottom: 88px; }
+  .post-foot > * { max-width: 720px; }
+  .series-box { border: 1px solid var(--line); border-radius: 16px; padding: 22px 26px; background: var(--paper); margin: 32px 0; }
+  .series-box h2 { font-family: var(--serif); font-weight: 500; font-size: 26px; margin: 8px 0 12px; }
+  .series-box ol { margin: 0; padding-left: 1.3em; color: var(--muted); }
+  .series-box li { margin: 6px 0; }
+  .series-box a { color: var(--ink-2); }
+  .series-box a:hover { color: var(--accent); }
+  .series-box a[aria-current='page'] { color: var(--ink); font-weight: 650; }
+  .author { display: flex; gap: 20px; align-items: center; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 28px 0; margin: 40px 0 24px; }
+  .author img { width: 76px; height: 76px; border-radius: 50%; object-fit: cover; flex: none; }
+  .author p { margin: 0 0 8px; color: var(--ink-2); font-size: 15.5px; }
+  .author .name { font-family: var(--serif); font-size: 22px; font-weight: 550; color: var(--ink); margin-bottom: 2px; }
+  .author .links { display: flex; gap: 8px; }
+  .author .links a { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 999px; color: var(--ink-2); font-size: 15px; }
+  .author .links a:hover { color: var(--accent); border-color: var(--accent); }
+  .prev-next { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .prev-next a { border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px; background: var(--paper); display: flex; flex-direction: column; gap: 4px; }
+  .prev-next a:hover { border-color: var(--accent); }
+  .prev-next small { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
+  .prev-next span { font-family: var(--serif); font-size: 18px; color: var(--ink); line-height: 1.3; }
+  .prev-next .next { text-align: right; align-items: flex-end; }
+
+  @media (max-width: 1040px) {
+    .post-body.has-toc { grid-template-columns: minmax(0, 720px); }
+    .toc { display: none; }
+  }
+  @media (max-width: 760px) {
+    .post-head { padding-top: 36px; padding-bottom: 28px; }
+    .post-head h1 { font-size: 38px; }
+    .post-head .lede { font-size: 20px; }
+    .post-cover { margin-bottom: 32px; }
+    .post-cover .frame { aspect-ratio: 16 / 10; border-radius: 14px; }
+    .prev-next { grid-template-columns: 1fr; }
+    .author { align-items: flex-start; }
+  }
+</style>
+
+<script>
+  // Highlight the section being read in the table of contents.
+  const links = new Map([...document.querySelectorAll<HTMLAnchorElement>('.toc a')].map((a) => [decodeURIComponent(a.hash.slice(1)), a]));
+  if (links.size) {
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        links.forEach((a) => a.classList.remove('active'));
+        links.get(entry.target.id)?.classList.add('active');
+      }
+    }, { rootMargin: '-80px 0px -70% 0px' });
+    links.forEach((_, id) => { const el = document.getElementById(id); if (el) observer.observe(el); });
+  }
+</script>

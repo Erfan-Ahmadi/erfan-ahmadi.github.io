@@ -1,0 +1,187 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import Cover from '../components/Cover.astro';
+import PostCard from '../components/PostCard.astro';
+import PostMeta from '../components/PostMeta.astro';
+import YouTube from '../components/YouTube.astro';
+import avatar from '../assets/avatar.jpg';
+import { SITE } from '../site';
+import { getListedPosts, postUrl, yearOf } from '../lib/posts';
+
+const posts = await getListedPosts();
+const latest = posts[0];
+const years = [...new Set(posts.map(yearOf))];
+const since = Math.min(...posts.map(yearOf));
+const inYear = (year: number) => posts.filter((p) => yearOf(p) === year).length;
+---
+<Base>
+  <div class="wrap">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">{SITE.eyebrow}</p>
+        <h1>{SITE.name}</h1>
+        <p class="lede">{SITE.description}</p>
+        <ul class="socials">
+          {SITE.socials.map((s, i) => (
+            <li>
+              <a class:list={['pill', { solid: i === 0, 'icon-only': 'iconOnly' in s }]} href={s.href} title={s.title} aria-label={'iconOnly' in s ? s.title : undefined}>
+                <Icon name={s.icon} />{!('iconOnly' in s) && s.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <figure class="portrait">
+        <Image src={avatar} alt="Portrait of Erfan Ahmadi" width={460} height={460} loading="eager" />
+      </figure>
+    </section>
+
+    {latest && (
+      <section class="latest" aria-label={latest.data.youtube ? 'Latest video' : 'Latest post'}>
+        {latest.data.youtube ? (
+          <div class="featured">
+            <YouTube id={latest.data.youtube} title={`Play: ${latest.data.title}`} />
+            <div>
+              <p class="kicker">Latest video</p>
+              <h2><a href={postUrl(latest)}>{latest.data.title}</a></h2>
+              <p>{latest.data.description}</p>
+              <PostMeta post={latest} />
+              <div class="video-links">
+                <a class="pill solid" href={SITE.youtube.channel}><Icon name="youtube" />Subscribe {SITE.youtube.handle}</a>
+                <a class="pill" href={postUrl(latest)}>Read the post<Icon name="arrowRight" /></a>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <a class="featured" href={postUrl(latest)}>
+            <Cover post={latest} sizes="(max-width: 760px) calc(100vw - 36px), 640px" eager />
+            <div>
+              <p class="kicker">Latest post</p>
+              <h2>{latest.data.title}</h2>
+              <p>{latest.data.description}</p>
+              <PostMeta post={latest} />
+              <p class="go"><span class="read">Read the post <Icon name="arrowRight" /></span></p>
+            </div>
+          </a>
+        )}
+      </section>
+    )}
+
+    <section class="posts" aria-labelledby="posts-title">
+      <div class="posts-head">
+        <h2 id="posts-title">Posts</h2>
+        <span class="count">{posts.length} posts since {since}</span>
+        <label class="search">
+          <Icon name="search" />
+          <span class="sr-only">Search posts</span>
+          <input id="q" type="search" placeholder="Search titles, topics, years…" autocomplete="off" />
+        </label>
+      </div>
+      <div class="years" role="group" aria-label="Filter by year">
+        <span class="label">Year</span>
+        <button class="chip" type="button" data-year="all" aria-pressed="true">All<span class="n">{posts.length}</span></button>
+        {years.map((year) => (
+          <button class="chip" type="button" data-year={year} aria-pressed="false">{year}<span class="n">{inYear(year)}</span></button>
+        ))}
+      </div>
+
+      <div class="grid" id="grid">
+        {posts.map((post) => <PostCard post={post} />)}
+      </div>
+      <p class="empty" id="empty" hidden>No posts match. Try another year or clear the search.</p>
+    </section>
+  </div>
+</Base>
+
+<style is:global>
+  .hero { display: grid; grid-template-columns: 1fr 340px; gap: 80px; align-items: center; padding: 92px 0 88px; }
+  .hero h1 { font-family: var(--serif); font-weight: 480; font-size: 88px; line-height: 0.96; letter-spacing: -0.035em; margin: 18px 0 26px; font-variation-settings: 'opsz' 144; }
+  .hero .lede { font-family: var(--serif); font-size: 29px; line-height: 1.3; color: var(--ink-2); max-width: 640px; margin: 0 0 32px; font-weight: 380; font-variation-settings: 'opsz' 36; }
+  .socials { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0; }
+  .socials .pill:not(.icon-only) { padding-left: 14px; padding-right: 14px; }
+  .portrait { margin: 0; position: relative; justify-self: end; }
+  .portrait::before { content: ''; position: absolute; inset: 16px -16px -16px 16px; border: 1.5px solid var(--accent); border-radius: 28px; }
+  .portrait img { width: 340px; height: 404px; object-fit: cover; border-radius: 28px; display: block; position: relative; }
+
+  .posts-head h2 { font-family: var(--serif); font-weight: 500; font-size: 46px; letter-spacing: -0.02em; line-height: 1; margin: 0; font-variation-settings: 'opsz' 96; }
+  .video-links { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 24px; }
+
+  .posts { border-top: 1px solid var(--line); padding: 64px 0 100px; }
+  .posts-head { display: flex; align-items: flex-end; gap: 18px; margin-bottom: 20px; flex-wrap: wrap; }
+  .posts-head .count { color: var(--muted); font-size: 15px; padding-bottom: 5px; }
+  .search { margin-left: auto; display: flex; align-items: center; gap: 10px; width: 360px; height: 46px; padding: 0 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); color: var(--muted); font-size: 17px; }
+  .search:focus-within { border-color: var(--accent); }
+  .search input { border: 0; outline: 0; background: transparent; font: inherit; font-size: 15px; color: var(--ink); width: 100%; min-width: 0; }
+  .years { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; padding: 6px 0 40px; }
+  .years .label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); width: 56px; font-weight: 650; }
+  .chip { font: inherit; font-size: 14px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--ink-2); cursor: pointer; white-space: nowrap; }
+  .chip:hover { border-color: color-mix(in oklab, var(--ink) 30%, var(--line)); }
+  .chip .n { color: var(--muted); font-size: 12px; margin-left: 5px; }
+  .chip[aria-pressed='true'] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .chip[aria-pressed='true'] .n { color: color-mix(in oklab, var(--bg) 65%, var(--ink)); }
+
+  .latest { border-top: 1px solid var(--line); padding: 64px 0; }
+  .featured { display: grid; grid-template-columns: 1.3fr 1fr; gap: 48px; align-items: center; }
+  .featured .thumb { border-radius: 20px; }
+  .featured h2 { font-family: var(--serif); font-size: 50px; line-height: 1.02; font-weight: 500; letter-spacing: -0.025em; margin: 14px 0 18px; font-variation-settings: 'opsz' 120; }
+  a.featured:hover h2, .featured h2 a:hover { color: var(--accent); }
+  .featured p:not(.kicker) { font-size: 18.5px; color: var(--ink-2); margin: 0 0 22px; line-height: 1.55; }
+  .featured .go { margin: 22px 0 0; }
+  .card[hidden] { display: none; }
+  .empty { padding: 48px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 16px; }
+
+  @media (max-width: 960px) {
+    .hero { grid-template-columns: 1fr 260px; gap: 48px; }
+    .hero h1 { font-size: 68px; }
+    .portrait img { width: 260px; height: 310px; }
+  }
+  @media (max-width: 760px) {
+    .hero { grid-template-columns: 1fr; gap: 26px; padding: 40px 0 48px; }
+    .portrait { order: -1; justify-self: start; }
+    .portrait::before { display: none; }
+    .portrait img { width: 104px; height: 104px; border-radius: 50%; }
+    .hero h1 { font-size: 54px; margin-top: 12px; }
+    .hero .lede { font-size: 22px; }
+    .latest { padding: 48px 0; }
+    .posts-head h2 { font-size: 36px; }
+    .posts { padding-top: 48px; }
+    .search { width: 100%; margin-left: 0; }
+    .years { flex-wrap: nowrap; overflow-x: auto; margin: 0 calc(-1 * var(--gutter)); padding: 6px var(--gutter) 32px; scrollbar-width: none; }
+    .years .label { display: none; }
+    .featured { grid-template-columns: 1fr; gap: 20px; }
+    .featured h2 { font-size: 34px; }
+  }
+</style>
+
+<script>
+  const section = document.querySelector<HTMLElement>('.posts')!;
+  const cards = [...section.querySelectorAll<HTMLElement>('#grid .card')];
+  const chips = [...section.querySelectorAll<HTMLButtonElement>('.years .chip')];
+  const input = section.querySelector<HTMLInputElement>('#q')!;
+  const empty = section.querySelector<HTMLElement>('#empty')!;
+
+  let year = new URLSearchParams(location.search).get('year') ?? 'all';
+  if (!chips.some((chip) => chip.dataset.year === year)) year = 'all';
+
+  function apply() {
+    const words = input.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    let shown = 0;
+    for (const card of cards) {
+      const match = (year === 'all' || card.dataset.year === year) && words.every((w) => card.dataset.search!.includes(w));
+      card.hidden = !match;
+      if (match) shown++;
+    }
+    empty.hidden = shown > 0;
+    chips.forEach((chip) => chip.setAttribute('aria-pressed', String(chip.dataset.year === year)));
+    const url = new URL(location.href);
+    if (year === 'all') url.searchParams.delete('year');
+    else url.searchParams.set('year', year);
+    history.replaceState(null, '', url);
+  }
+
+  chips.forEach((chip) => chip.addEventListener('click', () => { year = chip.dataset.year!; apply(); }));
+  input.addEventListener('input', apply);
+  apply();
+</script>

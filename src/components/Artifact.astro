@@ -1,0 +1,47 @@
+---
+// Embeds a self-contained HTML demo (e.g. a Claude artifact) that lives next to
+// the post: <Artifact src="demo.html" title="…" height={480} caption="…" />
+import Icon from './Icon.astro';
+
+interface Props {
+  src: string;
+  title?: string;
+  height?: number;
+  caption?: string;
+}
+const { src, title = 'Interactive demo', height = 480, caption } = Astro.props;
+---
+<figure class="artifact">
+  <div class="artifact-bar">
+    <span class="artifact-pill">Interactive</span>
+    <span class="artifact-name">{title}</span>
+    <a href={src} target="_blank" rel="noopener">Open full screen <Icon name="arrowUpRight" /></a>
+  </div>
+  <iframe data-artifact src={src} title={title} loading="lazy" style={`height:${height}px`} sandbox="allow-scripts allow-pointer-lock allow-popups allow-downloads"></iframe>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .artifact { margin: 2em 0; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--paper); box-shadow: var(--shadow); }
+  .artifact-bar { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+  .artifact-pill { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+  .artifact-name { color: var(--ink); font-weight: 560; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .artifact-bar a { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; color: var(--ink-2); text-decoration: none; }
+  .artifact iframe { display: block; width: 100%; border: 0; background: var(--paper); max-height: 80vh; }
+  .artifact figcaption { padding: 12px 16px; border-top: 1px solid var(--line); font-size: 14.5px; color: var(--muted); line-height: 1.5; }
+</style>
+
+<script>
+  // Demos get ?theme=light|dark so they can match the page, and reload when it changes.
+  const sync = () => {
+    const theme = document.documentElement.dataset.theme ?? 'light';
+    document.querySelectorAll<HTMLIFrameElement>('iframe[data-artifact]').forEach((frame) => {
+      const url = new URL(frame.getAttribute('src') ?? '', location.href);
+      if (url.searchParams.get('theme') === theme) return;
+      url.searchParams.set('theme', theme);
+      frame.setAttribute('src', url.pathname + url.search);
+    });
+  };
+  sync();
+  window.addEventListener('themechange', sync);
+</script>
