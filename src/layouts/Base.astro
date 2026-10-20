@@ -1,0 +1,88 @@
+---
+import '@fontsource-variable/fraunces/opsz.css';
+import '@fontsource-variable/fraunces/opsz-italic.css';
+import '@fontsource-variable/inter/index.css';
+import '@fontsource-variable/jetbrains-mono/index.css';
+import '../styles/global.css';
+import Icon from '../components/Icon.astro';
+import { SITE } from '../site';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  type?: 'website' | 'article';
+  published?: Date;
+  noindex?: boolean;
+}
+const { title, description = SITE.description, image = '/og.png', type = 'website', published, noindex = false } = Astro.props;
+const pageTitle = title ? `${title} — ${SITE.name}` : `${SITE.name} — ${SITE.eyebrow}`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogImage = new URL(image, Astro.site);
+const path = Astro.url.pathname;
+const year = new Date().getFullYear();
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <meta property="og:type" content={type} />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:title" content={title ?? SITE.name} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    {published && <meta property="article:published_time" content={published.toISOString()} />}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:creator" content="@ahmadierfan999" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="alternate" type="application/rss+xml" title={SITE.name} href="/rss.xml" />
+    <meta name="theme-color" content="#F6F4EF" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#141311" media="(prefers-color-scheme: dark)" />
+    <script is:inline>
+      (() => {
+        let theme;
+        try { theme = localStorage.getItem('theme'); } catch {}
+        if (theme !== 'light' && theme !== 'dark') theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.dataset.theme = theme;
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap row">
+        <a class="brand" href="/">{SITE.name}<b>.</b></a>
+        <nav aria-label="Main">
+          <a href="/" aria-current={path === '/' ? 'page' : undefined}>Posts</a>
+          <a class="hide-sm" href="/blog/" aria-current={path === '/blog/' ? 'page' : undefined}>Archive</a>
+          <a class="ext" href={SITE.youtube.channel}><Icon name="youtube" /><span class="hide-sm">YouTube</span></a>
+          <button class="theme-btn" type="button" aria-label="Toggle dark mode">
+            <span class="moon"><Icon name="moon" /></span><span class="sun"><Icon name="sun" /></span>
+          </button>
+        </nav>
+      </div>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer class="site-foot">
+      <div class="wrap row">
+        <span>&copy; {year} {SITE.name}</span>
+        <span><a href="/rss.xml">RSS</a> &middot; <a href="/blog/">Archive</a> &middot; <a href={SITE.youtube.channel}>YouTube</a> &middot; <a href={SITE.repo}>Source</a></span>
+      </div>
+    </footer>
+    <script>
+      document.querySelector('.theme-btn')?.addEventListener('click', () => {
+        const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = theme;
+        try { localStorage.setItem('theme', theme); } catch {}
+        window.dispatchEvent(new CustomEvent('themechange', { detail: theme }));
+      });
+    </script>
+  </body>
+</html>

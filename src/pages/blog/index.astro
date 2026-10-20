@@ -1,0 +1,64 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getListedPosts, postUrl, yearOf, formatDate } from '../../lib/posts';
+
+const posts = await getListedPosts();
+const years = [...new Set(posts.map(yearOf))];
+---
+<Base title="Archive" description="Every post on the blog, by year.">
+  <div class="wrap archive">
+    <header>
+      <p class="kicker">Archive</p>
+      <h1>Every post, by year</h1>
+      <nav class="jump" aria-label="Jump to year">
+        {years.map((year) => <a href={`#y${year}`}>{year}</a>)}
+      </nav>
+    </header>
+    {years.map((year) => {
+      const list = posts.filter((p) => yearOf(p) === year);
+      return (
+        <section id={`y${year}`}>
+          <h2>{year} <span>{list.length} {list.length === 1 ? 'post' : 'posts'}</span></h2>
+          <ul>
+            {list.map((post) => (
+              <li>
+                <a href={postUrl(post)}>
+                  <time datetime={post.data.date.toISOString().slice(0, 10)}>{formatDate(post.data.date).replace(/, \d{4}$/, '')}</time>
+                  <span class="t">{post.data.title}{post.data.draft && <span class="badge-draft">Draft</span>}</span>
+                  <span class="d">{post.data.description}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      );
+    })}
+  </div>
+</Base>
+
+<style>
+  .archive { padding-top: 72px; padding-bottom: 96px; }
+  header { margin-bottom: 40px; }
+  h1 { font-family: var(--serif); font-weight: 500; font-size: 60px; line-height: 1.02; letter-spacing: -0.03em; margin: 14px 0 22px; font-variation-settings: 'opsz' 144; }
+  .jump { display: flex; gap: 8px; flex-wrap: wrap; }
+  .jump a { font-size: 14px; padding: 6px 14px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink-2); }
+  .jump a:hover { border-color: var(--accent); color: var(--accent); }
+  section { border-top: 1px solid var(--line); padding: 36px 0 12px; display: grid; grid-template-columns: 220px 1fr; gap: 24px; scroll-margin-top: 80px; }
+  h2 { font-family: var(--serif); font-weight: 500; font-size: 44px; line-height: 1; margin: 0; letter-spacing: -0.02em; font-variation-settings: 'opsz' 96; }
+  h2 span { display: block; font-family: var(--sans); font-size: 14px; color: var(--muted); letter-spacing: 0; margin-top: 10px; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li a { display: grid; grid-template-columns: 76px 1fr; column-gap: 20px; padding: 0 0 26px; }
+  time { font-size: 14px; color: var(--muted); padding-top: 5px; font-variant-numeric: tabular-nums; }
+  .t { font-family: var(--serif); font-size: 23px; line-height: 1.25; color: var(--ink); font-variation-settings: 'opsz' 36; display: inline-flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+  a:hover .t { color: var(--accent); }
+  .d { grid-column: 2; color: var(--ink-2); font-size: 15.5px; margin-top: 4px; }
+  @media (max-width: 760px) {
+    .archive { padding-top: 40px; }
+    h1 { font-size: 40px; }
+    section { grid-template-columns: 1fr; gap: 16px; }
+    h2 { font-size: 34px; }
+    li a { grid-template-columns: 1fr; }
+    .d { grid-column: 1; }
+    time { padding: 0 0 2px; }
+  }
+</style>

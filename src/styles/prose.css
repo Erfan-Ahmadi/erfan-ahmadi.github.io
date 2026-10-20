@@ -1,0 +1,55 @@
+/* Article typography for rendered Markdown/MDX. */
+.prose { font-size: 18px; line-height: 1.75; color: var(--ink-2); overflow-wrap: break-word; }
+.prose > :first-child { margin-top: 0; }
+.prose :is(p, ul, ol, pre, table, blockquote, details, figure) { margin: 0 0 1.25em; }
+.prose :is(h2, h3, h4) { color: var(--ink); scroll-margin-top: 90px; }
+.prose h2 { font-family: var(--serif); font-weight: 520; font-size: 34px; line-height: 1.15; letter-spacing: -0.02em; margin: 1.9em 0 0.6em; font-variation-settings: 'opsz' 72; }
+.prose h3 { font-family: var(--serif); font-weight: 520; font-size: 25px; line-height: 1.25; letter-spacing: -0.01em; margin: 1.6em 0 0.5em; font-variation-settings: 'opsz' 36; }
+.prose h4 { font-size: 18px; font-weight: 650; line-height: 1.4; margin: 1.5em 0 0.5em; }
+.prose a { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: color-mix(in oklab, var(--accent) 45%, transparent); }
+.prose a:hover { text-decoration-color: var(--accent); }
+.prose :is(h2, h3, h4) a { color: inherit; text-decoration: none; }
+.prose strong { color: var(--ink); font-weight: 650; }
+.prose ul, .prose ol { padding-left: 1.4em; }
+.prose li { margin: 0.3em 0; }
+.prose li > :is(ul, ol) { margin: 0.3em 0; }
+.prose li > p { margin: 0.4em 0; }
+.prose input[type='checkbox'] { accent-color: var(--accent); margin-right: 0.45em; }
+.prose hr { border: 0; border-top: 1px solid var(--line); margin: 2.5em 0; }
+.prose blockquote { border-left: 3px solid var(--accent); padding: 0.1em 0 0.1em 1.1em; font-style: italic; }
+.prose table { border-collapse: collapse; display: block; overflow-x: auto; font-size: 16px; }
+.prose :is(th, td) { border-bottom: 1px solid var(--line); padding: 8px 12px; text-align: left; }
+
+/* Code */
+.prose code { font-family: var(--mono); font-size: 0.86em; background: var(--inline-code); padding: 0.15em 0.4em; border-radius: 5px; color: var(--ink); }
+.prose pre { font-family: var(--mono); font-size: 14px; line-height: 1.65; padding: 18px 20px; border: 1px solid var(--line); border-radius: 12px; overflow-x: auto; background: var(--paper) !important; font-variant-ligatures: none; tab-size: 4; }
+.prose pre code { background: none; padding: 0; border-radius: 0; font-size: inherit; color: inherit; }
+.astro-code, .astro-code span { color: var(--shiki-light); }
+[data-theme='dark'] .astro-code, [data-theme='dark'] .astro-code span { color: var(--shiki-dark); }
+
+/* Media */
+.prose img { display: block; height: auto; margin: 0 auto; border-radius: 10px; }
+[data-theme='dark'] .prose img { background: #F6F4EF; }
+.prose p[align='center'] { text-align: center; }
+.prose p[align='center'] :is(img, video) { display: inline-block; vertical-align: middle; margin: 4px; }
+.prose video { border-radius: 10px; max-width: 100%; height: auto; }
+.prose iframe { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border: 0; border-radius: 12px; }
+
+/* <details> blocks used for long code listings */
+.prose details { border: 1px solid var(--line); border-radius: 12px; padding: 12px 18px; background: var(--paper); }
+.prose details > summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+.prose details[open] > summary { margin-bottom: 12px; }
+.prose details pre { margin-bottom: 4px; }
+
+/* Math */
+.prose .katex { font-size: 1.05em; color: var(--ink); }
+.prose .katex-display { margin: 1.4em 0; padding: 4px 0; overflow-x: auto; overflow-y: hidden; }
+.prose .katex-display > .katex { font-size: 1.18em; }
+
+@media (max-width: 760px) {
+  .prose { font-size: 17px; }
+  .prose h2 { font-size: 28px; }
+  .prose h3 { font-size: 22px; }
+  .prose p[align='center'] :is(img, video) { width: 100% !important; height: auto !important; margin: 4px 0; }
+  .prose pre { font-size: 13px; padding: 14px 16px; border-radius: 10px; }
+}

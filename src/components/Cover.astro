@@ -1,0 +1,25 @@
+---
+import { Image } from 'astro:assets';
+import type { Post } from '../lib/posts';
+
+interface Props {
+  post: Post;
+  sizes: string;
+  eager?: boolean;
+}
+const { post, sizes, eager = false } = Astro.props;
+const { cover, coverAlt, diagram, title, draft, youtube } = post.data;
+// Posts without a cover get a generated one: the title on a tinted triangle grid.
+const hue = [...post.id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 0);
+---
+<div class:list={['thumb', { diagram }]}>
+  {cover ? (
+    <Image src={cover} alt={coverAlt} widths={[480, 800, 1280]} sizes={sizes} loading={eager ? 'eager' : 'lazy'} />
+  ) : youtube ? (
+    <img src={`https://i.ytimg.com/vi/${youtube}/hqdefault.jpg`} alt="" loading="lazy" />
+  ) : (
+    <div class="gen" style={`--h:${hue}`} aria-hidden="true"><span>{title}</span></div>
+  )}
+  {youtube && <span class="play" aria-hidden="true" />}
+  {draft && <span class="badge-draft">Draft</span>}
+</div>

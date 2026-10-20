@@ -1,0 +1,22 @@
+---
+import Cover from './Cover.astro';
+import PostMeta from './PostMeta.astro';
+import { postUrl, yearOf, type Post } from '../lib/posts';
+
+interface Props {
+  post: Post;
+  // The newest post is also shown as the featured card, so the grid hides it until a filter is active.
+  latest?: boolean;
+}
+const { post, latest = false } = Astro.props;
+const { title, description, tags, series, part } = post.data;
+const year = yearOf(post);
+const haystack = [title, description, ...tags, series ?? '', year].join(' ').toLowerCase();
+---
+<a class="card" href={postUrl(post)} data-year={year} data-search={haystack} data-latest={latest ? '' : undefined}>
+  <Cover post={post} sizes="(max-width: 760px) calc(100vw - 36px), (max-width: 1040px) 45vw, 360px" />
+  {series ? <div class="series">{series}{part && <> &middot; Part {part}</>}</div> : <PostMeta post={post} />}
+  <h3>{title}</h3>
+  <p>{description}</p>
+  {series ? <PostMeta post={post} /> : <div class="tags">{tags.join(' · ')}</div>}
+</a>

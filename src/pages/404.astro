@@ -1,0 +1,18 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Page not found" noindex>
+  <div class="wrap nf">
+    <p class="kicker">404</p>
+    <h1>This page doesn&rsquo;t exist.</h1>
+    <p>It may have moved when the blog was redesigned. Everything is still on the front page and in the archive.</p>
+    <p class="links"><a class="pill solid" href="/">All posts</a> <a class="pill" href="/blog/">Archive</a></p>
+  </div>
+</Base>
+
+<style>
+  .nf { padding-top: 120px; padding-bottom: 140px; max-width: 760px; }
+  h1 { font-family: var(--serif); font-weight: 500; font-size: 60px; line-height: 1.02; letter-spacing: -0.03em; margin: 14px 0 18px; font-variation-settings: 'opsz' 144; }
+  p { font-size: 19px; color: var(--ink-2); }
+  .links { display: flex; gap: 10px; margin-top: 28px; }
+</style>
