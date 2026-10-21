@@ -1,0 +1,11 @@
+<div class="verdicts">
+  <div class="verdict bad">
+    <span class="vmark" role="img" aria-label="Wrong">✕</span>
+    <div class="vbody">
+      <pre class="vcode">bda_ptr&lt;Counters&gt; p = bitcast&lt;bda_ptr&lt;Counters&gt; &gt;(pc.counters);
+Counters c = load(p, <span class="cm">/*Aligned*/</span> <span class="nu">0x2</span>, <span class="nu">4</span>);</pre>
+      <pre class="vcode verr">fatal error: generated SPIR-V is invalid: Structure id 7 decorated as Block for variable in PhysicalStorageBuffer storage class must follow scalar storage buffer layout rules: member 0 is missing an Offset decoration
+%Counters = OpTypeStruct %uint %uint</pre>
+    </div>
+  </div>
+</div>

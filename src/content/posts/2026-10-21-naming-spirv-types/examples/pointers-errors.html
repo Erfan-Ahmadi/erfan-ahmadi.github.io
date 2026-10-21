@@ -1,0 +1,13 @@
+<div class="verdicts">
+  <div class="verdict bad">
+    <span class="vmark" role="img" aria-label="Wrong">✕</span>
+    <div class="vbody">
+      <pre class="vcode">WorkgroupUintPtr p = addressOf(smem[<span class="nu">0</span>]);
+<span class="kw">if</span> (gi &gt; <span class="nu">31</span>)
+  p = addressOf(smem[<span class="nu">1</span>]);
+buf[gi] = load(p);</pre>
+      <pre class="vcode verr">fatal error: generated SPIR-V is invalid: Using pointers with OpPhi requires capability VariablePointers or VariablePointersStorageBuffer
+%29 = OpPhi %_ptr_Workgroup_uint %24 %22 %28 %27</pre>
+    </div>
+  </div>
+</div>

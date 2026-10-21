@@ -1,0 +1,55 @@
+<div class="example" data-flags="-spirv -T cs_6_8 -E main -HV 202x -fspv-target-env=vulkan1.3">
+  <div class="duo bleed">
+    <div class="pane">
+      <div class="pane-label"><span>HLSL</span></div>
+      <div class="lines">
+<div class="ln focus"><span class="no">1</span><span><span class="kw">typedef</span> <span class="ty">vk::SpirvType</span>&lt;<span class="cm">/*OpTypeFloat*/</span> <span class="nu lnk" data-k="4">22</span>, <span class="cm">/*size*/</span> <span class="nu lnk" data-k="1">8</span>, <span class="cm">/*alignment*/</span> <span class="nu lnk" data-k="1">8</span>,</span></div>
+<div class="ln focus"><span class="no">2</span><span>    <span class="ty">vk::Literal</span>&lt;<span class="ty">vk::integral_constant</span>&lt;<span class="ty">uint32_t</span>, <span class="nu lnk" data-k="6">64</span>&gt; &gt; &gt; MyDouble;</span></div>
+<div class="ln"><span class="no">3</span><span> </span></div>
+<div class="ln"><span class="no">4</span><span><span class="kw">struct</span> PushData</span></div>
+<div class="ln"><span class="no">5</span><span>{</span></div>
+<div class="ln"><span class="no">6</span><span>    <span class="ty">uint32_t</span> <span class="lnk" data-k="2">a</span>;</span></div>
+<div class="ln"><span class="no">7</span><span>    MyDouble <span class="lnk" data-k="1">b</span>;</span></div>
+<div class="ln"><span class="no">8</span><span>    <span class="ty">uint32_t</span> <span class="lnk" data-k="3">c</span>;</span></div>
+<div class="ln"><span class="no">9</span><span>};</span></div>
+<div class="ln"><span class="no">10</span><span>[[<span class="at">vk::push_constant</span>]] PushData pc;</span></div>
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+<div class="ln"><span class="no">14</span><span>[[<span class="at">vk::ext_capability</span>(<span class="cm">/*Float64*/</span> <span class="nu lnk" data-k="5">10</span>)]]</span></div>
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+      </div>
+    </div>
+    <div class="pane">
+      <div class="pane-label"><span>SPIR-V</span><span>excerpt</span></div>
+      <div class="acode">
+        <div class="item"><div class="cl"><span class="op">OpCapability</span> <span class="hov lnk" data-k="5">Float64</span></div><div class="why">From <code>ext_capability</code> on main: a 64-bit float type needs it.</div></div>
+        <div class="item"><div class="cl">%spirvIntrinsicType = <span class="op hov lnk" data-k="4">OpTypeFloat</span> <span class="nu hov lnk" data-k="6">64</span></div><div class="why">MyDouble</div></div>
+        <div class="gap"></div>
+        <div class="item"><div class="cl"><span class="op">OpMemberDecorate</span> %type_PushConstant_PushData 0 Offset <span class="nu hov lnk" data-k="2">0</span></div><div class="why">a</div></div>
+        <div class="item"><div class="cl"><span class="op">OpMemberDecorate</span> %type_PushConstant_PushData 1 Offset <span class="nu hov lnk" data-k="1">8</span></div><div class="why">b: the alignment of 8 moves it from 4 up to 8.</div></div>
+        <div class="item"><div class="cl"><span class="op">OpMemberDecorate</span> %type_PushConstant_PushData 2 Offset <span class="nu hov lnk" data-k="3">16</span></div><div class="why">c: right after b's 8 bytes.</div></div>
+      </div>
+    </div>
+  </div>
+  <p class="try"><a class="try-btn try-link" href="https://godbolt.org/" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5 2 8l3.5 3.5M10.5 4.5 14 8l-3.5 3.5"/></svg>Try it out yourself</a></p>
+  <script type="text/plain" class="full-src">
+typedef vk::SpirvType</*OpTypeFloat*/ 22, /*size*/ 8, /*alignment*/ 8,
+  vk::Literal<vk::integral_constant<uint32_t, 64> > > MyDouble;
+
+struct PushData
+{
+  uint32_t a;
+  MyDouble b;
+  uint32_t c;
+};
+[[vk::push_constant]] PushData pc;
+
+[[vk::binding(0,0)]] RWStructuredBuffer<uint32_t> buf;
+
+[[vk::ext_capability(/*Float64*/ 10)]]
+[numthreads(1, 1, 1)]
+void main()
+{
+  buf[0] = pc.a + pc.c;
+}
+</script>
+</div>

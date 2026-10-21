@@ -8,12 +8,12 @@ You need [Node.js](https://nodejs.org) 22.22 or newer (24 LTS is a good pick).
 
 ```sh
 npm install        # once
-npm run dev        # http://localhost:4321, reloads on save, shows drafts
+npm run dev        # http://localhost:4321, reloads on save, lists drafts too
 ```
 
 `npm run dev -- --host` also serves it on your network, so you can check it on your phone.
 
-To see exactly what will go live (no drafts):
+To see exactly what will go live (drafts reachable only by their link):
 
 ```sh
 npm run build      # builds into dist/ and checks every internal link
@@ -37,12 +37,15 @@ Front matter:
 | `date` | Required. Publish date, `YYYY-MM-DD`. Posts are sorted and filtered by it. |
 | `updated` | Optional date of a meaningful update. |
 | `cover`, `coverAlt` | Optional image in the folder, 16:10 works best (1280×800). Without one, the card gets a generated cover. |
+| `thumbnail` | Optional image for the post's card instead of the cover, 16:10 (1280×800), e.g. a designed title card. It isn't shown in the post itself. |
+| `socialImage` | Optional image for link previews on X, LinkedIn and others, 1200×630. Defaults to the thumbnail, then the cover. |
 | `diagram` | `true` for line-art covers on a light background: they're inverted in dark mode. |
 | `tags` | Shown on the cards, e.g. `[Vulkan, Math]`. |
 | `series`, `part` | Groups posts, e.g. `series: Yugen Journal` and `part: 2`. Each part links to the others. |
 | `youtube` | A video id to embed at the top of the post instead of the cover. |
-| `draft` | `true`: only visible in `npm run dev`. Delete the line to publish. |
-| `unlisted` | `true`: live at its URL but not listed anywhere, for sharing before publishing. |
+| `toc` | `false` hides the "On this page" sidebar and centers the post, so figures can run wider than the text on both sides. |
+| `draft` | `true`: live at its link with a "Draft" badge so you can share it for proofreading, but not listed or linked anywhere (home page, archive, RSS, sitemap, other posts) and hidden from search engines. `npm run dev` lists drafts so you can see them in place. Delete the line to publish. |
+| `unlisted` | `true`: like a draft without the badge: live at its link, never listed. |
 
 In the body:
 
@@ -68,7 +71,7 @@ The demo runs in a sandboxed frame, follows the site's light/dark theme through 
 
 ## Publish
 
-Remove `draft: true`, commit, and push to `master`. The [Build and deploy](.github/workflows/deploy.yml) workflow builds the site and publishes it in a minute or two. Pushes to other branches and pull requests are built and link-checked but not deployed.
+Push a draft to `master` and send people its link (`https://erfan-ahmadi.github.io/blog/<slug>/`) to proofread it. When it's ready, remove `draft: true`, commit, and push to `master`. The [Build and deploy](.github/workflows/deploy.yml) workflow builds the site and publishes it in a minute or two. Pushes to other branches and pull requests are built and link-checked but not deployed.
 
 ## Where things are
 

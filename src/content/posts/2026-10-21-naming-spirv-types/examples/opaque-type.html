@@ -1,0 +1,76 @@
+<div class="example" data-flags="-spirv -T cs_6_8 -E main -HV 202x -fspv-target-env=vulkan1.3 -fcgl -Vd">
+  <div class="duo bleed">
+    <div class="pane">
+      <div class="pane-label"><span>HLSL</span></div>
+      <div class="lines">
+<div class="ln"><span class="no">1</span><span><span class="kw">groupshared</span> <span class="ty">uint32_t</span> smem[<span class="nu">64</span>];</span></div>
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+<div class="ln focus"><span class="no">4</span><span><span class="kw">typedef</span> <span class="ty">vk::SpirvOpaqueType</span>&lt;<span class="cm">/*OpTypePointer*/</span> <span class="nu">32</span>,</span></div>
+<div class="ln focus"><span class="no">5</span><span>    <span class="ty">vk::Literal</span>&lt;<span class="ty">vk::integral_constant</span>&lt;<span class="ty">uint32_t</span>, <span class="cm">/*Workgroup*/</span> <span class="nu lnk" data-k="5">4</span>&gt; &gt;,</span></div>
+<div class="ln focus"><span class="no">6</span><span>    <span class="ty">uint32_t</span>&gt; <span class="lnk" data-k="1">WorkgroupUintPtr</span>;</span></div>
+<div class="ln"><span class="no">7</span><span> </span></div>
+<div class="ln"><span class="no">8</span><span><span class="cm">// 1: copy the pointer DXC makes for an ext_reference argument</span></span></div>
+<div class="ln"><span class="no">9</span><span>[[<span class="at">vk::ext_instruction</span>(<span class="cm">/*OpCopyObject*/</span> <span class="nu">83</span>)]]</span></div>
+<div class="ln"><span class="no">10</span><span>WorkgroupUintPtr <span class="lnk" data-k="2">addressOf</span>([[<span class="at">vk::ext_reference</span>]] <span class="ty">uint32_t</span> v);</span></div>
+<div class="ln"><span class="no">11</span><span> </span></div>
+<div class="ln"><span class="no">12</span><span><span class="cm">// 2: build it from a base pointer and an index</span></span></div>
+<div class="ln"><span class="no">13</span><span>[[<span class="at">vk::ext_instruction</span>(<span class="cm">/*OpAccessChain*/</span> <span class="nu">65</span>)]]</span></div>
+<div class="ln"><span class="no">14</span><span>WorkgroupUintPtr <span class="lnk" data-k="3">elementPtr</span>([[<span class="at">vk::ext_reference</span>]] <span class="ty">uint32_t</span> base[<span class="nu">64</span>],</span></div>
+<div class="ln"><span class="no">15</span><span>                            <span class="ty">uint32_t</span> index);</span></div>
+<div class="ln"><span class="no">16</span><span> </span></div>
+<div class="ln"><span class="no">17</span><span>[[<span class="at">vk::ext_instruction</span>(<span class="cm">/*OpLoad*/</span> <span class="nu">61</span>)]]</span></div>
+<div class="ln"><span class="no">18</span><span><span class="ty">uint32_t</span> <span class="lnk" data-k="4">load</span>(WorkgroupUintPtr p);</span></div>
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+<div class="ln"><span class="no">23</span><span>    WorkgroupUintPtr <span class="lnk" data-k="6">a</span> = <span class="lnk" data-k="2">addressOf</span>(smem[gi]);</span></div>
+<div class="ln"><span class="no">24</span><span>    WorkgroupUintPtr <span class="lnk" data-k="7">b</span> = <span class="lnk" data-k="3">elementPtr</span>(smem, gi);</span></div>
+<div class="ln"><span class="no">25</span><span>    buf[gi] = <span class="lnk" data-k="4">load</span>(<span class="lnk" data-k="6">a</span>) + load(<span class="lnk" data-k="7">b</span>);</span></div>
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+      </div>
+    </div>
+    <div class="pane">
+      <div class="pane-label"><span>SPIR-V</span><span>raw output</span></div>
+      <div class="acode">
+        <div class="item"><div class="cl"><span class="hov lnk" data-k="1">%_ptr_Workgroup_uint</span> = <span class="op">OpTypePointer</span> <span class="nu hov lnk" data-k="5">Workgroup</span> %uint</div><div class="why">WorkgroupUintPtr. DXC already uses this exact type, so it reuses its own.</div></div>
+        <div class="gap"></div>
+        <div class="item"><div class="cl">%32 = <span class="op">OpAccessChain</span> %_ptr_Workgroup_uint %smem %31</div><div class="why">DXC makes a pointer to smem[gi] for the ext_reference argument…</div></div>
+        <div class="item"><div class="cl">%33 = <span class="op hov lnk" data-k="2">OpCopyObject</span> %_ptr_Workgroup_uint %32</div><div class="why">…and addressOf copies it. A copy of a pointer is the same pointer.</div></div>
+        <div class="item"><div class="cl">      <span class="op">OpStore</span> <span class="hov lnk" data-k="6">%a</span> %33</div><div class="why">a = …</div></div>
+        <div class="gap"></div>
+        <div class="item"><div class="cl">%35 = <span class="op hov lnk" data-k="3">OpAccessChain</span> %_ptr_Workgroup_uint %smem %34</div><div class="why">elementPtr(smem, gi): the same pointer, built by our own call.</div></div>
+        <div class="item"><div class="cl">      <span class="op">OpStore</span> <span class="hov lnk" data-k="7">%b</span> %35</div><div class="why">b = …</div></div>
+        <div class="gap"></div>
+        <div class="item"><div class="cl">%36 = <span class="op">OpLoad</span> %_ptr_Workgroup_uint <span class="hov lnk" data-k="6">%a</span></div><div class="why">Read the pointer out of a…</div></div>
+        <div class="item"><div class="cl">%37 = <span class="op hov lnk" data-k="4">OpLoad</span> %uint %36</div><div class="why">…then load(a) reads through it.</div></div>
+      </div>
+    </div>
+  </div>
+  <p class="try"><a class="try-btn try-link" href="https://godbolt.org/" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5 2 8l3.5 3.5M10.5 4.5 14 8l-3.5 3.5"/></svg>Try it out yourself</a></p>
+  <script type="text/plain" class="full-src">
+groupshared uint32_t smem[64];
+[[vk::binding(0,0)]] RWStructuredBuffer<uint32_t> buf;
+
+typedef vk::SpirvOpaqueType</*OpTypePointer*/ 32,
+  vk::Literal<vk::integral_constant<uint32_t, /*Workgroup*/ 4> >,
+  uint32_t> WorkgroupUintPtr;
+
+// 1: copy the pointer DXC makes for an ext_reference argument
+[[vk::ext_instruction(/*OpCopyObject*/ 83)]]
+WorkgroupUintPtr addressOf([[vk::ext_reference]] uint32_t v);
+
+// 2: build it from a base pointer and an index
+[[vk::ext_instruction(/*OpAccessChain*/ 65)]]
+WorkgroupUintPtr elementPtr([[vk::ext_reference]] uint32_t base[64],
+                          uint32_t index);
+
+[[vk::ext_instruction(/*OpLoad*/ 61)]]
+uint32_t load(WorkgroupUintPtr p);
+
+[numthreads(64, 1, 1)]
+void main(uint32_t gi : SV_GroupIndex)
+{
+  WorkgroupUintPtr a = addressOf(smem[gi]);
+  WorkgroupUintPtr b = elementPtr(smem, gi);
+  buf[gi] = load(a) + load(b);
+}
+</script>
+</div>

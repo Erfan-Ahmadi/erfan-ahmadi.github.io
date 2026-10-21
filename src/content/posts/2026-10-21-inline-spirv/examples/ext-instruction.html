@@ -1,0 +1,54 @@
+<div class="example" data-flags="-spirv -T cs_6_8 -E main -HV 202x -fspv-target-env=vulkan1.3">
+  <div class="duo bleed">
+    <div class="pane">
+      <div class="pane-label"><span>HLSL</span></div>
+      <div class="lines">
+<div class="ln"><span class="no">1</span><span>[[<span class="at">vk::binding</span>(<span class="nu">0</span>,<span class="nu">0</span>)]] <span class="ty">RWStructuredBuffer</span>&lt;<span class="ty">uint32_t</span>&gt; buf;</span></div>
+<div class="ln"><span class="no">2</span><span> </span></div>
+<div class="ln focus"><span class="no">3</span><span>[[<span class="at">vk::ext_instruction</span>(<span class="cm">/*OpBitReverse*/</span> <span class="nu lnk" data-k="1">204</span>)]]</span></div>
+<div class="ln focus"><span class="no">4</span><span><span class="ty">uint32_t</span> <span class="lnk" data-k="1">myBitReverse</span>(<span class="ty">uint32_t</span> v);</span></div>
+<div class="ln"><span class="no">5</span><span> </span></div>
+<div class="ln focus"><span class="no">6</span><span>[[<span class="at">vk::ext_instruction</span>(<span class="cm">/*FindILsb*/</span> <span class="nu lnk" data-k="2">73</span>, <span class="str lnk" data-k="4">"GLSL.std.450"</span>)]]</span></div>
+<div class="ln focus"><span class="no">7</span><span><span class="ty">uint32_t</span> <span class="lnk" data-k="2">myFindLSB</span>(<span class="ty">uint32_t</span> v);</span></div>
+<div class="ln"><span class="no">8</span><span> </span></div>
+<div class="ln"><span class="no">9</span><span>[numthreads(<span class="nu">64</span>, <span class="nu">1</span>, <span class="nu">1</span>)]</span></div>
+<div class="ln"><span class="no">10</span><span><span class="kw">void</span> main(<span class="ty">uint32_t3</span> id : SV_DispatchThreadID)</span></div>
+<div class="ln"><span class="no">11</span><span>{</span></div>
+<div class="ln"><span class="no">12</span><span>    buf[id.x * <span class="nu">3</span> + <span class="nu">0</span>] = <span class="lnk" data-k="1">myBitReverse</span>(<span class="lnk" data-k="3">id.x</span>);</span></div>
+<div class="ln"><span class="no">13</span><span>    buf[id.x * <span class="nu">3</span> + <span class="nu">1</span>] = <span class="lnk" data-k="1">reversebits</span>(<span class="lnk" data-k="3">id.x</span>);</span></div>
+<div class="ln"><span class="no">14</span><span>    buf[id.x * <span class="nu">3</span> + <span class="nu">2</span>] = <span class="lnk" data-k="2">myFindLSB</span>(<span class="lnk" data-k="3">id.x</span>);</span></div>
+<div class="ln"><span class="no">15</span><span>}</span></div>
+      </div>
+    </div>
+    <div class="pane">
+      <div class="pane-label"><span>SPIR-V</span><span>excerpt</span></div>
+      <div class="acode">
+        <div class="item"><div class="cl"><span class="hov lnk" data-k="4">%1</span> = <span class="op">OpExtInstImport</span> <span class="str hov lnk" data-k="4">"GLSL.std.450"</span></div><div class="why">The extended set, imported once.</div></div>
+        <div class="item"><div class="cl"><span class="hov lnk" data-k="3">%21</span> = <span class="op">OpCompositeExtract</span> %uint %20 <span class="nu">0</span></div><div class="why">id.x</div></div>
+        <div class="item"><div class="cl">%22 = <span class="op hov lnk" data-k="1">OpBitReverse</span> %uint <span class="hov lnk" data-k="3">%21</span></div><div class="why">myBitReverse(id.x)</div></div>
+        <div class="item"><div class="cl">      <span class="op">OpStore</span> %24 %22</div><div class="why">buf[… + 0]</div></div>
+        <div class="item"><div class="cl">      <span class="op">OpStore</span> %26 %22</div><div class="why">buf[… + 1]: <code>reversebits(id.x)</code> is the same instruction, so the optimizer reused %22.</div></div>
+        <div class="item"><div class="cl">%27 = <span class="op hov lnk" data-k="2">OpExtInst</span> %uint <span class="hov lnk" data-k="4">%1</span> <span class="hov lnk" data-k="2">FindILsb</span> <span class="hov lnk" data-k="3">%21</span></div><div class="why">myFindLSB(id.x)</div></div>
+        <div class="item"><div class="cl">      <span class="op">OpStore</span> %29 %27</div><div class="why">buf[… + 2]</div></div>
+      </div>
+    </div>
+  </div>
+  <p class="try"><a class="try-btn try-link" href="https://godbolt.org/" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5 2 8l3.5 3.5M10.5 4.5 14 8l-3.5 3.5"/></svg>Try it out yourself</a></p>
+  <script type="text/plain" class="full-src">
+[[vk::binding(0,0)]] RWStructuredBuffer<uint32_t> buf;
+
+[[vk::ext_instruction(/*OpBitReverse*/ 204)]]
+uint32_t myBitReverse(uint32_t v);
+
+[[vk::ext_instruction(/*FindILsb*/ 73, "GLSL.std.450")]]
+uint32_t myFindLSB(uint32_t v);
+
+[numthreads(64, 1, 1)]
+void main(uint32_t3 id : SV_DispatchThreadID)
+{
+  buf[id.x * 3 + 0] = myBitReverse(id.x);
+  buf[id.x * 3 + 1] = reversebits(id.x);
+  buf[id.x * 3 + 2] = myFindLSB(id.x);
+}
+</script>
+</div>

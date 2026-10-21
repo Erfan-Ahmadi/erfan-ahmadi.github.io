@@ -1,0 +1,41 @@
+<div class="example" data-flags="-spirv -T cs_6_8 -E main -HV 202x -fspv-target-env=vulkan1.3 -fcgl -Vd">
+  <div class="duo bleed">
+    <div class="pane">
+      <div class="pane-label"><span>HLSL</span></div>
+      <div class="lines">
+<div class="ln"><span class="no">1</span><span><span class="kw lnk" data-k="3">groupshared</span> <span class="ty">uint32_t</span> <span class="lnk" data-k="1">counter</span>;</span></div>
+<div class="ln"><span class="no">2</span><span> </span></div>
+<div class="ln"><span class="no">3</span><span>[numthreads(<span class="nu">64</span>, <span class="nu">1</span>, <span class="nu">1</span>)]</span></div>
+<div class="ln"><span class="no">4</span><span><span class="kw">void</span> main()</span></div>
+<div class="ln"><span class="no">5</span><span>{</span></div>
+<div class="ln"><span class="no">6</span><span>    <span class="ty">uint32_t</span> <span class="lnk" data-k="2">value</span> = <span class="lnk" data-k="1">counter</span>;</span></div>
+<div class="ln"><span class="no">7</span><span>    <span class="lnk" data-k="1">counter</span> = <span class="lnk" data-k="2">value</span> + <span class="nu lnk" data-k="4">1u</span>;</span></div>
+<div class="ln"><span class="no">8</span><span>}</span></div>
+      </div>
+    </div>
+    <div class="pane">
+      <div class="pane-label"><span>SPIR-V</span><span>raw output</span></div>
+      <div class="acode">
+        <div class="item"><div class="cl"><span class="hov lnk" data-k="1">%counter</span> = <span class="op">OpVariable</span> %_ptr_Workgroup_uint <span class="hov lnk" data-k="3">Workgroup</span></div><div class="why">groupshared uint32_t counter;</div></div>
+        <div class="item"><div class="cl"><span class="hov lnk" data-k="2">%value</span>   = <span class="op">OpVariable</span> %_ptr_Function_uint Function</div><div class="why">uint32_t value: a local is a pointer too.</div></div>
+        <div class="gap"></div>
+        <div class="item"><div class="cl">%14 = <span class="op">OpLoad</span> %uint <span class="hov lnk" data-k="1">%counter</span></div><div class="why">Read counter…</div></div>
+        <div class="item"><div class="cl">      <span class="op">OpStore</span> <span class="hov lnk" data-k="2">%value</span> %14</div><div class="why">…and write it into value.</div></div>
+        <div class="item"><div class="cl">%15 = <span class="op">OpLoad</span> %uint <span class="hov lnk" data-k="2">%value</span></div><div class="why">Read value.</div></div>
+        <div class="item"><div class="cl">%16 = <span class="op">OpIAdd</span> %uint %15 <span class="nu hov lnk" data-k="4">%uint_1</span></div><div class="why">value + 1u</div></div>
+        <div class="item"><div class="cl">      <span class="op">OpStore</span> <span class="hov lnk" data-k="1">%counter</span> %16</div><div class="why">Write it into counter.</div></div>
+      </div>
+    </div>
+  </div>
+  <p class="try"><a class="try-btn try-link" href="https://godbolt.org/" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5 2 8l3.5 3.5M10.5 4.5 14 8l-3.5 3.5"/></svg>Try it out yourself</a></p>
+  <script type="text/plain" class="full-src">
+groupshared uint32_t counter;
+
+[numthreads(64, 1, 1)]
+void main()
+{
+  uint32_t value = counter;
+  counter = value + 1u;
+}
+</script>
+</div>

@@ -1,0 +1,60 @@
+<div class="example" data-flags="-spirv -T cs_6_8 -E main -HV 202x -fspv-target-env=vulkan1.3">
+  <div class="duo bleed">
+    <div class="pane">
+      <div class="pane-label"><span>HLSL</span></div>
+      <div class="lines">
+<div class="ln"><span class="no">1</span><span><span class="kw">struct</span> Particle</span></div>
+<div class="ln"><span class="no">2</span><span>{</span></div>
+<div class="ln"><span class="no">3</span><span>    <span class="ty">float32_t3</span> position;</span></div>
+<div class="ln"><span class="no">4</span><span>    <span class="ty">float32_t</span>  <span class="lnk" data-k="1">mass</span>;</span></div>
+<div class="ln"><span class="no">5</span><span>    <span class="ty">uint32_t</span>   counter;</span></div>
+<div class="ln"><span class="no">6</span><span>};</span></div>
+<div class="ln focus"><span class="no">7</span><span><span class="kw">typedef</span> <span class="ty">vk::BufferPointer</span>&lt;Particle&gt; ParticlePtr;</span></div>
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+<div class="ln"><span class="no">18</span><span>    <span class="ty">uint64_t</span> address = pc.particles + gi * <span class="lnk" data-k="2">sizeof(Particle)</span>;</span></div>
+<div class="ln focus"><span class="no">19</span><span>    ParticlePtr p = <span class="lnk" data-k="3">ParticlePtr(address)</span>;</span></div>
+<div class="ln focus"><span class="no">20</span><span>    <span class="ty">float32_t</span> m = <span class="lnk" data-k="4">p.Get().mass</span>;</span></div>
+<div class="ln focus"><span class="no">21</span><span>    <span class="lnk" data-k="4">p.Get().mass</span> = m * <span class="nu">2.0f</span>;</span></div>
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+      </div>
+    </div>
+    <div class="pane">
+      <div class="pane-label"><span>SPIR-V</span><span>excerpt</span></div>
+      <div class="acode">
+        <div class="item"><div class="cl"><span class="op">OpMemberDecorate</span> %Particle 1 Offset <span class="nu hov lnk" data-k="1">12</span></div><div class="why">DXC lays Particle out: mass right after the 12-byte position.</div></div>
+        <div class="gap"></div>
+        <div class="item"><div class="cl">%26 = <span class="op">OpIMul</span> %uint %23 <span class="nu hov lnk" data-k="2">%uint_20</span></div><div class="why">gi * sizeof(Particle)</div></div>
+        <div class="item"><div class="cl">%28 = <span class="op">OpIAdd</span> %ulong %25 %27</div><div class="why">+ pc.particles, in 64 bits.</div></div>
+        <div class="item"><div class="cl">%29 = <span class="op hov lnk" data-k="3">OpConvertUToPtr</span> %_ptr_PhysicalStorageBuffer_Particle %28</div><div class="why">ParticlePtr(address)</div></div>
+        <div class="item"><div class="cl">%30 = <span class="op hov lnk" data-k="4">OpAccessChain</span> %_ptr_PhysicalStorageBuffer_float %29 <span class="nu">%int_1</span></div><div class="why">p.Get().mass: a pointer to member 1.</div></div>
+        <div class="item"><div class="cl">%31 = <span class="op">OpLoad</span> %float %30 Aligned 4</div><div class="why">Read it…</div></div>
+        <div class="item"><div class="cl">      <span class="op">OpStore</span> %30 %32 Aligned 4</div><div class="why">…and write it back, doubled.</div></div>
+      </div>
+    </div>
+  </div>
+  <p class="try"><a class="try-btn try-link" href="https://godbolt.org/" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5 2 8l3.5 3.5M10.5 4.5 14 8l-3.5 3.5"/></svg>Try it out yourself</a></p>
+  <script type="text/plain" class="full-src">
+struct Particle
+{
+  float32_t3 position;
+  float32_t  mass;
+  uint32_t   counter;
+};
+typedef vk::BufferPointer<Particle> ParticlePtr;
+
+struct PushData
+{
+  uint64_t particles;
+};
+[[vk::push_constant]] PushData pc;
+
+[numthreads(64, 1, 1)]
+void main(uint32_t gi : SV_GroupIndex)
+{
+  uint64_t address = pc.particles + gi * sizeof(Particle);
+  ParticlePtr p = ParticlePtr(address);
+  float32_t m = p.Get().mass;
+  p.Get().mass = m * 2.0f;
+}
+</script>
+</div>

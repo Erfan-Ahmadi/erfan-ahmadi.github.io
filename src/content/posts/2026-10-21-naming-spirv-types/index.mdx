@@ -1,0 +1,149 @@
+---
+title: "Naming SPIR-V types yourself"
+description: "SPIR-V has types HLSL can't name, pointers above all. Name them yourself with vk::SpirvOpaqueType and vk::SpirvType, and use templates to work with them."
+date: 2026-10-21
+tags: ["HLSL", "SPIR-V", "Vulkan"]
+series: "Advanced HLSL to SPIR-V"
+part: 2
+toc: false
+draft: true
+---
+import HlslSpirv from '../../../components/HlslSpirv.astro';
+import patternMatching from './examples/pattern-matching.html?raw';
+import opaqueType from './examples/opaque-type.html?raw';
+import literal from './examples/literal.html?raw';
+import sizedType from './examples/sized-type.html?raw';
+import sizedTypeErrors from './examples/sized-type-errors.html?raw';
+import pointersErrors from './examples/pointers-errors.html?raw';
+import physicalPointer from './examples/physical-pointer.html?raw';
+import physicalPointerErrors from './examples/physical-pointer-errors.html?raw';
+import physicalPointerErrors2 from './examples/physical-pointer-errors-2.html?raw';
+import templatesOnTypes from './examples/templates-on-types.html?raw';
+import templatesOnTypesErrors from './examples/templates-on-types-errors.html?raw';
+
+In Part 1, every function we declared used types HLSL already has. SPIR-V has types HLSL can't name, and the most useful of them is the pointer. This part shows how to name SPIR-V types yourself, and how to use templates to work with them. First, a quick look at what templates can do in HLSL.
+
+## A small C++ recap
+
+HLSL 2021 added templates, and they're still there with `-HV 202x`. DXC is built on Clang, so they follow C++ rules: C++98 templates, plus alias and variable templates. This is what works:
+
+| Works | Example |
+| --- | --- |
+| Class and function templates (C++98) | `template<typename T> struct Pair { T a; T b; };` |
+| Partial and full specialization (C++98) | `template<> struct Pair<bool> { … };` |
+| Non-type parameters (C++98) | `template<uint32_t N> uint32_t times();` |
+| Default template arguments (C++98) | `template<typename T, typename U = T>` |
+| Alias templates (C++11) | `template<typename T> using PairOf = Pair<T, T>;` |
+| Variable templates (C++14) | `template<typename T> const static bool is_uint = false;` |
+| SFINAE, so `enable_if` works | `typename enable_if<is_uint<T>, T>::type twice(T x);` |
+
+And this is what doesn't, with DXC's error:
+
+| Doesn't work | DXC says |
+| --- | --- |
+| Variadic templates (C++11) | `variadic templates are not supported in HLSL` |
+| `constexpr` (C++11) | `unknown type name 'constexpr'` |
+| `if constexpr` (C++17) | `expected '(' after 'if'` |
+| Lambdas (C++11) | `expected expression` |
+| Overloading `operator=` | `overloading 'operator=' is not allowed` |
+| References (`T&`) | `pointers are unsupported in HLSL` |
+
+Without `constexpr`, a compile-time value goes in a `const static` member, as you'll see next.
+
+### Pattern matching with partial specialization
+
+A partial specialization can match the shape of a type and give names to its parts. Here, `vector_size` matches any `vector<E, N>` and reads `N` out of it. Every other type falls back to the general template.
+
+<HlslSpirv html={patternMatching} />
+
+It all happens at compile time: the shader only stores two constants. We'll use the same trick on SPIR-V pointer types at the end of this part.
+
+## vk::SpirvOpaqueType
+
+`vk::SpirvOpaqueType<Opcode, Operands...>` is a type made from a SPIR-V type instruction. DXC emits that instruction once and uses its result wherever you use the type. *Opaque* means DXC knows nothing else about it, not even its size. You can pass it to functions and keep it in local variables, but not in buffers.
+
+The most useful one is a pointer. Here's a pointer to a `uint32_t` in `Workgroup` memory, and two ways to get one: copy the pointer DXC already makes for an `ext_reference` argument, or build it yourself with `OpAccessChain`.
+
+<HlslSpirv html={opaqueType} />
+
+This is DXC's raw output (`-fcgl`), before the optimizer removes the locals `a` and `b`. The pointer is now a value you can pass around, so you can write *pointer-form* functions like `load` that take it directly, instead of a reference.
+
+## vk::Literal vs vk::integral_constant
+
+Each operand of the type instruction comes from one template argument. A type, like `uint32_t`, becomes that type's id. A number can go in two ways, just like with `vk::ext_literal` in Part 1:
+
+| You write | DXC emits |
+| --- | --- |
+| `vk::integral_constant<uint32_t, 4>` | the id of an `OpConstant` with value 4 |
+| `vk::Literal<vk::integral_constant<uint32_t, 4> >` | the number 4, written into the instruction |
+
+Which one is right comes from the spec. [`OpTypePointer`](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#OpTypePointer) wants its storage class as a literal. [`OpTypeArray`](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#OpTypeArray) wants its length as the id of a constant:
+
+<HlslSpirv html={literal} />
+
+Mix them up and you get the same bug as forgetting `vk::ext_literal` in Part 1: an id number where a plain number belongs, or the other way around.
+
+## vk::SpirvType
+
+`vk::SpirvType<Opcode, Size, Alignment, Operands...>` is the same thing, plus a size and an alignment in bytes. With those, DXC can lay the type out in memory, so it can be a member of a struct in a buffer or in push constants. Here's a 64-bit float. HLSL already has `float64_t`; this one only shows how it works.
+
+<HlslSpirv html={sizedType} />
+
+With `vk::SpirvOpaqueType`, DXC doesn't know the size, so the layout comes out wrong:
+
+<HlslSpirv html={sizedTypeErrors} />
+
+## Logical vs physical pointers
+
+Every pointer so far was a *logical* pointer: it points into a variable, and SPIR-V lets you do very little with it. A *physical* pointer is a real 64-bit address, from [buffer device address](https://registry.khronos.org/vulkan/specs/latest/man/html/VK_KHR_buffer_device_address.html) (BDA).
+
+|  | Logical | Physical |
+| --- | --- | --- |
+| Storage class | Workgroup, StorageBuffer, Private, Function, … | PhysicalStorageBuffer |
+| What it is | a variable, or a part of one | a 64-bit address |
+| Size | none, so `vk::SpirvOpaqueType` | 8 bytes, so `vk::SpirvType` |
+| Pick one at runtime | needs `VariablePointers` | yes |
+| Make from an integer | no | yes, with `OpBitcast` |
+| Loads and stores | plain | must say `Aligned` |
+
+Logical pointers only work when the compiler can tell which variable each one points at. Pick between two at runtime and the validator stops you:
+
+<HlslSpirv html={pointersErrors} />
+
+### A physical pointer from an address
+
+A physical pointer is `OpTypePointer` with storage class `PhysicalStorageBuffer` (5349). It's a real 64-bit value, so give it size 8 and alignment 8 with `vk::SpirvType`. To make one, bitcast an address:
+
+<HlslSpirv html={physicalPointer} />
+
+The address comes in as a `uint32_t2`. A `uint64_t` works too, but needs the `Int64` capability. The pointer type itself can't go in push constants for now: at the time of writing, DXC crashes on a `vk::SpirvType` pointer as a push-constant member.
+
+Two rules to remember. Every load and store through a physical pointer must say `Aligned`:
+
+<HlslSpirv html={physicalPointerErrors} />
+
+And put `vk::ext_capability` on the functions that use the type. On a type alias, DXC ignores it. Leave it out and you get:
+
+<HlslSpirv html={physicalPointerErrors2} />
+
+## Templates on SPIR-V types
+
+Now the promise from Part 1. Make the storage class a template parameter of the pointer type, and a partial specialization can read it back, just like `vector_size`. Here, `atomicAdd` uses it to pick the scope: Workgroup for `groupshared` memory, Device for a buffer.
+
+<HlslSpirv html={templatesOnTypes} />
+
+`storage_class_of` matches `pointer_t<SC, T>` and names its storage class `SC`. `scope_for` turns that into a scope. All of it happens at compile time: each call is a single `OpAtomicIAdd` with the right scope, and the optimizer has removed the `OpCopyObject`. A storage class with no `scope_for` doesn't compile:
+
+<HlslSpirv html={templatesOnTypesErrors} />
+
+In the next part, we'll look at the pointers DXC already has for buffer device addresses, what they can and can't do with atomics, and how to mix them with our own.
+
+## References
+
+- [Announcing HLSL 2021](https://devblogs.microsoft.com/directx/announcing-hlsl-2021/): DirectX blog, templates and the other HLSL 2021 changes
+- [Language versions](https://github.com/microsoft/DirectXShaderCompiler/wiki/Language-Versions): DXC wiki, what each `-HV` version adds
+- [Inline SPIR-V](https://github.com/microsoft/DirectXShaderCompiler/wiki/Inline-SPIR%E2%80%90V): DXC wiki, `vk::SpirvOpaqueType`, `vk::SpirvType`, `vk::Literal`
+- [Proposal 0011: Inline SPIR-V](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0011-inline-spirv.md): HLSL specs
+- [OpTypePointer](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#OpTypePointer)
+- [SPV_KHR_physical_storage_buffer](https://github.khronos.org/SPIRV-Registry/extensions/KHR/SPV_KHR_physical_storage_buffer.html): the SPIR-V side of physical pointers
+- [VK_KHR_buffer_device_address](https://registry.khronos.org/vulkan/specs/latest/man/html/VK_KHR_buffer_device_address.html): the Vulkan side, getting a buffer's address

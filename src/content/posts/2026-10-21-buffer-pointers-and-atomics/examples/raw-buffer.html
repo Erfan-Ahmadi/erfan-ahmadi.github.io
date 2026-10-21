@@ -1,0 +1,47 @@
+<div class="example" data-flags="-spirv -T cs_6_8 -E main -HV 202x -fspv-target-env=vulkan1.3">
+  <div class="duo bleed">
+    <div class="pane">
+      <div class="pane-label"><span>HLSL</span></div>
+      <div class="lines">
+<div class="ln"><span class="no">1</span><span><span class="kw">struct</span> PushData</span></div>
+<div class="ln"><span class="no">2</span><span>{</span></div>
+<div class="ln"><span class="no">3</span><span>    <span class="ty lnk" data-k="4">uint64_t</span> address;</span></div>
+<div class="ln"><span class="no">4</span><span>};</span></div>
+<div class="ln"><span class="no">5</span><span>[[<span class="at">vk::push_constant</span>]] PushData pc;</span></div>
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+<div class="ln"><span class="no">10</span><span>    <span class="ty">uint64_t</span> <span class="lnk" data-k="1">address</span> = pc.address + gi * <span class="nu">4</span>;</span></div>
+<div class="ln focus"><span class="no">11</span><span>    <span class="ty">uint32_t</span> v = <span class="lnk" data-k="2">vk::RawBufferLoad</span>&lt;<span class="ty">uint32_t</span>&gt;(<span class="lnk" data-k="1">address</span>);</span></div>
+<div class="ln focus"><span class="no">12</span><span>    <span class="lnk" data-k="3">vk::RawBufferStore</span>&lt;<span class="ty">uint32_t</span>&gt;(<span class="lnk" data-k="1">address</span>, v + <span class="nu">1u</span>);</span></div>
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+      </div>
+    </div>
+    <div class="pane">
+      <div class="pane-label"><span>SPIR-V</span><span>excerpt</span></div>
+      <div class="acode">
+        <div class="item"><div class="cl"><span class="op">OpCapability</span> <span class="hov lnk" data-k="4">Int64</span></div><div class="why">For the uint64_t math.</div></div>
+        <div class="item"><div class="cl"><span class="op">OpCapability</span> PhysicalStorageBufferAddresses</div><div class="why">DXC adds it for you.</div></div>
+        <div class="gap"></div>
+        <div class="item"><div class="cl"><span class="hov lnk" data-k="1">%23</span> = <span class="op">OpIAdd</span> %ulong %20 %22</div><div class="why">address = pc.address + gi * 4</div></div>
+        <div class="item"><div class="cl">%24 = <span class="op">OpBitcast</span> %_ptr_PhysicalStorageBuffer_uint <span class="hov lnk" data-k="1">%23</span></div><div class="why">The address becomes a pointer, the same <code>OpBitcast</code> as in Part 2.</div></div>
+        <div class="item"><div class="cl">%25 = <span class="op hov lnk" data-k="2">OpLoad</span> %uint %24 Aligned 4</div><div class="why">RawBufferLoad, with the default alignment.</div></div>
+        <div class="item"><div class="cl">      <span class="op hov lnk" data-k="3">OpStore</span> %24 %26 Aligned 4</div><div class="why">RawBufferStore. Same address, so the optimizer reused %24.</div></div>
+      </div>
+    </div>
+  </div>
+  <p class="try"><a class="try-btn try-link" href="https://godbolt.org/" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5 2 8l3.5 3.5M10.5 4.5 14 8l-3.5 3.5"/></svg>Try it out yourself</a></p>
+  <script type="text/plain" class="full-src">
+struct PushData
+{
+  uint64_t address;
+};
+[[vk::push_constant]] PushData pc;
+
+[numthreads(64, 1, 1)]
+void main(uint32_t gi : SV_GroupIndex)
+{
+  uint64_t address = pc.address + gi * 4;
+  uint32_t v = vk::RawBufferLoad<uint32_t>(address);
+  vk::RawBufferStore<uint32_t>(address, v + 1u);
+}
+</script>
+</div>

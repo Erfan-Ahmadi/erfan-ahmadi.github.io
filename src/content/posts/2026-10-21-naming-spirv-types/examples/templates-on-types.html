@@ -1,0 +1,112 @@
+<div class="example" data-flags="-spirv -T cs_6_8 -E main -HV 202x -fspv-target-env=vulkan1.3">
+  <div class="duo bleed">
+    <div class="pane">
+      <div class="pane-label"><span>HLSL</span></div>
+      <div class="lines">
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+<div class="ln"><span class="no">4</span><span><span class="kw">template</span>&lt;<span class="ty">uint32_t</span> SC, <span class="kw">typename</span> T&gt;</span></div>
+<div class="ln"><span class="no">5</span><span><span class="kw">using</span> pointer_t = <span class="ty">vk::SpirvOpaqueType</span>&lt;<span class="cm">/*OpTypePointer*/</span> <span class="nu">32</span>,</span></div>
+<div class="ln"><span class="no">6</span><span>    <span class="ty">vk::Literal</span>&lt;<span class="ty">vk::integral_constant</span>&lt;<span class="ty">uint32_t</span>, SC&gt; &gt;, T&gt;;</span></div>
+<div class="ln"><span class="no">7</span><span> </span></div>
+<div class="ln"><span class="no">8</span><span><span class="kw">template</span>&lt;<span class="ty">uint32_t</span> SC, <span class="kw">typename</span> T&gt;</span></div>
+<div class="ln"><span class="no">9</span><span>[[<span class="at">vk::ext_instruction</span>(<span class="cm">/*OpCopyObject*/</span> <span class="nu">83</span>)]]</span></div>
+<div class="ln"><span class="no">10</span><span>pointer_t&lt;SC, T&gt; addrof([[<span class="at">vk::ext_reference</span>]] T v);</span></div>
+<div class="ln"><span class="no">11</span><span> </span></div>
+<div class="ln"><span class="no">12</span><span><span class="kw">template</span>&lt;<span class="kw">typename</span> T, <span class="kw">typename</span> P&gt;</span></div>
+<div class="ln"><span class="no">13</span><span>[[<span class="at">vk::ext_instruction</span>(<span class="cm">/*OpAtomicIAdd*/</span> <span class="nu">234</span>)]]</span></div>
+<div class="ln"><span class="no">14</span><span>T <span class="lnk" data-k="5">atomicIAdd</span>(P pointer, <span class="ty">uint32_t</span> scope, <span class="ty">uint32_t</span> semantics, T value);</span></div>
+<div class="ln"><span class="no">15</span><span> </span></div>
+<div class="ln"><span class="no">16</span><span><span class="cm">// read the storage class out of a pointer type</span></span></div>
+<div class="ln focus"><span class="no">17</span><span><span class="kw">template</span>&lt;<span class="kw">typename</span> P&gt; <span class="kw">struct</span> storage_class_of;</span></div>
+<div class="ln focus"><span class="no">18</span><span><span class="kw">template</span>&lt;<span class="ty">uint32_t</span> SC, <span class="kw">typename</span> T&gt;</span></div>
+<div class="ln focus"><span class="no">19</span><span><span class="kw">struct</span> storage_class_of&lt;pointer_t&lt;SC, T&gt; &gt;</span></div>
+<div class="ln focus"><span class="no">20</span><span>{</span></div>
+<div class="ln focus"><span class="no">21</span><span>    <span class="kw">const static</span> <span class="ty">uint32_t</span> value = SC;</span></div>
+<div class="ln focus"><span class="no">22</span><span>};</span></div>
+<div class="ln"><span class="no">23</span><span> </span></div>
+<div class="ln"><span class="no">24</span><span><span class="cm">// pick an atomic scope for each storage class</span></span></div>
+<div class="ln focus"><span class="no">25</span><span><span class="kw">template</span>&lt;<span class="ty">uint32_t</span> SC&gt; <span class="kw">struct</span> scope_for;</span></div>
+<div class="ln focus"><span class="no">26</span><span><span class="kw">template</span>&lt;&gt; <span class="kw">struct</span> scope_for&lt;<span class="cm">/*Workgroup*/</span> <span class="nu lnk" data-k="1">4</span>&gt;</span></div>
+<div class="ln focus"><span class="no">27</span><span>{</span></div>
+<div class="ln focus"><span class="no">28</span><span>    <span class="kw">const static</span> <span class="ty">uint32_t</span> value = <span class="cm">/*Workgroup*/</span> <span class="nu lnk" data-k="1">2</span>;</span></div>
+<div class="ln focus"><span class="no">29</span><span>};</span></div>
+<div class="ln focus"><span class="no">30</span><span><span class="kw">template</span>&lt;&gt; <span class="kw">struct</span> scope_for&lt;<span class="cm">/*StorageBuffer*/</span> <span class="nu lnk" data-k="2">12</span>&gt;</span></div>
+<div class="ln focus"><span class="no">31</span><span>{</span></div>
+<div class="ln focus"><span class="no">32</span><span>    <span class="kw">const static</span> <span class="ty">uint32_t</span> value = <span class="cm">/*Device*/</span> <span class="nu lnk" data-k="2">1</span>;</span></div>
+<div class="ln focus"><span class="no">33</span><span>};</span></div>
+<div class="ln"><span class="no">34</span><span> </span></div>
+<div class="ln"><span class="no">35</span><span><span class="kw">template</span>&lt;<span class="kw">typename</span> T, <span class="kw">typename</span> P&gt;</span></div>
+<div class="ln"><span class="no">36</span><span>T atomicAdd(P pointer, T value)</span></div>
+<div class="ln"><span class="no">37</span><span>{</span></div>
+<div class="ln focus"><span class="no">38</span><span>    <span class="kw">const</span> <span class="ty">uint32_t</span> scope = scope_for&lt;storage_class_of&lt;P&gt;::value&gt;::value;</span></div>
+<div class="ln"><span class="no">39</span><span>    <span class="kw">return</span> <span class="lnk" data-k="5">atomicIAdd</span>&lt;T&gt;(pointer, scope, <span class="cm">/*Relaxed*/</span> <span class="nu">0</span>, value);</span></div>
+<div class="ln"><span class="no">40</span><span>}</span></div>
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+<div class="ln"><span class="no">45</span><span>    <span class="ty">uint32_t</span> a = atomicAdd(addrof&lt;<span class="cm">/*Workgroup*/</span> <span class="nu lnk" data-k="1">4</span>&gt;(<span class="lnk" data-k="3">smem[0]</span>), <span class="nu">1u</span>);</span></div>
+<div class="ln"><span class="no">46</span><span>    <span class="ty">uint32_t</span> b = atomicAdd(addrof&lt;<span class="cm">/*StorageBuffer*/</span> <span class="nu lnk" data-k="2">12</span>&gt;(<span class="lnk" data-k="4">buf[0]</span>), <span class="nu">1u</span>);</span></div>
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+      </div>
+    </div>
+    <div class="pane">
+      <div class="pane-label"><span>SPIR-V</span><span>excerpt</span></div>
+      <div class="acode">
+        <div class="item"><div class="cl"><span class="hov lnk" data-k="3">%24</span> = <span class="op">OpAccessChain</span> %_ptr_Workgroup_uint %smem <span class="nu">%int_0</span></div><div class="why">addrof&lt;4&gt;(smem[0]): a Workgroup pointer.</div></div>
+        <div class="item"><div class="cl">%25 = <span class="op hov lnk" data-k="5">OpAtomicIAdd</span> %uint <span class="hov lnk" data-k="3">%24</span> <span class="nu hov lnk" data-k="1">%uint_2</span> <span class="nu">%uint_0</span> <span class="nu">%uint_1</span></div><div class="why">Workgroup memory, so scope 2 (Workgroup).</div></div>
+        <div class="gap"></div>
+        <div class="item"><div class="cl"><span class="hov lnk" data-k="4">%26</span> = <span class="op">OpAccessChain</span> %_ptr_StorageBuffer_uint %buf <span class="nu">%int_0</span> <span class="nu">%uint_0</span></div><div class="why">addrof&lt;12&gt;(buf[0]): a StorageBuffer pointer.</div></div>
+        <div class="item"><div class="cl">%27 = <span class="op hov lnk" data-k="5">OpAtomicIAdd</span> %uint <span class="hov lnk" data-k="4">%26</span> <span class="nu hov lnk" data-k="2">%uint_1</span> <span class="nu">%uint_0</span> <span class="nu">%uint_1</span></div><div class="why">Buffer memory, so scope 1 (Device).</div></div>
+      </div>
+    </div>
+  </div>
+  <p class="try"><a class="try-btn try-link" href="https://godbolt.org/" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5 2 8l3.5 3.5M10.5 4.5 14 8l-3.5 3.5"/></svg>Try it out yourself</a></p>
+  <script type="text/plain" class="full-src">
+groupshared uint32_t smem[64];
+[[vk::binding(0,0)]] RWStructuredBuffer<uint32_t> buf;
+
+template<uint32_t SC, typename T>
+using pointer_t = vk::SpirvOpaqueType</*OpTypePointer*/ 32,
+  vk::Literal<vk::integral_constant<uint32_t, SC> >, T>;
+
+template<uint32_t SC, typename T>
+[[vk::ext_instruction(/*OpCopyObject*/ 83)]]
+pointer_t<SC, T> addrof([[vk::ext_reference]] T v);
+
+template<typename T, typename P>
+[[vk::ext_instruction(/*OpAtomicIAdd*/ 234)]]
+T atomicIAdd(P pointer, uint32_t scope, uint32_t semantics, T value);
+
+// read the storage class out of a pointer type
+template<typename P> struct storage_class_of;
+template<uint32_t SC, typename T>
+struct storage_class_of<pointer_t<SC, T> >
+{
+  const static uint32_t value = SC;
+};
+
+// pick an atomic scope for each storage class
+template<uint32_t SC> struct scope_for;
+template<> struct scope_for</*Workgroup*/ 4>
+{
+  const static uint32_t value = /*Workgroup*/ 2;
+};
+template<> struct scope_for</*StorageBuffer*/ 12>
+{
+  const static uint32_t value = /*Device*/ 1;
+};
+
+template<typename T, typename P>
+T atomicAdd(P pointer, T value)
+{
+  const uint32_t scope = scope_for<storage_class_of<P>::value>::value;
+  return atomicIAdd<T>(pointer, scope, /*Relaxed*/ 0, value);
+}
+
+[numthreads(64, 1, 1)]
+void main(uint32_t gi : SV_GroupIndex)
+{
+  uint32_t a = atomicAdd(addrof</*Workgroup*/ 4>(smem[0]), 1u);
+  uint32_t b = atomicAdd(addrof</*StorageBuffer*/ 12>(buf[0]), 1u);
+  buf[gi] = a + b;
+}
+</script>
+</div>

@@ -1,0 +1,73 @@
+<div class="example" data-flags="-spirv -T cs_6_8 -E main -HV 202x -fspv-target-env=vulkan1.3">
+  <div class="duo bleed">
+    <div class="pane">
+      <div class="pane-label"><span>HLSL</span></div>
+      <div class="lines">
+<div class="ln"><span class="no">1</span><span><span class="kw">struct</span> Counters</span></div>
+<div class="ln"><span class="no">2</span><span>{</span></div>
+<div class="ln"><span class="no">3</span><span>    <span class="ty">uint32_t</span> count;</span></div>
+<div class="ln"><span class="no">4</span><span>    <span class="ty">uint32_t</span> ready;</span></div>
+<div class="ln"><span class="no">5</span><span>};</span></div>
+<div class="ln"><span class="no">6</span><span><span class="kw">typedef</span> <span class="ty">vk::BufferPointer</span>&lt;Counters&gt; CountersPtr;</span></div>
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+<div class="ln"><span class="no">14</span><span><span class="kw">template</span>&lt;<span class="kw">typename</span> T&gt;</span></div>
+<div class="ln"><span class="no">15</span><span>[[<span class="at">vk::ext_instruction</span>(<span class="cm">/*OpAtomicStore*/</span> <span class="nu">228</span>)]]</span></div>
+<div class="ln"><span class="no">16</span><span><span class="kw">void</span> <span class="lnk" data-k="3">atomicStore</span>([[<span class="at">vk::ext_reference</span>]] T pointer, <span class="ty">uint32_t</span> scope,</span></div>
+<div class="ln"><span class="no">17</span><span>                 <span class="ty">uint32_t</span> semantics, T value);</span></div>
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+<div class="ln"><span class="no">22</span><span>    CountersPtr c = CountersPtr(pc.counters);</span></div>
+<div class="ln"><span class="no">23</span><span> </span></div>
+<div class="ln"><span class="no">24</span><span>    <span class="ty">uint32_t</span> old;</span></div>
+<div class="ln focus"><span class="no">25</span><span>    <span class="lnk" data-k="1">InterlockedAdd</span>(<span class="lnk" data-k="2">c.Get().count</span>, <span class="nu">1u</span>, old);</span></div>
+<div class="ln"><span class="no">26</span><span> </span></div>
+<div class="ln focus"><span class="no">27</span><span>    <span class="lnk" data-k="3">atomicStore</span>(<span class="lnk" data-k="4">c.Get().ready</span>, <span class="cm">/*Device*/</span> <span class="nu lnk" data-k="5">1</span>,</span></div>
+<div class="ln focus"><span class="no">28</span><span>                <span class="cm">/*Release | UniformMemory*/</span> <span class="nu lnk" data-k="6">0x44</span>, <span class="nu">1u</span>);</span></div>
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+      </div>
+    </div>
+    <div class="pane">
+      <div class="pane-label"><span>SPIR-V</span><span>excerpt</span></div>
+      <div class="acode">
+        <div class="item"><div class="cl">%22 = <span class="op">OpConvertUToPtr</span> %_ptr_PhysicalStorageBuffer_Counters %21</div><div class="why">c</div></div>
+        <div class="gap"></div>
+        <div class="item"><div class="cl"><span class="hov lnk" data-k="2">%23</span> = <span class="op">OpAccessChain</span> %_ptr_PhysicalStorageBuffer_uint %22 <span class="nu">%int_0</span></div><div class="why">c.Get().count</div></div>
+        <div class="item"><div class="cl">%24 = <span class="op hov lnk" data-k="1">OpAtomicIAdd</span> %uint <span class="hov lnk" data-k="2">%23</span> <span class="nu">%uint_1</span> <span class="nu">%uint_0</span> <span class="nu">%uint_1</span></div><div class="why">InterlockedAdd: Device scope (1) and relaxed (0). You can't change either.</div></div>
+        <div class="gap"></div>
+        <div class="item"><div class="cl"><span class="hov lnk" data-k="4">%25</span> = <span class="op">OpAccessChain</span> %_ptr_PhysicalStorageBuffer_uint %22 <span class="nu">%int_1</span></div><div class="why">c.Get().ready, passed by ext_reference.</div></div>
+        <div class="item"><div class="cl">      <span class="op hov lnk" data-k="3">OpAtomicStore</span> <span class="hov lnk" data-k="4">%25</span> <span class="nu hov lnk" data-k="5">%uint_1</span> <span class="nu hov lnk" data-k="6">%uint_68</span> <span class="nu">%uint_1</span></div><div class="why">Our scope and our ordering: Release | UniformMemory (0x44 = 68).</div></div>
+      </div>
+    </div>
+  </div>
+  <p class="try"><a class="try-btn try-link" href="https://godbolt.org/" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5 2 8l3.5 3.5M10.5 4.5 14 8l-3.5 3.5"/></svg>Try it out yourself</a></p>
+  <script type="text/plain" class="full-src">
+struct Counters
+{
+  uint32_t count;
+  uint32_t ready;
+};
+typedef vk::BufferPointer<Counters> CountersPtr;
+
+struct PushData
+{
+  uint64_t counters;
+};
+[[vk::push_constant]] PushData pc;
+
+template<typename T>
+[[vk::ext_instruction(/*OpAtomicStore*/ 228)]]
+void atomicStore([[vk::ext_reference]] T pointer, uint32_t scope,
+               uint32_t semantics, T value);
+
+[numthreads(64, 1, 1)]
+void main()
+{
+  CountersPtr c = CountersPtr(pc.counters);
+
+  uint32_t old;
+  InterlockedAdd(c.Get().count, 1u, old);
+
+  atomicStore(c.Get().ready, /*Device*/ 1,
+              /*Release | UniformMemory*/ 0x44, 1u);
+}
+</script>
+</div>

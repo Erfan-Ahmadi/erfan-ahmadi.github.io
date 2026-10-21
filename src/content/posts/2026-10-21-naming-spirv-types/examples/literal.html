@@ -1,0 +1,60 @@
+<div class="example" data-flags="-spirv -T cs_6_8 -E main -HV 202x -fspv-target-env=vulkan1.3 -fcgl -Vd">
+  <div class="duo bleed">
+    <div class="pane">
+      <div class="pane-label"><span>HLSL</span></div>
+      <div class="lines">
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+<div class="ln"><span class="no">4</span><span><span class="cm">// OpTypePointer: the storage class is a literal</span></span></div>
+<div class="ln focus"><span class="no">5</span><span><span class="kw">typedef</span> <span class="ty">vk::SpirvOpaqueType</span>&lt;<span class="cm">/*OpTypePointer*/</span> <span class="nu">32</span>,</span></div>
+<div class="ln focus"><span class="no">6</span><span>    <span class="ty lnk" data-k="1">vk::Literal</span>&lt;<span class="ty">vk::integral_constant</span>&lt;<span class="ty">uint32_t</span>, <span class="cm">/*Workgroup*/</span> <span class="nu lnk" data-k="1">4</span>&gt; &gt;,</span></div>
+<div class="ln focus"><span class="no">7</span><span>    <span class="ty">uint32_t</span>&gt; WorkgroupUintPtr;</span></div>
+<div class="ln"><span class="no">8</span><span> </span></div>
+<div class="ln"><span class="no">9</span><span><span class="cm">// OpTypeArray: the length is the id of a constant</span></span></div>
+<div class="ln focus"><span class="no">10</span><span><span class="kw">typedef</span> <span class="ty">vk::SpirvOpaqueType</span>&lt;<span class="cm">/*OpTypeArray*/</span> <span class="nu">28</span>,</span></div>
+<div class="ln focus"><span class="no">11</span><span>    <span class="ty">uint32_t</span>,</span></div>
+<div class="ln focus"><span class="no">12</span><span>    <span class="ty lnk" data-k="2">vk::integral_constant</span>&lt;<span class="ty">uint32_t</span>, <span class="nu lnk" data-k="2">4</span>&gt; &gt; <span class="lnk" data-k="3">FourUints</span>;</span></div>
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+<div class="ln"><span class="no">23</span><span>    FourUints <span class="lnk" data-k="4">unused</span>;</span></div>
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+      </div>
+    </div>
+    <div class="pane">
+      <div class="pane-label"><span>SPIR-V</span><span>raw output</span></div>
+      <div class="acode">
+        <div class="item"><div class="cl">%_ptr_Workgroup_uint = <span class="op">OpTypePointer</span> <span class="nu hov lnk" data-k="1">Workgroup</span> %uint</div><div class="why">vk::Literal: the 4 is written into the instruction. The disassembler shows it by name.</div></div>
+        <div class="gap"></div>
+        <div class="item"><div class="cl"><span class="nu hov lnk" data-k="2">%uint_4</span> = <span class="op">OpConstant</span> %uint <span class="nu">4</span></div><div class="why">vk::integral_constant: DXC makes a constant…</div></div>
+        <div class="item"><div class="cl"><span class="hov lnk" data-k="3">%spirvIntrinsicType</span> = <span class="op">OpTypeArray</span> %uint <span class="nu hov lnk" data-k="2">%uint_4</span></div><div class="why">…and passes its id as the length. DXC names types it doesn't know <code>%spirvIntrinsicType</code>.</div></div>
+        <div class="item"><div class="cl"><span class="hov lnk" data-k="4">%unused</span> = <span class="op">OpVariable</span> %_ptr_Function_spirvIntrinsicType Function</div><div class="why">FourUints unused: a local of our own type.</div></div>
+      </div>
+    </div>
+  </div>
+  <p class="try"><a class="try-btn try-link" href="https://godbolt.org/" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5 2 8l3.5 3.5M10.5 4.5 14 8l-3.5 3.5"/></svg>Try it out yourself</a></p>
+  <script type="text/plain" class="full-src">
+groupshared uint32_t smem[64];
+[[vk::binding(0,0)]] RWStructuredBuffer<uint32_t> buf;
+
+// OpTypePointer: the storage class is a literal
+typedef vk::SpirvOpaqueType</*OpTypePointer*/ 32,
+  vk::Literal<vk::integral_constant<uint32_t, /*Workgroup*/ 4> >,
+  uint32_t> WorkgroupUintPtr;
+
+// OpTypeArray: the length is the id of a constant
+typedef vk::SpirvOpaqueType</*OpTypeArray*/ 28,
+  uint32_t,
+  vk::integral_constant<uint32_t, 4> > FourUints;
+
+[[vk::ext_instruction(/*OpCopyObject*/ 83)]]
+WorkgroupUintPtr addressOf([[vk::ext_reference]] uint32_t v);
+
+[[vk::ext_instruction(/*OpLoad*/ 61)]]
+uint32_t load(WorkgroupUintPtr p);
+
+[numthreads(64, 1, 1)]
+void main(uint32_t gi : SV_GroupIndex)
+{
+  FourUints unused;
+  buf[gi] = load(addressOf(smem[gi]));
+}
+</script>
+</div>

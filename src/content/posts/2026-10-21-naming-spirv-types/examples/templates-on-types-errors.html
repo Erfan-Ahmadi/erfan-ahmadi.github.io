@@ -1,0 +1,11 @@
+<div class="verdicts">
+  <div class="verdict bad">
+    <span class="vmark" role="img" aria-label="Wrong">✕</span>
+    <div class="vbody">
+      <pre class="vcode"><span class="kw">static</span> <span class="ty">uint32_t</span> priv;
+<span class="cm">⋮</span>
+<span class="ty">uint32_t</span> b = atomicAdd(addrof&lt;<span class="cm">/*Private*/</span> <span class="nu">6</span>&gt;(priv), <span class="nu">1u</span>);</pre>
+      <p class="verr">error: implicit instantiation of undefined template 'scope_for&lt;6&gt;'</p>
+    </div>
+  </div>
+</div>

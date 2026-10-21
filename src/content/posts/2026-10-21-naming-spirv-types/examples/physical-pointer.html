@@ -1,0 +1,84 @@
+<div class="example" data-flags="-spirv -T cs_6_8 -E main -HV 202x -fspv-target-env=vulkan1.3">
+  <div class="duo bleed">
+    <div class="pane">
+      <div class="pane-label"><span>HLSL</span></div>
+      <div class="lines">
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+<div class="ln focus"><span class="no">3</span><span><span class="kw">template</span>&lt;<span class="kw">typename</span> T&gt;</span></div>
+<div class="ln focus"><span class="no">4</span><span><span class="kw">using</span> bda_ptr = <span class="ty">vk::SpirvType</span>&lt;<span class="cm">/*OpTypePointer*/</span> <span class="nu">32</span>, <span class="cm">/*size*/</span> <span class="nu">8</span>, <span class="cm">/*align*/</span> <span class="nu">8</span>,</span></div>
+<div class="ln focus"><span class="no">5</span><span>    <span class="ty">vk::Literal</span>&lt;<span class="ty">vk::integral_constant</span>&lt;<span class="ty">uint32_t</span>, <span class="cm">/*PhysicalStorageBuffer*/</span> <span class="nu lnk" data-k="1">5349</span>&gt; &gt;, T&gt;;</span></div>
+<div class="ln"><span class="no">6</span><span> </span></div>
+<div class="ln"><span class="no">7</span><span><span class="kw">template</span>&lt;<span class="kw">typename</span> To, <span class="kw">typename</span> From&gt;</span></div>
+<div class="ln"><span class="no">8</span><span>[[<span class="at">vk::ext_instruction</span>(<span class="cm">/*OpBitcast*/</span> <span class="nu">124</span>)]]</span></div>
+<div class="ln"><span class="no">9</span><span>To <span class="lnk" data-k="2">bitcast</span>(From v);</span></div>
+<div class="ln"><span class="no">10</span><span> </span></div>
+<div class="ln"><span class="no">11</span><span><span class="kw">template</span>&lt;<span class="kw">typename</span> T&gt;</span></div>
+<div class="ln"><span class="no">12</span><span>[[<span class="at">vk::ext_capability</span>(<span class="cm">/*PhysicalStorageBufferAddresses*/</span> <span class="nu lnk" data-k="5">5347</span>)]]</span></div>
+<div class="ln"><span class="no">13</span><span>[[<span class="at">vk::ext_instruction</span>(<span class="cm">/*OpLoad*/</span> <span class="nu">61</span>)]]</span></div>
+<div class="ln"><span class="no">14</span><span>T <span class="lnk" data-k="6">load</span>(bda_ptr&lt;T&gt; p, [[<span class="at">vk::ext_literal</span>]] <span class="ty">uint32_t</span> aligned,</span></div>
+<div class="ln"><span class="no">15</span><span>                     [[<span class="at">vk::ext_literal</span>]] <span class="ty">uint32_t</span> alignment);</span></div>
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+<div class="ln"><span class="no">23</span><span><span class="kw">struct</span> PushData</span></div>
+<div class="ln"><span class="no">24</span><span>{</span></div>
+<div class="ln"><span class="no">25</span><span>    <span class="ty">uint32_t2</span> <span class="lnk" data-k="7">address</span>;</span></div>
+<div class="ln"><span class="no">26</span><span>};</span></div>
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+<div class="ln focus"><span class="no">32</span><span>    bda_ptr&lt;<span class="ty">uint32_t</span>&gt; p = <span class="lnk" data-k="2">bitcast</span>&lt;bda_ptr&lt;<span class="ty">uint32_t</span>&gt; &gt;(pc.<span class="lnk" data-k="7">address</span>);</span></div>
+<div class="ln focus"><span class="no">33</span><span>    <span class="ty">uint32_t</span> v = <span class="lnk" data-k="6">load</span>(p, <span class="cm">/*Aligned*/</span> <span class="nu lnk" data-k="3">0x2</span>, <span class="nu lnk" data-k="4">4</span>);</span></div>
+<div class="ln focus"><span class="no">34</span><span>    <span class="lnk" data-k="8">store</span>(p, v + <span class="nu">1u</span>, <span class="cm">/*Aligned*/</span> <span class="nu">0x2</span>, <span class="nu">4</span>);</span></div>
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+      </div>
+    </div>
+    <div class="pane">
+      <div class="pane-label"><span>SPIR-V</span><span>excerpt</span></div>
+      <div class="acode">
+        <div class="item"><div class="cl"><span class="op">OpCapability</span> <span class="hov lnk" data-k="5">PhysicalStorageBufferAddresses</span></div><div class="why">From <code>ext_capability</code> on load and store.</div></div>
+        <div class="item"><div class="cl"><span class="op">OpMemoryModel</span> PhysicalStorageBuffer64 GLSL450</div><div class="why">DXC switches the addressing model by itself.</div></div>
+        <div class="item"><div class="cl">%spirvIntrinsicType = <span class="op">OpTypePointer</span> <span class="nu hov lnk" data-k="1">PhysicalStorageBuffer</span> %uint</div><div class="why">bda_ptr&lt;uint32_t&gt;</div></div>
+        <div class="gap"></div>
+        <div class="item"><div class="cl">%23 = <span class="op hov lnk" data-k="2">OpBitcast</span> %spirvIntrinsicType <span class="hov lnk" data-k="7">%22</span></div><div class="why">The uint32_t2 from push constants becomes a pointer.</div></div>
+        <div class="item"><div class="cl">%24 = <span class="op hov lnk" data-k="6">OpLoad</span> %uint %23 <span class="nu hov lnk" data-k="3">Aligned</span> <span class="nu hov lnk" data-k="4">4</span></div><div class="why">Aligned (0x2) and the alignment, both written in as literals.</div></div>
+        <div class="item"><div class="cl">      <span class="op hov lnk" data-k="8">OpStore</span> %23 %25 Aligned 4</div><div class="why">store(p, v + 1u, …)</div></div>
+      </div>
+    </div>
+  </div>
+  <p class="try"><a class="try-btn try-link" href="https://godbolt.org/" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5 2 8l3.5 3.5M10.5 4.5 14 8l-3.5 3.5"/></svg>Try it out yourself</a></p>
+  <script type="text/plain" class="full-src">
+[[vk::binding(0,0)]] RWStructuredBuffer<uint32_t> buf;
+
+template<typename T>
+using bda_ptr = vk::SpirvType</*OpTypePointer*/ 32, /*size*/ 8, /*align*/ 8,
+  vk::Literal<vk::integral_constant<uint32_t, /*PhysicalStorageBuffer*/ 5349> >, T>;
+
+template<typename To, typename From>
+[[vk::ext_instruction(/*OpBitcast*/ 124)]]
+To bitcast(From v);
+
+template<typename T>
+[[vk::ext_capability(/*PhysicalStorageBufferAddresses*/ 5347)]]
+[[vk::ext_instruction(/*OpLoad*/ 61)]]
+T load(bda_ptr<T> p, [[vk::ext_literal]] uint32_t aligned,
+                   [[vk::ext_literal]] uint32_t alignment);
+
+template<typename T>
+[[vk::ext_capability(/*PhysicalStorageBufferAddresses*/ 5347)]]
+[[vk::ext_instruction(/*OpStore*/ 62)]]
+void store(bda_ptr<T> p, T value, [[vk::ext_literal]] uint32_t aligned,
+                                [[vk::ext_literal]] uint32_t alignment);
+
+struct PushData
+{
+  uint32_t2 address;
+};
+[[vk::push_constant]] PushData pc;
+
+[numthreads(1, 1, 1)]
+void main()
+{
+  bda_ptr<uint32_t> p = bitcast<bda_ptr<uint32_t> >(pc.address);
+  uint32_t v = load(p, /*Aligned*/ 0x2, 4);
+  store(p, v + 1u, /*Aligned*/ 0x2, 4);
+  buf[0] = v;
+}
+</script>
+</div>

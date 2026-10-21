@@ -9,13 +9,14 @@ interface Props {
   eager?: boolean;
 }
 const { post, sizes, eager = false } = Astro.props;
-const { cover, coverAlt, diagram, title, draft, youtube } = post.data;
+const { cover, coverAlt, thumbnail, diagram, title, draft, youtube } = post.data;
+const image = thumbnail ?? cover;
 // Posts without a cover get a generated one: the title on a tinted triangle grid.
 const hue = [...post.id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 0);
 ---
-<div class:list={['thumb', { diagram, video: youtube }]}>
-  {cover ? (
-    <Image src={cover} alt={coverAlt} widths={[480, 800, 1280]} sizes={sizes} loading={eager ? 'eager' : 'lazy'} />
+<div class:list={['thumb', { diagram: diagram && !thumbnail, video: youtube }]}>
+  {image ? (
+    <Image src={image} alt={coverAlt} widths={[480, 800, 1280]} sizes={sizes} loading={eager ? 'eager' : 'lazy'} />
   ) : youtube ? (
     <img src={`https://i.ytimg.com/vi/${youtube}/hqdefault.jpg`} alt="" loading="lazy" onerror="this.remove()" />
   ) : (

@@ -1,0 +1,25 @@
+<div class="verdicts">
+  <div class="verdict bad">
+    <span class="vmark" role="img" aria-label="Wrong">✕</span>
+    <div class="vbody">
+      <pre class="vcode">%uint = <span class="op">OpTypeInt</span> <span class="nu">32</span> <span class="nu">0</span>
+%var  = <span class="op">OpVariable</span> %uint Private</pre>
+      <p class="verr">error: OpVariable Result Type &lt;id&gt; '4[%uint]' is not a pointer type.</p>
+    </div>
+  </div>
+  <div class="verdict bad">
+    <span class="vmark" role="img" aria-label="Wrong">✕</span>
+    <div class="vbody">
+      <pre class="vcode">%uint_ptr = <span class="op">OpTypePointer</span> Function %uint
+%var      = <span class="op">OpVariable</span> %uint_ptr Private</pre>
+      <p class="verr">error: Storage class must match result type storage class</p>
+    </div>
+  </div>
+  <div class="verdict good">
+    <span class="vmark" role="img" aria-label="Right">✓</span>
+    <div class="vbody">
+      <pre class="vcode">%uint_ptr = <span class="op">OpTypePointer</span> Private %uint
+%var      = <span class="op">OpVariable</span> %uint_ptr Private</pre>
+    </div>
+  </div>
+</div>

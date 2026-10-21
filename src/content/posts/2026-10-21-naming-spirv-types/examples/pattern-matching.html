@@ -1,0 +1,54 @@
+<div class="example" data-flags="-spirv -T cs_6_8 -E main -HV 202x -fspv-target-env=vulkan1.3">
+  <div class="duo bleed">
+    <div class="pane">
+      <div class="pane-label"><span>HLSL</span></div>
+      <div class="lines">
+<div class="ln"><span class="no">1</span><span><span class="kw">template</span>&lt;<span class="kw">typename</span> T&gt;</span></div>
+<div class="ln"><span class="no">2</span><span><span class="kw">struct</span> vector_size</span></div>
+<div class="ln"><span class="no">3</span><span>{</span></div>
+<div class="ln"><span class="no">4</span><span>    <span class="kw">const static</span> <span class="ty">uint32_t</span> value = <span class="nu lnk" data-k="2">1</span>;</span></div>
+<div class="ln"><span class="no">5</span><span>};</span></div>
+<div class="ln"><span class="no">6</span><span> </span></div>
+<div class="ln focus"><span class="no">7</span><span><span class="kw">template</span>&lt;<span class="kw">typename</span> E, <span class="ty">int</span> N&gt;</span></div>
+<div class="ln focus"><span class="no">8</span><span><span class="kw">struct</span> vector_size&lt;<span class="ty">vector</span>&lt;E, <span class="lnk" data-k="1">N</span>&gt; &gt;</span></div>
+<div class="ln focus"><span class="no">9</span><span>{</span></div>
+<div class="ln focus"><span class="no">10</span><span>    <span class="kw">const static</span> <span class="ty">uint32_t</span> value = <span class="lnk" data-k="1">N</span>;</span></div>
+<div class="ln focus"><span class="no">11</span><span>};</span></div>
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+<div class="ln"><span class="no">18</span><span>    buf[<span class="nu">0</span>] = vector_size&lt;<span class="ty lnk" data-k="1">float32_t3</span>&gt;::value;</span></div>
+<div class="ln"><span class="no">19</span><span>    buf[<span class="nu">1</span>] = vector_size&lt;<span class="ty lnk" data-k="2">float</span>&gt;::value;</span></div>
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+      </div>
+    </div>
+    <div class="pane">
+      <div class="pane-label"><span>SPIR-V</span><span>excerpt</span></div>
+      <div class="acode">
+        <div class="item"><div class="cl">      <span class="op">OpStore</span> %16 <span class="nu hov lnk" data-k="1">%uint_3</span></div><div class="why">buf[0]: <code>float32_t3</code> matches <code>vector&lt;E, N&gt;</code> with N = 3.</div></div>
+        <div class="item"><div class="cl">      <span class="op">OpStore</span> %17 <span class="nu hov lnk" data-k="2">%uint_1</span></div><div class="why">buf[1]: <code>float</code> isn't a vector, so the general template gives 1.</div></div>
+      </div>
+    </div>
+  </div>
+  <p class="try"><a class="try-btn try-link" href="https://godbolt.org/" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5 2 8l3.5 3.5M10.5 4.5 14 8l-3.5 3.5"/></svg>Try it out yourself</a></p>
+  <script type="text/plain" class="full-src">
+template<typename T>
+struct vector_size
+{
+  const static uint32_t value = 1;
+};
+
+template<typename E, int N>
+struct vector_size<vector<E, N> >
+{
+  const static uint32_t value = N;
+};
+
+[[vk::binding(0,0)]] RWStructuredBuffer<uint32_t> buf;
+
+[numthreads(1, 1, 1)]
+void main()
+{
+  buf[0] = vector_size<float32_t3>::value;
+  buf[1] = vector_size<float>::value;
+}
+</script>
+</div>

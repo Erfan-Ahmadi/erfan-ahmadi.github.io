@@ -1,0 +1,11 @@
+<div class="verdicts">
+  <div class="verdict bad">
+    <span class="vmark" role="img" aria-label="Wrong">✕</span>
+    <div class="vbody">
+      <pre class="vcode"><span class="kw">typedef</span> <span class="ty">vk::SpirvOpaqueType</span>&lt;<span class="cm">/*OpTypeFloat*/</span> <span class="nu">22</span>,
+  <span class="ty">vk::Literal</span>&lt;<span class="ty">vk::integral_constant</span>&lt;<span class="ty">uint32_t</span>, <span class="nu">64</span>&gt; &gt; &gt; MyDouble;</pre>
+      <pre class="vcode verr">fatal error: generated SPIR-V is invalid: Structure id 4 decorated as Block for variable in PushConstant storage class must follow scalar storage buffer layout rules: member 1 at offset 4 is not aligned to 8
+%type_PushConstant_PushData = OpTypeStruct %uint %spirvIntrinsicType %uint</pre>
+    </div>
+  </div>
+</div>

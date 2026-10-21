@@ -1,0 +1,12 @@
+<div class="verdicts">
+  <div class="verdict bad">
+    <span class="vmark" role="img" aria-label="Wrong">✕</span>
+    <div class="vbody">
+      <pre class="vcode">[[<span class="at">vk::ext_instruction</span>(<span class="cm">/*OpLoad*/</span> <span class="nu">61</span>)]]
+T load(bda_ptr&lt;T&gt; p, [[<span class="at">vk::ext_literal</span>]] <span class="ty">uint32_t</span> aligned,
+                   [[<span class="at">vk::ext_literal</span>]] <span class="ty">uint32_t</span> alignment);</pre>
+      <pre class="vcode verr">fatal error: generated SPIR-V is invalid: Operand 2 of TypePointer requires one of these capabilities: PhysicalStorageBufferAddresses
+%spirvIntrinsicType = OpTypePointer PhysicalStorageBuffer %uint</pre>
+    </div>
+  </div>
+</div>

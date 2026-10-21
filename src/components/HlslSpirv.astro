@@ -1,0 +1,119 @@
+---
+// Side-by-side HLSL / SPIR-V example (or a block of wrong/right verdicts), authored
+// as an HTML fragment in the post's examples/ folder and passed in with
+// `import x from './examples/x.html?raw'`.
+// Hovering or focusing a SPIR-V piece (.hov[data-k]) lights up every piece with
+// the same key; the "Try it out" link opens Compiler Explorer with .full-src.
+// In a centered post (toc: false) the code runs wider than the text, on both sides.
+interface Props { html: string }
+const { html } = Astro.props;
+---
+<div class="spv" set:html={html} />
+
+<style is:global>
+  .spv {
+    --code-bg: var(--paper); --code-ink: var(--ink); --comment: #8A8478;
+    --kw: #3a2fa6; --ty: #0d6b75; --nu: #a14a06; --at: #5b5f97; --op: #1f4fbf; --str: #3d7a2e;
+    --bad: #B83A2E; --good: #2F7D4A;
+  }
+  [data-theme='dark'] .spv {
+    --comment: #8F897D; --kw: #b7adff; --ty: #5fc6cf; --nu: #f2a65e; --at: #a9acdf; --op: #8fb0ff; --str: #a6d68a;
+    --bad: #F07A72; --good: #6FCF8F;
+  }
+  .spv .example { margin: 1.75em 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; }
+  .spv .example > * { min-width: 0; margin: 0; }
+  .spv .duo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.75rem; }
+  /* Code, the instruction table and the "Try it" link span the page, centered on the text column. */
+  .centered .spv :is(.bleed, .instr, .try) { margin-left: calc(50% - 50cqw); margin-right: calc(50% - 50cqw); }
+  /* Stacked panes: drop the blank lines (.pad) that only line SPIR-V up with the HLSL beside it. */
+  @media (max-width: 900px) { .spv .duo { grid-template-columns: minmax(0, 1fr); } .spv .ln.pad { display: none; } }
+  .spv .pane { background: var(--code-bg); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; min-width: 0; }
+  .spv .pane-label { display: flex; justify-content: space-between; align-items: center; gap: 1rem; font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 7px 14px; border-bottom: 1px solid var(--line); }
+  .spv .lines { padding: 9px 0; overflow-x: auto; font-family: var(--mono); font-size: 13px; line-height: 1.65; color: var(--code-ink); font-variant-ligatures: none; }
+  .spv .ln { display: grid; grid-template-columns: 2.4rem max-content; width: max-content; min-width: 100%; white-space: pre; border-left: 3px solid transparent; padding-right: 0.8rem; }
+  .spv .ln .no { color: var(--comment); text-align: right; padding-right: 0.75rem; user-select: none; }
+  .spv .ln.focus { background: color-mix(in oklab, var(--accent) 8%, transparent); border-left-color: var(--accent); }
+  .spv .ln.focus .no { color: var(--accent); font-weight: 600; }
+  .spv .ln.fold, .spv .ln.fold .no, .spv .ln.dim { color: var(--comment); }
+  .spv .ln.dim { font-style: italic; }
+  .spv .cm { color: var(--comment); font-style: italic; }
+  .spv .kw { color: var(--kw); }
+  .spv .ty { color: var(--ty); }
+  .spv .nu { color: var(--nu); }
+  .spv .at { color: var(--at); }
+  .spv .op { color: var(--op); }
+  .spv .str { color: var(--str); }
+  .spv .id { color: inherit; }
+  .spv [data-k] { --kc: var(--accent); }
+  .spv .lnk { border-radius: 3px; transition: background-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease; }
+  .spv .lnk.on { color: var(--kc); background: color-mix(in oklab, var(--kc) 22%, transparent); box-shadow: 0 0 0 1px var(--kc); }
+  .spv .hov { cursor: help; }
+  .spv :is(.lines, .acode) .hov { text-decoration: underline dotted; text-decoration-color: color-mix(in oklab, var(--muted) 70%, transparent); text-underline-offset: 3px; }
+
+  /* Annotated SPIR-V: each line with a plain-words note under it. */
+  .spv .acode { padding: 12px 16px; display: grid; gap: 10px; overflow-x: auto; }
+  .spv .acode .item { display: grid; gap: 1px; }
+  .spv .acode .cl { font-family: var(--mono); font-size: 13px; line-height: 1.6; white-space: pre; color: var(--code-ink); font-variant-ligatures: none; }
+  .spv .acode .why { font-size: 14px; line-height: 1.45; color: var(--muted); }
+  .spv .acode .gap { height: 4px; }
+
+  /* Wrong / right examples. */
+  .spv .verdicts { display: grid; gap: 10px; margin: 1.5em 0; }
+  .spv .verdict { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 14px; align-items: start; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
+  .spv .vmark { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; font-family: var(--mono); font-size: 14px; font-weight: 700; line-height: 1; color: var(--paper); }
+  .spv .bad .vmark { background: var(--bad); }
+  .spv .good .vmark { background: var(--good); }
+  .spv .vbody { display: grid; gap: 6px; min-width: 0; padding-top: 2px; }
+  .spv .vcode { margin: 0; padding: 0; border: 0; border-radius: 0; background: none !important; font-family: var(--mono); font-size: 13px; line-height: 1.6; white-space: pre; overflow-x: auto; color: var(--code-ink); font-variant-ligatures: none; }
+  .spv .verr { margin: 0; font-family: var(--mono); font-size: 13px; line-height: 1.55; color: var(--bad); overflow-wrap: anywhere; }
+  .spv .vcode.verr { white-space: pre-wrap; }
+  .spv .instr { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
+  .spv .instr table { display: table; border-collapse: collapse; width: 100%; margin: 0; }
+  .spv .instr td { padding: 9px 13px; text-align: left; vertical-align: top; border-bottom: 0; transition: background-color 0.15s ease, color 0.15s ease; }
+  .spv .instr tr:first-child td { font-family: var(--mono); font-size: 13px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .spv .instr tr + tr td { font-size: 14px; line-height: 1.4; color: var(--muted); }
+  .spv .instr td + td { border-left: 1px solid var(--line); }
+  .spv .instr .ghost { display: inline-block; min-width: 2.2em; height: 1.2em; vertical-align: middle; border: 1px dashed var(--muted); border-radius: 3px; }
+  .spv .instr td.on { background: color-mix(in oklab, var(--kc) 14%, transparent); color: var(--kc); }
+  .spv .instr td.on :is(.op, .id, .nu) { color: var(--kc); }
+  .spv .try { display: flex; justify-content: flex-start; }
+  .spv .try-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 7px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--ink-2); font-family: var(--mono); font-size: 13px; text-decoration: none; }
+  .spv .try-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .spv .try-btn svg { width: 1.1em; height: 1.1em; flex: none; }
+  @media (prefers-reduced-motion: reduce) { .spv .lnk, .spv .instr td { transition: none; } }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.spv .example').forEach((fig) => {
+    const setOn = (key: string, on: boolean) =>
+      fig.querySelectorAll(`[data-k="${key}"]`).forEach((el) => el.classList.toggle('on', on));
+    const handler = (on: boolean) => (e: Event) => {
+      const el = (e.target as Element).closest('.hov[data-k]');
+      if (el && fig.contains(el)) setOn(el.getAttribute('data-k')!, on);
+    };
+    fig.addEventListener('mouseover', handler(true));
+    fig.addEventListener('mouseout', handler(false));
+    fig.addEventListener('focusin', handler(true));
+    fig.addEventListener('focusout', handler(false));
+
+    // Compiler Explorer link carrying this example's full source and flags.
+    const src = fig.querySelector('.full-src');
+    const link = fig.querySelector<HTMLAnchorElement>('.try-link');
+    if (!src || !link) return;
+    try {
+      const state = {
+        sessions: [{
+          id: 1,
+          language: 'hlsl',
+          source: (src.textContent ?? '').replace(/^\n/, ''),
+          compilers: [{ id: 'dxc_trunk', options: fig.getAttribute('data-flags') ?? '' }],
+        }],
+      };
+      let bin = '';
+      new TextEncoder().encode(JSON.stringify(state)).forEach((b) => (bin += String.fromCharCode(b)));
+      link.href = 'https://godbolt.org/clientstate/' + btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    } catch {
+      link.href = 'https://godbolt.org/';
+    }
+  });
+</script>
