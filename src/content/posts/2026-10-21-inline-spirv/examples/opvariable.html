@@ -1,0 +1,44 @@
+<div class="example" data-flags="-spirv -T cs_6_8 -E main -HV 202x -fspv-target-env=vulkan1.3 -fcgl -Vd">
+  <div class="duo bleed">
+    <div class="pane">
+      <div class="pane-label"><span>HLSL</span></div>
+      <div class="lines">
+<div class="ln"><span class="no">1</span><span><span class="kw">struct</span> <span class="lnk" data-k="1">MyStruct</span></span></div>
+<div class="ln"><span class="no">2</span><span>{</span></div>
+<div class="ln"><span class="no">3</span><span>    <span class="ty">float</span> f;</span></div>
+<div class="ln"><span class="no">4</span><span>};</span></div>
+<div class="ln"><span class="no">5</span><span> </span></div>
+<div class="ln"><span class="no">6</span><span><span class="kw lnk" data-k="2">static</span> <span class="lnk" data-k="1">MyStruct</span> <span class="lnk" data-k="3">privateVar</span>;</span></div>
+      </div>
+    </div>
+    <div class="pane">
+      <div class="pane-label"><span>SPIR-V</span><span>raw output</span></div>
+      <div class="acode">
+        <div class="item"><div class="cl"><span class="hov lnk" data-k="1">%MyStruct</span> = <span class="op">OpTypeStruct</span> %float</div></div>
+        <div class="item"><div class="cl">%_ptr_Private_MyStruct = <span class="op">OpTypePointer</span> <span class="hov lnk" data-k="2">Private</span> <span class="hov lnk" data-k="1">%MyStruct</span></div></div>
+        <div class="item"><div class="cl"><span class="hov lnk" data-k="3">%privateVar</span> = <span class="op">OpVariable</span> %_ptr_Private_MyStruct <span class="hov lnk" data-k="2">Private</span></div></div>
+      </div>
+    </div>
+  </div>
+  <p class="try"><a class="try-btn try-link" href="https://godbolt.org/" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5 2 8l3.5 3.5M10.5 4.5 14 8l-3.5 3.5"/></svg>Try it out yourself</a></p>
+  <script type="text/plain" class="full-src">
+struct MyStruct
+{
+  float f;
+};
+
+ConstantBuffer<MyStruct> uniformBuffer;
+RWStructuredBuffer<float> output;
+groupshared float sharedMemory[64];
+static MyStruct privateVar;
+
+[numthreads(64, 1, 1)]
+void main(uint32_t gi : SV_GroupIndex)
+{
+  MyStruct localVar;
+  localVar.f = uniformBuffer.f + privateVar.f;
+  sharedMemory[gi] = localVar.f;
+  output[gi] = sharedMemory[gi];
+}
+</script>
+</div>

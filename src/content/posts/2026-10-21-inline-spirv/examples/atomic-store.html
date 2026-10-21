@@ -1,8 +1,8 @@
-  <div class="example" data-flags="-spirv -T cs_6_8 -E main -HV 202x -fspv-target-env=vulkan1.3">
-    <div class="duo bleed">
-      <div class="pane">
-        <div class="pane-label"><span>HLSL</span></div>
-        <div class="lines">
+<div class="example" data-flags="-spirv -T cs_6_8 -E main -HV 202x -fspv-target-env=vulkan1.3">
+  <div class="duo bleed">
+    <div class="pane">
+      <div class="pane-label"><span>HLSL</span></div>
+      <div class="lines">
 <div class="ln focus"><span class="no">1</span><span><span class="kw">template</span>&lt;<span class="kw">typename</span> T&gt;</span></div>
 <div class="ln focus"><span class="no">2</span><span>[[<span class="at">vk::ext_instruction</span>(<span class="cm">/*OpAtomicStore*/</span> <span class="nu lnk" data-k="1">228</span>)]]</span></div>
 <div class="ln focus"><span class="no">3</span><span><span class="kw lnk" data-k="0">void</span> atomicStore([[<span class="at">vk::ext_reference</span>]] T <span class="lnk" data-k="2">pointer</span>,</span></div>
@@ -14,52 +14,52 @@
 <div class="ln fold"><span class="no">⋮</span><span>…</span></div>
 <div class="ln focus"><span class="no">11</span><span>        atomicStore(<span class="lnk" data-k="2">ready</span>, <span class="nu lnk" data-k="3">2</span>, <span class="nu lnk" data-k="4">0x104</span>, <span class="nu lnk" data-k="5">1u</span>);</span></div>
 <div class="ln fold"><span class="no">⋮</span><span>…</span></div>
-        </div>
       </div>
-      <div class="pane">
-        <div class="pane-label"><span>SPIR-V</span><span>gutter = HLSL line</span></div>
-        <div class="lines">
+    </div>
+    <div class="pane">
+      <div class="pane-label"><span>SPIR-V</span></div>
+      <div class="lines">
 <div class="ln dim"><span class="no"></span><span>; the declaration emits nothing</span></div>
-<div class="ln"><span class="no"></span><span> </span></div>
-<div class="ln"><span class="no"></span><span> </span></div>
-<div class="ln"><span class="no"></span><span> </span></div>
-<div class="ln"><span class="no"></span><span> </span></div>
-<div class="ln"><span class="no"></span><span> </span></div>
+<div class="ln pad"><span class="no"></span><span> </span></div>
+<div class="ln pad"><span class="no"></span><span> </span></div>
+<div class="ln pad"><span class="no"></span><span> </span></div>
+<div class="ln pad"><span class="no"></span><span> </span></div>
+<div class="ln pad"><span class="no"></span><span> </span></div>
 <div class="ln fold"><span class="no">⋮</span><span>…</span></div>
 <div class="ln"><span class="no">5</span><span><span class="id hov lnk" data-k="2">%ready</span> = <span class="op">OpVariable</span> <span class="id">%_ptr_Workgroup_uint</span> Workgroup</span></div>
 <div class="ln fold"><span class="no">⋮</span><span>…</span></div>
 <div class="ln focus"><span class="no">11</span><span><span class="op hov lnk" data-k="1">OpAtomicStore</span> <span class="id hov lnk" data-k="2">%ready</span> <span class="nu hov lnk" data-k="3">%uint_2</span> <span class="nu hov lnk" data-k="4">%uint_260</span> <span class="nu hov lnk" data-k="5">%uint_1</span></span></div>
 <div class="ln fold"><span class="no">⋮</span><span>…</span></div>
-        </div>
       </div>
     </div>
+  </div>
 
-    <p class="try"><a class="try-btn try-link" href="https://godbolt.org/" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5 2 8l3.5 3.5M10.5 4.5 14 8l-3.5 3.5"/></svg>Try it out yourself</a></p>
+  <p class="try"><a class="try-btn try-link" href="https://godbolt.org/" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5 2 8l3.5 3.5M10.5 4.5 14 8l-3.5 3.5"/></svg>Try it out yourself</a></p>
 
-    <p>You can see that the templated function we wrote is just another way to get access to SPIR-V functions. If you're wondering where those magic numbers come from, they come from the <a href="https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#OpAtomicStore" target="_blank" rel="noopener">SPIR-V spec</a>.</p>
+  <p>You can see that the templated function we wrote is just another way to get access to SPIR-V functions. If you're wondering where those magic numbers come from, they come from the <a href="https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#OpAtomicStore" target="_blank" rel="noopener">SPIR-V spec</a>.</p>
 
-    <div class="instr">
-      <table>
-        <tr>
-          <td class="hov" data-k="0" tabindex="0"><span class="ghost" aria-label="no result"></span></td>
-          <td class="hov" data-k="1" tabindex="0"><span class="op">OpAtomicStore</span></td>
-          <td class="hov" data-k="2" tabindex="0"><span class="id">%ready</span></td>
-          <td class="hov" data-k="3" tabindex="0"><span class="nu">%uint_2</span></td>
-          <td class="hov" data-k="4" tabindex="0"><span class="nu">%uint_260</span></td>
-          <td class="hov" data-k="5" tabindex="0"><span class="nu">%uint_1</span></td>
-        </tr>
-        <tr>
-          <td class="hov" data-k="0">no result (void)</td>
-          <td class="hov" data-k="1">instruction (opcode 228)</td>
-          <td class="hov" data-k="2">pointer: where to store</td>
-          <td class="hov" data-k="3">scope: Workgroup</td>
-          <td class="hov" data-k="4">memory ordering: Release</td>
-          <td class="hov" data-k="5">value to store</td>
-        </tr>
-      </table>
-    </div>
+  <div class="instr">
+    <table>
+      <tr>
+        <td class="hov" data-k="0" tabindex="0"><span class="ghost" aria-label="no result"></span></td>
+        <td class="hov" data-k="1" tabindex="0"><span class="op">OpAtomicStore</span></td>
+        <td class="hov" data-k="2" tabindex="0"><span class="id">%ready</span></td>
+        <td class="hov" data-k="3" tabindex="0"><span class="nu">%uint_2</span></td>
+        <td class="hov" data-k="4" tabindex="0"><span class="nu">%uint_260</span></td>
+        <td class="hov" data-k="5" tabindex="0"><span class="nu">%uint_1</span></td>
+      </tr>
+      <tr>
+        <td class="hov" data-k="0">no result (void)</td>
+        <td class="hov" data-k="1">instruction (opcode 228)</td>
+        <td class="hov" data-k="2">pointer: where to store</td>
+        <td class="hov" data-k="3">scope: Workgroup</td>
+        <td class="hov" data-k="4">memory ordering: Release</td>
+        <td class="hov" data-k="5">value to store</td>
+      </tr>
+    </table>
+  </div>
 
-    <script type="text/plain" class="full-src">
+  <script type="text/plain" class="full-src">
 template<typename T>
 [[vk::ext_instruction(/*OpAtomicStore*/228)]]
 void atomicStore([[vk::ext_reference]] T pointer, uint32_t scope, uint32_t semantics, T value);
@@ -69,8 +69,8 @@ groupshared uint32_t ready;
 [numthreads(64, 1, 1)]
 void main(uint32_t gi : SV_GroupIndex)
 {
-    if (gi == 0)
-        atomicStore(ready, /*Workgroup*/ 2, /*Release | WorkgroupMemory*/ 0x104, 1u);
+  if (gi == 0)
+      atomicStore(ready, /*Workgroup*/ 2, /*Release | WorkgroupMemory*/ 0x104, 1u);
 }
 </script>
-  </div>
+</div>

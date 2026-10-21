@@ -41,7 +41,7 @@ Front matter:
 | `tags` | Shown on the cards, e.g. `[Vulkan, Math]`. |
 | `series`, `part` | Groups posts, e.g. `series: Yugen Journal` and `part: 2`. Each part links to the others. |
 | `youtube` | A video id to embed at the top of the post instead of the cover. |
-| `toc` | `false` hides the "On this page" sidebar, e.g. for posts with figures wider than the text column. |
+| `toc` | `false` hides the "On this page" sidebar and centers the post, so figures can run wider than the text on both sides. |
 | `draft` | `true`: only visible in `npm run dev`. Delete the line to publish. |
 | `unlisted` | `true`: live at its URL but not listed anywhere, for sharing before publishing. |
 

@@ -1,8 +1,10 @@
 ---
-// Side-by-side HLSL / SPIR-V example, authored as an HTML fragment in the post's
-// examples/ folder and passed in with `import x from './examples/x.html?raw'`.
+// Side-by-side HLSL / SPIR-V example (or a block of wrong/right verdicts), authored
+// as an HTML fragment in the post's examples/ folder and passed in with
+// `import x from './examples/x.html?raw'`.
 // Hovering or focusing a SPIR-V piece (.hov[data-k]) lights up every piece with
 // the same key; the "Try it out" link opens Compiler Explorer with .full-src.
+// In a centered post (toc: false) the code runs wider than the text, on both sides.
 interface Props { html: string }
 const { html } = Astro.props;
 ---
@@ -11,17 +13,20 @@ const { html } = Astro.props;
 <style is:global>
   .spv {
     --code-bg: var(--paper); --code-ink: var(--ink); --comment: #8A8478;
-    --kw: #3a2fa6; --ty: #0d6b75; --nu: #a14a06; --at: #5b5f97; --op: #1f4fbf;
+    --kw: #3a2fa6; --ty: #0d6b75; --nu: #a14a06; --at: #5b5f97; --op: #1f4fbf; --str: #3d7a2e;
+    --bad: #B83A2E; --good: #2F7D4A;
   }
   [data-theme='dark'] .spv {
-    --comment: #8F897D; --kw: #b7adff; --ty: #5fc6cf; --nu: #f2a65e; --at: #a9acdf; --op: #8fb0ff;
+    --comment: #8F897D; --kw: #b7adff; --ty: #5fc6cf; --nu: #f2a65e; --at: #a9acdf; --op: #8fb0ff; --str: #a6d68a;
+    --bad: #F07A72; --good: #6FCF8F;
   }
   .spv .example { margin: 1.75em 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; }
   .spv .example > * { min-width: 0; margin: 0; }
-  .spv .duo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.6rem; }
-  /* Code and the instruction table may run wider than the text column (to the right, into the empty margin). */
-  @media (min-width: 1100px) { .spv :is(.bleed, .instr, .try) { width: min(1060px, calc(100vw - 2 * var(--gutter))); } }
-  @media (max-width: 900px) { .spv .duo { grid-template-columns: minmax(0, 1fr); } }
+  .spv .duo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.75rem; }
+  /* Code, the instruction table and the "Try it" link span the page, centered on the text column. */
+  .centered .spv :is(.bleed, .instr, .try) { margin-left: calc(50% - 50cqw); margin-right: calc(50% - 50cqw); }
+  /* Stacked panes: drop the blank lines (.pad) that only line SPIR-V up with the HLSL beside it. */
+  @media (max-width: 900px) { .spv .duo { grid-template-columns: minmax(0, 1fr); } .spv .ln.pad { display: none; } }
   .spv .pane { background: var(--code-bg); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; min-width: 0; }
   .spv .pane-label { display: flex; justify-content: space-between; align-items: center; gap: 1rem; font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 7px 14px; border-bottom: 1px solid var(--line); }
   .spv .lines { padding: 9px 0; overflow-x: auto; font-family: var(--mono); font-size: 13px; line-height: 1.65; color: var(--code-ink); font-variant-ligatures: none; }
@@ -37,14 +42,33 @@ const { html } = Astro.props;
   .spv .nu { color: var(--nu); }
   .spv .at { color: var(--at); }
   .spv .op { color: var(--op); }
+  .spv .str { color: var(--str); }
   .spv .id { color: inherit; }
   .spv [data-k] { --kc: var(--accent); }
   .spv .lnk { border-radius: 3px; transition: background-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease; }
   .spv .lnk.on { color: var(--kc); background: color-mix(in oklab, var(--kc) 22%, transparent); box-shadow: 0 0 0 1px var(--kc); }
   .spv .hov { cursor: help; }
-  .spv .lines .hov { text-decoration: underline dotted; text-decoration-color: color-mix(in oklab, var(--muted) 70%, transparent); text-underline-offset: 3px; }
+  .spv :is(.lines, .acode) .hov { text-decoration: underline dotted; text-decoration-color: color-mix(in oklab, var(--muted) 70%, transparent); text-underline-offset: 3px; }
+
+  /* Annotated SPIR-V: each line with a plain-words note under it. */
+  .spv .acode { padding: 12px 16px; display: grid; gap: 10px; overflow-x: auto; }
+  .spv .acode .item { display: grid; gap: 1px; }
+  .spv .acode .cl { font-family: var(--mono); font-size: 13px; line-height: 1.6; white-space: pre; color: var(--code-ink); font-variant-ligatures: none; }
+  .spv .acode .why { font-size: 14px; line-height: 1.45; color: var(--muted); }
+  .spv .acode .gap { height: 4px; }
+
+  /* Wrong / right examples. */
+  .spv .verdicts { display: grid; gap: 10px; margin: 1.5em 0; }
+  .spv .verdict { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 14px; align-items: start; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
+  .spv .vmark { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; font-family: var(--mono); font-size: 14px; font-weight: 700; line-height: 1; color: var(--paper); }
+  .spv .bad .vmark { background: var(--bad); }
+  .spv .good .vmark { background: var(--good); }
+  .spv .vbody { display: grid; gap: 6px; min-width: 0; padding-top: 2px; }
+  .spv .vcode { margin: 0; padding: 0; border: 0; border-radius: 0; background: none !important; font-family: var(--mono); font-size: 13px; line-height: 1.6; white-space: pre; overflow-x: auto; color: var(--code-ink); font-variant-ligatures: none; }
+  .spv .verr { margin: 0; font-family: var(--mono); font-size: 13px; line-height: 1.55; color: var(--bad); overflow-wrap: anywhere; }
+  .spv .vcode.verr { white-space: pre-wrap; }
   .spv .instr { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
-  .spv .instr table { display: table; border-collapse: collapse; width: max-content; min-width: 100%; margin: 0; }
+  .spv .instr table { display: table; border-collapse: collapse; width: 100%; margin: 0; }
   .spv .instr td { padding: 9px 13px; text-align: left; vertical-align: top; border-bottom: 0; transition: background-color 0.15s ease, color 0.15s ease; }
   .spv .instr tr:first-child td { font-family: var(--mono); font-size: 13px; border-bottom: 1px solid var(--line); white-space: nowrap; }
   .spv .instr tr + tr td { font-size: 14px; line-height: 1.4; color: var(--muted); }
@@ -52,7 +76,7 @@ const { html } = Astro.props;
   .spv .instr .ghost { display: inline-block; min-width: 2.2em; height: 1.2em; vertical-align: middle; border: 1px dashed var(--muted); border-radius: 3px; }
   .spv .instr td.on { background: color-mix(in oklab, var(--kc) 14%, transparent); color: var(--kc); }
   .spv .instr td.on :is(.op, .id, .nu) { color: var(--kc); }
-  .spv .try { text-align: right; }
+  .spv .try { display: flex; justify-content: flex-end; }
   .spv .try-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 7px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--ink-2); font-family: var(--mono); font-size: 13px; text-decoration: none; }
   .spv .try-btn:hover { border-color: var(--accent); color: var(--accent); }
   .spv .try-btn svg { width: 1.1em; height: 1.1em; flex: none; }

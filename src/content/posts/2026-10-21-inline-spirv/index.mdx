@@ -10,6 +10,17 @@ draft: true
 ---
 import HlslSpirv from '../../../components/HlslSpirv.astro';
 import atomicStore from './examples/atomic-store.html?raw';
+import opVariable from './examples/opvariable.html?raw';
+import opVariableRules from './examples/opvariable-rules.html?raw';
+import loadStore from './examples/load-store.html?raw';
+import extInstruction from './examples/ext-instruction.html?raw';
+import extInstructionError from './examples/ext-instruction-error.html?raw';
+import extLiteral from './examples/ext-literal.html?raw';
+import extLiteralError from './examples/ext-literal-error.html?raw';
+import extReference from './examples/ext-reference.html?raw';
+import extReferenceError from './examples/ext-reference-error.html?raw';
+import extCapability from './examples/ext-capability.html?raw';
+import extCapabilityError from './examples/ext-capability-error.html?raw';
 
 ## Why inline SPIR-V?
 
@@ -24,7 +35,7 @@ There are three good reasons to learn it.
 2. **Atomics on memory you reach through an address.**
    Atomic functions like `InterlockedAdd` work on `groupshared` variables and buffer elements. Inline SPIR-V lets you run atomics with BDA (*buffer device address*) too. (More recently, `vk::BufferPointer` was added to DXC, which allows it, but only with relaxed ordering.)
 3. **More modular code.**
-   Once an instruction is wrapped in a small HLSL function, you can reuse it everywhere and build your own library on top, like we do in [Nabla](https://github.com/Devsh-Graphics-Programming/Nabla/tree/master/include/nbl/builtin/hlsl).
+   Once an instruction is wrapped in a small HLSL function, you can reuse it everywhere and build your own library on top, like we do in [Nabla](https://github.com/Devsh-Graphics-Programming/Nabla/tree/master/include/nbl/builtin/hlsl/spirv_intrinsics).
 
 Here's a taste. HLSL has no way to write an atomic store with [*release* ordering](https://en.cppreference.com/cpp/atomic/memory_order). One declaration adds it:
 
@@ -32,10 +43,105 @@ Here's a taste. HLSL has no way to write an atomic store with [*release* orderin
 
 You don't need to follow every detail yet. The next sections explain each piece.
 
-I assume you already know about HLSL syntax, compute shaders, and some basics of SPIR-V, even though I will provide a brief recap about it.
+I assume you know HLSL and compute shaders, and have already seen a bit of SPIR-V. The recap below covers some of the important building blocks this post relies on.
+
+## SPIR-V recap
+
+### `OpVariable` is a pointer
+
+<HlslSpirv html={opVariable} />
+
+The first two lines are only type definitions; nothing exists in memory yet. The third line, `OpVariable`, is where real memory comes in. And notice its type: `OpVariable` isn't really a "variable" holding a struct. It's a **pointer to a memory location** that holds the struct.
+
+### Storage classes
+
+The word after `OpTypePointer` (`Private` above) is the **storage class**: where the memory lives. (LLVM calls this an *address space*.) Each kind of HLSL variable gets its own:
+
+| HLSL | Storage class |
+| --- | --- |
+| `ConstantBuffer<MyStruct> uniformBuffer;` | Uniform |
+| `RWStructuredBuffer<float> output;` | StorageBuffer |
+| `groupshared float sharedMemory[64];` | Workgroup |
+| `static MyStruct privateVar;` | Private |
+| `MyStruct localVar;` (inside a function) | Function |
+
+An important rule for `OpVariable`: its type must be an `OpTypePointer`, and both must name the same storage class.
+
+<HlslSpirv html={opVariableRules} />
+
+### `OpLoad` and `OpStore`
+
+Since a variable is a pointer, reading and writing it always go through that pointer. `OpLoad` takes a pointer and gives you the value stored there. `OpStore` takes a pointer and a value, and writes the value there.
+
+<HlslSpirv html={loadStore} />
+
+## Calling SPIR-V directly from HLSL
+
+These attributes do all the work: `vk::ext_instruction`, `vk::ext_literal`, `vk::ext_reference`, and the pair `vk::ext_capability` / `vk::ext_extension`. Each one changes how DXC turns a function declaration, or one of its parameters, into SPIR-V.
+
+### 1. vk::ext_instruction
+
+Put `[[vk::ext_instruction(opcode)]]` on a function declaration with no body. Every call to it becomes exactly that one instruction, right where the call is. The function's return type becomes the instruction's result type, and each argument becomes an operand. With a second argument naming an *extended instruction set*, such as `"GLSL.std.450"`, the call becomes `OpExtInst` instead.
+
+<HlslSpirv html={extInstruction} />
+
+Each argument is passed by value: DXC reads it first and uses the result as the operand. The next two attributes change that.
+
+You might be wondering what happens if you change the argument and return types. DXC still compiles that for you, but in some cases the SPIR-V validator will stop you. For example, if you change `uint32_t` to `uint64_t` on `myBitReverse` above, you get:
+
+<HlslSpirv html={extInstructionError} />
+
+### 2. vk::ext_literal
+
+Some operands aren't values at all. They're plain numbers written inside the instruction, such as an index or an option; the SPIR-V spec calls them *literals*. `[[vk::ext_literal]]` on a parameter makes DXC write the argument as a number. It has to be known at compile time.
+
+<HlslSpirv html={extLiteral} />
+
+Forget `[[vk::ext_literal]]` and DXC writes the *id* of the constant `1` into that slot instead. Every tool reading the instruction then sees whatever number that id happens to have:
+
+<HlslSpirv html={extLiteralError} />
+
+The 5 is an id number, so it changes between compilers and even between unrelated edits. If it happens to be in range, nothing complains and the wrong component is read.
+
+### 3. vk::ext_reference
+
+Some instructions need a pointer: `OpLoad`, `OpStore` and every atomic. From the recap, a variable already *is* a pointer. `[[vk::ext_reference]]` on a parameter passes the argument's pointer instead of reading its value. So the argument must be something that has a pointer: a variable, not a temporary.
+
+<HlslSpirv html={extReference} />
+
+A temporary has no pointer, so DXC refuses it:
+
+<HlslSpirv html={extReferenceError} />
+
+A normal HLSL function with an `inout` parameter passes that pointer through as well, so you can wrap these calls in your own helper functions.
+
+### 4. vk::ext_capability and vk::ext_extension
+
+An instruction from a SPIR-V extension only works if the module declares it: `OpExtension` for the extension and `OpCapability` for the feature. For HLSL's built-in functions DXC adds these lines itself. For your own declarations you add them with these two attributes. They're only emitted if the function is actually called.
+
+<HlslSpirv html={extCapability} />
+
+Without the two attributes, DXC still emits the instruction, but the validator rejects the module:
+
+<HlslSpirv html={extCapabilityError} />
+
+These lines only declare what the shader needs. The device still has to support the feature, here `VK_KHR_shader_clock`, when you create the pipeline.
+
+In the next part, we will name SPIR-V types ourselves, and learn how to use C++ templates in HLSL 2021 to extract information about those SPIR-V types (such as their storage class) and specialize our functions with it.
 
 ## Where things stand
 
 Written around **October 2026**, against **DXC's main branch**. Clang's HLSL support hasn't come out yet.
 
 Inline SPIR-V started as DXC's version of GLSL's [GL_EXT_spirv_intrinsics](https://github.com/KhronosGroup/GLSL/blob/main/extensions/ext/GLSL_EXT_spirv_intrinsics.txt) and is documented on the [DXC wiki](https://github.com/microsoft/DirectXShaderCompiler/wiki/Inline-SPIR%E2%80%90V). It's being standardized in HLSL proposal [0011](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0011-inline-spirv.md), still under review, but it's already available in DXC. It only applies when compiling to SPIR-V.
+
+## References
+
+- [SPIR-V specification](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html): Khronos, every opcode, operand and storage class
+- [GLSL.std.450 extended instruction set](https://registry.khronos.org/SPIR-V/specs/unified1/GLSL.std.450.html): Khronos
+- [Inline SPIR-V](https://github.com/microsoft/DirectXShaderCompiler/wiki/Inline-SPIR%E2%80%90V): DXC wiki
+- [Proposal 0011: Inline SPIR-V](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0011-inline-spirv.md): HLSL specs
+- [GL_EXT_spirv_intrinsics](https://github.com/KhronosGroup/GLSL/blob/main/extensions/ext/GLSL_EXT_spirv_intrinsics.txt): the GLSL extension inline SPIR-V comes from
+- [HLSL to SPIR-V feature mapping](https://github.com/microsoft/DirectXShaderCompiler/blob/main/docs/SPIR-V.rst): DXC docs
+- [std::memory_order](https://en.cppreference.com/cpp/atomic/memory_order): cppreference, what relaxed, acquire and release mean
+- [Nabla's HLSL library](https://github.com/Devsh-Graphics-Programming/Nabla/tree/master/include/nbl/builtin/hlsl): a real library built on these attributes

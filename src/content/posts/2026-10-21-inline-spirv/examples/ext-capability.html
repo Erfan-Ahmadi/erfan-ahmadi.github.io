@@ -1,0 +1,46 @@
+<div class="example" data-flags="-spirv -T cs_6_8 -E main -HV 202x -fspv-target-env=vulkan1.3">
+  <div class="duo bleed">
+    <div class="pane">
+      <div class="pane-label"><span>HLSL</span></div>
+      <div class="lines">
+<div class="ln"><span class="no">1</span><span>[[<span class="at">vk::binding</span>(<span class="nu">0</span>,<span class="nu">0</span>)]] <span class="ty">RWStructuredBuffer</span>&lt;<span class="ty">uint32_t</span>&gt; buf;</span></div>
+<div class="ln"><span class="no">2</span><span> </span></div>
+<div class="ln focus"><span class="no">3</span><span>[[<span class="at">vk::ext_extension</span>(<span class="str lnk" data-k="2">"SPV_KHR_shader_clock"</span>)]]</span></div>
+<div class="ln focus"><span class="no">4</span><span>[[<span class="at">vk::ext_capability</span>(<span class="cm">/*ShaderClockKHR*/</span> <span class="nu lnk" data-k="1">5055</span>)]]</span></div>
+<div class="ln focus"><span class="no">5</span><span>[[<span class="at">vk::ext_instruction</span>(<span class="cm">/*OpReadClockKHR*/</span> <span class="nu lnk" data-k="3">5056</span>)]]</span></div>
+<div class="ln focus"><span class="no">6</span><span><span class="ty">uint32_t2</span> <span class="lnk" data-k="3">readClock</span>(<span class="ty">uint32_t</span> scope);</span></div>
+<div class="ln"><span class="no">7</span><span> </span></div>
+<div class="ln"><span class="no">8</span><span>[numthreads(<span class="nu">64</span>, <span class="nu">1</span>, <span class="nu">1</span>)]</span></div>
+<div class="ln"><span class="no">9</span><span><span class="kw">void</span> main(<span class="ty">uint32_t3</span> id : SV_DispatchThreadID)</span></div>
+<div class="ln"><span class="no">10</span><span>{</span></div>
+<div class="ln"><span class="no">11</span><span>    buf[id.x] = <span class="lnk" data-k="3">readClock</span>(<span class="cm">/*Subgroup*/</span> <span class="nu lnk" data-k="4">3</span>).x;</span></div>
+<div class="ln"><span class="no">12</span><span>}</span></div>
+      </div>
+    </div>
+    <div class="pane">
+      <div class="pane-label"><span>SPIR-V</span><span>excerpt</span></div>
+      <div class="acode">
+        <div class="item"><div class="cl"><span class="op">OpCapability</span> <span class="hov lnk" data-k="1">ShaderClockKHR</span></div><div class="why">From <code>ext_capability(5055)</code>.</div></div>
+        <div class="item"><div class="cl"><span class="op">OpExtension</span> <span class="str hov lnk" data-k="2">"SPV_KHR_shader_clock"</span></div><div class="why">From <code>ext_extension</code>.</div></div>
+        <div class="gap"></div>
+        <div class="item"><div class="cl">%19 = <span class="op hov lnk" data-k="3">OpReadClockKHR</span> %v2uint <span class="nu hov lnk" data-k="4">%uint_3</span></div><div class="why">readClock(3): scope 3 is Subgroup.</div></div>
+        <div class="item"><div class="cl">%20 = <span class="op">OpCompositeExtract</span> %uint %19 <span class="nu">0</span></div><div class="why">.x</div></div>
+      </div>
+    </div>
+  </div>
+  <p class="try"><a class="try-btn try-link" href="https://godbolt.org/" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5 2 8l3.5 3.5M10.5 4.5 14 8l-3.5 3.5"/></svg>Try it out yourself</a></p>
+  <script type="text/plain" class="full-src">
+[[vk::binding(0,0)]] RWStructuredBuffer<uint32_t> buf;
+
+[[vk::ext_extension("SPV_KHR_shader_clock")]]
+[[vk::ext_capability(/*ShaderClockKHR*/ 5055)]]
+[[vk::ext_instruction(/*OpReadClockKHR*/ 5056)]]
+uint32_t2 readClock(uint32_t scope);
+
+[numthreads(64, 1, 1)]
+void main(uint32_t3 id : SV_DispatchThreadID)
+{
+  buf[id.x] = readClock(/*Subgroup*/ 3).x;
+}
+</script>
+</div>

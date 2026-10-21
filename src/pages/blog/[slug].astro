@@ -31,7 +31,7 @@ const ogImage = cover ? (await getImage({ src: cover, width: 1200, format: 'jpeg
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 ---
 <Base title={title} description={description} image={ogImage} type="article" published={date} noindex={draft || unlisted}>
-  <article class="post">
+  <article class:list={['post', { centered: !post.data.toc }]}>
     <header class="post-head wrap">
       <p class="kicker">
         {draft && <span class="badge-draft">Draft</span>} {series ? `${series}${part ? ` · Part ${part}` : ''}` : tags.join(' · ')}
@@ -123,6 +123,10 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
   .toc a { color: var(--muted); display: block; line-height: 1.4; }
   .toc a:hover, .toc a.active { color: var(--ink); }
   .toc a.active { font-weight: 600; }
+
+  /* toc: false: one centered column. Wide figures can extend past it on both sides, up to the full width (100cqw). */
+  .post.centered :is(.post-head, .post-foot) > * { max-width: 720px; margin-left: auto; margin-right: auto; }
+  .post.centered .post-body { justify-content: center; container-type: inline-size; }
 
   .post-foot { padding-top: 24px; padding-bottom: 88px; }
   .post-foot > * { max-width: 720px; }
