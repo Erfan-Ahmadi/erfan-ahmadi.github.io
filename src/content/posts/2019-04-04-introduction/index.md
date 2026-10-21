@@ -16,7 +16,7 @@ I've worked in the Games Industry for ~2 Years, My first Job was Unity3D program
 and my second job was C++ Programmer I used imgui to develop app ui and sometimes I had to work with dx and opengl stuff but I never had chance to understand them.
 
 
-I'm a student of Computer Science at Shahid Beheshti Unversity, I think University is a waste of time for me except it forces me to learn good stuff sometimes.
+I'm a student of Computer Science at Shahid Beheshti Unversity, I think University is a waste of time for me except it forces me to learn good stuff sometimes. (And before you judge me about why I enrolled in the first place, look up "Mandatory 2-year Military Service in Iran")
 
 ![Hello Triangle](./download.png)
 <p align="center">
