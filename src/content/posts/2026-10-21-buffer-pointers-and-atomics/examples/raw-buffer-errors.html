@@ -1,0 +1,11 @@
+<div class="verdicts">
+  <div class="verdict bad">
+    <span class="vmark" role="img" aria-label="Wrong">✕</span>
+    <div class="vbody">
+      <pre class="vcode"><span class="ty">uint32_t</span> old;
+InterlockedAdd(<span class="ty">vk::RawBufferLoad</span>&lt;<span class="ty">uint32_t</span>&gt;(pc.address), <span class="nu">1u</span>, old);</pre>
+      <pre class="vcode verr">error: line 63: AtomicIAdd: expected Pointer to be a pointer type
+%25 = OpAtomicIAdd %uint %24 %uint_1 %uint_0 %uint_1</pre>
+    </div>
+  </div>
+</div>

@@ -23,7 +23,7 @@
 .prose th { font-size: 12px; font-weight: 650; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
 
 /* Code */
-.prose code { font-family: var(--mono); font-size: 0.86em; background: var(--inline-code); padding: 0.15em 0.4em; border-radius: 5px; color: var(--ink); }
+.prose code { font-family: var(--mono); font-size: 0.86em; background: var(--inline-code); padding: 0.15em 0.4em; border-radius: 5px; color: var(--ink); font-variant-ligatures: none; }
 .prose pre { font-family: var(--mono); font-size: 14px; line-height: 1.65; padding: 18px 20px; border: 1px solid var(--line); border-radius: 12px; overflow-x: auto; background: var(--paper) !important; font-variant-ligatures: none; tab-size: 4; }
 .prose pre code { background: none; padding: 0; border-radius: 0; font-size: inherit; color: inherit; }
 .astro-code, .astro-code span { color: var(--shiki-light); }

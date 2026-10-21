@@ -1,0 +1,82 @@
+---
+title: "Buffer pointers and atomics"
+description: "DXC has two built-in ways to use a buffer device address. What each one can do with atomics, and how to combine them with your own SPIR-V functions."
+date: 2026-10-21
+tags: ["HLSL", "SPIR-V", "Vulkan"]
+series: "Advanced HLSL to SPIR-V"
+part: 3
+toc: false
+draft: true
+---
+import HlslSpirv from '../../../components/HlslSpirv.astro';
+import rawBuffer from './examples/raw-buffer.html?raw';
+import rawBufferErrors from './examples/raw-buffer-errors.html?raw';
+import bufferPointer from './examples/buffer-pointer.html?raw';
+import bufferPointerErrors from './examples/buffer-pointer-errors.html?raw';
+import bufferPointerErrors2 from './examples/buffer-pointer-errors-2.html?raw';
+import bpAtomics from './examples/bp-atomics.html?raw';
+import bpBitcast from './examples/bp-bitcast.html?raw';
+import bpBitcastErrors from './examples/bp-bitcast-errors.html?raw';
+import bpBitcast2 from './examples/bp-bitcast-2.html?raw';
+
+DXC has two built-in ways to use a buffer device address: `vk::RawBufferLoad` / `vk::RawBufferStore`, and `vk::BufferPointer`. This part shows what each one can do with atomics, and how to combine them with your own SPIR-V functions when they can't.
+
+## vk::RawBufferLoad and vk::RawBufferStore
+
+`vk::RawBufferLoad<T>(address)` reads a `T` at a `uint64_t` address, and `vk::RawBufferStore<T>(address, value)` writes one. An optional last argument sets the alignment; it's 4 by default.
+
+<HlslSpirv html={rawBuffer} />
+
+Each call turns the address into a pointer, uses it once, and drops it. You only ever get a value back, so there's nothing to give an atomic. DXC still accepts this:
+
+<HlslSpirv html={rawBufferErrors} />
+
+The atomic gets the loaded value, `%24 = OpLoad %uint %23 Aligned 4`, instead of a pointer. The validator catches it in DXC's raw output; with optimizations on, the DXC build I tested crashed instead.
+
+## vk::BufferPointer
+
+`vk::BufferPointer<T, Alignment>` is a typed physical pointer built into DXC ([proposal 0010](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0010-vk-buffer-ref.md)). You make one from a `uint64_t` address, and `Get()` returns the `T` it points at. `Get()` is an lvalue: you can read it, write it, and pick members of it.
+
+<HlslSpirv html={bufferPointer} />
+
+`p.Get().mass` became an `OpAccessChain`: a pointer to the member, the same kind of pointer `vk::ext_reference` passes. The next section builds on that.
+
+There's no pointer arithmetic. Do the math on the address and make a new pointer, as above:
+
+<HlslSpirv html={bufferPointerErrors} />
+
+Math on a `uint64_t` needs the `Int64` capability, and `shaderInt64` on the device. To avoid it, keep the address as a `uint32_t2` and use the `bitcast` from Part 2. The output then has no `Int64`:
+
+<HlslSpirv html={bufferPointerErrors2} />
+
+One more difference from C++: buffer pointers are *restrict* by default, so the compiler may assume no two of them point at the same memory. Mark a pointer `[[vk::aliased_pointer]]` when they might.
+
+## vk::BufferPointer with Interlocked*
+
+Since `Get()` is an lvalue, you can pass it to `InterlockedAdd` and friends. You can also pass it to your own function with a `[[vk::ext_reference]]` parameter, like `atomicStore` from Part 1. Here are both:
+
+<HlslSpirv html={bpAtomics} />
+
+On a buffer pointer, `InterlockedAdd` always uses Device scope and relaxed ordering. With your own function you pick both, here a release store. That's the second reason from Part 1, done with nothing more than `vk::ext_reference`.
+
+## Bitcasting vk::BufferPointer for your own SPIR-V functions
+
+`vk::ext_reference` covers most cases. Sometimes you want the pointer itself as a value: to keep it in a struct, or to pass it to a pointer-form function like the `bda_ptr` ones from Part 2. A `vk::BufferPointer` is a physical pointer underneath, so `OpBitcast` turns it into your own pointer type:
+
+<HlslSpirv html={bpBitcast} />
+
+Be careful with structs. If your own pointer type points at a struct, DXC doesn't lay that struct out:
+
+<HlslSpirv html={bpBitcastErrors} />
+
+Instead, let `vk::BufferPointer` handle the struct, and take the address of the member you need. `addrof` is the `OpCopyObject` trick from Part 2, now returning a `bda_ptr`:
+
+<HlslSpirv html={bpBitcast2} />
+
+## References
+
+- [Proposal 0010: vk::BufferPointer](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0010-vk-buffer-ref.md): HLSL specs, `Get()`, alignment, restrict and `vk::aliased_pointer`
+- [RawBufferLoad and RawBufferStore](https://github.com/microsoft/DirectXShaderCompiler/blob/main/docs/SPIR-V.rst#rawbufferload-and-rawbufferstore): DXC docs
+- [OpAtomicIAdd](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#OpAtomicIAdd)
+- [VK_KHR_buffer_device_address](https://registry.khronos.org/vulkan/specs/latest/man/html/VK_KHR_buffer_device_address.html): Vulkan
+- [std::memory_order](https://en.cppreference.com/cpp/atomic/memory_order): cppreference, what relaxed, acquire and release mean

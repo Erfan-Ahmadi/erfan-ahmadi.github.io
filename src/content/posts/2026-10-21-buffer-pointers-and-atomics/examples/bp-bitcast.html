@@ -1,0 +1,62 @@
+<div class="example" data-flags="-spirv -T cs_6_8 -E main -HV 202x -fspv-target-env=vulkan1.3">
+  <div class="duo bleed">
+    <div class="pane">
+      <div class="pane-label"><span>HLSL</span></div>
+      <div class="lines">
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+<div class="ln"><span class="no">7</span><span><span class="kw">template</span>&lt;<span class="kw">typename</span> T&gt;</span></div>
+<div class="ln"><span class="no">8</span><span><span class="kw">using</span> bda_ptr = <span class="ty">vk::SpirvType</span>&lt;<span class="cm">/*OpTypePointer*/</span> <span class="nu">32</span>, <span class="cm">/*size*/</span> <span class="nu">8</span>, <span class="cm">/*align*/</span> <span class="nu">8</span>,</span></div>
+<div class="ln"><span class="no">9</span><span>    <span class="ty">vk::Literal</span>&lt;<span class="ty">vk::integral_constant</span>&lt;<span class="ty">uint32_t</span>, <span class="cm">/*PhysicalStorageBuffer*/</span> <span class="nu">5349</span>&gt; &gt;, T&gt;;</span></div>
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+<div class="ln"><span class="no">15</span><span><span class="kw">template</span>&lt;<span class="kw">typename</span> T, <span class="kw">typename</span> P&gt;</span></div>
+<div class="ln"><span class="no">16</span><span>[[<span class="at">vk::ext_capability</span>(<span class="cm">/*PhysicalStorageBufferAddresses*/</span> <span class="nu">5347</span>)]]</span></div>
+<div class="ln"><span class="no">17</span><span>[[<span class="at">vk::ext_instruction</span>(<span class="cm">/*OpAtomicIAdd*/</span> <span class="nu">234</span>)]]</span></div>
+<div class="ln"><span class="no">18</span><span>T <span class="lnk" data-k="4">atomicIAdd</span>(P pointer, <span class="ty">uint32_t</span> scope, <span class="ty">uint32_t</span> semantics, T value);</span></div>
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+<div class="ln focus"><span class="no">23</span><span>    <span class="ty">vk::BufferPointer</span>&lt;<span class="ty">uint32_t</span>&gt; <span class="lnk" data-k="1">bp</span> = <span class="ty">vk::BufferPointer</span>&lt;<span class="ty">uint32_t</span>&gt;(pc.counter);</span></div>
+<div class="ln focus"><span class="no">24</span><span>    bda_ptr&lt;<span class="ty">uint32_t</span>&gt; <span class="lnk" data-k="3">p</span> = <span class="lnk" data-k="2">bitcast</span>&lt;bda_ptr&lt;<span class="ty">uint32_t</span>&gt; &gt;(<span class="lnk" data-k="1">bp</span>);</span></div>
+<div class="ln focus"><span class="no">25</span><span>    <span class="lnk" data-k="4">atomicIAdd</span>&lt;<span class="ty">uint32_t</span>&gt;(<span class="lnk" data-k="3">p</span>, <span class="cm">/*Device*/</span> <span class="nu">1</span>,</span></div>
+<div class="ln focus"><span class="no">26</span><span>                         <span class="cm">/*AcquireRelease | UniformMemory*/</span> <span class="nu lnk" data-k="5">0x48</span>, <span class="nu">1u</span>);</span></div>
+<div class="ln fold"><span class="no">⋮</span><span>…</span></div>
+      </div>
+    </div>
+    <div class="pane">
+      <div class="pane-label"><span>SPIR-V</span><span>excerpt</span></div>
+      <div class="acode">
+        <div class="item"><div class="cl"><span class="hov lnk" data-k="1">%19</span> = <span class="op">OpConvertUToPtr</span> %_ptr_PhysicalStorageBuffer_uint %18</div><div class="why">bp</div></div>
+        <div class="item"><div class="cl"><span class="hov lnk" data-k="3">%20</span> = <span class="op hov lnk" data-k="2">OpBitcast</span> %spirvIntrinsicType <span class="hov lnk" data-k="1">%19</span></div><div class="why">Pointer to pointer: the same address, now our bda_ptr&lt;uint32_t&gt;.</div></div>
+        <div class="item"><div class="cl">%21 = <span class="op hov lnk" data-k="4">OpAtomicIAdd</span> %uint <span class="hov lnk" data-k="3">%20</span> <span class="nu">%uint_1</span> <span class="nu hov lnk" data-k="5">%uint_72</span> <span class="nu">%uint_1</span></div><div class="why">A pointer-form atomic with AcquireRelease | UniformMemory (0x48 = 72).</div></div>
+      </div>
+    </div>
+  </div>
+  <p class="try"><a class="try-btn try-link" href="https://godbolt.org/" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5 2 8l3.5 3.5M10.5 4.5 14 8l-3.5 3.5"/></svg>Try it out yourself</a></p>
+  <script type="text/plain" class="full-src">
+struct PushData
+{
+  uint64_t counter;
+};
+[[vk::push_constant]] PushData pc;
+
+template<typename T>
+using bda_ptr = vk::SpirvType</*OpTypePointer*/ 32, /*size*/ 8, /*align*/ 8,
+  vk::Literal<vk::integral_constant<uint32_t, /*PhysicalStorageBuffer*/ 5349> >, T>;
+
+template<typename To, typename From>
+[[vk::ext_instruction(/*OpBitcast*/ 124)]]
+To bitcast(From v);
+
+template<typename T, typename P>
+[[vk::ext_capability(/*PhysicalStorageBufferAddresses*/ 5347)]]
+[[vk::ext_instruction(/*OpAtomicIAdd*/ 234)]]
+T atomicIAdd(P pointer, uint32_t scope, uint32_t semantics, T value);
+
+[numthreads(64, 1, 1)]
+void main()
+{
+  vk::BufferPointer<uint32_t> bp = vk::BufferPointer<uint32_t>(pc.counter);
+  bda_ptr<uint32_t> p = bitcast<bda_ptr<uint32_t> >(bp);
+  atomicIAdd<uint32_t>(p, /*Device*/ 1,
+                       /*AcquireRelease | UniformMemory*/ 0x48, 1u);
+}
+</script>
+</div>
