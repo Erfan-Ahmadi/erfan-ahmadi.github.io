@@ -19,6 +19,7 @@ export async function getListedPosts(): Promise<Post[]> {
 export const postUrl = (post: Post) => `/blog/${post.id}/`;
 
 export function readingMinutes(post: Post): number {
+  if (post.data.readingTime) return post.data.readingTime;
   const words = (post.body ?? '').split(/\s+/).filter(Boolean).length;
   return Math.max(1, Math.round(words / 230));
 }

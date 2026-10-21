@@ -129,6 +129,8 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
   /* toc: false: one centered column. Wide figures can extend past it on both sides, up to the full width (100cqw). */
   .post.centered :is(.post-head, .post-foot) > * { max-width: 720px; margin-left: auto; margin-right: auto; }
   .post.centered .post-body { justify-content: center; container-type: inline-size; }
+  /* With the sidebar, wide figures stop --toc-room short of the right edge: the sidebar's width plus a gap. */
+  .post-body.has-toc { container-type: inline-size; --toc-room: 270px; }
 
   .post-foot { padding-top: 24px; padding-bottom: 88px; }
   .post-foot > * { max-width: 720px; }
@@ -154,7 +156,7 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
   .prev-next .next { text-align: right; align-items: flex-end; }
 
   @media (max-width: 1040px) {
-    .post-body.has-toc { grid-template-columns: minmax(0, 720px); }
+    .post-body.has-toc { grid-template-columns: minmax(0, 720px); --toc-room: 0px; }
     .toc { display: none; }
   }
   @media (max-width: 760px) {

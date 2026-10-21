@@ -28,6 +28,8 @@ const posts = defineCollection({
       tags: z.array(z.string()).default([]),
       series: z.string().optional(),
       part: z.number().int().positive().optional(),
+      // Minutes to read, when the word count undersells it (code and figures to work through).
+      readingTime: z.number().int().positive().optional(),
       // YouTube video id: embedded at the top of the post.
       youtube: z.string().optional(),
       // Show "On this page" beside the post (when it has 3+ headings). Turn off for posts with wide figures.

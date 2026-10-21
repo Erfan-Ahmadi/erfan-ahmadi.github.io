@@ -43,6 +43,7 @@ Front matter:
 | `tags` | Shown on the cards, e.g. `[Vulkan, Math]`. |
 | `series`, `part` | Groups posts, e.g. `series: Yugen Journal` and `part: 2`. Each part links to the others. |
 | `youtube` | A video id to embed at the top of the post instead of the cover. |
+| `readingTime` | Optional minutes to read, e.g. `20`, when the automatic estimate (words only) undersells a post full of code to work through. |
 | `toc` | `false` hides the "On this page" sidebar and centers the post, so figures can run wider than the text on both sides. |
 | `draft` | `true`: live at its link with a "Draft" badge so you can share it for proofreading, but not listed or linked anywhere (home page, archive, RSS, sitemap, other posts) and hidden from search engines. `npm run dev` lists drafts so you can see them in place. Delete the line to publish. |
 | `unlisted` | `true`: like a draft without the badge: live at its link, never listed. |
