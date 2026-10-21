@@ -20,6 +20,7 @@ import extLiteral from './examples/ext-literal.html?raw';
 import extLiteralError from './examples/ext-literal-error.html?raw';
 import extReference from './examples/ext-reference.html?raw';
 import extReferenceError from './examples/ext-reference-error.html?raw';
+import inoutWarning from './examples/inout-warning.html?raw';
 import extCapability from './examples/ext-capability.html?raw';
 import extCapabilityError from './examples/ext-capability-error.html?raw';
 
@@ -117,6 +118,8 @@ A temporary has no pointer, so DXC refuses it:
 <HlslSpirv html={extReferenceError} />
 
 A normal HLSL function with an `inout` parameter passes that pointer through as well, so you can wrap these calls in your own helper functions.
+
+<HlslSpirv html={inoutWarning} />
 
 ### 4. vk::ext_capability and vk::ext_extension
 

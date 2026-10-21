@@ -1,0 +1,25 @@
+<div class="callout" role="note" data-flags="-spirv -T cs_6_8 -E main -HV 202x -fspv-target-env=vulkan1.3 -fcgl -Vd">
+  <p class="ctitle">DXC could change this</p>
+  <p>HLSL defines <code>inout</code> as copy-in/copy-out; DXC only skips the copy when the argument's type matches exactly. It already switched to copying once (<a href="https://github.com/microsoft/DirectXShaderCompiler/pull/7127" target="_blank" rel="noopener">#7127</a>), which broke these atomics, and reverted a month later (<a href="https://github.com/microsoft/DirectXShaderCompiler/pull/7223" target="_blank" rel="noopener">#7223</a>).</p>
+  <p><a class="try-link" href="https://godbolt.org/" target="_blank" rel="noopener">See what it compiles to</a>, and if the raw output (<code>-fcgl -Vd</code>) shows no copy in and out, it's safe to wrap these SPIR-V atomics in your own helper functions with <code>inout</code>.</p>
+  <p>In Nabla we decided not to take the risk, and added <code>[[vk::ext_reference]] inout</code> (<a href="https://github.com/microsoft/DirectXShaderCompiler/issues/5675" target="_blank" rel="noopener">#5675</a>) to our <a href="https://github.com/Devsh-Graphics-Programming/DirectXShaderCompiler" target="_blank" rel="noopener">DXC fork</a>, used by <a href="https://github.com/Devsh-Graphics-Programming/Nabla/tree/master/tools/nsc" target="_blank" rel="noopener">nsc</a>, so our helpers ask for the pointer explicitly.</p>
+  <script type="text/plain" class="full-src">
+[[vk::ext_instruction(/*OpAtomicIAdd*/ 234)]]
+uint32_t atomicIAdd([[vk::ext_reference]] uint32_t ptr, uint32_t scope, uint32_t semantics, uint32_t value);
+
+uint32_t myAtomicAdd(inout uint32_t ptr, uint32_t value)
+{
+  return atomicIAdd(ptr, /*Device*/ 1, /*Relaxed*/ 0, value);
+}
+
+struct S { uint32_t a; uint32_t b; };
+groupshared S sharedStruct;
+[[vk::binding(0,0)]] RWStructuredBuffer<uint32_t> buf;
+
+[numthreads(64, 1, 1)]
+void main(uint32_t gi : SV_GroupIndex)
+{
+  buf[gi] = myAtomicAdd(buf[gi], 1u) + myAtomicAdd(sharedStruct.b, 1u);
+}
+</script>
+</div>
