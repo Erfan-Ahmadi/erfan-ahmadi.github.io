@@ -14,11 +14,11 @@ const { html } = Astro.props;
   .spv {
     --code-bg: var(--paper); --code-ink: var(--ink); --comment: #8A8478;
     --kw: #3a2fa6; --ty: #0d6b75; --nu: #a14a06; --at: #5b5f97; --op: #1f4fbf; --str: #3d7a2e;
-    --bad: #B83A2E; --good: #2F7D4A;
+    --bad: #B83A2E; --good: #2F7D4A; --warn: #9A5B06;
   }
   [data-theme='dark'] .spv {
     --comment: #8F897D; --kw: #b7adff; --ty: #5fc6cf; --nu: #f2a65e; --at: #a9acdf; --op: #8fb0ff; --str: #a6d68a;
-    --bad: #F07A72; --good: #6FCF8F;
+    --bad: #F07A72; --good: #6FCF8F; --warn: #F0B45A;
   }
   .spv .example { margin: 1.75em 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; }
   .spv .example > * { min-width: 0; margin: 0; }
@@ -71,6 +71,11 @@ const { html } = Astro.props;
   .spv .vcode { margin: 0; padding: 0; border: 0; border-radius: 0; background: none !important; font-family: var(--mono); font-size: 13px; line-height: 1.6; white-space: pre; overflow-x: auto; color: var(--code-ink); font-variant-ligatures: none; }
   .spv .verr { margin: 0; font-family: var(--mono); font-size: 13px; line-height: 1.55; color: var(--bad); overflow-wrap: anywhere; }
   .spv .vcode.verr { white-space: pre-wrap; }
+
+  /* Warning callout; its .try-link opens its .full-src in Compiler Explorer like an example's button. */
+  .spv .callout { display: grid; gap: 8px; margin: 1.5em 0; padding: 14px 18px; border: 1px solid var(--line); border-left: 3px solid var(--warn); border-radius: 12px; background: color-mix(in oklab, var(--warn) 7%, var(--paper)); }
+  .spv .callout p { margin: 0; font-size: 16px; line-height: 1.6; }
+  .spv .callout .ctitle { font-weight: 650; color: var(--warn); }
   .spv .instr { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
   .spv .instr table { display: table; border-collapse: collapse; width: 100%; margin: 0; }
   .spv .instr td { padding: 9px 13px; text-align: left; vertical-align: top; border-bottom: 0; transition: background-color 0.15s ease, color 0.15s ease; }
@@ -88,7 +93,7 @@ const { html } = Astro.props;
 </style>
 
 <script>
-  document.querySelectorAll<HTMLElement>('.spv .example').forEach((fig) => {
+  document.querySelectorAll<HTMLElement>('.spv :is(.example, .callout)').forEach((fig) => {
     const setOn = (key: string, on: boolean) =>
       fig.querySelectorAll(`[data-k="${key}"]`).forEach((el) => el.classList.toggle('on', on));
     const handler = (on: boolean) => (e: Event) => {
