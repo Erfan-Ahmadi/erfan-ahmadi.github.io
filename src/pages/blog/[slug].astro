@@ -18,7 +18,7 @@ export async function getStaticPaths() {
 
 interface Props { post: Post }
 const { post } = Astro.props;
-const { title, description, date, updated, cover, coverAlt, tags, series, part, youtube, draft, unlisted } = post.data;
+const { title, description, date, updated, cover, coverAlt, thumbnail, socialImage, tags, series, part, youtube, draft, unlisted } = post.data;
 const { Content, headings } = await render(post);
 
 const listed = (await getAllPosts()).filter((p) => !p.data.unlisted);
@@ -27,7 +27,8 @@ const newer = index > 0 ? listed[index - 1] : undefined;
 const older = index >= 0 ? listed[index + 1] : undefined;
 const parts = seriesParts(listed, post);
 const toc = post.data.toc ? headings.filter((h) => h.depth === 2 || h.depth === 3) : [];
-const ogImage = cover ? (await getImage({ src: cover, width: 1200, format: 'jpeg' })).src : undefined;
+const preview = socialImage ?? thumbnail ?? cover;
+const ogImage = preview ? (await getImage({ src: preview, width: 1200, format: 'jpeg' })).src : undefined;
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 ---
 <Base title={title} description={description} image={ogImage} type="article" published={date} noindex={draft || unlisted}>

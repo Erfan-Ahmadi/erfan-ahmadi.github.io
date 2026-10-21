@@ -37,6 +37,8 @@ Front matter:
 | `date` | Required. Publish date, `YYYY-MM-DD`. Posts are sorted and filtered by it. |
 | `updated` | Optional date of a meaningful update. |
 | `cover`, `coverAlt` | Optional image in the folder, 16:10 works best (1280×800). Without one, the card gets a generated cover. |
+| `thumbnail` | Optional image for the post's card instead of the cover, 16:10 (1280×800), e.g. a designed title card. It isn't shown in the post itself. |
+| `socialImage` | Optional image for link previews on X, LinkedIn and others, 1200×630. Defaults to the thumbnail, then the cover. |
 | `diagram` | `true` for line-art covers on a light background: they're inverted in dark mode. |
 | `tags` | Shown on the cards, e.g. `[Vulkan, Math]`. |
 | `series`, `part` | Groups posts, e.g. `series: Yugen Journal` and `part: 2`. Each part links to the others. |

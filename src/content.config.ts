@@ -19,6 +19,10 @@ const posts = defineCollection({
       updated: z.coerce.date().optional(),
       cover: image().optional(),
       coverAlt: z.string().default(''),
+      // Card image in place of the cover (16:10), e.g. a designed title card. Not shown in the post.
+      thumbnail: image().optional(),
+      // Link preview image (1200×630). Defaults to the thumbnail, then the cover.
+      socialImage: image().optional(),
       // Line-art covers (diagrams on a light background) are inverted in dark mode.
       diagram: z.boolean().default(false),
       tags: z.array(z.string()).default([]),
