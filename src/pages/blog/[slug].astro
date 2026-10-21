@@ -26,7 +26,7 @@ const index = listed.findIndex((p) => p.id === post.id);
 const newer = index > 0 ? listed[index - 1] : undefined;
 const older = index >= 0 ? listed[index + 1] : undefined;
 const parts = seriesParts(listed, post);
-const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+const toc = post.data.toc ? headings.filter((h) => h.depth === 2 || h.depth === 3) : [];
 const ogImage = cover ? (await getImage({ src: cover, width: 1200, format: 'jpeg' })).src : undefined;
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 ---

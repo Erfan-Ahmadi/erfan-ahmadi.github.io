@@ -1,0 +1,41 @@
+---
+title: "Inline SPIR-V"
+description: "SPIR-V can express more than HLSL lets you write. Inline SPIR-V lets you call those instructions straight from HLSL with DXC."
+date: 2026-10-21
+tags: ["HLSL", "SPIR-V", "Vulkan"]
+series: "Advanced HLSL to SPIR-V"
+part: 1
+toc: false
+draft: true
+---
+import HlslSpirv from '../../../components/HlslSpirv.astro';
+import atomicStore from './examples/atomic-store.html?raw';
+
+## Why inline SPIR-V?
+
+When you compile HLSL for Vulkan, DXC turns your shader into SPIR-V. SPIR-V can express more than HLSL lets you write. Some instructions have no HLSL function, some options can't be passed, and some types have no HLSL name.
+
+With **inline SPIR-V**, you write a small declaration in HLSL that tells DXC "a call to this function is exactly this SPIR-V instruction". Then you call it like any other HLSL function.
+
+There are three good reasons to learn it.
+
+1. **Use SPIR-V features that HLSL doesn't expose (yet).**
+   Explicit barrier and memory control, subgroup operations HLSL doesn't have, and new SPIR-V extensions not exposed in HLSL. Another good example is atomics: HLSL's `Interlocked*` functions don't let you choose [memory ordering](https://en.cppreference.com/cpp/atomic/memory_order); DXC always emits them as *relaxed*.
+2. **Atomics on memory you reach through an address.**
+   Atomic functions like `InterlockedAdd` work on `groupshared` variables and buffer elements. Inline SPIR-V lets you run atomics with BDA (*buffer device address*) too. (More recently, `vk::BufferPointer` was added to DXC, which allows it, but only with relaxed ordering.)
+3. **More modular code.**
+   Once an instruction is wrapped in a small HLSL function, you can reuse it everywhere and build your own library on top, like we do in [Nabla](https://github.com/Devsh-Graphics-Programming/Nabla/tree/master/include/nbl/builtin/hlsl).
+
+Here's a taste. HLSL has no way to write an atomic store with [*release* ordering](https://en.cppreference.com/cpp/atomic/memory_order). One declaration adds it:
+
+<HlslSpirv html={atomicStore} />
+
+You don't need to follow every detail yet. The next sections explain each piece.
+
+I assume you already know about HLSL syntax, compute shaders, and some basics of SPIR-V, even though I will provide a brief recap about it.
+
+## Where things stand
+
+Written around **October 2026**, against **DXC's main branch**. Clang's HLSL support hasn't come out yet.
+
+Inline SPIR-V started as DXC's version of GLSL's [GL_EXT_spirv_intrinsics](https://github.com/KhronosGroup/GLSL/blob/main/extensions/ext/GLSL_EXT_spirv_intrinsics.txt) and is documented on the [DXC wiki](https://github.com/microsoft/DirectXShaderCompiler/wiki/Inline-SPIR%E2%80%90V). It's being standardized in HLSL proposal [0011](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0011-inline-spirv.md), still under review, but it's already available in DXC. It only applies when compiling to SPIR-V.

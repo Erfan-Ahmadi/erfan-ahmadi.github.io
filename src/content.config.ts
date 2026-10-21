@@ -26,6 +26,8 @@ const posts = defineCollection({
       part: z.number().int().positive().optional(),
       // YouTube video id: embedded at the top of the post.
       youtube: z.string().optional(),
+      // Show "On this page" beside the post (when it has 3+ headings). Turn off for posts with wide figures.
+      toc: z.boolean().default(true),
       // Only visible in `npm run dev`; never built into the live site.
       draft: z.boolean().default(false),
       // Built and reachable by its link, but not listed anywhere.
