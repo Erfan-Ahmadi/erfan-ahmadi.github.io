@@ -1,5 +1,5 @@
 ---
-title: "Introduction to Me"
+title: "Who am I? (Apr 2019)"
 description: "Who I am, why I wanted to build engines instead of just using them, and why I started this blog."
 date: 2019-04-04
 cover: ./cover.jpg
@@ -9,12 +9,8 @@ tags: ["Personal"]
 
 ## Who am I? 
 
-<p align="center">
-<img src="https://avatars0.githubusercontent.com/u/10983665?s=400&u=8e7ec11b2e3ab1ed96ee4103e3ff16711e2316b4&v=4" align="center" alt="" height="250" hspace="20"/>
-</p>
-
 I'm Erfan,
-An enthusiastic programmer and self-motivated learner currently located in Iran.
+An enthusiastic programmer and self-motivated learner born in Iran.
 
 I've worked in the Games Industry for ~2 Years, My first Job was Unity3D programmer but **I didn't wanted to use Unity, I wanted to help make It**.
 and my second job was C++ Programmer I used imgui to develop app ui and sometimes I had to work with dx and opengl stuff but I never had chance to understand them.
