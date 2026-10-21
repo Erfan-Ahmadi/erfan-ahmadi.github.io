@@ -36,7 +36,7 @@ There are three good reasons to learn it.
 2. **Atomics on memory you reach through an address.**
    Atomic functions like `InterlockedAdd` work on `groupshared` variables and buffer elements. Inline SPIR-V lets you run atomics with BDA (*buffer device address*) too. (More recently, `vk::BufferPointer` was added to DXC, which allows it, but only with relaxed ordering.)
 3. **More modular code.**
-   Once an instruction is wrapped in a small HLSL function, you can reuse it everywhere and build your own library on top, like we do in [Nabla](https://github.com/Devsh-Graphics-Programming/Nabla/tree/master/include/nbl/builtin/hlsl/spirv_intrinsics).
+   Once an instruction is wrapped in a small HLSL function, you can reuse it everywhere and build your own library on top, like we do in [Nabla](https://github.com/Devsh-Graphics-Programming/Nabla/tree/master/include/nbl/builtin/hlsl/spirv_intrinsics). If you're curious how we wrote a single-source C++/HLSL library, take a look at our Vulkanised 2024 talk, [Beyond SPIR-V: Single Source C++ and Shader Programming](https://www.youtube.com/watch?v=JCJ35dlZJb4).
 
 Here's a taste. HLSL has no way to write an atomic store with [*release* ordering](https://en.cppreference.com/cpp/atomic/memory_order). One declaration adds it:
 
@@ -75,6 +75,8 @@ An important rule for `OpVariable`: its type must be an `OpTypePointer`, and bot
 Since a variable is a pointer, reading and writing it always go through that pointer. `OpLoad` takes a pointer and gives you the value stored there. `OpStore` takes a pointer and a value, and writes the value there.
 
 <HlslSpirv html={loadStore} />
+
+This recap is a short extract from my colleague's talk at the Shading Languages Symposium 2026, [The Vulkan SPIR-V and its Fundamental Limits](https://www.youtube.com/watch?v=L-oRcQ1NU58). Watch it for the full picture.
 
 ## Calling SPIR-V directly from HLSL
 
@@ -146,3 +148,5 @@ Inline SPIR-V started as DXC's version of GLSL's [GL_EXT_spirv_intrinsics](https
 - [HLSL to SPIR-V feature mapping](https://github.com/microsoft/DirectXShaderCompiler/blob/main/docs/SPIR-V.rst): DXC docs
 - [std::memory_order](https://en.cppreference.com/cpp/atomic/memory_order): cppreference, what relaxed, acquire and release mean
 - [Nabla's HLSL library](https://github.com/Devsh-Graphics-Programming/Nabla/tree/master/include/nbl/builtin/hlsl): a real library built on these attributes
+- [The Vulkan SPIR-V and its Fundamental Limits](https://www.youtube.com/watch?v=L-oRcQ1NU58): Shading Languages Symposium 2026
+- [Beyond SPIR-V: Single Source C++ and Shader Programming](https://www.youtube.com/watch?v=JCJ35dlZJb4): Vulkanised 2024, Mateusz Kielan
