@@ -42,14 +42,13 @@ const year = new Date().getFullYear();
     <meta name="twitter:creator" content="@ahmadierfan999" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="alternate" type="application/rss+xml" title={SITE.name} href="/rss.xml" />
-    <meta name="theme-color" content="#F6F4EF" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#141311" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#F6F4EF" />
     <script is:inline>
+      // Light by default; dark only when the reader picked it with the toggle.
       (() => {
         let theme;
         try { theme = localStorage.getItem('theme'); } catch {}
-        if (theme !== 'light' && theme !== 'dark') theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        document.documentElement.dataset.theme = theme;
+        document.documentElement.dataset.theme = theme === 'dark' ? 'dark' : 'light';
       })();
     </script>
   </head>
