@@ -129,8 +129,23 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
   /* toc: false: one centered column. Wide figures can extend past it on both sides, up to the full width (100cqw). */
   .post.centered :is(.post-head, .post-foot) > * { max-width: 720px; margin-left: auto; margin-right: auto; }
   .post.centered .post-body { justify-content: center; container-type: inline-size; }
-  /* With the sidebar, wide figures stop --toc-room short of the right edge: the sidebar's width plus a gap. */
-  .post-body.has-toc { container-type: inline-size; --toc-room: 270px; }
+  /* With the sidebar, wide figures stop --toc-room short of the right edge, leaving room for the rail below. */
+  .post-body.has-toc { container-type: inline-size; --toc-room: 40px; }
+
+  /* Rail: while a wide figure passes under the sidebar, it shrinks to one short bar per heading at the right
+     edge (the script below sets .rail). Hover or focus opens the full list over the figure. */
+  .toc { z-index: 5; }
+  .toc :is(.toc-title, a) { transition: color 0.2s ease; }
+  .toc a { position: relative; }
+  .toc a::after { content: ''; position: absolute; right: 0; top: 0.55em; width: 14px; height: 3px; border-radius: 2px; background: var(--line); opacity: 0; transition: opacity 0.2s ease; pointer-events: none; }
+  .toc li.d3 a::after { width: 9px; }
+  .toc a.active::after { width: 22px; background: var(--accent); }
+  .toc.rail:not(:hover, :focus-within) { pointer-events: none; }
+  .toc.rail:not(:hover, :focus-within) :is(.toc-title, a) { color: transparent; }
+  .toc.rail:not(:hover, :focus-within) ol { border-left-color: transparent; }
+  .toc.rail:not(:hover, :focus-within) a::after { opacity: 1; pointer-events: auto; }
+  .toc.rail:is(:hover, :focus-within)::before { content: ''; position: absolute; inset: -14px -18px; z-index: -1; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 10px 30px rgb(0 0 0 / 0.12); }
+  @media (prefers-reduced-motion: reduce) { .toc :is(.toc-title, a), .toc a::after { transition: none; } }
 
   .post-foot { padding-top: 24px; padding-bottom: 88px; }
   .post-foot > * { max-width: 720px; }
@@ -182,5 +197,25 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
       }
     }, { rootMargin: '-80px 0px -70% 0px' });
     links.forEach((_, id) => { const el = document.getElementById(id); if (el) observer.observe(el); });
+  }
+
+  // Shrink the sidebar to a rail while a wide figure is under it. Its layout box never changes, so the
+  // check doesn't flicker between the two states.
+  const toc = document.querySelector<HTMLElement>('.toc');
+  const wide = [...document.querySelectorAll<HTMLElement>('.spv :is(.bleed, .instr, .try)')];
+  if (toc && wide.length) {
+    let queued = false;
+    const update = () => {
+      queued = false;
+      const t = toc.getBoundingClientRect();
+      toc.classList.toggle('rail', wide.some((el) => {
+        const r = el.getBoundingClientRect();
+        return r.top < t.bottom && r.bottom > t.top && r.right > t.left;
+      }));
+    };
+    const queue = () => { if (!queued) { queued = true; requestAnimationFrame(update); } };
+    addEventListener('scroll', queue, { passive: true });
+    addEventListener('resize', queue);
+    update();
   }
 </script>
