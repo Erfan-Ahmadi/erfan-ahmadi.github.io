@@ -22,20 +22,16 @@ const TYPES = {
 
 const slugOf = (folder) => folder.replace(/^\d{4}-\d{2}-\d{2}-/, '');
 
-function isDraft(dir) {
-  const index = ['index.md', 'index.mdx'].map((f) => path.join(dir, f)).find((f) => fs.existsSync(f));
-  if (!index) return true;
-  const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(fs.readFileSync(index, 'utf8'));
-  return Boolean(frontmatter && /^draft:\s*true\b/m.test(frontmatter[1]));
-}
+// Only folders holding a post (drafts too: they're published at their link for proofreading).
+const isPost = (dir) => ['index.md', 'index.mdx'].some((f) => fs.existsSync(path.join(dir, f)));
 
-function findAssets(postsDir, { includeDrafts }) {
+function findAssets(postsDir) {
   if (!fs.existsSync(postsDir)) return [];
   const found = [];
   for (const entry of fs.readdirSync(postsDir, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
     const dir = path.join(postsDir, entry.name);
-    if (!includeDrafts && isDraft(dir)) continue;
+    if (!isPost(dir)) continue;
     for (const file of fs.readdirSync(dir)) {
       const ext = path.extname(file).toLowerCase();
       if (TYPES[ext] && file !== 'index.html') found.push({ slug: slugOf(entry.name), file, abs: path.join(dir, file), type: TYPES[ext] });
@@ -75,7 +71,7 @@ export default function postAssets() {
                 server.middlewares.use((req, res, next) => {
                   const match = /^\/blog\/([^/]+)\/([^/]+)$/.exec(decodeURIComponent((req.url ?? '').split('?')[0]));
                   if (!match) return next();
-                  const asset = findAssets(postsDir, { includeDrafts: true }).find((a) => a.slug === match[1] && a.file === match[2]);
+                  const asset = findAssets(postsDir).find((a) => a.slug === match[1] && a.file === match[2]);
                   if (!asset) return next();
                   serve(asset, req, res);
                 });
@@ -86,7 +82,7 @@ export default function postAssets() {
       },
       'astro:build:done': ({ dir, logger }) => {
         const outDir = fileURLToPath(dir);
-        const assets = findAssets(postsDir, { includeDrafts: false });
+        const assets = findAssets(postsDir);
         for (const asset of assets) {
           const dest = path.join(outDir, 'blog', asset.slug, asset.file);
           fs.mkdirSync(path.dirname(dest), { recursive: true });

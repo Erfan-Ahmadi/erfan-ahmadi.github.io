@@ -42,7 +42,7 @@ date: ${date}
 # coverAlt: ""
 # diagram: true             # Line-art cover on a light background: inverted in dark mode.
 tags: []
-draft: true                 # Only visible in \`npm run dev\`. Delete this line to publish.
+draft: true                 # Live at its link for proofreading, but not listed anywhere. Delete this line to publish.
 ---
 
 Start writing here. Markdown, $\\LaTeX$ math and fenced code blocks all work.

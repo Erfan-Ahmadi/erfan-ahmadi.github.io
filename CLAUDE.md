@@ -4,7 +4,7 @@ Erfan Ahmadi's blog about math, computer graphics and GPUs. Astro 7 static site,
 
 ## Commands
 
-- `npm run dev`: local server on http://localhost:4321 (shows drafts).
+- `npm run dev`: local server on http://localhost:4321 (lists drafts; in the built site drafts are live at their link but never listed or linked).
 - `npm run build`: production build into `dist/`, then `scripts/check-links.mjs` fails on broken internal links. Run it before committing.
 - `npm run new -- "Title"`: new draft post folder.
 - `npm run artifact -- <file.html> [slug]`: copy an HTML demo into a post folder and print its `<Artifact>` tag.

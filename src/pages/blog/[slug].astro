@@ -9,7 +9,7 @@ import Artifact from '../../components/Artifact.astro';
 import YouTube from '../../components/YouTube.astro';
 import avatar from '../../assets/avatar.jpg';
 import { SITE } from '../../site';
-import { getAllPosts, postUrl, readingMinutes, formatDate, seriesParts, type Post } from '../../lib/posts';
+import { getAllPosts, getListedPosts, isListed, postUrl, readingMinutes, formatDate, seriesParts, type Post } from '../../lib/posts';
 
 export async function getStaticPaths() {
   const posts = await getAllPosts();
@@ -21,11 +21,12 @@ const { post } = Astro.props;
 const { title, description, date, updated, cover, coverAlt, thumbnail, socialImage, tags, series, part, youtube, draft, unlisted } = post.data;
 const { Content, headings } = await render(post);
 
-const listed = (await getAllPosts()).filter((p) => !p.data.unlisted);
+const listed = await getListedPosts();
 const index = listed.findIndex((p) => p.id === post.id);
 const newer = index > 0 ? listed[index - 1] : undefined;
 const older = index >= 0 ? listed[index + 1] : undefined;
-const parts = seriesParts(listed, post);
+// A hidden post (draft, unlisted) still sees its own place in the series; listed posts never link to it.
+const parts = seriesParts(isListed(post) ? listed : [...listed, post], post);
 const toc = post.data.toc ? headings.filter((h) => h.depth === 2 || h.depth === 3) : [];
 const preview = socialImage ?? thumbnail ?? cover;
 const ogImage = preview ? (await getImage({ src: preview, width: 1200, format: 'jpeg' })).src : undefined;

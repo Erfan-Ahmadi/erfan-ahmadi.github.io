@@ -2,15 +2,18 @@ import { getCollection, type CollectionEntry } from 'astro:content';
 
 export type Post = CollectionEntry<'posts'>;
 
-/** Every post that gets a page: drafts only exist in `npm run dev`. */
+/** Every post that gets a page, drafts included: they're published at their link for proofreading. */
 export async function getAllPosts(): Promise<Post[]> {
-  const posts = await getCollection('posts', ({ data }) => import.meta.env.DEV || !data.draft);
+  const posts = await getCollection('posts');
   return posts.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 }
 
+/** Whether a post appears in lists, feeds, the sitemap and links from other posts. Drafts only do in `npm run dev`. */
+export const isListed = (post: Post) => !post.data.unlisted && (import.meta.env.DEV || !post.data.draft);
+
 /** Posts that appear in lists, feeds and the sitemap (newest first). */
 export async function getListedPosts(): Promise<Post[]> {
-  return (await getAllPosts()).filter((p) => !p.data.unlisted);
+  return (await getAllPosts()).filter(isListed);
 }
 
 export const postUrl = (post: Post) => `/blog/${post.id}/`;
