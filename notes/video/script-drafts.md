@@ -125,3 +125,9 @@ Later note:
 ```text
 for expansion, when camera moves, don't replay the animation allover again, count to targer numbers and stretch those outputs to match the new camera position
 ```
+
+Later note:
+
+```text
+the very first section I want to show the merged expansion and compaction without naming things, the prefix sum should be visible. and it should be dynamic as the camera moves around. and as soon as the code pops in it goes out and the code comes in. similar to what we currently have at the end but with no highlighting or extra explanations
+```

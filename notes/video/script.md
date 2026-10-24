@@ -5,10 +5,10 @@ The working script below has light edits; the original drafts, word for word, ar
 
 ## Part 1: the hook
 
-**1.** [Culling scene, full frame. Camera moving. No panel, no labels.]
+**1.** [The whole thing, with no names: the chained example from the end of the video, its rows on the left with their "prefix sum" bars, the scene on the right with the bunnies, all of it live as the camera moves around.]
 > If you're here, chances are you've seen this before. It's culling. The idea is simple: we want to filter out the objects that are outside the camera's view.
 
-**2.** [The CPU code slides in on the left.]
+**2.** [The rows slide away and the CPU code slides in on the left. The bunnies settle into plain circles; the camera keeps moving.]
 > On the CPU, it's easy: if an object is visible, push it to our list of visible objects.
 
 **3.** [The scene freezes. A debugger-style highlight steps through the loop, one object at a time: the for line, then the if line with a ring on the object being checked, then push_back for the visible ones, which fly into an `out` list under the code.]
