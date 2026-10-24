@@ -106,7 +106,7 @@ One press per sum, so each step is under your control. The sums are shown twice:
 > For now, let's sweep that under the rug and just accept that this prefix sum happens in parallel.
 
 **39.** [The aside goes and the full level-of-detail example pops up, rows and scene, under the name "Expansion". Three bunnies, the camera held still. One press per step from here.]
-> Btw, Congratulations, you now know what expansion is and how it works. Expansion is when each thread generates a different amount of work,  Here generating the triangles for the chose these levels of detail here. [GIVE EXAMPLES]
+> Btw, Congratulations, you now know what expansion is and how it works. Expansion is when each thread generates a different amount of work,  Here generating the triangles for the chosen levels of detail. [GIVE EXAMPLES]
 
 **40–43.** [Count, offset, spaces, output, one press each, with the first camera. No running sum here: a long "prefix sum" bar sits between count and offset, and the offsets just appear.]
 
@@ -146,7 +146,7 @@ Compaction and expansion share one scene: the same eight objects, the same color
 > and the second pass will expand and generate geometry for the appropriate LODs. And this is what actual real-time applications and games do.
 
 > [EXAMPLES]  
-> NOTICE how when an object goes out of sight it only affects the first pass at the top, but when we get closer to our objects more geometry gets generated at the bottom in sceond pass
+> NOTICE how when an object goes out of sight it affects the first pass at the top, but when we get closer to our objects more geometry gets generated at the bottom in sceond pass
 
 **55.** [The highlight goes and the camera starts roaming, as in beat 44, with the whole chain live: objects leave and enter the view (culled ones turn into dashed circles), the survivors' list and the triangle counts change, and the offsets and the output re-flow. It keeps running inside the aside card that follows, so something is moving while the question is talked over.]
 
