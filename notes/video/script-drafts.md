@@ -217,3 +217,9 @@ Later note:
 for the atomics, code on the left and takes less space
 remove the global memory grid thing at the end of the atomic section
 ```
+
+Later note:
+
+```text
+add prefix sum title in the presentation about prefix sum
+```

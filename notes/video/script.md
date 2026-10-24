@@ -63,7 +63,7 @@ The working script below has light edits; the original drafts, word for word, ar
 
 ## Part 3: the prefix sum
 
-One press per sum, so each step is under your control. The sums are shown twice: first as the running sum with its + signs, then as the chart.
+One press per sum, so each step is under your control. The sums are shown twice: first as the running sum with its + signs, then as the chart. The panel carries the title "Prefix sum · where to start writing", like the named parts after it.
 
 **20.** [The goal fades away. Three threads come in as colored boxes.]
 > Behind all of these is one simple idea: the prefix sum.
