@@ -110,7 +110,7 @@ One press per sum, so each step is under your control. The sums are shown twice:
 
 **40–43.** [Count, offset, spaces, output, one press each, with the first camera. No running sum here: a long "prefix sum" bar sits between count and offset, and the offsets just appear.]
 
-**44.** [The camera starts roaming and keeps going: closer first, then back and forth along the view and sideways, turning left and right, with periods that never line up. The panel stays and follows live: each count counts to its new value, the offsets, the spaces and the output stretch with it, objects keep their level even outside the view, since this part is expansion only, and the bunnies switch level with a pop. It runs until the next press, so there is time to talk over it.]
+**44.** [The camera starts roaming and keeps going: a dolly from the far place to the near one and back every 8 seconds, with as much of a turn as keeps all five objects in view (worked out once, per point of the dolly), so nothing is ever culled in this part. The panel stays and follows live: each count counts to its new value, the offsets, the spaces and the output stretch with it, and the bunnies switch level with a pop every few seconds. It runs until the next press, so there is time to talk over it.]
 
 ## Part 5: compaction, then the two chained
 
@@ -296,5 +296,5 @@ Decided:
 - Part 6 uses four clusters and eight lights (more lights than clusters). The lists stay as rows: no transposed table. In the app, M on Light clusters switches to this setup, and Controls has the histogram style ("How start is shown") for every example.
 - The material tiles beat uses every material's list, so a tile with two materials is in two lists, like a light in two clusters. M on Material tiles in the app flips to the one-mixed-list version if that reads better.
 - The light clusters in the overview (the tour at beat 10, the grid, the Binning card) are the same example as part 6: four clusters, eight lights, drawn with part 6's rows, which cycle on their own (marks, count, prefix sum, plop, output, about seven seconds, then again) while the lights keep moving.
-- Expansion only means no culling: in the expansion beats (39 to 44, and the level-of-detail tour) every object keeps its level even outside the view. The dashed 0 chips belong to compaction and to the chained example.
+- Expansion only means no culling: the camera paths of the expansion beats (39 to 44, and the level-of-detail tour) keep every object inside the view, so no count ever drops to 0 there. The dashed 0 chips belong to compaction and to the chained example, whose roam does cull.
 - The intro stays quiet: every name or number on screen has to serve a purpose, and here the purpose is a taste of where the pattern shows up, not following the algorithm. So there are no names on objects or chips, no distance numbers in LOD, no tile numbers, and no notes under the outputs. The count and start rows and the ribbons stay. Light clusters keeps its cluster numbers.

@@ -261,3 +261,10 @@ compaction + expansion is not doing the cull properly
 ```text
 here after countrig do an animation which highlights each count and then the corresponding cluster in the right hand, moving one at a time
 ```
+
+Later note:
+
+```text
+expansion case still buggy, it doesn't cull, also I need more visible changes when camera moves, so make the movement maybe faster or in a way that prefix sums change a bit more rapidly
+```
+(With the screenshot of a bunny outside the frustum still drawn and counted. Read together with "don't add culling when we're on expansion only": the roam must never put an object outside the view.)
