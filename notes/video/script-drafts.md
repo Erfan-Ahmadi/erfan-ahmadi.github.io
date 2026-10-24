@@ -223,3 +223,13 @@ Later note:
 ```text
 add prefix sum title in the presentation about prefix sum
 ```
+
+Later notes:
+
+```text
+in the expansion section after the intiial run when I hit next, it will go into a mode of moving the camera around and the left side becomes sync and updated, it doesn't have to be a single move and stop, it can move back and forth and look different directions. it gives me time to talk about things
+```
+
+```text
+the binning in the initial sections of overview of different usecases is not synced with our recent additions and updates to binning animation
+```

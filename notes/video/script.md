@@ -110,7 +110,7 @@ One press per sum, so each step is under your control. The sums are shown twice:
 
 **40–43.** [Count, offset, spaces, output, one press each, with the first camera. No running sum here: a long "prefix sum" bar sits between count and offset, and the offsets just appear.]
 
-**44.** [The camera moves closer. The panel stays: each count ticks up to its new value, and the offsets, the spaces and the output stretch along with it. The bunnies switch level with a pop.]
+**44.** [The camera starts roaming and keeps going: closer first, then back and forth along the view and sideways, turning left and right, with periods that never line up. The panel stays and follows live: each count counts to its new value, the offsets, the spaces and the output stretch with it, an object that leaves the view drops to 0, and the bunnies switch level with a pop. It runs until the next press, so there is time to talk over it.]
 
 ## Part 5: compaction, then the two chained
 
@@ -292,4 +292,5 @@ Decided:
 - Part 4 explains the parallel prefix sum first and ends on "you now know expansion"; it flows better that way.
 - Part 6 uses four clusters and eight lights (more lights than clusters). The lists stay as rows: no transposed table. In the app, M on Light clusters switches to this setup, and Controls has the histogram style ("How start is shown") for every example.
 - The material tiles beat uses every material's list, so a tile with two materials is in two lists, like a light in two clusters. M on Material tiles in the app flips to the one-mixed-list version if that reads better.
+- The light clusters in the overview (the tour at beat 10, the grid, the Binning card) are the same example as part 6: four clusters, eight lights, drawn with part 6's rows, which cycle on their own (marks, count, prefix sum, plop, output, about seven seconds, then again) while the lights keep moving.
 - The intro stays quiet: every name or number on screen has to serve a purpose, and here the purpose is a taste of where the pattern shows up, not following the algorithm. So there are no names on objects or chips, no distance numbers in LOD, no tile numbers, and no notes under the outputs. The count and start rows and the ribbons stay. Light clusters keeps its cluster numbers.
