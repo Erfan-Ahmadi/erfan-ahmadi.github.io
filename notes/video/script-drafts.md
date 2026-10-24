@@ -131,3 +131,9 @@ Later note:
 ```text
 the very first section I want to show the merged expansion and compaction without naming things, the prefix sum should be visible. and it should be dynamic as the camera moves around. and as soon as the code pops in it goes out and the code comes in. similar to what we currently have at the end but with no highlighting or extra explanations
 ```
+
+Later note:
+
+```text
+for the first beat, the idea with the camera should be the main focus and centered, and those merged prefix sum stuff should be on the right and smaller, they go out from the right and code comes in from the left
+```
