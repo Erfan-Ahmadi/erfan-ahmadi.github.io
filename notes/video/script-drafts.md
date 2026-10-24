@@ -48,3 +48,16 @@ let me show you that with a simple chart, the first item is 0, the next is 0+5, 
 [then the vertical bar becoming the offsets animation we already have]
 see how changing the count on the first object affects the offsets of everything that comes after it [the first one changing count and the offsets of the next 2-3 items highlighted with marker]
 ```
+
+## Part 3: notes on the second pass
+
+```text
+the offsets are not poitning to the start of their area for some reason. minor ux issue
+I need to see the + sign in the animation happening. the actual running sum which we already have animation of.  I need to control each step. 
+make it so that it doesn't jump from 5 to 7 but counts up and down and the offsets are moving.
+also I'm thinking of showing these as generating N triangles, so each thread should show N triangles and then small triangle inside each little box in the chart. the first changing number should be more dynamic and smoother for better understanding.
+
+I added some minor changes to transcript. another way to say the last sentence: "A thread can't know where to start until it knows how much room every thread before it needs." let's use this.
+
+based on the transcript so I need to show the sum first.. and then the chart, so the sum animation happens twice. take transcript into account when placing the animations
+```

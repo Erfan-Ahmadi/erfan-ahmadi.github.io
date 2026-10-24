@@ -63,29 +63,37 @@ The working script below has light edits; the original drafts, word for word, ar
 
 ## Part 3: the prefix sum
 
+One press per sum, so each step is under your control. The sums are shown twice: first as the running sum with its + signs, then as the chart.
+
 **20.** [The goal fades away. Three threads come in as colored boxes.]
 > Behind all of these is one simple idea: the prefix sum.
 
-**21.** [Each box shows its count inside it: 5, 3 and 6.]
-> If you don't know what a prefix sum is, the idea is simple. Once each thread has counted how many items it will write,
+**21.** [Each box shows its count, and the triangles it generates appear under it: 5, 3 and 6.]
+> If you don't know what a prefix sum is, the idea is simple. Once each thread has counted how many triangles it will generate,
 
 **22.** [An empty start row appears under the boxes.]
-> each thread's start is the sum of all the counts that came before it. That sum tells the thread where to start writing. It has to include everything before it, because every thread before it takes up room in the output, so where a thread starts depends on all of them.
+> every new item becomes the sum of what came before it.
 
-(another way to say the last sentence: "A thread can't know where to start until it knows how much room every thread before it needs.")
+**23–26.** [One press per sum, the running sum with its + signs: 0 drops into the first cell, then 0 + 5, then 5 + 3, then 8 + 6 = 14, the total. After each one the cells that were used stay marked until the next press.]
 
-**23.** [The chart: one bar per thread, each one the bar before it plus the next count, building one at a time. The start row fills in: 0, 5, 8, and the total, 14.]
-> Let me show you with a simple chart. The first one starts at 0. The next at 0 + 5. Then 5 + 3. Then 8 + 6.
+**27.** [The empty output track appears at the bottom.]
+> And this sum tells each thread where to start writing. A thread can't know where to start until it knows how much room every thread before it needs.
 
-**24.** [The bars tip over into the output. Each thread's space begins at its sum, with an arrow from its start.]
+**28.** [The start row clears and the chart's base line appears.]
+> Let me show you that with a simple chart.
+
+**29–32.** [One press per bar. Each bar is the one before it plus the next count, with a triangle in every cell, and the start row fills in again: 0, then 0 + 5, then 5 + 3, then 8 + 6 = 14.]
+> The first one is 0. The next is 0 + 5. Then 5 + 3. Then 8 + 6.
+
+**33.** [The bars tip over into the output. Each thread's space begins at its sum, with an arrow from its start cell to the start of the space.]
 > (line to write) For example: lay the bars down, and each sum marks exactly where its thread starts writing.
 
-**25.** [The first count grows from 5 to 7. The starts after it change (7, 10 and the total, 16) and get marked one after another, each with its space in the output.]
+**34.** [The first count moves up and down smoothly between 3 and 8, its triangles growing and shrinking. The starts after it (and the total) are marked and keep changing, and their spaces in the output slide with them. It keeps going until the next press.]
 > See how changing the count of the first one shifts the start of everything that comes after it.
 
 ## Presentation mode
 
-Built into the artifact, beats 1 to 25. Start it with V, the Present button, or `#present` at the end of the URL.
+Built into the artifact, beats 1 to 34. Start it with V, the Present button, or `#present` at the end of the URL.
 
 Keys: → (or Enter, ↓, Page Down) next beat · ← back · Space pause and resume (everything holds still; moving to another beat resumes) · R replay the beat · I beat counter · F fullscreen · Esc exit.
 
@@ -99,5 +107,5 @@ Optional later: one press per card in beat 16, naming each as it appears, instea
 Decided:
 - Beat 7 shows the goal (a clean burst), with no "chaos" beat before it.
 - Beat 16 picks culling, level of detail and light clusters out of the grid; the other examples fade out. The grid doesn't sort itself into groups.
-- The prefix sum uses three threads with fixed counts (5, 3, 6) so the numbers on screen are the ones being said; in beat 25 the first count grows to 7.
+- The prefix sum uses three threads with fixed counts (5, 3, 6) so the numbers on screen are the ones being said. Each sum is one press, in both the running sum and the chart. In beat 34 the first count moves up and down on its own.
 - The intro stays quiet: every name or number on screen has to serve a purpose, and here the purpose is a taste of where the pattern shows up, not following the algorithm. So there are no names on objects or chips, no distance numbers in LOD, no tile numbers, and no notes under the outputs. The count and start rows and the ribbons stay. Light clusters keeps its cluster numbers.
