@@ -147,7 +147,7 @@ Compaction and expansion share one scene: the same eight objects, the same color
 
 ## Part 6: binning
 
-Binning uses the light clusters with four clusters and eight lights, so there are more lights than clusters. The point of the part is that the prefix sum runs over the per-cluster counts, not over the inputs. The rows use the histogram style: a bar per cluster, then each bar takes the bars before it, so the last bar already has the output's layout. The lights move only while the scene is alone (beat 57) and hold still from the moment the rows come in.
+Binning uses the light clusters with four clusters and eight lights, so there are more lights than clusters. The point of the part is that the prefix sum runs over the per-cluster counts, not over the inputs. The rows are the presentation's own drawing, not the app's table: a row of threads along the top, one list per cluster under it, and the counting, the prefix sum and the offsets right where the lists are. The bars are numbered by list, with no colors. The lights move only while the scene is alone (beat 57) and hold still from the moment the rows come in.
 
 **55.** [The combined example shrinks into a card on the left, still showing its result.]
 > Now that you understand how expansion and compaction generate a variable amount of output, you might be wondering what happens when there is more than one output to push back into.
@@ -165,33 +165,73 @@ Binning uses the light clusters with four clusters and eight lights, so there ar
 > and we issue one thread per light.
 
 **60.** [A thread per light: a chip flies from each light in the scene into a row of thread blocks along the top of the card.]
-> Now let's look at it the other way around.
-
-**61.** [The swap: the cluster numbers go up to head the columns, the thread chips go down the side, one per row, and the table forms under them. Each light's marks appear in the clusters it touches.]
 > This is where most people get confused. Unlike compaction or expansion, where the prefix sum runs over the inputs,
 
-**62.** [Count per cluster: the marks of each column drop into its count cell, and a histogram grows right under the counts, one bar per cluster, a cell per light.]
-> here we count how many lights fall in each cluster. This is called histogramming.
+**61.** [Each thread drops a mark into every list it belongs to, under its own column.]
+> each light finds the clusters it touches,
 
-**63.** [The prefix sum runs over the counts: the "prefix sum" bar appears, the histogram slides under the offset row, and each bar takes the bar above it, so the bars get longer down the chart by construction. An offset fills in as its row completes. One row per press-free second.]
+**62.** [The lists make room on their right. Each list counts its marks into a cell at its end, the total under them, and a histogram grows beside the counts: one numbered bar per list, a cell per light.]
+> and we count how many lights fall in each cluster. This is called histogramming.
+
+**63.** [A vertical "prefix sum" box comes up between the counts and the bars, and the prefix sum runs down the bars: each bar takes the bar above it, so the bars get longer down the chart by construction. One row per second.]
 > And we do the prefix sum over the counts themselves. It runs over the clusters, not the lights, so its size is fixed and known up front; here it is four numbers.
 
-**64.** [The bottom bar, which already has the output's layout, slides down into the output and its pieces become the dashed spaces, each offset pointing at its own.]
+**64.** [The bottom bar, which already has the output's layout, plops down into the output and its pieces become the dashed spaces, numbered by cluster, each with its offset under its left edge.]
 > So the bottom bar becomes our offsets.
 
-**65.** [Output: every light flies into its clusters' spaces at once, and the ribbons come in.]
+**65.** [Output: every light flies into its clusters' spaces at once, with a bracket under each cluster's range.]
 > Once we know the offsets, we run our threads once more and each light places itself in the right list. Note that this time the order inside a list doesn't matter much, so an atomic counter per cluster could place the lights instead. If that doesn't make sense yet, don't worry; we'll come back to atomics.
 
-**66.** [Fade to the material tiles, "Binning · material tiles", which run through the same steps on their own in about three seconds: a tile with several materials goes into each material's list.]
+**66.** [Fade to the material tiles, "Binning · material tiles": the same rows, six tiles and three lists, with the marks, the counting, the prefix sum, the plop and the output running on their own in about six seconds. A tile with several materials goes into each material's list.]
 > Another example of binning is assigning materials to each tile. You usually see this pattern in deferred shading pipelines.
 
 Fact check for this part:
 - "This prefix sum is usually much cheaper because there are a lot more lights than clusters": the scan's length is the number of bins, so it is cheaper than a scan over the inputs only when there are fewer bins than inputs. That holds for material lists (a handful of shaders against thousands of tiles) and for the example here (four clusters, eight lights), but not in general for light clusters: a 16 × 8 × 24 grid has about 3000 clusters, often more than the lights. The safe claim is the one in beat 63: the scan runs over the bins, whose number is fixed and known up front.
 - "Atomics instead of a prefix sum" for binning: an atomic counter per cluster places the lights in any order, but the lists then need either a fixed capacity per cluster or a base offset that still comes from a prefix sum (or from one atomic allocation of the cluster's whole range). Beat 65 says "could place the lights" and leaves the rest to the atomics part.
 
+## Part 7: using the offsets, push or pull
+
+Eight threads with fixed counts (1, 2, 8, 1, 2, 1, 1, 2; total 18), one of them with eight items. Push on the left, pull on the right, the same inputs and offsets on both; a line of text comes in under a card with each point.
+
+**67.** [The material tiles shrink into a card on the left.]
+> Now, before I end this video: for the more advanced viewers, I want to touch on a few nuances I purposely left out.
+
+**68.** ["Using the offsets" / "Who moves the data: the input, or the output?" / "Push, or pull."]
+> I talked about using the prefix sum to compute offsets, but not about how to actually use those offsets to fill, or to walk, the compact output. There are two ways to go about it: push style and pull style.
+
+**69.** [Two cards: Push ("the inputs write") and Pull ("the outputs read"), each with the eight threads and their counts, the offset row with the total, and an empty output row.]
+
+**70.** [Push: every thread writes its items at its offset, one item per tick, in lockstep. The thread with eight items keeps going while the others, done after one or two, dim and wait. Line: "Each input thread writes its items at its offset."]
+> Push style is when each input thread writes its values at its offset in the output.
+
+**71.** [A dashed frame around the output row: "buffer: 18 slots". Line: "Needs a buffer for all the outputs."]
+> This usually needs extra memory, a buffer for the outputs,
+
+**72.** [The writes play again, and under the output a wave fills in tick by tick: one lane per thread, a cell per item written, dashed cells where a lane sits idle. One lane is busy for eight ticks, the rest for one or two. Line: "A wave waits for its longest thread."]
+> and the work is imbalanced across a wave: if one thread has eight items to add and the others one or two, they all wait for it to finish.
+
+**73.** [Pull: the output row becomes a row of threads, one per slot, each marked "?". Line: "A thread per output asks: which input am I from?"]
+> With pull style, you run the next batch of threads over the outputs instead, and each thread asks itself: which input do I belong to?
+
+**74.** [One output thread (slot 7) searches the offsets: the middle entry lights up, "12 > 7", the upper half dims; "3 ≤ 7"; "11 > 7"; its input is 2, and its item is 7 − 3 = 4. An arrow from input 2 to the slot, which takes its color. Then every thread resolves at once: ribbons from each input to its slots. Line: "A binary search over the offsets: an upper bound."]
+> Then it knows its local offset and pulls the data. Finding the input usually takes a binary search over the offsets, technically an upper bound.
+
+**75.** [The pull wave: one lane per output thread, three or four muted cells for the search steps and one colored cell for the read; every lane about the same. Line: "More work per thread, less memory, balanced."]
+> So it is more computation per thread, but it needs less memory and the work is balanced.
+
+**76.** [Line: "The second pass of the chain can pull from the first."]
+> It is especially good for the compaction-then-expansion chain we just saw: the expansion pass can pull from the compaction pass's result instead of having it pushed out.
+
+Fact check for this part:
+- Push needs the expanded buffer; pull needs only the offsets (plus the inputs), because each output thread recomputes where it comes from. Both need the total, to size the buffer or the next dispatch.
+- Wave imbalance: lanes in a wave run in lockstep, so a loop with a per-thread trip count runs as many iterations as the longest lane, with the finished lanes masked off. "They all wait for it" is accurate.
+- The search: with exclusive offsets start[0..n] plus the total as start[n], the owner of output j is the last i with start[i] ≤ j, which is `upper_bound(start, j) − 1`. A lower bound is wrong when a count is 0 (two inputs share the same start). With inclusive sums (ends), it is `upper_bound(end, j)`. So "an upper bound" is the right word. A fixed-trip-count search over n + 1 entries takes ⌈log₂(n + 1)⌉ steps for every thread, 4 here; the shown search for slot 7 stops after 3 compares, and the wave shows 3 or 4 per lane.
+- "More balanced" is right; "faster" is not claimed and should not be: pull launches one thread per output (18 here against 8), so it does more total work, in exchange for no idle lanes and no buffer. In the chain, the win is in the expansion pass (many items per input), not in the compaction pass (0 or 1 item per input), where push is fine.
+- Related reading if a link is wanted: this is the "load-balancing search" / "expand" pattern (ModernGPU calls it load-balancing search; it is also how vectorized binary search over a scan is done in GPU libraries).
+
 ## Presentation mode
 
-Built into the artifact, beats 1 to 66. Start it with V, the Present button, or `#present` at the end of the URL.
+Built into the artifact, beats 1 to 76. Start it with V, the Present button, or `#present` at the end of the URL.
 
 Keys: → (or Enter, ↓, Page Down) next beat · ← back · Space pause and resume (everything holds still; moving to another beat resumes) · R replay the beat · I beat counter · F fullscreen · Esc exit.
 
@@ -208,6 +248,6 @@ Decided:
 - Row labels are named for their context: the row is "prefix sum" in part 3, where that is what is being explained, and "offset" from part 4 on. From part 4 on a "prefix sum" bar sits between count and offset, with no word on how it is computed; the running sum is only shown in part 3.
 - The prefix sum uses three threads with fixed counts (5, 3, 6) so the numbers on screen are the ones being said. Each sum is one press, in both the running sum and the chart. In beat 34 the first count steps up and down on its own, one at a time.
 - Part 4 explains the parallel prefix sum first and ends on "you now know expansion"; it flows better that way.
-- Part 6 uses four clusters and eight lights (more lights than clusters). In the app, M on Light clusters switches to this setup, and Controls has the histogram style ("How start is shown") for every example.
+- Part 6 uses four clusters and eight lights (more lights than clusters). The lists stay as rows: no transposed table. In the app, M on Light clusters switches to this setup, and Controls has the histogram style ("How start is shown") for every example.
 - The material tiles beat uses every material's list, so a tile with two materials is in two lists, like a light in two clusters. M on Material tiles in the app flips to the one-mixed-list version if that reads better.
 - The intro stays quiet: every name or number on screen has to serve a purpose, and here the purpose is a taste of where the pattern shows up, not following the algorithm. So there are no names on objects or chips, no distance numbers in LOD, no tile numbers, and no notes under the outputs. The count and start rows and the ribbons stay. Light clusters keeps its cluster numbers.

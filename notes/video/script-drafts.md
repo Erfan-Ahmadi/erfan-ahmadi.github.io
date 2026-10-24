@@ -163,3 +163,33 @@ another example of binning is assigning materials to each tile. you usually see 
 ```text
 try to publish gradually before working on other items/tasks I've given you so I can review faster
 ```
+
+Later notes:
+
+```text
+for the binning I don't want them transposed. I want them right upfront. let me do a drawing. kind of like this to the right, but you can make it more compact to save space. then the bottom one will plop down to be the offsets dashed thing we have now. also no need for seperate colors now, just number them instead with 0 1 2 3
+```
+(The drawing: the thread row along the top, the four lists as rows numbered 0 to 3, and to the right of each list a bar: the first short, each next one the one above it plus its own piece.)
+
+```text
+also show the total count to the right of the table and the prefix sum vertical bar after this table and before the prefix sum visualization
+```
+
+## Part 7, push or pull (the user's draft)
+
+```text
+ok now help me write the next sections. I need help with phrasing things.  (please fact check as well)
+
+Now before I end this video. For more advanced viewers I want to touch up on few nuances I had purposefully omitted.
+I had talked about how to use prefix sum to calculate offsets, but I didn't go into how to actually use those offsets to either populate or iterate over your compact output.
+there are two ways to go about it. Push style vs pull style. [push on the left, pull on the right, with text appearing on each point I speak about)
+Push style is when each input thread writes it's values to the appropriate offset in the output.
+this usually requires an additional memory to store the outputs. and you get imbalanced workloads across a wave if one thread has many things to add and others have to wait for it to finish (example of 8 waves in a row, one has 8 items in it's column, other only 1-2).
+
+wth pull style, you run the next batch of threads iterating over the outputs insteads. and each thread will ask itself, which input do I belong to? and then known it's local offset to PULL the data. this usually involves each thread doing a binary search or more technically correct upper bound to find it's parent. so it's more calculation but less memory requirements and more balanced workloads and specially good for the compaction expansion chain we just saw where the expansion pass can PULL the compaction pass's result
+
+generate animations for above as well please
+
+
+next point is atomics vs prefix sum
+```
