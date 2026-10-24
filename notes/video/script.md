@@ -65,7 +65,7 @@ The working script below has light edits; the original drafts, word for word, ar
 
 Built into the artifact, beats 1 to 19. Start it with V, the Present button, or `#present` at the end of the URL.
 
-Keys: → (or Space, Enter, ↓, Page Down) next beat · ← back · R replay the beat · I beat counter · F fullscreen · Esc exit.
+Keys: → (or Enter, ↓, Page Down) next beat · ← back · Space pause and resume (everything holds still; moving to another beat resumes) · R replay the beat · I beat counter · F fullscreen · Esc exit.
 
 - Stepping back shows a beat the way it ends; stepping forward plays it.
 - Asides (like 18 and 19) take two presses: first whatever is on screen shrinks into a card on the left and keeps running, then a title and lines come in on the right, the way 3Blue1Brown steps back to talk over a concept. Any later beat can reuse it with a title and a few lines.
