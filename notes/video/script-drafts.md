@@ -487,3 +487,7 @@ I still see the weird empty output when we're on "where did I come from"
 ```text
 where are we with the script page?
 ```
+
+```text
+for the lines have an option to just scroll and not fade out anything, all colored properly. don't have titles, I know the flow
+```
