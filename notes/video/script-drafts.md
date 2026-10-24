@@ -293,3 +293,17 @@ write beneath the selected index in the pull method. Where do I come from? (tran
 ```text
 for the next section do  writing in the appropriate section: "when order is important" and "when order is arbitrary"
 ```
+
+Later notes:
+
+```text
+put the triangles with similar color inside the blocks, and the count will be numbers instead
+```
+
+```text
+I need it to be visible that in a row after prefix sum we have threads and things should compare left to right with symmetry, code should be  below the last row and pull inside the pull area and push inside the push area
+```
+
+```text
+the number of threads should be right next to the threads tehmselves. so on the left side we have 4 threads, right side we have 12
+```

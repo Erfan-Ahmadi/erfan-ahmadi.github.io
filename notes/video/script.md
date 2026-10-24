@@ -194,7 +194,7 @@ Fact check for this part:
 
 ## Part 7: using the offsets, push or pull
 
-Four objects with fixed counts (1, 2, 6, 3; total 12), drawn as in the prefix-sum part: a chip, its triangles under it as the count, and the prefix sum under those with its total. Push comes first, alone, with its code; then pull comes in beside it with its code under push's. No text lines under the cards: the points are spoken. Each card says its thread count under its name: "threads = objects = 4" for push, "threads = sum of counts = 12" for pull.
+Four objects with fixed counts (1, 2, 6, 3; total 12). Push and pull are two mirror cards with the same rows at the same heights, so they compare left to right: object (a chip with a triangle in it), count (numbers), prefix sum (with its total), thread, output, and each side's code under its own rows. The thread row is where the two differ: push has one thread per object, under its object, with "4 threads = objects" written right after them; pull has one per output, over its slot, with "12 threads = total". Push sits in the left half from the start; pull slides into the right half when its turn comes. No text lines: the points are spoken.
 
 **68.** [The material tiles shrink into a card on the left.]
 > Now, before I end this video: for the more advanced viewers, I want to touch on a few nuances I purposely left out.
@@ -202,24 +202,24 @@ Four objects with fixed counts (1, 2, 6, 3; total 12), drawn as in the prefix-su
 **69.** ["Using the offsets" / "Who moves the data: the input, or the output?" / "Push, or pull."]
 > I talked about using the prefix sum to compute offsets, but not about how to actually use those offsets to fill, or to walk, the compact output. There are two ways to go about it: push style and pull style.
 
-**70.** [Push alone: on the left its code, a thread per object with a loop over its count writing at `prefix[i] + k`; on the right the Push card with the four objects, their triangles, the prefix sum, and an empty output.]
+**70.** [Push alone, in the left half: the four objects, their counts, the prefix sum, the four threads under their objects, an empty output, and under it all the push code: a thread per object with a loop over its count writing at `prefix[i] + k`.]
 > Push style is when each input thread writes its values at its offset in the output.
 
-**71.** [Every thread writes its triangles at its offset, one per tick, in lockstep. The thread with six keeps going while the others, done after one to three, dim and wait.]
+**71.** [Every thread writes its triangles at its offset, one per tick, in lockstep, from its thread block down into the output. The thread with six keeps going while the others, done after one to three, dim and wait.]
 
 **72.** [A dashed frame around the output: "buffer: 12 slots".]
 > This usually needs extra memory, a buffer for all the outputs,
 
-**73.** [The writes play again, and under the output one wave fills in tick by tick: a lane per thread, a cell per triangle written, dashed cells where a lane sits idle. One lane is busy for six ticks, the rest for one to three.]
+**73.** [The writes play again, and at the bottom of the card one wave fills in tick by tick: a lane per thread, a cell per triangle written, dashed cells where a lane sits idle. One lane is busy for six ticks, the rest for one to three.]
 > and the work is imbalanced across a wave: if one thread has six triangles to write and the others one or two, they all wait for it to finish.
 
-**74.** [Pull comes in: push's code moves up and pull's code appears under it; the Push card shrinks to the left and its wave goes; the Pull card slides in on the right with the same object, count and prefix-sum rows, and under them a row of 12 threads, one per output, each marked "?".]
+**74.** [Pull slides into the right half, the mirror of push: the same object, count and prefix-sum rows, then 12 threads marked "?", one over each output slot, "12 threads = total" after them, an empty output, and the pull code under it. Push's wave goes.]
 > With pull style, you run the next batch of threads over the outputs instead: as many threads as the total.
 
 **75.** [One thread is picked out and framed: "idx = 7", and under it "Where do I come from?"]
 > All this thread knows is that it is the 7th triangle to render. Its data has to be pulled from the object it belongs to, so it needs to find out where it comes from.
 
-**76.** [The search: the prefix-sum cells are compared with 7, the middle first, "3 ≤ 7", then "12 > 7", then "9 > 7", the losing halves dimming; the answer is object 2, triangle 7 − 3 = 4. An arrow from object 2 to the thread, which takes its color. Then every thread resolves at once: ribbons from each object to its range.]
+**76.** [The search: the prefix-sum cells are compared with 7, the middle first, "3 ≤ 7", then "12 > 7", then "9 > 7", the losing halves dimming; the answer is object 2, triangle 7 − 3 = 4. An arrow from object 2 to the thread, which takes its color and writes its triangle into the slot under it. Then every thread resolves at once: ribbons from each object to its threads, and the output fills.]
 > One way to do that is a binary search over the prefix sums, technically an upper bound: it finds the object, and the offset gives the triangle within it. So it is more computation per thread, but it needs less memory and the work is balanced, and it is especially good for the compaction-then-expansion chain we just saw: the expansion pass can pull from the compaction pass's result.
 
 Fact check for this part:
