@@ -54,15 +54,19 @@ The working script below has light edits; the original drafts, word for word, ar
 > All of them come down to three versions of one idea: compaction, expansion and binning.
 
 **17.** [The cards keep looping.]
-> I'm not going to go into shader code or implementation details. My goal is to show you this pattern the clearest way I know how, so that next time you run into a problem like this, you'll recognize it right away and know exactly what to do.
+> I'm not going to go into shader code or implementation details.
+
+**18.** [Aside: everything on screen shrinks, keeping its shape, into a card on the left and keeps running. On the right: "Goal", then "Recognize the patterns".]
+> My goal is to show you this pattern the clearest way I know how, so that next time you run into a problem like this, you'll recognize it right away and know exactly what to do.
 
 ## Presentation mode
 
-Built into the artifact, beats 1 to 17. Start it with V, the Present button, or `#present` at the end of the URL.
+Built into the artifact, beats 1 to 18. Start it with V, the Present button, or `#present` at the end of the URL.
 
 Keys: → (or Space, Enter, ↓, Page Down) next beat · ← back · R replay the beat · I beat counter · F fullscreen · Esc exit.
 
 - Stepping back shows a beat the way it ends; stepping forward plays it.
+- Aside beats (like 18): whatever is on screen shrinks into a card on the left and keeps running, while a title and lines come in on the right, the way 3Blue1Brown steps back to talk over a concept. Any later beat can reuse it with a title and a few lines.
 - Every start builds the scenes fresh, so each take begins the same way. To redo a take from the top, press Esc and then V.
 - The key list shows at the bottom for the first 3 seconds after starting; start recording after it fades.
 
