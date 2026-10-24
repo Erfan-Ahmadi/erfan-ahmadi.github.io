@@ -233,3 +233,31 @@ in the expansion section after the intiial run when I hit next, it will go into 
 ```text
 the binning in the initial sections of overview of different usecases is not synced with our recent additions and updates to binning animation
 ```
+
+Later notes:
+
+```text
+don't add culling when we're on expansion only
+```
+
+```text
+before compaction + expanson pass gets aside. you need to hide the highlight and let the camera freeroam with synced visualization that keep on playing after minimization, this keeps the eyes engaged when I'm speaking
+```
+
+```text
+here show the index undeneath that idx=7, and then pause and then next navigation will start doing the binary search
+```
+
+```text
+here remove the prefix sum. make another example, the right side should show a freezed camera frame for culling. then with next navigation it will give it's place to the prefix sum where we comapre them side by side:
+left side shows atomics, when order doesn't matter, left side, when order matters . and shows all frames consistent
+```
+(The drawing: the "prefix sum" row crossed out, and the two atomic frames bracketed with the word "order".)
+
+```text
+compaction + expansion is not doing the cull properly
+```
+
+```text
+here after countrig do an animation which highlights each count and then the corresponding cluster in the right hand, moving one at a time
+```
