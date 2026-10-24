@@ -1,6 +1,6 @@
 ---
 title: "GPU-Driven Anything"
-description: "Culling, level of detail, light clusters, particles, splats: under all of them is one question, where does each thread write? One pattern answers it: count, prefix sum, write."
+description: "There is a pattern underneath some of the most important graphics techniques. Culling, level of detail, light clusters, particles, splats: one question, where does each thread write, and one answer: count, prefix sum, write."
 date: 2026-10-24
 # youtube: VIDEO_ID
 tags: ["GPU-Driven", "Compute", "Shaders"]
@@ -10,9 +10,9 @@ readingTime: 8
 draft: true
 ---
 
-On the CPU, filtering a list is one line: if the object is visible, `push_back` it. On the GPU you give every object its own thread, and that line is gone. A hundred thousand threads all want to write to the same list, in order, with no gaps, and none of them knows where its place is.
+There is a pattern underneath some of the most important graphics techniques. Culling, level of detail, light clusters, particle systems, marching squares, Gaussian splatting: they look like different problems, but in each one a hundred thousand GPU threads want to write into one list, in order, with no gaps, and none of them knows where its place is.
 
-The answer to that one question is hiding inside a lot of graphics techniques: culling, level of detail, light clusters, particle systems, vector graphics, marching squares, Gaussian splatting. This video is about seeing the pattern, so that next time you run into it you recognize it right away and know exactly what to do.
+On the CPU that is one line: if the object is visible, `push_back` it. On the GPU every object gets its own thread, and that line is gone. This video is about the pattern that replaces it, so that next time you run into it you recognize it right away and know exactly what to do.
 
 ## Chapters
 
@@ -49,9 +49,20 @@ The two chain: compact first, expand only what survived, and the second pass can
 
 **Atomics instead?** One counter, every visible thread adds to it and writes at the value it gets back. Perfectly compact, but in the order the threads happened to reach the counter, which changes from frame to frame. When order matters, the prefix sum gives the same output every frame.
 
-## Further reading
+## Prefix sum resources
 
-- Parallel prefix sum: [GPU Gems 3, chapter 39](https://developer.nvidia.com/gpugems/gpugems3/part-vi-gpu-computing/chapter-39-parallel-prefix-sum-scan-cuda), and Merrill and Garland's [Single-pass Parallel Prefix Scan with Decoupled Look-back](https://research.nvidia.com/publication/2016-03_single-pass-parallel-prefix-scan-decoupled-look-back).
-- The pull side of expansion is the load-balancing search in [ModernGPU](https://moderngpu.github.io/loadbalance.html).
+Roughly in the order I would read them:
+
+- [Prefix sum on Wikipedia](https://en.wikipedia.org/wiki/Prefix_sum): the serial version and the two classic parallel ones.
+- [GPU Gems 3, chapter 39: Parallel Prefix Sum (Scan) with CUDA](https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch39.html) (Harris, Sengupta, Owens, 2007): the classic work-efficient scan, with code, and compaction as an application.
+- [Prefix Sums and Their Applications](https://www.cs.cmu.edu/~scandal/papers/CMU-CS-90-190.html) (Blelloch, 1990): where the all-prefix-sums idea and its many uses come from.
+- [Data Parallel Algorithms](https://doi.org/10.1145/7902.7903) (Hillis and Steele, 1986): the simple log-step scan.
+- [Scan Primitives for GPU Computing](https://diglib.eg.org/handle/10.2312/EGGH.EGGH07.097-106) (Sengupta, Harris, Zhang, Owens, 2007): scan and segmented scan as GPU building blocks.
+- [Single-pass Parallel Prefix Scan with Decoupled Look-back](https://research.nvidia.com/publication/2016-03_single-pass-parallel-prefix-scan-decoupled-look-back) (Merrill and Garland, 2016): the state of the art, the one inside CUB.
+- [Prefix sum on Vulkan](https://raphlinus.github.io/gpu/2020/04/30/prefix-sum.html) (Raph Levien, 2020) and [Prefix sum on portable compute shaders](https://raphlinus.github.io/gpu/2021/11/17/prefix-sum-portable.html) (2021): decoupled look-back in a compute shader, and what it takes to run it everywhere.
+- [GPUPrefixSums](https://github.com/b0nes164/GPUPrefixSums) (Thomas Smith): a survey of implementations in HLSL, CUDA and WGSL, from the wave to the whole device.
+- [Efficient Stream Compaction on Wide SIMD Many-Core Architectures](https://diglib.eg.org/handle/10.2312/EGGH.HPG09.159-166) (Billeter, Olsson, Assarsson, 2009): compaction built on a scan.
+- [WavePrefixSum](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/waveprefixsum) in HLSL: the scan within one wave, one intrinsic.
+- The pull side of expansion is the [load-balancing search in ModernGPU](https://moderngpu.github.io/loadbalance.html).
 
 Find more on [my YouTube channel](https://www.youtube.com/@ErFunRender).
