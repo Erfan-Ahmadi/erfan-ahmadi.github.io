@@ -108,3 +108,14 @@ the merging needs to be more smooth and items already in screen need to be place
 oh and for previous animation for the prefix sum. instead of start write ` prefix sum` be careful about annotations like this being properly named to the context they are in
 for compaction make the full algorithm show first then navigatable options to highlight outputs and inputs when we have the full version and ribbons
 ```
+
+## Part 5, rewritten directions
+
+```text
+for compaction animations let me rewrite cause you don't know what's in my head.
+both compaction and expansion near the end, I don't want the sum + animation, the point was shown before, I want a long bar writing "prefix sum" similar to what we did by abstracting the complex network.
+for compaction, I want the first view to be object and count and highlighting visible and invisible ones with 1 and then 0, then show algorithm run without the sum and the arrows poitning to the offsets becoming ribbons then highlight output then highlight inputs.
+
+and for the merge, we should only show the first row above. also I don't want two different sections (it seems like two cards stacked on another), It should be 1 unified one. 
+the next navigation will very quickly run the algorithm (without the sum) in 1-2 seconds to get culled output, and then the next run will work on those outputs to generate lods (again quickly)
+```

@@ -108,49 +108,48 @@ One press per sum, so each step is under your control. The sums are shown twice:
 **39.** [The aside goes and the full level-of-detail example pops up, rows and scene, under the name "Expansion". Three bunnies, the camera held still. One press per step from here.]
 > Congratulations, you now know what expansion is and how it works. Expansion is when each thread generates a different amount of work, decided at runtime. Like generating these levels of detail here.
 
-**40–43.** [Count, start, offsets, output, one press each, with the first camera.]
+**40–43.** [Count, offset, spaces, output, one press each, with the first camera. No running sum here: a long "prefix sum" bar sits between count and offset, and the offsets just appear.]
 
 **44.** [The camera moves closer. The rows go back to the objects, and the bunnies switch level with a pop.]
 
-**45–48.** [Count, start, offsets, output again, with the new counts.]
+**45–48.** [Count, offset, spaces, output again, with the new counts.]
 
 ## Part 5: compaction, then the two chained
 
-Compaction and expansion share one scene: the same eight objects, the same colors, and the same camera (the one expansion ends on). Expansion's items are the five objects that camera sees; compaction has the three outside the view as well.
+Compaction and expansion share one scene: the same eight objects, the same colors, and the same camera (the one expansion ends on). Expansion's items are the five objects that camera sees; compaction has the three outside the view as well. From here on there is no running sum: a long "prefix sum" bar sits between count and offset.
 
-**49.** [Fade to compaction: the culling example, named, with the camera held still. Just the objects.]
-> Compaction is the same idea.
+**49.** [Fade to compaction: the culling example, named, with the camera held still. The objects and their counts.]
+> Compaction is the same idea. It's even simpler: each item generates either 0 or 1 items instead of many.
 
-**50–53.** [Count, offset, spaces, output, one press each: the full version, with its ribbons.]
-> It's even simpler: each item generates either 0 or 1 items instead of many.
-
-**54.** [The visible objects light up, in the scene and in the rows, with their 1s framed. The rest dims.]
+**50.** [The visible objects light up, in the scene and in the rows, with their 1s framed. The rest dims.]
 > The count is 1 when the object is visible,
 
-**55.** [Now the culled objects light up, with their 0s.]
+**51.** [Now the culled objects light up, with their 0s.]
 > and 0 when it's culled.
 
-**56.** [The row of inputs is framed and the rest of the panel dims.]
+**52.** [One press runs the rest: the offsets appear under the "prefix sum" bar, the arrows point at the spaces, and the outputs fly in with their ribbons. About 3 seconds.]
+
+**53.** [The output row is framed and the rest dims.]
 > It's called compaction because the number of outputs
 
-**57.** [The output row is framed instead.]
+**54.** [The row of inputs is framed instead.]
 > is less than the number of inputs.
 
-**58.** [The screen splits into two named sections, both complete and still: Compaction on the left, Expansion sliding in on the right, each with its scene on top and its rows under it.]
+**55.** [The screen splits into two named sections, both complete and still: Compaction on the left, Expansion sliding in on the right.]
 > Now that you know what expansion and compaction are,
 
-**59.** [The two sections glide into one: compaction's rows on top, expansion's rows under them, one scene on the right, named "Compaction, then expansion". A "prefix sum" box sits between each count row and its offset row. Then the two passes run in turn: the cull with circles, then the levels with bunnies.]
+**56.** [The two sections become one panel, "Compaction, then expansion", showing nothing but the eight objects, with the scene beside it.]
 > you can chain these two operations together and plug them in like Lego.
 
-**60.** [The first pass is framed and runs over and over.]
+**57.** [One press runs the first pass, quickly: count, offsets, spaces, the list of survivors. The pass is framed while it runs.]
 > The first pass will compact and cull,
 
-**61.** [The second pass is framed and runs over and over, with the compaction above it complete.]
+**58.** [One press runs the second pass on those survivors, quickly: triangles, offsets, spaces, output, the bunnies appearing in the scene.]
 > and the second pass will expand and generate geometry for the appropriate LODs. And this is what actual real-time applications and games do, like…
 
 ## Presentation mode
 
-Built into the artifact, beats 1 to 61. Start it with V, the Present button, or `#present` at the end of the URL.
+Built into the artifact, beats 1 to 58. Start it with V, the Present button, or `#present` at the end of the URL.
 
 Keys: → (or Enter, ↓, Page Down) next beat · ← back · Space pause and resume (everything holds still; moving to another beat resumes) · R replay the beat · I beat counter · F fullscreen · Esc exit.
 
@@ -164,7 +163,7 @@ Optional later: one press per card in beat 16, naming each as it appears, instea
 Decided:
 - Beat 7 shows the goal (a clean burst), with no "chaos" beat before it.
 - Beat 16 picks culling, level of detail and light clusters out of the grid; the other examples fade out. The grid doesn't sort itself into groups.
-- Row labels are named for their context: the row is "prefix sum" in part 3, where that is what is being explained, and "offset" from part 4 on. In the merged example a "prefix sum" box sits between count and offset, with no word on how it is computed.
+- Row labels are named for their context: the row is "prefix sum" in part 3, where that is what is being explained, and "offset" from part 4 on. From part 4 on a "prefix sum" bar sits between count and offset, with no word on how it is computed; the running sum is only shown in part 3.
 - The prefix sum uses three threads with fixed counts (5, 3, 6) so the numbers on screen are the ones being said. Each sum is one press, in both the running sum and the chart. In beat 34 the first count steps up and down on its own, one at a time.
 - Part 4 explains the parallel prefix sum first and ends on "you now know expansion"; it flows better that way.
 - The intro stays quiet: every name or number on screen has to serve a purpose, and here the purpose is a taste of where the pattern shows up, not following the algorithm. So there are no names on objects or chips, no distance numbers in LOD, no tile numbers, and no notes under the outputs. The count and start rows and the ribbons stay. Light clusters keeps its cluster numbers.
