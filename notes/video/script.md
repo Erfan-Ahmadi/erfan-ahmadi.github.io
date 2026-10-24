@@ -29,7 +29,7 @@ The working script below has light edits; the original drafts, word for word, ar
 **8.**
 > It turns out the answer to this one question is hiding inside a lot of computer graphics.
 
-**9.** [Level of detail: 3 objects, all in view, camera moving in and out quickly. Panel with counts and ribbons.]
+**9.** [Level of detail: three low-poly bunnies, one straight ahead and two a little behind it. The camera moves straight in and out on the near one, so it steps through all four levels (22, 12, 7 and 4 triangles) while the ones behind switch later and less. Each switch pops with a ring. Panel with counts and ribbons.]
 > Like choosing a level of detail, where each object produces a different number of triangles depending on how close the camera is.
 
 **10.** [Light clusters, simple setup, panel.]
