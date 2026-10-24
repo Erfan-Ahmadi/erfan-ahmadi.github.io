@@ -231,7 +231,7 @@ Fact check for this part:
 
 ## Part 8: atomics instead of a prefix sum
 
-The original example again: eight objects, five visible, with the atomic version of the code beside them. The visible threads reach the counter in a shuffled order, a different one each frame.
+The original example again: the atomic version of the code in a small card on the left, with the counter under it; the eight objects, five visible, and the outputs on the right. The visible threads reach the counter in a shuffled order, a different one each frame.
 
 **77.** [Push and pull shrink into a card on the left.]
 > Another thing I want to touch on is atomics instead of a prefix sum.
@@ -249,10 +249,7 @@ The original example again: eight objects, five visible, with the atomic version
 > But it isn't necessarily ordered. With the chaos of GPU execution, each frame your compacted result depends on which threads reached the atomic first.
 
 **82.** [A third row, "prefix sum": the same objects in their own order.]
-> This might not matter in some situations. But when you care about preserving the order, the prefix sum is the solution: it gives the same order every frame.
-
-**83.** [Under the counter, now framed as "global memory", a grid of 64 threads. One at a time, each sends a line to the counter and waits for its value; the counter climbs to 64. About 5 seconds.]
-> Another problem with atomics is the round trip: every thread goes out to the same counter in global memory and waits for its value to come back, with thousands of threads contending for that one address.
+> This might not matter in some situations. But when you care about preserving the order, the prefix sum is the solution: it gives the same order every frame. Another problem with atomics, said over this same picture, is the round trip: every thread goes out to the same counter in global memory and waits for its value to come back, with thousands of threads contending for that one address.
 
 Fact check for this part:
 - Order: the arrival order at the counter is not deterministic across waves and workgroups, so the compacted order changes between runs; the prefix sum is a stable compaction and gives the same order every time. Correct, and it is the main argument. Reproducibility for debugging is a related one.
@@ -261,13 +258,13 @@ Fact check for this part:
 
 ## The ending
 
-**84.** [The grid of the seven examples comes back and shrinks into a card on the left.]
+**83.** [The grid of the seven examples comes back and shrinks into a card on the left.]
 > And that's the push_back pattern on the GPU. Whenever a thread doesn't know where to write, ask the three questions: keep it or not, how many, which list. Count, prefix sum, write.
 
-**85.** ["Your turn" / "Seen these patterns somewhere else?" / "Tell me in the comments."]
+**84.** ["Your turn" / "Seen these patterns somewhere else?" / "Tell me in the comments."]
 > If you've run into other examples that fit these patterns, or a case where they don't, tell me in the comments. I'd love to hear about them.
 
-**86.** ["Thanks for watching" / "See you in the next one."]
+**85.** ["Thanks for watching" / "See you in the next one."]
 > Thanks for watching, and see you in the next one.
 
 Other ways to say goodbye, if the one above feels stiff:
@@ -276,7 +273,7 @@ Other ways to say goodbye, if the one above feels stiff:
 
 ## Presentation mode
 
-Built into the artifact, beats 1 to 86. Start it with V, the Present button, or `#present` at the end of the URL.
+Built into the artifact, beats 1 to 85. Start it with V, the Present button, or `#present` at the end of the URL.
 
 Keys: → (or Enter, ↓, Page Down) next beat · ← back · Space pause and resume (everything holds still; moving to another beat resumes) · R replay the beat · I beat counter · F fullscreen · Esc exit.
 

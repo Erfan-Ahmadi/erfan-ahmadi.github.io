@@ -210,3 +210,10 @@ add at the final transcript:
 aside. and then saying goodbye in a way (I'm not good at this so I need help)
 but I want to say something along "If you have any other examples that match these patterns comment down below..."
 ```
+
+Later note:
+
+```text
+for the atomics, code on the left and takes less space
+remove the global memory grid thing at the end of the atomic section
+```
