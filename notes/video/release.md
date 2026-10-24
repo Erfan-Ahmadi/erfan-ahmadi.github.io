@@ -8,7 +8,7 @@ GPU-Driven Anything
 
 ## YouTube description
 
-There is a pattern underneath some of the most important graphics techniques. Culling, level of detail, light clusters, particle systems, marching squares, Gaussian splatting: they look like different problems, but in each one a hundred thousand GPU threads want to write into one list, in order, with no gaps, and none of them knows where its place is.
+There is a pattern underneath some of the most interesting graphics techniques. Culling, level of detail, light clusters, particle systems, marching squares, Gaussian splatting: they look like different problems, but in each one a hundred thousand GPU threads want to write into one list, in order, with no gaps, and none of them knows where its place is.
 
 This video is about that pattern: count, prefix sum, write. The three shapes it takes (compaction, expansion, binning), how they chain into a GPU-driven frame, and two nuances for the advanced viewers: push vs. pull, and atomics instead of a prefix sum.
 
@@ -68,7 +68,7 @@ X: https://x.com/ErFunRender
 
 ## Social post (X and LinkedIn), the short one that went out
 
-There is a pattern underneath some of the most important graphics techniques. Culling, level of detail, light clusters, particle systems, Gaussian splatting: they look like different problems, but they are all the same one.
+There is a pattern underneath some of the most interesting graphics techniques. Culling, level of detail, light clusters, particle systems, Gaussian splatting: they look like different problems, but they are all the same one.
 
 My new video shows that pattern:
 

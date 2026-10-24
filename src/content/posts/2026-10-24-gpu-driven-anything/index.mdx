@@ -1,6 +1,6 @@
 ---
 title: "GPU-Driven Anything"
-description: "There is a pattern underneath some of the most important graphics techniques. Culling, level of detail, light clusters, particles, splats: one question, where does each thread write, and one answer: count, prefix sum, write."
+description: "There is a pattern underneath some of the most interesting graphics techniques. Culling, level of detail, light clusters, particles, splats: one question, where does each thread write, and one answer: count, prefix sum, write."
 date: 2026-10-24
 youtube: Gb2Sw7RHxJ8
 tags: ["GPU-Driven", "Compute", "Shaders"]
@@ -9,7 +9,7 @@ socialImage: ./social.png
 readingTime: 8
 ---
 
-There is a pattern underneath some of the most important graphics techniques. Culling, level of detail, light clusters, particle systems, marching squares, Gaussian splatting: they look like different problems, but in each one a hundred thousand GPU threads want to write into one list, in order, with no gaps, and none of them knows where its place is.
+There is a pattern underneath some of the most interesting graphics techniques. Culling, level of detail, light clusters, particle systems, marching squares, Gaussian splatting: they look like different problems, but in each one a hundred thousand GPU threads want to write into one list, in order, with no gaps, and none of them knows where its place is.
 
 On the CPU that is one line: if the object is visible, `push_back` it. On the GPU every object gets its own thread, and that line is gone. This video is about the pattern that replaces it, so that next time you run into it you recognize it right away and know exactly what to do.
 
