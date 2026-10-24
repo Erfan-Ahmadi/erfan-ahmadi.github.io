@@ -229,9 +229,54 @@ Fact check for this part:
 - "More balanced" is right; "faster" is not claimed and should not be: pull launches one thread per output (18 here against 8), so it does more total work, in exchange for no idle lanes and no buffer. In the chain, the win is in the expansion pass (many items per input), not in the compaction pass (0 or 1 item per input), where push is fine.
 - Related reading if a link is wanted: this is the "load-balancing search" / "expand" pattern (ModernGPU calls it load-balancing search; it is also how vectorized binary search over a scan is done in GPU libraries).
 
+## Part 8: atomics instead of a prefix sum
+
+The original example again: eight objects, five visible, with the atomic version of the code beside them. The visible threads reach the counter in a shuffled order, a different one each frame.
+
+**77.** [Push and pull shrink into a card on the left.]
+> Another thing I want to touch on is atomics instead of a prefix sum.
+
+**78.** ["Atomics instead?" / "One counter: every thread adds to it and writes at the value it gets back."]
+> If we go back to our original push_back example, one could easily claim that the prefix sum isn't needed and that an atomic does the same job: every visible object adds one to a counter, and the value it gets back is its offset in the output.
+
+**79.** [The objects, the culled ones dashed, and the GPU pseudo code: `slot = atomicAdd(counter, 1); out[slot] = obj;`, with the counter at 0.]
+> Here is what that looks like.
+
+**80.** [The visible threads reach the counter one after another, in a shuffled order. Each sends a pulse to the counter, the counter ticks up, the value it got back appears under the thread, and its item lands at that slot in "atomic, frame 1". No gaps, in arrival order. About 4 seconds.]
+> This gives you a perfectly compact output.
+
+**81.** [The same run again into "atomic, frame 2", with a different arrival order. The two rows hold the same objects in different orders.]
+> But it isn't necessarily ordered. With the chaos of GPU execution, each frame your compacted result depends on which threads reached the atomic first.
+
+**82.** [A third row, "prefix sum": the same objects in their own order.]
+> This might not matter in some situations. But when you care about preserving the order, the prefix sum is the solution: it gives the same order every frame.
+
+**83.** [Under the counter, now framed as "global memory", a grid of 64 threads. One at a time, each sends a line to the counter and waits for its value; the counter climbs to 64. About 5 seconds.]
+> Another problem with atomics is the round trip: every thread goes out to the same counter in global memory and waits for its value to come back, with thousands of threads contending for that one address.
+
+Fact check for this part:
+- Order: the arrival order at the counter is not deterministic across waves and workgroups, so the compacted order changes between runs; the prefix sum is a stable compaction and gives the same order every time. Correct, and it is the main argument. Reproducibility for debugging is a related one.
+- Round trip: atomics on a buffer are performed on the memory side (at the L2 cache's atomic units, not necessarily in DRAM), and a thread that needs the returned value stalls until it comes back; many threads on one address serialize there. Correct. One standard nuance is worth a sentence or a link: wave-level aggregation (one atomic per wave, then a wave prefix count spreads the lanes over the range it got) cuts the traffic by the wave width, and per-workgroup counters in shared memory cut it further. With those, atomics are practical and common; many GPU-driven cullers use exactly this. The ordering problem stays across waves either way.
+- The atomic version is a single pass, with no count, scan and write; that is its appeal. For compaction with no ordering requirement, the claim that the prefix sum isn't needed is right.
+
+## The ending
+
+**84.** [The grid of the seven examples comes back and shrinks into a card on the left.]
+> And that's the push_back pattern on the GPU. Whenever a thread doesn't know where to write, ask the three questions: keep it or not, how many, which list. Count, prefix sum, write.
+
+**85.** ["Your turn" / "Seen these patterns somewhere else?" / "Tell me in the comments."]
+> If you've run into other examples that fit these patterns, or a case where they don't, tell me in the comments. I'd love to hear about them.
+
+**86.** ["Thanks for watching" / "See you in the next one."]
+> Thanks for watching, and see you in the next one.
+
+Other ways to say goodbye, if the one above feels stiff:
+- "That's all I have. If these patterns show up in your work, or you do it a different way, tell me in the comments. Thanks for watching."
+- "If you spot one of these patterns in the wild, let me know in the comments; I'll collect the best ones for a follow-up. Thanks for watching, see you next time."
+
 ## Presentation mode
 
-Built into the artifact, beats 1 to 76. Start it with V, the Present button, or `#present` at the end of the URL.
+Built into the artifact, beats 1 to 86. Start it with V, the Present button, or `#present` at the end of the URL.
 
 Keys: → (or Enter, ↓, Page Down) next beat · ← back · Space pause and resume (everything holds still; moving to another beat resumes) · R replay the beat · I beat counter · F fullscreen · Esc exit.
 

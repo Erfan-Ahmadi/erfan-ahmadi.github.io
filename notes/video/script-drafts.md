@@ -193,3 +193,20 @@ generate animations for above as well please
 
 next point is atomics vs prefix sum
 ```
+
+## Part 8, atomics (the user's draft)
+
+```text
+another thing I wanted to touch up on is atomics instead of prefix sum. 
+If we go back to our original exmaple of push back, one could easily claim that prefix sum is not needed and you could do the same thing with atomics. every visible object will add to that atomic and use it's current offset to find it's offset in the output (actually show some GPU pseudo code with atomics). 
+this gives you perfectly compact output, but it's not necessarily ordered, with the chaos of GPU execution, each frame your compacted results depend on which threads executed the atomic first. this might not matter in certain situations. but when you care about preserving the order, the solution is prefix sum.
+another problem with atomics is having to rountrip to global memory and sync atomics across thousands of threads globally
+```
+
+## The ending (the user's note)
+
+```text
+add at the final transcript:
+aside. and then saying goodbye in a way (I'm not good at this so I need help)
+but I want to say something along "If you have any other examples that match these patterns comment down below..."
+```
