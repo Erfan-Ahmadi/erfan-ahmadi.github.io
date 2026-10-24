@@ -37,3 +37,14 @@ I will write up the rest in a later prompt
 
 I'm not going to go into implemnentation detail or show you code, My goal here is to show you this pattern in the best way I know how. so you can detect when you stumble upon a similar problem you can know just the pattern to use [I need to say this part better].
 ```
+
+## Part 3: the prefix sum (first draft)
+
+```text
+behind all these processes is the simple process of prefix sum; If you don't know what a prefix sum is, the idea is simple. once you've counted how many items a single thread will generate. (count : colored boxes with count inside it). every new item becomes the sum of what came before it.
+and this new sum will tell each thread where they should start writing.
+because anything that comes before could affect where our offset is (you need to help me clarify this better).  
+let me show you that with a simple chart, the first item is 0, the next is 0+5, the next is 5 + 3, then next is 8+6. 
+[then the vertical bar becoming the offsets animation we already have]
+see how changing the count on the first object affects the offsets of everything that comes after it [the first one changing count and the offsets of the next 2-3 items highlighted with marker]
+```

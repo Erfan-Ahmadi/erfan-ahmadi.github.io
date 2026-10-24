@@ -61,9 +61,31 @@ The working script below has light edits; the original drafts, word for word, ar
 **19.** [On the right, beside the card: "Goal", then "Recognize the patterns".]
 > My goal is to show you this pattern the clearest way I know how, so that next time you run into a problem like this, you'll recognize it right away and know exactly what to do.
 
+## Part 3: the prefix sum
+
+**20.** [The goal fades away. Three threads come in as colored boxes.]
+> Behind all of these is one simple idea: the prefix sum.
+
+**21.** [Each box shows its count inside it: 5, 3 and 6.]
+> If you don't know what a prefix sum is, the idea is simple. Once each thread has counted how many items it will write,
+
+**22.** [An empty start row appears under the boxes.]
+> each thread's start is the sum of all the counts that came before it. That sum tells the thread where to start writing. It has to include everything before it, because every thread before it takes up room in the output, so where a thread starts depends on all of them.
+
+(another way to say the last sentence: "A thread can't know where to start until it knows how much room every thread before it needs.")
+
+**23.** [The chart: one bar per thread, each one the bar before it plus the next count, building one at a time. The start row fills in: 0, 5, 8, and the total, 14.]
+> Let me show you with a simple chart. The first one starts at 0. The next at 0 + 5. Then 5 + 3. Then 8 + 6.
+
+**24.** [The bars tip over into the output. Each thread's space begins at its sum, with an arrow from its start.]
+> (line to write) For example: lay the bars down, and each sum marks exactly where its thread starts writing.
+
+**25.** [The first count grows from 5 to 7. The starts after it change (7, 10 and the total, 16) and get marked one after another, each with its space in the output.]
+> See how changing the count of the first one shifts the start of everything that comes after it.
+
 ## Presentation mode
 
-Built into the artifact, beats 1 to 19. Start it with V, the Present button, or `#present` at the end of the URL.
+Built into the artifact, beats 1 to 25. Start it with V, the Present button, or `#present` at the end of the URL.
 
 Keys: → (or Enter, ↓, Page Down) next beat · ← back · Space pause and resume (everything holds still; moving to another beat resumes) · R replay the beat · I beat counter · F fullscreen · Esc exit.
 
@@ -77,4 +99,5 @@ Optional later: one press per card in beat 16, naming each as it appears, instea
 Decided:
 - Beat 7 shows the goal (a clean burst), with no "chaos" beat before it.
 - Beat 16 picks culling, level of detail and light clusters out of the grid; the other examples fade out. The grid doesn't sort itself into groups.
+- The prefix sum uses three threads with fixed counts (5, 3, 6) so the numbers on screen are the ones being said; in beat 25 the first count grows to 7.
 - The intro stays quiet: every name or number on screen has to serve a purpose, and here the purpose is a taste of where the pattern shows up, not following the algorithm. So there are no names on objects or chips, no distance numbers in LOD, no tile numbers, and no notes under the outputs. The count and start rows and the ribbons stay. Light clusters keeps its cluster numbers.
