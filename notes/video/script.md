@@ -6,7 +6,7 @@ The working script below has light edits; the original drafts, word for word, ar
 ## Part 1: the hook
 
 **1.** [Culling scene, full frame. Camera moving. No panel, no labels.]
-> If you're here, chances are you've seen something like this before. It's culling. The idea is simple: we want to filter out the objects that are outside the camera's view.
+> If you're here, chances are you've seen this before. It's culling. The idea is simple: we want to filter out the objects that are outside the camera's view.
 
 **2.** [The CPU code slides in on the left.]
 > On the CPU, it's easy: if an object is visible, push it to our list of visible objects.
@@ -36,10 +36,10 @@ The working script below has light edits; the original drafts, word for word, ar
 > Or assigning lights to clusters in clustered shading, where a cluster can end up with any number of lights.
 
 **11–14.** [Particles, curves, marching squares, Gaussian splatting. One press each, quick transitions. Curves: one circle in the middle and one bezier, zooming in and out every few seconds so the counts keep changing.]
-> Once you start looking, you see it everywhere: particle systems, curves, marching squares, Gaussian splatting.
+> Once you start looking, you see it everywhere: particle systems, vector graphics, marching squares, Gaussian splatting.
 
 **15.** [The last example shrinks into a grid of every example.]
-> Different problems, different engines, different decades. But underneath all of them, it's the same pattern.
+> Different problems. But underneath all of them, it's the same pattern.
 
 (optional closer: "build them yourself" clashes with beat 17's "no implementation details", so either drop it or use something like this)
 > And once you see it, you'll start spotting it everywhere.
