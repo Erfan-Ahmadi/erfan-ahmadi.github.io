@@ -110,46 +110,44 @@ One press per sum, so each step is under your control. The sums are shown twice:
 
 **40–43.** [Count, offset, spaces, output, one press each, with the first camera. No running sum here: a long "prefix sum" bar sits between count and offset, and the offsets just appear.]
 
-**44.** [The camera moves closer. The rows go back to the objects, and the bunnies switch level with a pop.]
-
-**45–48.** [Count, offset, spaces, output again, with the new counts.]
+**44.** [The camera moves closer. The panel stays: each count ticks up to its new value, and the offsets, the spaces and the output stretch along with it. The bunnies switch level with a pop.]
 
 ## Part 5: compaction, then the two chained
 
 Compaction and expansion share one scene: the same eight objects, the same colors, and the same camera (the one expansion ends on). Expansion's items are the five objects that camera sees; compaction has the three outside the view as well. From here on there is no running sum: a long "prefix sum" bar sits between count and offset.
 
-**49.** [Fade to compaction: the culling example, named, with the camera held still. The objects and their counts.]
+**45.** [Fade to compaction: the culling example, named, with the camera held still. The objects and their counts.]
 > Compaction is the same idea. It's even simpler: each item generates either 0 or 1 items instead of many.
 
-**50.** [The visible objects light up, in the scene and in the rows, with their 1s framed. The rest dims.]
+**46.** [The visible objects light up, in the scene and in the rows, with their 1s framed. The rest dims.]
 > The count is 1 when the object is visible,
 
-**51.** [Now the culled objects light up, with their 0s.]
+**47.** [Now the culled objects light up, with their 0s.]
 > and 0 when it's culled.
 
-**52.** [One press runs the rest: the offsets appear under the "prefix sum" bar, the arrows point at the spaces, and the outputs fly in with their ribbons. About 3 seconds.]
+**48.** [One press runs the rest: the offsets appear under the "prefix sum" bar, the arrows point at the spaces, and the outputs fly in with their ribbons. About 3 seconds.]
 
-**53.** [The output row is framed and the rest dims.]
+**49.** [The output row is framed and the rest dims.]
 > It's called compaction because the number of outputs
 
-**54.** [The row of inputs is framed instead.]
+**50.** [The row of inputs is framed instead.]
 > is less than the number of inputs.
 
-**55.** [The screen splits into two named sections, both complete and still: Compaction on the left, Expansion sliding in on the right.]
+**51.** [The screen splits into two named sections, both complete and still: Compaction on the left, Expansion sliding in on the right.]
 > Now that you know what expansion and compaction are,
 
-**56.** [The two sections become one panel, "Compaction, then expansion", showing nothing but the eight objects, with the scene beside it.]
+**52.** [The two sections become one panel, "Compaction, then expansion", showing nothing but the eight objects, with the scene beside it.]
 > you can chain these two operations together and plug them in like Lego.
 
-**57.** [One press runs the first pass, quickly: count, offsets, spaces, the list of survivors. The pass is framed while it runs.]
+**53.** [One press runs the first pass, quickly: count, offsets, spaces, the list of survivors. The pass is framed while it runs.]
 > The first pass will compact and cull,
 
-**58.** [One press runs the second pass on those survivors, quickly: triangles, offsets, spaces, output, the bunnies appearing in the scene.]
+**54.** [One press runs the second pass on those survivors, quickly: triangles, offsets, spaces, output, the bunnies appearing in the scene.]
 > and the second pass will expand and generate geometry for the appropriate LODs. And this is what actual real-time applications and games do, like…
 
 ## Presentation mode
 
-Built into the artifact, beats 1 to 58. Start it with V, the Present button, or `#present` at the end of the URL.
+Built into the artifact, beats 1 to 54. Start it with V, the Present button, or `#present` at the end of the URL.
 
 Keys: → (or Enter, ↓, Page Down) next beat · ← back · Space pause and resume (everything holds still; moving to another beat resumes) · R replay the beat · I beat counter · F fullscreen · Esc exit.
 

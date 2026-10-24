@@ -119,3 +119,9 @@ for compaction, I want the first view to be object and count and highlighting vi
 and for the merge, we should only show the first row above. also I don't want two different sections (it seems like two cards stacked on another), It should be 1 unified one. 
 the next navigation will very quickly run the algorithm (without the sum) in 1-2 seconds to get culled output, and then the next run will work on those outputs to generate lods (again quickly)
 ```
+
+Later note:
+
+```text
+for expansion, when camera moves, don't replay the animation allover again, count to targer numbers and stretch those outputs to match the new camera position
+```
