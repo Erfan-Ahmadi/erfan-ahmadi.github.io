@@ -92,3 +92,9 @@ Now that you know what expansion and compaction is (two seperate sections, the l
 you can chain these two operations together and plug them like legos. (the left and right section merge together and the expansion goes under the comapction)
 the first pass will compact and cull and the second pass will expand and generate geometry for appropriate LoDs. and this is what actual real-time applications and games do like...
 ```
+
+Later note:
+
+```text
+compaction animations also need to be controlled by navigation, right now it immediately skips to compaction. the two different cameras and the algorithm steps need to be controllable
+```
