@@ -457,3 +457,33 @@ why is expansion culling here? I don't want cull, also I can just set where the 
 ```text
 the loop here  has a fade in which it fades in and out completely, it should come with no fade in like the texts next to it (the titles and questions) and it should not fade in/out, apply similar fix to anywhere else that applies
 ```
+
+(With a screenshot of pull at "Where do I come from?")
+
+```text
+when pull appears we see nothing  but the first three rows, then we highlight count and prefix sum just like the other push section.
+then 12 threads will show up and place them selves next to eachother. and the rest as ususal
+I have finalized the script, pull the most recent and create a mobile friendly seperate artifact that's synced with my transcript sections only in mobile so I can read and talk easier while doing the recording. I had to resolce som conflicts so I attached here the most recent script I approved
+```
+
+```text
+I don't need directions ,just text
+```
+
+(With a screenshot of pull's empty output under the threads)
+
+```text
+empty output is weird, here, don't show until next navigation, fade it out when output comes
+```
+
+```text
+the push version also needs navigation that gives details gradually with each nav
+```
+
+```text
+I still see the weird empty output when we're on "where did I come from"
+```
+
+```text
+where are we with the script page?
+```
