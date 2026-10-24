@@ -137,3 +137,29 @@ Later note:
 ```text
 for the first beat, the idea with the camera should be the main focus and centered, and those merged prefix sum stuff should be on the right and smaller, they go out from the right and code comes in from the left
 ```
+
+## Part 6, binning (the user's directions)
+
+```text
+perfect, now onto the next: but before that I need some more animations and modifications to the light clustering version. (the number of lights should be more than clusters, so maybe let's make it 4 clusters and 8 lights) and I need an animation that moves those lights to blocks of threads in a row. and then swaps the order when I say "let's look at it the other way around"
+[aside the combined thing. question pops up : what if we got multiple outputs to push back into?]
+[go into clustering example but only show the idea with the camera]
+(a connector the idea of binning) now that you understand how expansion or compaction work to generate variable sized data into the output, you might be wondering what happens if we need multiple outputs to push back into. for example when we need to assign lights to clusters?
+in clustered lighting, instead of a single list, we need one list per cluster [one output row becomes multiple clusters.] and we issue one thread per light.
+and this is where most people get confused. because unlike compaction or expansion where we do the prefix sum over the inputs, here we count how many lights per cluster, this is called histogramming (show histogram per cluster), and do the prefix sum over the counts themselves, this prefix sum is usually much cheaper than the others because in practice the number of lights is a lot bigger than the number of clusters. (prefix sum vertical bar then histogram horizontal after it, might run out of physical space a bit, let's see how it looks first) then turn the histogram into a prefix sum so bars on the bottom are larger by construct. and then the most bottom one will become the offsets with dashed lines. once we know the offsets we can run our threads once again and place them in the appropriate place. note that this time the order within the buckets themselves doesn't matter much so we can use atomics instead of prefix sum. if you don't understand this don't worry we'll come back to the usage of atomics in these scenarios
+```
+
+Later notes:
+
+```text
+btw add these new visualization options for binning in the main view outside presentation as well
+```
+
+```text
+[next, quickly show the material one, similar to binning we will arrive at for the light clustering.]
+another example of binning is assigning materials to each tile. you usually see this pattern in deferred shading pipelines.
+```
+
+```text
+try to publish gradually before working on other items/tasks I've given you so I can review faster
+```

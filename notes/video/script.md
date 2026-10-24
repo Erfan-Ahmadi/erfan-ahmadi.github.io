@@ -145,9 +145,53 @@ Compaction and expansion share one scene: the same eight objects, the same color
 **54.** [One press runs the second pass on those survivors, quickly: triangles, offsets, spaces, output, the bunnies appearing in the scene.]
 > and the second pass will expand and generate geometry for the appropriate LODs. And this is what actual real-time applications and games do, like…
 
+## Part 6: binning
+
+Binning uses the light clusters with four clusters and eight lights, so there are more lights than clusters. The point of the part is that the prefix sum runs over the per-cluster counts, not over the inputs. The rows use the histogram style: a bar per cluster, then each bar takes the bars before it, so the last bar already has the output's layout. The lights move only while the scene is alone (beat 57) and hold still from the moment the rows come in.
+
+**55.** [The combined example shrinks into a card on the left, still showing its result.]
+> Now that you understand how expansion and compaction generate a variable amount of output, you might be wondering what happens when there is more than one output to push back into.
+
+**56.** [The question comes in beside it: "Several outputs?" / "What if there is more than one list to push back into?"]
+> For example, when we need to assign lights to clusters.
+
+**57.** [The aside goes and the light clusters pop up under the name "Binning": only the scene, with the camera, four clusters and eight lights moving around.]
+> In clustered lighting, instead of a single list,
+
+**58.** [The scene makes room on the right and the rows card comes in with one output list.]
+> we need one list per cluster,
+
+**59.** [The one list splits into four, one per cluster, each with its cluster number at its left.]
+> and we issue one thread per light.
+
+**60.** [A thread per light: a chip flies from each light in the scene into a row of thread blocks along the top of the card.]
+> Now let's look at it the other way around.
+
+**61.** [The swap: the cluster numbers go up to head the columns, the thread chips go down the side, one per row, and the table forms under them. Each light's marks appear in the clusters it touches.]
+> This is where most people get confused. Unlike compaction or expansion, where the prefix sum runs over the inputs,
+
+**62.** [Count per cluster: the marks of each column drop into its count cell, and a histogram grows right under the counts, one bar per cluster, a cell per light.]
+> here we count how many lights fall in each cluster. This is called histogramming.
+
+**63.** [The prefix sum runs over the counts: the "prefix sum" bar appears, the histogram slides under the offset row, and each bar takes the bar above it, so the bars get longer down the chart by construction. An offset fills in as its row completes. One row per press-free second.]
+> And we do the prefix sum over the counts themselves. It runs over the clusters, not the lights, so its size is fixed and known up front; here it is four numbers.
+
+**64.** [The bottom bar, which already has the output's layout, slides down into the output and its pieces become the dashed spaces, each offset pointing at its own.]
+> So the bottom bar becomes our offsets.
+
+**65.** [Output: every light flies into its clusters' spaces at once, and the ribbons come in.]
+> Once we know the offsets, we run our threads once more and each light places itself in the right list. Note that this time the order inside a list doesn't matter much, so an atomic counter per cluster could place the lights instead. If that doesn't make sense yet, don't worry; we'll come back to atomics.
+
+**66.** [Fade to the material tiles, "Binning · material tiles", which run through the same steps on their own in about three seconds: a tile with several materials goes into each material's list.]
+> Another example of binning is assigning materials to each tile. You usually see this pattern in deferred shading pipelines.
+
+Fact check for this part:
+- "This prefix sum is usually much cheaper because there are a lot more lights than clusters": the scan's length is the number of bins, so it is cheaper than a scan over the inputs only when there are fewer bins than inputs. That holds for material lists (a handful of shaders against thousands of tiles) and for the example here (four clusters, eight lights), but not in general for light clusters: a 16 × 8 × 24 grid has about 3000 clusters, often more than the lights. The safe claim is the one in beat 63: the scan runs over the bins, whose number is fixed and known up front.
+- "Atomics instead of a prefix sum" for binning: an atomic counter per cluster places the lights in any order, but the lists then need either a fixed capacity per cluster or a base offset that still comes from a prefix sum (or from one atomic allocation of the cluster's whole range). Beat 65 says "could place the lights" and leaves the rest to the atomics part.
+
 ## Presentation mode
 
-Built into the artifact, beats 1 to 54. Start it with V, the Present button, or `#present` at the end of the URL.
+Built into the artifact, beats 1 to 66. Start it with V, the Present button, or `#present` at the end of the URL.
 
 Keys: → (or Enter, ↓, Page Down) next beat · ← back · Space pause and resume (everything holds still; moving to another beat resumes) · R replay the beat · I beat counter · F fullscreen · Esc exit.
 
@@ -164,4 +208,6 @@ Decided:
 - Row labels are named for their context: the row is "prefix sum" in part 3, where that is what is being explained, and "offset" from part 4 on. From part 4 on a "prefix sum" bar sits between count and offset, with no word on how it is computed; the running sum is only shown in part 3.
 - The prefix sum uses three threads with fixed counts (5, 3, 6) so the numbers on screen are the ones being said. Each sum is one press, in both the running sum and the chart. In beat 34 the first count steps up and down on its own, one at a time.
 - Part 4 explains the parallel prefix sum first and ends on "you now know expansion"; it flows better that way.
+- Part 6 uses four clusters and eight lights (more lights than clusters). In the app, M on Light clusters switches to this setup, and Controls has the histogram style ("How start is shown") for every example.
+- The material tiles beat uses every material's list, so a tile with two materials is in two lists, like a light in two clusters. M on Material tiles in the app flips to the one-mixed-list version if that reads better.
 - The intro stays quiet: every name or number on screen has to serve a purpose, and here the purpose is a taste of where the pattern shows up, not following the algorithm. So there are no names on objects or chips, no distance numbers in LOD, no tile numbers, and no notes under the outputs. The count and start rows and the ribbons stay. Light clusters keeps its cluster numbers.
