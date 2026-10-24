@@ -88,12 +88,32 @@ One press per sum, so each step is under your control. The sums are shown twice:
 **33.** [The bars tip over into the output. Each thread's space begins at its sum, with an arrow from its start cell to the start of the space.]
 > (line to write) For example: lay the bars down, and each sum marks exactly where its thread starts writing.
 
-**34.** [The first count moves up and down smoothly between 3 and 8, its triangles growing and shrinking. The starts after it (and the total) are marked and keep changing, and their spaces in the output slide with them. It keeps going until the next press.]
+**34.** [The first count steps up and down one at a time: 5, 6, 7, 8, then back down to 3 and up again, its triangles with it. The starts after it (and the total) are marked and change with each step, and their spaces in the output glide to their new place. It keeps going until the next press.]
 > See how changing the count of the first one shifts the start of everything that comes after it.
+
+## Part 4: in parallel, and expansion
+
+**35.** [Only the prefix sum again: the three threads with their start row shrink into a card on the left.]
+> But you might be asking, wait a minute, how do you calculate the prefix sum?
+
+**36.** [Beside the card: "Serial?", "Every thread depends on the one before it".]
+> It looks suspiciously like a serial algorithm, where every thread depends on the last one.
+
+**37.** [The text is replaced by "Parallel prefix sum" and a scan network: eight counts, four rounds of adds, every thread at once in each round, and the starts come out at the bottom.]
+> To which I say, great question. There are plenty of clever algorithms, developed over the last few decades, that compute the prefix sum in parallel over thousands of threads.
+
+**38.** ["Links in the description" appears under the network.]
+> I was really tempted to go into these algorithms here, but that's not my goal, and there are plenty of resources where you can learn about parallel prefix sums. I'll link some of them below.
+
+**39.** [A rug sweeps across the network from the right. As it passes, the rounds fold into one box that says "prefix sum", with the counts going in and the starts coming out. The rug slides on out of the way and the simple picture stays.]
+> For now, let's sweep that under the rug and just accept that this prefix sum happens in parallel.
+
+**40.** [The aside goes and the full level-of-detail example pops up, rows and scene, under the name "Expansion", running its steps on a loop.]
+> Congratulations, you now know what expansion is and how it works. Expansion is when each thread generates a different amount of work, decided at runtime. Like generating these levels of detail here.
 
 ## Presentation mode
 
-Built into the artifact, beats 1 to 34. Start it with V, the Present button, or `#present` at the end of the URL.
+Built into the artifact, beats 1 to 40. Start it with V, the Present button, or `#present` at the end of the URL.
 
 Keys: → (or Enter, ↓, Page Down) next beat · ← back · Space pause and resume (everything holds still; moving to another beat resumes) · R replay the beat · I beat counter · F fullscreen · Esc exit.
 
@@ -107,5 +127,6 @@ Optional later: one press per card in beat 16, naming each as it appears, instea
 Decided:
 - Beat 7 shows the goal (a clean burst), with no "chaos" beat before it.
 - Beat 16 picks culling, level of detail and light clusters out of the grid; the other examples fade out. The grid doesn't sort itself into groups.
-- The prefix sum uses three threads with fixed counts (5, 3, 6) so the numbers on screen are the ones being said. Each sum is one press, in both the running sum and the chart. In beat 34 the first count moves up and down on its own.
+- The prefix sum uses three threads with fixed counts (5, 3, 6) so the numbers on screen are the ones being said. Each sum is one press, in both the running sum and the chart. In beat 34 the first count steps up and down on its own, one at a time.
+- Part 4 explains the parallel prefix sum first and ends on "you now know expansion"; it flows better that way.
 - The intro stays quiet: every name or number on screen has to serve a purpose, and here the purpose is a taste of where the pattern shows up, not following the algorithm. So there are no names on objects or chips, no distance numbers in LOD, no tile numbers, and no notes under the outputs. The count and start rows and the ribbons stay. Light clusters keeps its cluster numbers.

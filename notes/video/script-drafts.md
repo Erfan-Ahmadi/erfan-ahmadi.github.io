@@ -61,3 +61,19 @@ I added some minor changes to transcript. another way to say the last sentence: 
 
 based on the transcript so I need to show the sum first.. and then the chart, so the sum animation happens twice. take transcript into account when placing the animations
 ```
+
+## Part 4: in parallel, and expansion (first draft)
+
+```text
+Congratulations, you now know what expansion is and how it works. Expansion is when each thread generates different amount of work decided at runtime. like generating these LoDs here. (the full lod visualization pops up, the expansion + lod selection on top) 
+
+But you might be asking, wait a minute, how do you calculate the prefix sum [the lod stuff with camera view dissapers, and we do aside with only the prefix sum again], it seems suspicoously a serial algorithm that every thread depends on the last. To which I say, great question and there is plenty of clever algorithms developed over the last few decades (a visualization of prefix sum like bleloch or some kind of network thing, doesn't matter and doesn't need to be that exact) that compute the prefix sum in parallel over thousands of threads. I was really tempted to go into these algorithms here, but that's not my goal and there is plenty of resources which you can learn parallel prefix some, some of which I'll link down below.  for now let's sweep that under the rug and just accept that this prefix sum happens in parallel.
+```
+
+Later notes:
+
+```text
+the movememnt of 3-8 for the first item is continous and doesn't make sense. it should be discrete.
+when I say let's sweep that under the rug the network disappears and becomes simple or squashes somehow make sure to have that animation as well
+hmm I think I'll do the parallel explanation first and then the congrats you now know expansion, it flows better this way
+```
