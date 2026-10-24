@@ -194,7 +194,7 @@ Fact check for this part:
 
 ## Part 7: using the offsets, push or pull
 
-Eight threads with fixed counts (1, 2, 8, 1, 2, 1, 1, 2; total 18), one of them with eight items. Push on the left, pull on the right, the same inputs and offsets on both; a line of text comes in under a card with each point.
+Four objects with fixed counts (1, 2, 6, 3; total 12), drawn as in the prefix-sum part: a chip, its triangles under it as the count, and the prefix sum under those with its total. Push comes first, alone, with its code; then pull comes in beside it with its code under push's. No text lines under the cards: the points are spoken. Each card says its thread count under its name: "threads = objects = 4" for push, "threads = sum of counts = 12" for pull.
 
 **68.** [The material tiles shrink into a card on the left.]
 > Now, before I end this video: for the more advanced viewers, I want to touch on a few nuances I purposely left out.
@@ -202,56 +202,53 @@ Eight threads with fixed counts (1, 2, 8, 1, 2, 1, 1, 2; total 18), one of them 
 **69.** ["Using the offsets" / "Who moves the data: the input, or the output?" / "Push, or pull."]
 > I talked about using the prefix sum to compute offsets, but not about how to actually use those offsets to fill, or to walk, the compact output. There are two ways to go about it: push style and pull style.
 
-**70.** [Two cards: Push ("the inputs write") and Pull ("the outputs read"), each with the eight threads and their counts, the offset row with the total, and an empty output row.]
-
-**71.** [Push: every thread writes its items at its offset, one item per tick, in lockstep. The thread with eight items keeps going while the others, done after one or two, dim and wait. Line: "Each input thread writes its items at its offset."]
+**70.** [Push alone: on the left its code, a thread per object with a loop over its count writing at `prefix[i] + k`; on the right the Push card with the four objects, their triangles, the prefix sum, and an empty output.]
 > Push style is when each input thread writes its values at its offset in the output.
 
-**72.** [A dashed frame around the output row: "buffer: 18 slots". Line: "Needs a buffer for all the outputs."]
-> This usually needs extra memory, a buffer for the outputs,
+**71.** [Every thread writes its triangles at its offset, one per tick, in lockstep. The thread with six keeps going while the others, done after one to three, dim and wait.]
 
-**73.** [The writes play again, and under the output a wave fills in tick by tick: one lane per thread, a cell per item written, dashed cells where a lane sits idle. One lane is busy for eight ticks, the rest for one or two. Line: "A wave waits for its longest thread."]
-> and the work is imbalanced across a wave: if one thread has eight items to add and the others one or two, they all wait for it to finish.
+**72.** [A dashed frame around the output: "buffer: 12 slots".]
+> This usually needs extra memory, a buffer for all the outputs,
 
-**74.** [Pull: the output row becomes a row of threads, one per slot, each marked "?". Then one of them is picked out, framed, with "idx = 7" under it, and waits for the next press. Line: "A thread per output asks: which input am I from?"]
-> With pull style, you run the next batch of threads over the outputs instead, and each thread asks itself: which input do I belong to?
+**73.** [The writes play again, and under the output one wave fills in tick by tick: a lane per thread, a cell per triangle written, dashed cells where a lane sits idle. One lane is busy for six ticks, the rest for one to three.]
+> and the work is imbalanced across a wave: if one thread has six triangles to write and the others one or two, they all wait for it to finish.
 
-**75.** [One output thread (slot 7) searches the offsets: the middle entry lights up, "12 > 7", the upper half dims; "3 ≤ 7"; "11 > 7"; its input is 2, and its item is 7 − 3 = 4. An arrow from input 2 to the slot, which takes its color. Then every thread resolves at once: ribbons from each input to its slots. Line: "A binary search over the offsets: an upper bound."]
-> Then it knows its local offset and pulls the data. Finding the input usually takes a binary search over the offsets, technically an upper bound.
+**74.** [Pull comes in: push's code moves up and pull's code appears under it; the Push card shrinks to the left and its wave goes; the Pull card slides in on the right with the same object, count and prefix-sum rows, and under them a row of 12 threads, one per output, each marked "?".]
+> With pull style, you run the next batch of threads over the outputs instead: as many threads as the total.
 
-**76.** [The pull wave: one lane per output thread, three or four muted cells for the search steps and one colored cell for the read; every lane about the same. Line: "More work per thread, less memory, balanced."]
-> So it is more computation per thread, but it needs less memory and the work is balanced.
+**75.** [One thread is picked out and framed: "idx = 7", and under it "Where do I come from?"]
+> All this thread knows is that it is the 7th triangle to render. Its data has to be pulled from the object it belongs to, so it needs to find out where it comes from.
 
-**77.** [Line: "The second pass of the chain can pull from the first."]
-> It is especially good for the compaction-then-expansion chain we just saw: the expansion pass can pull from the compaction pass's result instead of having it pushed out.
+**76.** [The search: the prefix-sum cells are compared with 7, the middle first, "3 ≤ 7", then "12 > 7", then "9 > 7", the losing halves dimming; the answer is object 2, triangle 7 − 3 = 4. An arrow from object 2 to the thread, which takes its color. Then every thread resolves at once: ribbons from each object to its range.]
+> One way to do that is a binary search over the prefix sums, technically an upper bound: it finds the object, and the offset gives the triangle within it. So it is more computation per thread, but it needs less memory and the work is balanced, and it is especially good for the compaction-then-expansion chain we just saw: the expansion pass can pull from the compaction pass's result.
 
 Fact check for this part:
-- Push needs the expanded buffer; pull needs only the offsets (plus the inputs), because each output thread recomputes where it comes from. Both need the total, to size the buffer or the next dispatch.
+- Push needs the expanded buffer; pull needs only the prefix sums (plus the inputs), because each output thread recomputes where it comes from. Both need the total, to size the buffer or the next dispatch.
 - Wave imbalance: lanes in a wave run in lockstep, so a loop with a per-thread trip count runs as many iterations as the longest lane, with the finished lanes masked off. "They all wait for it" is accurate.
-- The search: with exclusive offsets start[0..n] plus the total as start[n], the owner of output j is the last i with start[i] ≤ j, which is `upper_bound(start, j) − 1`. A lower bound is wrong when a count is 0 (two inputs share the same start). With inclusive sums (ends), it is `upper_bound(end, j)`. So "an upper bound" is the right word. A fixed-trip-count search over n + 1 entries takes ⌈log₂(n + 1)⌉ steps for every thread, 4 here; the shown search for slot 7 stops after 3 compares, and the wave shows 3 or 4 per lane.
-- "More balanced" is right; "faster" is not claimed and should not be: pull launches one thread per output (18 here against 8), so it does more total work, in exchange for no idle lanes and no buffer. In the chain, the win is in the expansion pass (many items per input), not in the compaction pass (0 or 1 item per input), where push is fine.
+- The search: with exclusive prefix sums prefix[0..n] plus the total as prefix[n], the owner of output j is the last i with prefix[i] ≤ j, which is `upper_bound(prefix, j) − 1`. A lower bound is wrong when a count is 0 (two inputs share the same value). With inclusive sums (ends), it is `upper_bound(end, j)`. So "an upper bound" is the right word. For 7 the search takes three compares.
+- "More balanced" is right; "faster" is not claimed and should not be: pull launches one thread per output (12 here against 4), so it does more total work, in exchange for no idle lanes and no buffer. In the chain, the win is in the expansion pass (many items per input), not in the compaction pass (0 or 1 item per input), where push is fine.
 - Related reading if a link is wanted: this is the "load-balancing search" / "expand" pattern (ModernGPU calls it load-balancing search; it is also how vectorized binary search over a scan is done in GPU libraries).
 
 ## Part 8: atomics instead of a prefix sum
 
 The original example again. The code sits in a small card at the top left with the counter beside it; under it the atomics rows: the eight objects, five visible, and a row per frame. On the right the culling scene, held still at the compaction camera, until the comparison, when it gives its place to the prefix sum's rows. The visible threads reach the counter in a shuffled order, a different one each frame.
 
-**78.** [Push and pull shrink into a card on the left.]
+**77.** [Push and pull shrink into a card on the left.]
 > Another thing I want to touch on is atomics instead of a prefix sum.
 
-**79.** ["Atomics instead?" / "One counter: every thread adds to it and writes at the value it gets back."]
+**78.** ["Atomics instead?" / "One counter: every thread adds to it and writes at the value it gets back."]
 > If we go back to our original push_back example, one could easily claim that the prefix sum isn't needed and that an atomic does the same job: every visible object adds one to a counter, and the value it gets back is its offset in the output.
 
-**80.** [The code, `slot = atomicAdd(counter, 1); out[slot] = obj;`, with the counter at 0; the objects, the culled ones dashed; and the scene, frozen.]
+**79.** [The code, `slot = atomicAdd(counter, 1); out[slot] = obj;`, with the counter at 0; the objects, the culled ones dashed; and the scene, frozen.]
 > Here is what that looks like.
 
-**81.** [The visible threads reach the counter one after another, in a shuffled order. Each sends a pulse to the counter, the counter ticks up, the value it got back appears under the thread, and its item lands at that slot in frame 1. No gaps, in arrival order. About 4 seconds.]
+**80.** [The visible threads reach the counter one after another, in a shuffled order. Each sends a pulse to the counter, the counter ticks up, the value it got back appears under the thread, and its item lands at that slot in frame 1. No gaps, in arrival order. About 4 seconds.]
 > This gives you a perfectly compact output.
 
-**82.** [The same run again into frame 2, with a different arrival order. The two rows hold the same objects in different orders.]
+**81.** [The same run again into frame 2, with a different arrival order. The two rows hold the same objects in different orders.]
 > But it isn't necessarily ordered. With the chaos of GPU execution, each frame your compacted result depends on which threads reached the atomic first.
 
-**83.** [The scene shrinks away and the prefix sum's rows take its place, side by side with the atomics: "Atomics · when the order does not matter" on the left, "Prefix sum · when the order matters" on the right, the same objects with their offsets 0 to 4 under them, and frame 1 and frame 2 in the same order.]
+**82.** [The scene shrinks away and the prefix sum's rows take its place, side by side with the atomics: "Atomics · when order is arbitrary" on the left, "Prefix sum · when order is important" on the right, the same objects with their offsets 0 to 4 under them, and frame 1 and frame 2 in the same order.]
 > This might not matter in some situations. But when you care about preserving the order, the prefix sum is the solution: every frame comes out the same. One more thing about atomics, said over this picture: every thread goes out to the same counter in global memory and waits for its value to come back, with thousands of threads contending for that one address.
 
 Fact check for this part:
@@ -261,13 +258,13 @@ Fact check for this part:
 
 ## The ending
 
-**84.** [The grid of the seven examples comes back and shrinks into a card on the left.]
+**83.** [The grid of the seven examples comes back and shrinks into a card on the left.]
 > And that's the push_back pattern on the GPU. Whenever a thread doesn't know where to write, ask the three questions: keep it or not, how many, which list. Count, prefix sum, write.
 
-**85.** ["Your turn" / "Seen these patterns somewhere else?" / "Tell me in the comments."]
+**84.** ["Your turn" / "Seen these patterns somewhere else?" / "Tell me in the comments."]
 > If you've run into other examples that fit these patterns, or a case where they don't, tell me in the comments. I'd love to hear about them.
 
-**86.** ["Thanks for watching" / "See you in the next one."]
+**85.** ["Thanks for watching" / "See you in the next one."]
 > Thanks for watching, and see you in the next one.
 
 Other ways to say goodbye, if the one above feels stiff:
@@ -276,7 +273,7 @@ Other ways to say goodbye, if the one above feels stiff:
 
 ## Presentation mode
 
-Built into the artifact, beats 1 to 86. Start it with V, the Present button, or `#present` at the end of the URL.
+Built into the artifact, beats 1 to 85. Start it with V, the Present button, or `#present` at the end of the URL.
 
 Keys: → (or Enter, ↓, Page Down) next beat · ← back · Space pause and resume (everything holds still; moving to another beat resumes) · R replay the beat · I beat counter · F fullscreen · Esc exit.
 

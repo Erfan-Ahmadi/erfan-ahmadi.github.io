@@ -268,3 +268,28 @@ Later note:
 expansion case still buggy, it doesn't cull, also I need more visible changes when camera moves, so make the movement maybe faster or in a way that prefix sums change a bit more rapidly
 ```
 (With the screenshot of a bunny outside the frustum still drawn and counted. Read together with "don't add culling when we're on expansion only": the roam must never put an object outside the view.)
+
+Later notes:
+
+```text
+the push vs pull section is confusing. 
+there are bugs, on the right hand side, the output turns suddenly to thread.
+the numbers on the blocks of thread is confusing, some may think it's their index, but it's actually their count, so use the same triangle visualization used in the prefix sum intro.
+threads should be objects and counts. on both sides we have count and prefix sum.
+
+ok and reduce the number of threads to make it more understandible. (4 is good)
+
+when talking about push, we only see that section and a pseudo code for a double for loop (for each thread, for  < size write to offset.
+
+then pull comes in the pseudo code moves up. I don't want the texts underneath, I will explain over it.
+
+and we see the pull. and the first two rows are the same as the other which is fixed. the thread count should be expicitly mentioned, the left is push thread count = number of objects = 4, but on the right hand pull thread count = sum ...
+
+hide the thread occupancy thing once we move to pull, that's just additional crowdedness
+
+write beneath the selected index in the pull method. Where do I come from? (transcript idea: all it knows is it's the 7th triangle to render, but it needs to have it's data pulled from the main object and needs to know where it comes from. a way to do that is to do a binary search to find where it comes from.
+```
+
+```text
+for the next section do  writing in the appropriate section: "when order is important" and "when order is arbitrary"
+```
