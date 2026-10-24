@@ -98,3 +98,13 @@ Later note:
 ```text
 compaction animations also need to be controlled by navigation, right now it immediately skips to compaction. the two different cameras and the algorithm steps need to be controllable
 ```
+
+Later notes:
+
+```text
+the items in the compaction and the expansion need to be synced and the same color position (except compaction has others outside view)
+when showing expansion next to compaction they need the full frozen version not the animation again
+the merging needs to be more smooth and items already in screen need to be placed in the correct spots because the items are synced it's natural and then those orange highlight annotations will go over each step, first compaction and then expansion. instead of start write `offset`and between the layers of count and offset put one of those blackbox prefix sums.
+oh and for previous animation for the prefix sum. instead of start write ` prefix sum` be careful about annotations like this being properly named to the context they are in
+for compaction make the full algorithm show first then navigatable options to highlight outputs and inputs when we have the full version and ribbons
+```
