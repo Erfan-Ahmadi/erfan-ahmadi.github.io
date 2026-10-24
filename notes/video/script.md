@@ -108,9 +108,38 @@ One press per sum, so each step is under your control. The sums are shown twice:
 **39.** [The aside goes and the full level-of-detail example pops up, rows and scene, under the name "Expansion". It cycles: the steps run with the camera held still (count, start, offsets, output), then the camera moves somewhere else, and they run again with the new counts.]
 > Congratulations, you now know what expansion is and how it works. Expansion is when each thread generates a different amount of work, decided at runtime. Like generating these levels of detail here.
 
+## Part 5: compaction, then the two chained
+
+**40.** [Fade to compaction: the culling example, named, with the camera held still. The counts pop in.]
+> Compaction is the same idea. It's even simpler: each item generates either 0 or 1 items instead of many.
+
+**41.** [The visible objects light up, in the scene and in the rows, with their 1s framed. The rest dims.]
+> The count is 1 when the object is visible,
+
+**42.** [Now the culled objects light up, with their 0s.]
+> and 0 when it's culled.
+
+**43.** [The row of inputs is framed and the rest of the panel dims.]
+> It's called compaction because the number of outputs
+
+**44.** [The outputs fly into the list; then the output row is framed and the rest dims.]
+> is less than the number of inputs.
+
+**45.** [The screen splits into two named sections: Compaction on the left, Expansion sliding in on the right, each with its scene on top and its rows under it.]
+> Now that you know what expansion and compaction are,
+
+**46.** [The two sections stack up, expansion under compaction, and become one example: "Compaction, then expansion". It runs its steps on a loop: cull, the list of survivors, then triangles for each survivor.]
+> you can chain these two operations together and plug them in like Lego.
+
+**47.** [The first pass is framed while it runs: objects, keep?, start, offsets, list.]
+> The first pass will compact and cull,
+
+**48.** [The second pass is framed while it runs: triangles, start, offsets, output.]
+> and the second pass will expand and generate geometry for the appropriate LODs. And this is what actual real-time applications and games do, like…
+
 ## Presentation mode
 
-Built into the artifact, beats 1 to 39. Start it with V, the Present button, or `#present` at the end of the URL.
+Built into the artifact, beats 1 to 48. Start it with V, the Present button, or `#present` at the end of the URL.
 
 Keys: → (or Enter, ↓, Page Down) next beat · ← back · Space pause and resume (everything holds still; moving to another beat resumes) · R replay the beat · I beat counter · F fullscreen · Esc exit.
 

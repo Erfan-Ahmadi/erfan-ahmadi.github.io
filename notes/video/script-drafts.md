@@ -80,3 +80,15 @@ when asking serial , the animation of first item changing should be still playig
 the next animation for lods is too fast. it should do the animation with camera frozen move the camera to another place and do it again.
 make the networked prefix sum appear 2x as fast
 ```
+
+## Part 5: compaction, then the two chained (first draft)
+
+```text
+[fade to compaction, camera frozen at a state]
+Compaction is the same idea. it's even simpler, each item generates either 0 or 1 items instead of many. count is 1 when object is visible and a 0 when it's culled. [1's visible highlighted, and when next 0s and invisibles highlighted, with their count below them]
+it's called compaction because the number of outputs is less than the number  of input. (navigation will highlight the inputs and then with next conrol the outputs highlighted, a bit bigger or something that turns the attention to)
+
+Now that you know what expansion and compaction is (two seperate sections, the lod one will appear or slide in again somehow with the name of expansion and compaction)
+you can chain these two operations together and plug them like legos. (the left and right section merge together and the expansion goes under the comapction)
+the first pass will compact and cull and the second pass will expand and generate geometry for appropriate LoDs. and this is what actual real-time applications and games do like...
+```
