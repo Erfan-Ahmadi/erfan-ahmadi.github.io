@@ -68,7 +68,7 @@ X: https://x.com/ErFunRender
 
 ## Social post (X and LinkedIn), the short one that went out
 
-There is a pattern underneath some of the most interesting graphics techniques. Culling, level of detail, light clusters, particle systems, Gaussian splatting: they look like different problems, but they are all the same one.
+There is a pattern underneath some of the most interesting graphics techniques. Culling, level of detail, light clusters, particle systems, Gaussian splatting: they look like different problems, but the same pattern shows up in every one of them.
 
 My new video shows that pattern:
 
