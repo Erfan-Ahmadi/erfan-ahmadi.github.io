@@ -76,4 +76,7 @@ Later notes:
 the movememnt of 3-8 for the first item is continous and doesn't make sense. it should be discrete.
 when I say let's sweep that under the rug the network disappears and becomes simple or squashes somehow make sure to have that animation as well
 hmm I think I'll do the parallel explanation first and then the congrats you now know expansion, it flows better this way
+when asking serial , the animation of first item changing should be still playig, also too much empty space due to aspect ration for some reason on the "aside" that feels weird. also remove "links in the description text".
+the next animation for lods is too fast. it should do the animation with camera frozen move the camera to another place and do it again.
+make the networked prefix sum appear 2x as fast
 ```

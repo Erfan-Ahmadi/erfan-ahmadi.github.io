@@ -93,27 +93,24 @@ One press per sum, so each step is under your control. The sums are shown twice:
 
 ## Part 4: in parallel, and expansion
 
-**35.** [Only the prefix sum again: the three threads with their start row shrink into a card on the left.]
+**35.** [Only the prefix sum: the panel from beat 34 shrinks into a card on the left, the first count still stepping and the offsets still moving.]
 > But you might be asking, wait a minute, how do you calculate the prefix sum?
 
 **36.** [Beside the card: "Serial?", "Every thread depends on the one before it".]
 > It looks suspiciously like a serial algorithm, where every thread depends on the last one.
 
-**37.** [The text is replaced by "Parallel prefix sum" and a scan network: eight counts, four rounds of adds, every thread at once in each round, and the starts come out at the bottom.]
-> To which I say, great question. There are plenty of clever algorithms, developed over the last few decades, that compute the prefix sum in parallel over thousands of threads.
+**37.** [The text is replaced by "Parallel prefix sum" and a scan network: eight counts, four quick rounds of adds, every thread at once in each round, and the starts come out at the bottom. About 2 seconds.]
+> To which I say, great question. There are plenty of clever algorithms, developed over the last few decades, that compute the prefix sum in parallel over thousands of threads. I was really tempted to go into these algorithms here, but that's not my goal, and there are plenty of resources where you can learn about parallel prefix sums. I'll link some of them below.
 
-**38.** ["Links in the description" appears under the network.]
-> I was really tempted to go into these algorithms here, but that's not my goal, and there are plenty of resources where you can learn about parallel prefix sums. I'll link some of them below.
-
-**39.** [A rug sweeps across the network from the right. As it passes, the rounds fold into one box that says "prefix sum", with the counts going in and the starts coming out. The rug slides on out of the way and the simple picture stays.]
+**38.** [A rug sweeps across the network from the right. As it passes, the rounds fold into one box that says "prefix sum", with the counts going in and the starts coming out. The rug slides on out of the way and the simple picture stays.]
 > For now, let's sweep that under the rug and just accept that this prefix sum happens in parallel.
 
-**40.** [The aside goes and the full level-of-detail example pops up, rows and scene, under the name "Expansion", running its steps on a loop.]
+**39.** [The aside goes and the full level-of-detail example pops up, rows and scene, under the name "Expansion". It cycles: the steps run with the camera held still (count, start, offsets, output), then the camera moves somewhere else, and they run again with the new counts.]
 > Congratulations, you now know what expansion is and how it works. Expansion is when each thread generates a different amount of work, decided at runtime. Like generating these levels of detail here.
 
 ## Presentation mode
 
-Built into the artifact, beats 1 to 40. Start it with V, the Present button, or `#present` at the end of the URL.
+Built into the artifact, beats 1 to 39. Start it with V, the Present button, or `#present` at the end of the URL.
 
 Keys: → (or Enter, ↓, Page Down) next beat · ← back · Space pause and resume (everything holds still; moving to another beat resumes) · R replay the beat · I beat counter · F fullscreen · Esc exit.
 
