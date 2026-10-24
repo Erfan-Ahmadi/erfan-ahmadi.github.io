@@ -106,7 +106,7 @@ One press per sum, so each step is under your control. The sums are shown twice:
 > For now, let's sweep that under the rug and just accept that this prefix sum happens in parallel.
 
 **39.** [The aside goes and the full level-of-detail example pops up, rows and scene, under the name "Expansion". Three bunnies, the camera held still. One press per step from here.]
-> Btw, Congratulations, you now know what expansion is and how it works. Expansion is when each thread generates a different amount of work, decided at runtime. Like generating these levels of detail here. [GIVE EXAMPLES]
+> Btw, Congratulations, you now know what expansion is and how it works. Expansion is when each thread generates a different amount of work,  Here generating the triangles for the chose these levels of detail here. [GIVE EXAMPLES]
 
 **40–43.** [Count, offset, spaces, output, one press each, with the first camera. No running sum here: a long "prefix sum" bar sits between count and offset, and the offsets just appear.]
 
@@ -117,19 +117,18 @@ One press per sum, so each step is under your control. The sums are shown twice:
 Compaction and expansion share one scene: the same eight objects, the same colors, and the same camera (the one expansion ends on). Expansion's items are the five objects that camera sees; compaction has the three outside the view as well. From here on there is no running sum: a long "prefix sum" bar sits between count and offset.
 
 **45.** [Fade to compaction: the culling example, named, with the camera held still. The objects and their counts.]
-> Compaction is the same idea. It's even simpler: each item generates either 0 or 1 items instead of many.
+> Compaction is the same idea. It's even simpler: each item generates either 0 or 1.
 
 **46.** [The visible objects light up, in the scene and in the rows, with their 1s framed. The rest dims.]
-> The count is 1 when the object is visible,
+> Visible objects report a count of 1 and invisible objects will report a count of 0
 
 **47.** [Now the culled objects light up, with their 0s.]
-> and 0 when it's culled.
 
 **48.** [One press runs the rest: the offsets appear under the "prefix sum" bar, the arrows point at the spaces, and the outputs fly in with their ribbons. About 3 seconds.]
 
 **49.** [The output row is framed and the rest dims.]
 > It's called compaction because the number of outputs
-
+ simply  is less than the number of inputs.
 **50.** [The row of inputs is framed instead.]
 > is less than the number of inputs.
 
@@ -141,10 +140,11 @@ Compaction and expansion share one scene: the same eight objects, the same color
 
 **53.** [One press runs the first pass, quickly: count, offsets, spaces, the list of survivors. The pass is framed while it runs.]
 > The first pass will compact and cull,
-
+ now ew ee have outr visible object
 **54.** [One press runs the second pass on those survivors, quickly: triangles, offsets, spaces, output, the bunnies appearing in the scene.]
 > and the second pass will expand and generate geometry for the appropriate LODs. And this is what actual real-time applications and games do, like…
-
+. [EXAMPLES]  
+NOTICE how when an object goes out of sight it only affects the first pass at the top, but when we get closer to our objects more geometry gets generated at the bottom in sceond pass
 **55.** [The highlight goes and the camera starts roaming, as in beat 44, with the whole chain live: objects leave and enter the view (culled ones turn into dashed circles), the survivors' list and the triangle counts change, and the offsets and the output re-flow. It keeps running inside the aside card that follows, so something is moving while the question is talked over.]
 > (The tail of the line above, and whatever else there is to say about real applications, goes here.)
 
@@ -154,7 +154,7 @@ Binning uses the light clusters with four clusters and eight lights, so there ar
 
 **56.** [The combined example shrinks into a card on the left, still showing its result.]
 > Now that you understand how expansion and compaction generate a variable amount of output, you might be wondering what happens when there is more than one output to push back into.
-
+ together
 **57.** [The question comes in beside it: "Several outputs?" / "What if there is more than one list to push back into?"]
 > For example, when we need to assign lights to clusters.
 
@@ -178,7 +178,7 @@ Binning uses the light clusters with four clusters and eight lights, so there ar
 
 **64.** [A vertical "prefix sum" box comes up between the counts and the bars, and the prefix sum runs down the bars: each bar takes the bar above it, so the bars get longer down the chart by construction. One row per second.]
 > And we do the prefix sum over the counts themselves. It runs over the clusters, not the lights, so its size is fixed and known up front; here it is four numbers.
-
+Once we have the colight unts fofor each cluster, ovef r the countNOT .  no matter how many light s we havewe  we always do prefix sium over our 4 clu
 **65.** [The bottom bar, which already has the output's layout, plops down into the output and its pieces become the dashed spaces, numbered by cluster, each with its offset under its left edge.]
 > So the bottom bar becomes our offsets.
 
@@ -200,10 +200,11 @@ Four objects with fixed counts (1, 2, 6, 3; total 12). Push and pull are two mir
 > Now, before I end this video: for the more advanced viewers, I want to touch on a few nuances I purposely left out.
 
 **69.** ["Using the offsets" / "Who moves the data: the input, or the output?" / "Push, or pull."]
-> I talked about using the prefix sum to compute offsets, but not about how to actually use those offsets to fill, or to walk, the compact output. There are two ways to go about it: push style and pull style.
+> I talked about using the prefix sum to compute offsets, but not about how to actually use those offsets to fill, or to walk, the compact output. There are two ways to go about it: first is push style.
 
 **70.** [Push alone, in the left half: the four objects, their counts, the prefix sum, the four threads under their objects, an empty output, and under it all the push code: a thread per object with a loop over its count writing at `prefix[i] + k`.]
-> Push style is when each input thread writes its values at its offset in the output.
+  
+> Here you can see we have the object counts and prefix sums, with Push style. we only use 4 threads, one per object, to write all the 12 output triangles.
 
 **71.** [Every thread writes its triangles at its offset, one per tick, in lockstep, from its thread block down into the output. The thread with six keeps going while the others, done after one to three, dim and wait.]
 
@@ -211,16 +212,19 @@ Four objects with fixed counts (1, 2, 6, 3; total 12). Push and pull are two mir
 > This usually needs extra memory, a buffer for all the outputs,
 
 **73.** [The writes play again, and at the bottom of the card one wave fills in tick by tick: a lane per thread, a cell per triangle written, dashed cells where a lane sits idle. One lane is busy for six ticks, the rest for one to three.]
-> and the work is imbalanced across a wave: if one thread has six triangles to write and the others one or two, they all wait for it to finish.
+> and the work here is imbalanced across a wave: if one thread has six triangles to write and the others one or two, they all wait for it to finish.
 
 **74.** [Pull slides into the right half, the mirror of push: the same object, count and prefix-sum rows, then 12 threads marked "?", one over each output slot, "12 threads = total" after them, an empty output, and the pull code under it. Push's wave goes.]
-> With pull style, you run the next batch of threads over the outputs instead: as many threads as the total.
+> With pull style, we again have the count and the prefix sum. but this time instead of 4 threads, we generate 12 ones instead, one per output triangle. 
+ 
 
 **75.** [One thread is picked out and framed: "idx = 7", and under it "Where do I come from?"]
-> All this thread knows is that it is the 7th triangle to render. Its data has to be pulled from the object it belongs to, so it needs to find out where it comes from.
+> All this thread knows is that it is the 8th overall triangle to render. Its data has to be pulled from the object it belongs to, so it needs to find out where it comes from. try to answer this yourself.
 
 **76.** [The search: the prefix-sum cells are compared with 7, the middle first, "3 ≤ 7", then "12 > 7", then "9 > 7", the losing halves dimming; the answer is object 2, triangle 7 − 3 = 4. An arrow from object 2 to the thread, which takes its color and writes its triangle into the slot under it. Then every thread resolves at once: ribbons from each object to its threads, and the output fills.]
-> One way to do that is a binary search over the prefix sums, technically an upper bound: it finds the object, and the offset gives the triangle within it. So it is more computation per thread, but it needs less memory and the work is balanced, and it is especially good for the compaction-then-expansion chain we just saw: the expansion pass can pull from the compaction pass's result.
+> you pause the video here if you want and tell me which object does the 8th triangle belong to.  If you didn't cheat by looking at the left side, you probably did something like this. [1, 2, 3, 4,. .. ] and yes  we found our triangle it's the 5th triangle of the third object. In practice instead of counting like this we use a binary search to speed up this process it gives the same result.
+  
+> So yes, it is more computation per thread, but it needs less memory and the work is balanced, and it is especially good for the compaction-then-expansion chain we just saw: the expansion pass can pull from the compaction pass's result.
 
 Fact check for this part:
 - Push needs the expanded buffer; pull needs only the prefix sums (plus the inputs), because each output thread recomputes where it comes from. Both need the total, to size the buffer or the next dispatch.
@@ -234,22 +238,22 @@ Fact check for this part:
 The original example again. The code sits in a small card at the top left with the counter beside it; under it the atomics rows: the eight objects, five visible, and a row per frame. On the right the culling scene, held still at the compaction camera, until the comparison, when it gives its place to the prefix sum's rows. The visible threads reach the counter in a shuffled order, a different one each frame.
 
 **77.** [Push and pull shrink into a card on the left.]
-> Another thing I want to touch on is atomics instead of a prefix sum.
+> Another thing I want to touch on is using atomics instead of a prefix sum.
 
 **78.** ["Atomics instead?" / "One counter: every thread adds to it and writes at the value it gets back."]
 > If we go back to our original push_back example, one could easily claim that the prefix sum isn't needed and that an atomic does the same job: every visible object adds one to a counter, and the value it gets back is its offset in the output.
 
 **79.** [The code, `slot = atomicAdd(counter, 1); out[slot] = obj;`, with the counter at 0; the objects, the culled ones dashed; and the scene, frozen.]
-> Here is what that looks like.
+
 
 **80.** [The visible threads reach the counter one after another, in a shuffled order. Each sends a pulse to the counter, the counter ticks up, the value it got back appears under the thread, and its item lands at that slot in frame 1. No gaps, in arrival order. About 4 seconds.]
 > This gives you a perfectly compact output.
 
 **81.** [The same run again into frame 2, with a different arrival order. The two rows hold the same objects in different orders.]
-> But it isn't necessarily ordered. With the chaos of GPU execution, each frame your compacted result depends on which threads reached the atomic first.
+> But it isn't necessarily ordered. With the chaos of GPU execution, each frame, your compacted result depends on which threads reached the atomic first. so your second frame might execute atomics in a different order and get something completely different
 
 **82.** [The scene shrinks away and the prefix sum's rows take its place, side by side with the atomics: "Atomics · when order is arbitrary" on the left, "Prefix sum · when order is important" on the right, the same objects with their offsets 0 to 4 under them, and frame 1 and frame 2 in the same order.]
-> This might not matter in some situations. But when you care about preserving the order, the prefix sum is the solution: every frame comes out the same. One more thing about atomics, said over this picture: every thread goes out to the same counter in global memory and waits for its value to come back, with thousands of threads contending for that one address.
+> This might not matter in some situations. But when you care about preserving the order, the prefix sum is the solution, where every frame comes out the same.
 
 Fact check for this part:
 - Order: the arrival order at the counter is not deterministic across waves and workgroups, so the compacted order changes between runs; the prefix sum is a stable compaction and gives the same order every time. Correct, and it is the main argument. Reproducibility for debugging is a related one.
@@ -259,7 +263,7 @@ Fact check for this part:
 ## The ending
 
 **83.** [The grid of the seven examples comes back and shrinks into a card on the left.]
-> And that's the push_back pattern on the GPU. Whenever a thread doesn't know where to write, ask the three questions: keep it or not, how many, which list. Count, prefix sum, write.
+> And these were the patterns on the GPU I wanted to show you.
 
 **84.** ["Your turn" / "Seen these patterns somewhere else?" / "Tell me in the comments."]
 > If you've run into other examples that fit these patterns, or a case where they don't, tell me in the comments. I'd love to hear about them.
