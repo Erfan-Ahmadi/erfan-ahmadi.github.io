@@ -1,0 +1,57 @@
+---
+title: "GPU-Driven Anything"
+description: "Culling, level of detail, light clusters, particles, splats: under all of them is one question, where does each thread write? One pattern answers it: count, prefix sum, write."
+date: 2026-10-24
+# youtube: VIDEO_ID
+tags: ["GPU-Driven", "Compute", "Shaders"]
+thumbnail: ./thumbnail.png
+socialImage: ./social.png
+readingTime: 8
+draft: true
+---
+
+On the CPU, filtering a list is one line: if the object is visible, `push_back` it. On the GPU you give every object its own thread, and that line is gone. A hundred thousand threads all want to write to the same list, in order, with no gaps, and none of them knows where its place is.
+
+The answer to that one question is hiding inside a lot of graphics techniques: culling, level of detail, light clusters, particle systems, vector graphics, marching squares, Gaussian splatting. This video is about seeing the pattern, so that next time you run into it you recognize it right away and know exactly what to do.
+
+## Chapters
+
+- [0:00](https://www.youtube.com/watch?v=VIDEO_ID&t=0s) The pattern
+- [2:35](https://www.youtube.com/watch?v=VIDEO_ID&t=155s) Prefix sum
+- [4:19](https://www.youtube.com/watch?v=VIDEO_ID&t=259s) Expansion
+- [4:53](https://www.youtube.com/watch?v=VIDEO_ID&t=293s) Compaction
+- [5:12](https://www.youtube.com/watch?v=VIDEO_ID&t=312s) Compaction + expansion
+- [6:19](https://www.youtube.com/watch?v=VIDEO_ID&t=379s) Binning
+- [8:06](https://www.youtube.com/watch?v=VIDEO_ID&t=486s) Push vs. pull
+- [10:40](https://www.youtube.com/watch?v=VIDEO_ID&t=640s) Atomics
+
+## Play with it
+
+Every animation in the video comes from this page. Pick an example, step through count, prefix sum and write, drag the camera, and open **Where it's used** for the papers and talks each example comes from.
+
+<Artifact src="gpu-push-back.html" title="GPU-Driven Anything" height={560} caption="Count, prefix sum, write: one pattern across seven examples. Press V for the presentation the video was recorded from." />
+
+## The pattern in one paragraph
+
+Each thread counts how much it wants to write: 0 or 1 for a cull, a triangle count for a level of detail, one per cluster a light touches. A prefix sum over the counts turns them into offsets, and the offset is where that thread starts writing. The sum itself runs in parallel; plenty of good algorithms do that, and a few are linked below.
+
+Three shapes of the same idea:
+
+- **Compaction**: every input makes 0 or 1 outputs. Fewer outputs than inputs. Culling.
+- **Expansion**: every input makes a different number of outputs, decided at run time. Level of detail, particles, curves.
+- **Binning**: every input goes into one or more of several lists, and the prefix sum runs over the lists, not the inputs. Light clusters, material tiles.
+
+The two chain: compact first, expand only what survived, and the second pass can pull straight from the first pass's result.
+
+## Two nuances
+
+**Push or pull.** Push has a thread per input write its outputs at its offset, which needs the whole output buffer and leaves a wave waiting for its longest thread. Pull has a thread per output find its input with a binary search over the prefix sums, technically an upper bound. More work per thread, less memory, balanced work, and a natural fit for the expansion half of the chain.
+
+**Atomics instead?** One counter, every visible thread adds to it and writes at the value it gets back. Perfectly compact, but in the order the threads happened to reach the counter, which changes from frame to frame. When order matters, the prefix sum gives the same output every frame.
+
+## Further reading
+
+- Parallel prefix sum: [GPU Gems 3, chapter 39](https://developer.nvidia.com/gpugems/gpugems3/part-vi-gpu-computing/chapter-39-parallel-prefix-sum-scan-cuda), and Merrill and Garland's [Single-pass Parallel Prefix Scan with Decoupled Look-back](https://research.nvidia.com/publication/2016-03_single-pass-parallel-prefix-scan-decoupled-look-back).
+- The pull side of expansion is the load-balancing search in [ModernGPU](https://moderngpu.github.io/loadbalance.html).
+
+Find more on [my YouTube channel](https://www.youtube.com/@ErFunRender).
