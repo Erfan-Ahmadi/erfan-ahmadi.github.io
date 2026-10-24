@@ -307,3 +307,153 @@ I need it to be visible that in a row after prefix sum we have threads and thing
 ```text
 the number of threads should be right next to the threads tehmselves. so on the left side we have 4 threads, right side we have 12
 ```
+
+Later notes:
+
+(With a screenshot of pull after "Where do I come from?")
+
+```text
+after where do i come from I need another animation that counts each triangle by highlighting the outline as red, counting, 1 2 3 4 5 6 7 and yes we now know the 7th triangle comes from the third object and we know where to pull our data from
+inside the blocks we should have correct number of small triangles based on count
+```
+
+(With a screenshot of push's output row)
+
+```text
+make 'output' more aligned and better spaced here
+```
+
+(With a screenshot of the thread row)
+
+```text
+here triangles in threads
+```
+
+```text
+publish what you have now, for the atomics section make it so that I can navigate each atomic operation. and the animations are too quick and weird and non smooth. make it slower and better understandible
+```
+
+```text
+publish what you have now, for the binning I need better navigation, when it comes to highlighting clusters i need to control that myself, and make the counts more visible by greying out the other ones
+```
+
+```text
+also 6 lights is enough in binning.
+```
+
+(With a screenshot of push and pull)
+
+```text
+I need navigational control here. and the output is still misalligned with top rows
+```
+
+```text
+after alignmnet fix show with some dotted ribbon how one thread writes multiple outputs in push
+```
+
+(With a screenshot of the prefix sum chart)
+
+```text
+show the pluses here as well when stacking the bars
+```
+
+(With a screenshot of the expansion roam)
+
+```text
+the camera movement here is weird, make the moving around of the camera faster, it's twitching right now. I need lods to change more rapidly when animation is playing after full explanatin of the section
+```
+
+```text
+instead of doing animation, you need to give me full control of the camera here after the explanation is finished
+```
+
+(With a screenshot of the "Using the offsets" aside)
+
+```text
+no aside here, because it's unrelated to the concept, the text should appear on the left and fade in slowly, same for next aside
+```
+
+(With a screenshot of the atomics section)
+
+```text
+here you need to give control to me to do atomics with the new ordering for the next row as well
+and the empty space is weird after prefix sum comes in, so code should be below and empty space should be in bottom right
+```
+
+(With a screenshot of the prefix sum intro: the thread boxes with the counts in them and the triangles under them)
+
+```text
+here like the previous feedback, make the triangles go inside the object, and a new count row which is numbers
+```
+
+(With a screenshot of the expansion rows: plain colored boxes in the object row)
+
+```text
+put the shape of the meshes we have in camera view inside those object boxes here as well
+```
+
+(With a screenshot of the chained example's second pass)
+
+```text
+here as well, the second pass needs to have the geometries inside the little boxes.
+```
+
+(With a screenshot of the "Using the offsets" text beat)
+
+```text
+use static animation of loop that we have dashed areas and threads fill them. kind of like the push but a bit more general just so the audience have something to look at while I'm talking
+```
+
+(With a screenshot of push's rows at the start of the part)
+
+```text
+I need highlight with navigation controls here at the begninng of this section that highlight both the count and the prefix sum.
+```
+
+(With a screenshot of push and pull at "Where do I come from?")
+
+```text
+after this highlight the 7th one on the left hand side (navigatable)
+```
+
+(With a screenshot of "idx = 7" / "Where do I come from?")
+
+```text
+next to idx=7, write eight triangle
+```
+
+(With a screenshot of the "Atomics instead?" text beat)
+
+```text
+do stationary animation of atomic add here, an atomic counter that connects with dashed lines to multiple threads, in multiple blocks and connections get fired up like neurons and bit more like gpu viz
+```
+
+(With screenshots of the two cards' heads and of the side-by-side screen)
+
+```text
+move these to the bottom center of the cards, also weird layout make it one with just a seperator vertical line in the middle
+```
+
+(With a screenshot of "Thanks for watching" / "See you in the next one.")
+
+```text
+remove see you in the next one
+```
+
+(With screenshots of the Goal aside and of the prefix sum beat after it)
+
+```text
+the transition from this and the next is unsmooth and the next section should just say prefix sum no sub note
+```
+
+(With a screenshot of the expansion beat with the camera free, one object outside the view and culled)
+
+```text
+why is expansion culling here? I don't want cull, also I can just set where the camera looks at I need to also change it's position ( the radius to select the camera to move should be big enough for me to not misclick and make it look elsewhere. same idea for the interactible sections next  (I think it was the merged one)
+```
+
+(With a screenshot of the loop beside "Using the offsets")
+
+```text
+the loop here  has a fade in which it fades in and out completely, it should come with no fade in like the texts next to it (the titles and questions) and it should not fade in/out, apply similar fix to anywhere else that applies
+```

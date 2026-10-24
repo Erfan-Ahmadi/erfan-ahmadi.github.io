@@ -139,14 +139,16 @@ Compaction and expansion share one scene: the same eight objects, the same color
 > you can chain these two operations together and plug them in like Lego.
 
 **53.** [One press runs the first pass, quickly: count, offsets, spaces, the list of survivors. The pass is framed while it runs.]
-> The first pass will compact and cull,
- now ew ee have outr visible object
+> The first pass will compact and cull, Now we have our visible objects
+
 **54.** [One press runs the second pass on those survivors, quickly: triangles, offsets, spaces, output, the bunnies appearing in the scene.]
-> and the second pass will expand and generate geometry for the appropriate LODs. And this is what actual real-time applications and games do, like…
-. [EXAMPLES]  
-NOTICE how when an object goes out of sight it only affects the first pass at the top, but when we get closer to our objects more geometry gets generated at the bottom in sceond pass
+
+> and the second pass will expand and generate geometry for the appropriate LODs. And this is what actual real-time applications and games do.
+
+> [EXAMPLES]  
+> NOTICE how when an object goes out of sight it only affects the first pass at the top, but when we get closer to our objects more geometry gets generated at the bottom in sceond pass
+
 **55.** [The highlight goes and the camera starts roaming, as in beat 44, with the whole chain live: objects leave and enter the view (culled ones turn into dashed circles), the survivors' list and the triangle counts change, and the offsets and the output re-flow. It keeps running inside the aside card that follows, so something is moving while the question is talked over.]
-> (The tail of the line above, and whatever else there is to say about real applications, goes here.)
 
 ## Part 6: binning
 
@@ -154,20 +156,26 @@ Binning uses the light clusters with four clusters and eight lights, so there ar
 
 **56.** [The combined example shrinks into a card on the left, still showing its result.]
 > Now that you understand how expansion and compaction generate a variable amount of output, you might be wondering what happens when there is more than one output to push back into.
- together
+ 
+
 **57.** [The question comes in beside it: "Several outputs?" / "What if there is more than one list to push back into?"]
+
 > For example, when we need to assign lights to clusters.
 
 **58.** [The aside goes and the light clusters pop up under the name "Binning": only the scene, with the camera, four clusters and eight lights moving around.]
+
 > In clustered lighting, instead of a single list,
 
 **59.** [The scene makes room on the right and the rows card comes in with one output list.]
+
 > we need one list per cluster,
 
 **60.** [The one list splits into four, one per cluster, each with its cluster number at its left.]
+
 > and we issue one thread per light.
 
 **61.** [A thread per light: a chip flies from each light in the scene into a row of thread blocks along the top of the card.]
+
 > This is where most people get confused. Unlike compaction or expansion, where the prefix sum runs over the inputs,
 
 **62.** [Each thread drops a mark into every list it belongs to, under its own column.]
@@ -177,10 +185,11 @@ Binning uses the light clusters with four clusters and eight lights, so there ar
 > and we count how many lights fall in each cluster. This is called histogramming.
 
 **64.** [A vertical "prefix sum" box comes up between the counts and the bars, and the prefix sum runs down the bars: each bar takes the bar above it, so the bars get longer down the chart by construction. One row per second.]
-> And we do the prefix sum over the counts themselves. It runs over the clusters, not the lights, so its size is fixed and known up front; here it is four numbers.
-Once we have the colight unts fofor each cluster, ovef r the countNOT .  no matter how many light s we havewe  we always do prefix sium over our 4 clu
+
+> And we do the prefix sum over the counts themselves. It runs over the clusters, NOT the lights, Here we do prefix sum over the 4 clusters no matter how many lights we have. 
+
 **65.** [The bottom bar, which already has the output's layout, plops down into the output and its pieces become the dashed spaces, numbered by cluster, each with its offset under its left edge.]
-> So the bottom bar becomes our offsets.
+> Now the bottom bar becomes our offsets for each light list.
 
 **66.** [Output: every light flies into its clusters' spaces at once, with a bracket under each cluster's range.]
 > Once we know the offsets, we run our threads once more and each light places itself in the right list. Note that this time the order inside a list doesn't matter much, so an atomic counter per cluster could place the lights instead. If that doesn't make sense yet, don't worry; we'll come back to atomics.
@@ -200,6 +209,7 @@ Four objects with fixed counts (1, 2, 6, 3; total 12). Push and pull are two mir
 > Now, before I end this video: for the more advanced viewers, I want to touch on a few nuances I purposely left out.
 
 **69.** ["Using the offsets" / "Who moves the data: the input, or the output?" / "Push, or pull."]
+
 > I talked about using the prefix sum to compute offsets, but not about how to actually use those offsets to fill, or to walk, the compact output. There are two ways to go about it: first is push style.
 
 **70.** [Push alone, in the left half: the four objects, their counts, the prefix sum, the four threads under their objects, an empty output, and under it all the push code: a thread per object with a loop over its count writing at `prefix[i] + k`.]
@@ -215,16 +225,19 @@ Four objects with fixed counts (1, 2, 6, 3; total 12). Push and pull are two mir
 > and the work here is imbalanced across a wave: if one thread has six triangles to write and the others one or two, they all wait for it to finish.
 
 **74.** [Pull slides into the right half, the mirror of push: the same object, count and prefix-sum rows, then 12 threads marked "?", one over each output slot, "12 threads = total" after them, an empty output, and the pull code under it. Push's wave goes.]
-> With pull style, we again have the count and the prefix sum. but this time instead of 4 threads, we generate 12 ones instead, one per output triangle. 
+> With pull style, we again have the count and the prefix sum. but this time
+
+> but now instead of 4 threads, we dispatch 12 ones instead, one per output triangle. 
  
 
 **75.** [One thread is picked out and framed: "idx = 7", and under it "Where do I come from?"]
 > All this thread knows is that it is the 8th overall triangle to render. Its data has to be pulled from the object it belongs to, so it needs to find out where it comes from. try to answer this yourself.
 
 **76.** [The search: the prefix-sum cells are compared with 7, the middle first, "3 ≤ 7", then "12 > 7", then "9 > 7", the losing halves dimming; the answer is object 2, triangle 7 − 3 = 4. An arrow from object 2 to the thread, which takes its color and writes its triangle into the slot under it. Then every thread resolves at once: ribbons from each object to its threads, and the output fills.]
-> you pause the video here if you want and tell me which object does the 8th triangle belong to.  If you didn't cheat by looking at the left side, you probably did something like this. [1, 2, 3, 4,. .. ] and yes  we found our triangle it's the 5th triangle of the third object. In practice instead of counting like this we use a binary search to speed up this process it gives the same result.
+
+> you can pause the video here if you want and tell me which object does the 8th triangle belong to.  If you didn't cheat by looking at the left side, you probably did something like this. [1, 2, 3, 4,. .. ] and yes  we found our triangle it's the 5th triangle of the third object. Usually In practice instead of counting like this we use a binary search to speed up this process it gives the same result.
   
-> So yes, it is more computation per thread, but it needs less memory and the work is balanced, and it is especially good for the compaction-then-expansion chain we just saw: the expansion pass can pull from the compaction pass's result.
+> So yes, it is more computation per thread, but it needs less memory and the work is balanced, and it is especially good for the compaction-then-expansion chain we just saw: the expansion pass can pull from the compaction pass's result. without an intermediate output buffer to write to
 
 Fact check for this part:
 - Push needs the expanded buffer; pull needs only the prefix sums (plus the inputs), because each output thread recomputes where it comes from. Both need the total, to size the buffer or the next dispatch.
