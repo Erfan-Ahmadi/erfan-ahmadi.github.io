@@ -2,12 +2,11 @@
 title: "GPU-Driven Anything"
 description: "There is a pattern underneath some of the most important graphics techniques. Culling, level of detail, light clusters, particles, splats: one question, where does each thread write, and one answer: count, prefix sum, write."
 date: 2026-10-24
-# youtube: VIDEO_ID
+youtube: Gb2Sw7RHxJ8
 tags: ["GPU-Driven", "Compute", "Shaders"]
 thumbnail: ./thumbnail.png
 socialImage: ./social.png
 readingTime: 8
-draft: true
 ---
 
 There is a pattern underneath some of the most important graphics techniques. Culling, level of detail, light clusters, particle systems, marching squares, Gaussian splatting: they look like different problems, but in each one a hundred thousand GPU threads want to write into one list, in order, with no gaps, and none of them knows where its place is.
@@ -16,14 +15,14 @@ On the CPU that is one line: if the object is visible, `push_back` it. On the GP
 
 ## Chapters
 
-- [0:00](https://www.youtube.com/watch?v=VIDEO_ID&t=0s) The pattern
-- [2:35](https://www.youtube.com/watch?v=VIDEO_ID&t=155s) Prefix sum
-- [4:19](https://www.youtube.com/watch?v=VIDEO_ID&t=259s) Expansion
-- [4:53](https://www.youtube.com/watch?v=VIDEO_ID&t=293s) Compaction
-- [5:12](https://www.youtube.com/watch?v=VIDEO_ID&t=312s) Compaction + expansion
-- [6:19](https://www.youtube.com/watch?v=VIDEO_ID&t=379s) Binning
-- [8:06](https://www.youtube.com/watch?v=VIDEO_ID&t=486s) Push vs. pull
-- [10:40](https://www.youtube.com/watch?v=VIDEO_ID&t=640s) Atomics
+- [0:00](https://www.youtube.com/watch?v=Gb2Sw7RHxJ8&t=0s) The pattern
+- [2:35](https://www.youtube.com/watch?v=Gb2Sw7RHxJ8&t=155s) Prefix sum
+- [4:19](https://www.youtube.com/watch?v=Gb2Sw7RHxJ8&t=259s) Expansion
+- [4:53](https://www.youtube.com/watch?v=Gb2Sw7RHxJ8&t=293s) Compaction
+- [5:12](https://www.youtube.com/watch?v=Gb2Sw7RHxJ8&t=312s) Compaction + expansion
+- [6:19](https://www.youtube.com/watch?v=Gb2Sw7RHxJ8&t=379s) Binning
+- [8:06](https://www.youtube.com/watch?v=Gb2Sw7RHxJ8&t=486s) Push vs. pull
+- [10:40](https://www.youtube.com/watch?v=Gb2Sw7RHxJ8&t=640s) Atomics
 
 ## Play with it
 

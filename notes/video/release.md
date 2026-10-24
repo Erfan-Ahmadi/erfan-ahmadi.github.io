@@ -1,6 +1,6 @@
 # GPU-Driven Anything: release texts
 
-Replace VIDEO_ID with the YouTube id once the video is up (also in the post's frontmatter and chapter links).
+Replace Gb2Sw7RHxJ8 with the YouTube id once the video is up (also in the post's frontmatter and chapter links).
 
 ## YouTube title
 
@@ -78,7 +78,7 @@ Every animation is an interactive page you can play with. Links below.
 
 Reply, right under it:
 
-Watch the full video: https://www.youtube.com/watch?v=VIDEO_ID
+Watch the full video: https://www.youtube.com/watch?v=Gb2Sw7RHxJ8
 Play with every animation, with the papers each example comes from: https://erfan-ahmadi.github.io/blog/gpu-driven-anything/
 
 Thread version, each under 280 characters, with the clip on the first:
@@ -89,7 +89,7 @@ Thread version, each under 280 characters, with the clip on the first:
 
 3/ Two nuances for the advanced crowd: push vs. pull, and atomics instead of a prefix sum (perfectly compact, but not in the same order every frame).
 
-4/ Watch the full video: https://www.youtube.com/watch?v=VIDEO_ID
+4/ Watch the full video: https://www.youtube.com/watch?v=Gb2Sw7RHxJ8
 Play with every animation, with the papers each example comes from: https://erfan-ahmadi.github.io/blog/gpu-driven-anything/
 
 ## LinkedIn
@@ -109,7 +109,7 @@ Every animation is an interactive page you can play with, with the papers and ta
 
 First comment:
 
-Watch the full video: https://www.youtube.com/watch?v=VIDEO_ID
+Watch the full video: https://www.youtube.com/watch?v=Gb2Sw7RHxJ8
 Play with every animation: https://erfan-ahmadi.github.io/blog/gpu-driven-anything/
 
 ## Clip suggestions for the snippet
