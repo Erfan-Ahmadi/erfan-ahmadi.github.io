@@ -445,3 +445,9 @@ remove see you in the next one
 ```text
 the transition from this and the next is unsmooth and the next section should just say prefix sum no sub note
 ```
+
+(With a screenshot of the expansion beat with the camera free, one object outside the view and culled)
+
+```text
+why is expansion culling here? I don't want cull, also I can just set where the camera looks at I need to also change it's position ( the radius to select the camera to move should be big enough for me to not misclick and make it look elsewhere. same idea for the interactible sections next  (I think it was the merged one)
+```

@@ -110,7 +110,7 @@ One press per sum, so each step is under your control. The sums are shown twice:
 
 **40–43.** [Count, offset, spaces, output, one press each, with the first camera. No running sum here: a long "prefix sum" bar sits between count and offset, and the offsets just appear.]
 
-**44.** [The camera is yours from here: drag in the scene to aim it, drag the camera body to move it, scroll to dolly, or W A S D to move and Q E to turn. The panel stays and follows live: each count counts to its new value, the offsets, the spaces and the output stretch with it, the bunnies switch level with a pop, and the bunny in each object's box switches with them. An object taken out of view is culled (its count drops to 0 and its box goes dashed), so keep the five in view while the point is expansion alone. It runs until the next press, so there is time to talk over it.]
+**44.** [The camera is yours from here: drag in the scene to aim it, drag the camera body to move it, scroll to dolly, or W A S D to move and Q E to turn. The panel stays and follows live: each count counts to its new value, the offsets, the spaces and the output stretch with it, the bunnies switch level with a pop, and the bunny in each object's box switches with them. Nothing is culled here: an object taken out of view keeps its count and its bunny, since this part is expansion alone. A faint dashed ring around the camera body marks where a drag moves it rather than aims it. It runs until the next press, so there is time to talk over it.]
 
 ## Part 5: compaction, then the two chained
 
@@ -145,7 +145,7 @@ Compaction and expansion share one scene: the same eight objects, the same color
 > and the second pass will expand and generate geometry for the appropriate LODs. And this is what actual real-time applications and games do, like…
 . [EXAMPLES]  
 NOTICE how when an object goes out of sight it only affects the first pass at the top, but when we get closer to our objects more geometry gets generated at the bottom in sceond pass
-**55.** [The highlight goes and the camera is yours, as in beat 44 (drag, scroll, W A S D Q E), with the whole chain live: objects leave and enter the view (culled ones turn into dashed circles), the survivors' list and the triangle counts change, and the offsets and the output re-flow. The camera stays yours inside the aside card that follows, the pointer going through the card to the scene, so something is moving while the question is talked over.]
+**55.** [The highlight goes and the camera is yours, as in beat 44 (drag, scroll, W A S D Q E, the ring around the camera body marking where to grab it), with the whole chain live: objects leave and enter the view (culled ones turn into dashed circles), the survivors' list and the triangle counts change, and the offsets and the output re-flow. The camera stays yours inside the aside card that follows, the pointer going through the card to the scene, so something is moving while the question is talked over.]
 > (The tail of the line above, and whatever else there is to say about real applications, goes here.)
 
 ## Part 6: binning
@@ -290,7 +290,7 @@ Built into the artifact, beats 1 to 106. Start it with V, the Present button, or
 
 Keys: → (or Enter, ↓, Page Down) next beat · ← back · Space pause and resume (everything holds still; moving to another beat resumes) · R replay the beat · I beat counter · F fullscreen · Esc exit.
 
-On beats 44 and 55 (and through the aside after 55) the camera is yours: drag in the scene to aim it, drag the camera body to move it, scroll to dolly, W A S D to move and Q E to turn. The arrow keys still step the beats.
+On beats 44 and 55 (and through the aside after 55) the camera is yours: drag in the scene to aim it, drag the camera body (inside the faint ring around it) to move it, scroll to dolly, W A S D to move and Q E to turn. The arrow keys still step the beats.
 
 - Stepping back shows a beat the way it ends; stepping forward plays it.
 - Asides (like 18 and 19) take two presses: first whatever is on screen shrinks into a card on the left and keeps running, then a title and lines come in on the right, the way 3Blue1Brown steps back to talk over a concept. Any later beat can reuse it with a title and a few lines.
@@ -309,7 +309,7 @@ Decided:
 - Part 6 uses four clusters and six lights (more lights than clusters). The lists stay as rows: no transposed table. In the app, M on Light clusters switches to the four-cluster setup (with eight lights there), and Controls has the histogram style ("How start is shown") for every example.
 - The material tiles beat uses every material's list, so a tile with two materials is in two lists, like a light in two clusters. M on Material tiles in the app flips to the one-mixed-list version if that reads better.
 - The light clusters in the overview (the tour at beat 10, the grid, the Binning card) are the same example as part 6: four clusters, six lights, drawn with part 6's rows, which cycle on their own (marks, count, prefix sum, plop, output, about seven seconds, then again) while the lights keep moving.
-- Expansion only means no culling: the scripted camera of the expansion beats (39 to 43, and the level-of-detail tour) keeps every object inside the view, so no count drops to 0 there. With the free camera at 44 that is up to the presenter: an object taken out of view is culled, as in the chained example. The dashed 0 chips belong to compaction and to the chained example.
+- Expansion only means no culling: the scripted camera of the expansion beats (39 to 43, and the level-of-detail tour) keeps every object inside the view, so no count drops to 0 there. With the free camera at 44 nothing is culled either: that scene has culling off, so an object outside the view keeps its count and its bunny. Only compaction and the chained example cull, and the dashed 0 chips belong to them.
 - Wherever a box stands for an object of the level-of-detail scene (the expansion rows, the chained example's second pass, the overview's level of detail), it shows the object the way the scene draws it: its bunny at its current level. The culling rows keep plain boxes, since the scene shows plain circles there.
 - Wherever a thread's count is shown next to it (the prefix sum intro, push and pull), the count is a number in its own row and the triangles sit inside the thread's block, so a number on a block is never mistaken for an index.
 - The intro stays quiet: every name or number on screen has to serve a purpose, and here the purpose is a taste of where the pattern shows up, not following the algorithm. So there are no names on objects or chips, no distance numbers in LOD, no tile numbers, and no notes under the outputs. The count and start rows and the ribbons stay. Light clusters keeps its cluster numbers.
