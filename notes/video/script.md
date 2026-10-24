@@ -9,10 +9,10 @@ The working script below has light edits; the original drafts, word for word, ar
 > If you're here, chances are you've seen this before. It's culling. The idea is simple: we want to filter out the objects that are outside the camera's view.
 
 **2.** [The rows card goes out to the right, the CPU code slides in from the left, and the scene moves over to the right half. The bunnies settle into plain circles; the camera keeps moving.]
-> On the CPU, it's easy: if an object is visible, push it to our list of visible objects.
+> On the CPU, it's easy: if an object is visible, push it to our list of visible objects. and if it's not visible don't do anything.
 
 **3.** [The scene freezes. A debugger-style highlight steps through the loop, one object at a time: the for line, then the if line with a ring on the object being checked, then push_back for the visible ones, which fly into an `out` list under the code.]
-> (line to write) For example: one object at a time. Is it visible? Push it to the list. Next one.
+> PAUSE
 
 **4.** [Lots of new objects pop into the camera's view.]
 > But what if you have a hundred thousand objects?
@@ -24,10 +24,10 @@ The working script below has light edits; the original drafts, word for word, ar
 > And now you don't have a simple push_back anymore.
 
 **7.** [Every thread writes into the output at the same moment, each landing in its place, with an arrow from each visible thread to the slot it writes. This shows the goal, before we explain how.]
-> So how do all these threads, running at the same time, each find their own place in the output, in order, with no gaps?
+> So how do all these threads, running in parallel, each find their own place in the output, in order, with no gaps?
 
 **8.**
-> It turns out the answer to this one question is hiding inside a lot of computer graphics.
+> It turns out the answer to this one question is hiding inside a lot of computer graphics techniques.
 
 **9.** [Level of detail: three low-poly bunnies, one straight ahead and two a little behind it. The camera moves straight in and out on the near one, so it steps through all four levels (22, 12, 7 and 4 triangles) while the ones behind switch later and less. Each switch pops with a ring. Panel with counts and ribbons.]
 > Like choosing a level of detail, where each object produces a different number of triangles depending on how close the camera is.
@@ -36,13 +36,13 @@ The working script below has light edits; the original drafts, word for word, ar
 > Or assigning lights to clusters in clustered shading, where a cluster can end up with any number of lights.
 
 **11–14.** [Particles, curves, marching squares, Gaussian splatting. One press each, quick transitions. Curves: one circle in the middle and one bezier, zooming in and out every few seconds so the counts keep changing.]
-> Once you start looking, you see it everywhere: particle systems, vector graphics, marching squares, Gaussian splatting.
+> Once you start looking, you see it everywhere: particle systems, vector graphics, marching squares, even Gaussian splatting.
 
 **15.** [The last example shrinks into a grid of every example.]
 > Different problems. But underneath all of them, it's the same pattern.
 
 (optional closer: "build them yourself" clashes with beat 17's "no implementation details", so either drop it or use something like this)
-> And once you see it, you'll start spotting it everywhere.
+> And once you see it, you'll start spotting it everywhere. [PAUSE]
 
 ## Part 2: three kinds
 
@@ -66,10 +66,10 @@ The working script below has light edits; the original drafts, word for word, ar
 One press per sum, so each step is under your control. The sums are shown twice: first as the running sum with its + signs, then as the chart. The panel carries the title "Prefix sum · where to start writing", like the named parts after it.
 
 **20.** [The goal fades away. Three threads come in as colored boxes.]
-> Behind all of these is one simple idea: the prefix sum.
+> Behind these three is one simple idea: the prefix sum.
 
 **21.** [Each box shows its count, and the triangles it generates appear under it: 5, 3 and 6.]
-> If you don't know what a prefix sum is, the idea is simple. Once each thread has counted how many triangles it will generate,
+> If you don't know what a prefix sum is, the idea is simple. 
 
 **22.** [An empty start row appears under the boxes.]
 > every new item becomes the sum of what came before it.
@@ -77,19 +77,19 @@ One press per sum, so each step is under your control. The sums are shown twice:
 **23–26.** [One press per sum, the running sum with its + signs: 0 drops into the first cell, then 0 + 5, then 5 + 3, then 8 + 6 = 14, the total. After each one the cells that were used stay marked until the next press.]
 
 **27.** [The empty output track appears at the bottom.]
-> And this sum tells each thread where to start writing. A thread can't know where to start until it knows how much room every thread before it needs.
+> And this sum tells each thread where to start writing. 
 
 **28.** [The start row clears and the chart's base line appears.]
-> Let me show you that with a simple chart.
+> Let me show you the idea that with a simple chart.
 
 **29–32.** [One press per bar. Each bar is the one before it plus the next count, with a triangle in every cell, and the start row fills in again: 0, then 0 + 5, then 5 + 3, then 8 + 6 = 14.]
 > The first one is 0. The next is 0 + 5. Then 5 + 3. Then 8 + 6.
 
 **33.** [The bars tip over into the output. Each thread's space begins at its sum, with an arrow from its start cell to the start of the space.]
-> (line to write) For example: lay the bars down, and each sum marks exactly where its thread starts writing.
+> each sum marks exactly where its thread starts writing.
 
 **34.** [The first count steps up and down one at a time: 5, 6, 7, 8, then back down to 3 and up again, its triangles with it. The starts after it (and the total) are marked and change with each step, and their spaces in the output glide to their new place. It keeps going until the next press.]
-> See how changing the count of the first one shifts the start of everything that comes after it.
+> See for example how changing the count of the first one shifts the start of everything that comes after it.
 
 ## Part 4: in parallel, and expansion
 
@@ -100,13 +100,13 @@ One press per sum, so each step is under your control. The sums are shown twice:
 > It looks suspiciously like a serial algorithm, where every thread depends on the last one.
 
 **37.** [The text is replaced by "Parallel prefix sum" and a scan network: eight counts, four quick rounds of adds, every thread at once in each round, and the starts come out at the bottom. About 2 seconds.]
-> To which I say, great question. There are plenty of clever algorithms, developed over the last few decades, that compute the prefix sum in parallel over thousands of threads. I was really tempted to go into these algorithms here, but that's not my goal, and there are plenty of resources where you can learn about parallel prefix sums. I'll link some of them below.
+> To which I say, great question. There are plenty of clever algorithms, developed over the last few decades, that compute the prefix sum in parallel over thousands of threads. I was really tempted to go into these algorithms here, but that's not my goal here, and there are plenty of resources where you can learn about parallel prefix sums. I'll link some of them below.
 
 **38.** [A rug sweeps across the network from the right. As it passes, the rounds fold into one box that says "prefix sum", with the counts going in and the starts coming out. The rug slides on out of the way and the simple picture stays.]
 > For now, let's sweep that under the rug and just accept that this prefix sum happens in parallel.
 
 **39.** [The aside goes and the full level-of-detail example pops up, rows and scene, under the name "Expansion". Three bunnies, the camera held still. One press per step from here.]
-> Congratulations, you now know what expansion is and how it works. Expansion is when each thread generates a different amount of work, decided at runtime. Like generating these levels of detail here.
+> Btw, Congratulations, you now know what expansion is and how it works. Expansion is when each thread generates a different amount of work, decided at runtime. Like generating these levels of detail here. [GIVE EXAMPLES]
 
 **40–43.** [Count, offset, spaces, output, one press each, with the first camera. No running sum here: a long "prefix sum" bar sits between count and offset, and the offsets just appear.]
 
