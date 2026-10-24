@@ -43,32 +43,29 @@ The working script below has light edits; the original drafts, word for word, ar
 
 ## Part 2: three kinds
 
-**15.** [The grid sorts itself into three groups, and each group becomes a tall card, side by side. Each card has its name, its question and one small animation that loops the whole time.]
-- Compaction, "keep it or not?": culling (culling, particles)
-- Expansion, "how many?": level of detail (level of detail, curves, marching squares, splat copies)
-- Binning, "which list?": material tiles (light clusters, splat tiles)
+**15.** [Three examples are picked out of the grid and grow into tall cards, side by side, while the others fade out. Each card has its name, its question and its example looping the whole time.]
+- Compaction, "keep it or not?": culling
+- Expansion, "how many?": level of detail
+- Binning, "which list?": light clusters
 
 > All of them come down to three versions of one idea: compaction, expansion and binning.
 
 **16.** [The cards keep looping.]
 > I'm not going to go into shader code or implementation details. My goal is to show you this pattern the clearest way I know how, so that next time you run into a problem like this, you'll recognize it right away and know exactly what to do.
 
-## For presentation mode later
+## Presentation mode
 
-Part 1:
-- Scene-only view: the culling scene full frame, nothing else drawn.
-- Code sliding in from the left.
-- "Many objects" culling scenario: objects pop into the camera's view.
-- Objects flying into a row of thread blocks with "…" (no shrinking).
-- Strike-through on `push_back`.
-- The burst: every thread writes into the output at once, each in its place (built from parallel filling).
-- Simple, quick versions of LOD (3 objects, dolly in and out), lights, particles, curves, marching squares, splats.
-- The last example shrinking into the grid. The grid holds only the examples named in the hook (culling, LOD, lights, particles, curves, marching squares, splats).
+Built into the artifact, beats 1 to 16. Start it with V, the Present button, or `#present` at the end of the URL.
 
-Part 2:
-- Three tall cards side by side: name, question, one looping mini animation each, rows only, simple scenarios (culling with few objects, LOD with 3 objects, material tiles with a small grid). Material tiles fits a narrow card better than light clusters, which always have 12 columns.
-- The grid sorting into three groups that turn into the cards. Gaussian splatting can show up in two groups: its copies are expansion and its tiles are binning.
-- Optional: one press per card, naming each as it appears, instead of all three at once.
+Keys: → (or Space, Enter, ↓, Page Down) next beat · ← back · R replay the beat · I beat counter · F fullscreen · Esc exit.
+
+- Stepping back shows a beat the way it ends; stepping forward plays it.
+- Every start builds the scenes fresh, so each take begins the same way. To redo a take from the top, press Esc and then V.
+- The key list shows at the bottom for the first 3 seconds after starting; start recording after it fades.
+
+Optional later: one press per card in beat 15, naming each as it appears, instead of all three at once.
 
 Decided:
 - Beat 6 shows the goal (a clean burst), with no "chaos" beat before it.
+- Beat 15 picks culling, level of detail and light clusters out of the grid; the other examples fade out. The grid doesn't sort itself into groups.
+- The intro stays quiet: every name or number on screen has to serve a purpose, and here the purpose is a taste of where the pattern shows up, not following the algorithm. So there are no names on objects or chips, no distance numbers in LOD, no cluster or tile numbers, and no notes under the outputs. The count and start rows and the ribbons stay.
