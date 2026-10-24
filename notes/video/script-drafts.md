@@ -29,3 +29,11 @@ The applications are endless but undelying all of these, is the same pattern.
 ] 
 I will write up the rest in a later prompt
 ```
+
+## Part 2: three kinds (first draft)
+
+```text
+[Show the 3 concepts Compaction, Expansion and Binning, with the explicit name and one associated visualization associated with them. I'm thinking of 3 vertical cards, and the animation is running continously while I'm speaking]
+
+I'm not going to go into implemnentation detail or show you code, My goal here is to show you this pattern in the best way I know how. so you can detect when you stumble upon a similar problem you can know just the pattern to use [I need to say this part better].
+```

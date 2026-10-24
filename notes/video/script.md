@@ -38,12 +38,24 @@ The working script below has light edits; the original drafts, word for word, ar
 **14.** [The last example shrinks into a grid of every example.]
 > Different problems, different engines, different decades. But underneath all of them, it's the same pattern.
 
-(optional closer)
-> And once you see it, you'll be able to build any of these yourself.
+(optional closer: "build them yourself" clashes with beat 16's "no implementation details", so either drop it or use something like this)
+> And once you see it, you'll start spotting it everywhere.
+
+## Part 2: three kinds
+
+**15.** [The grid sorts itself into three groups, and each group becomes a tall card, side by side. Each card has its name, its question and one small animation that loops the whole time.]
+- Compaction, "keep it or not?": culling (culling, particles)
+- Expansion, "how many?": level of detail (level of detail, curves, marching squares, splat copies)
+- Binning, "which list?": material tiles (light clusters, splat tiles)
+
+> All of them come down to three versions of one idea: compaction, expansion and binning.
+
+**16.** [The cards keep looping.]
+> I'm not going to go into shader code or implementation details. My goal is to show you this pattern the clearest way I know how, so that next time you run into a problem like this, you'll recognize it right away and know exactly what to do.
 
 ## For presentation mode later
 
-New pieces this part needs:
+Part 1:
 - Scene-only view: the culling scene full frame, nothing else drawn.
 - Code sliding in from the left.
 - "Many objects" culling scenario: objects pop into the camera's view.
@@ -51,6 +63,12 @@ New pieces this part needs:
 - Strike-through on `push_back`.
 - The burst: every thread writes into the output at once, each in its place (built from parallel filling).
 - Simple, quick versions of LOD (3 objects, dolly in and out), lights, particles, curves, marching squares, splats.
-- The last example shrinking into the All grid.
+- The last example shrinking into the grid. The grid holds only the examples named in the hook (culling, LOD, lights, particles, curves, marching squares, splats).
 
-Decided: beat 6 shows the goal (a clean burst), with no "chaos" beat before it.
+Part 2:
+- Three tall cards side by side: name, question, one looping mini animation each, rows only, simple scenarios (culling with few objects, LOD with 3 objects, material tiles with a small grid). Material tiles fits a narrow card better than light clusters, which always have 12 columns.
+- The grid sorting into three groups that turn into the cards. Gaussian splatting can show up in two groups: its copies are expansion and its tiles are binning.
+- Optional: one press per card, naming each as it appears, instead of all three at once.
+
+Decided:
+- Beat 6 shows the goal (a clean burst), with no "chaos" beat before it.
