@@ -451,3 +451,9 @@ the transition from this and the next is unsmooth and the next section should ju
 ```text
 why is expansion culling here? I don't want cull, also I can just set where the camera looks at I need to also change it's position ( the radius to select the camera to move should be big enough for me to not misclick and make it look elsewhere. same idea for the interactible sections next  (I think it was the merged one)
 ```
+
+(With a screenshot of the loop beside "Using the offsets")
+
+```text
+the loop here  has a fade in which it fades in and out completely, it should come with no fade in like the texts next to it (the titles and questions) and it should not fade in/out, apply similar fix to anywhere else that applies
+```
