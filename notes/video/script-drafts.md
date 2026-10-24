@@ -439,3 +439,9 @@ move these to the bottom center of the cards, also weird layout make it one with
 ```text
 remove see you in the next one
 ```
+
+(With screenshots of the Goal aside and of the prefix sum beat after it)
+
+```text
+the transition from this and the next is unsmooth and the next section should just say prefix sum no sub note
+```
