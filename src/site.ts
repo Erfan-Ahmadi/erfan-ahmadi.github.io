@@ -8,6 +8,11 @@ export const SITE = {
     channel: 'https://www.youtube.com/@ErFunRender',
     handle: '@ErFunRender',
   },
+  // UTM tags tell DevSH's analytics the visit came from this blog (the YouTube channel uses utm_source=youtube).
+  work: {
+    label: 'Consulting & Training',
+    href: 'https://www.devsh.eu/when-to-call-devsh?utm_source=blog&utm_medium=homepage&utm_campaign=erfan',
+  },
   socials: [
     { icon: 'github', label: 'Erfan-Ahmadi', title: 'GitHub', href: 'https://github.com/Erfan-Ahmadi' },
     { icon: 'youtube', label: '@ErFunRender', title: 'YouTube', href: 'https://www.youtube.com/@ErFunRender' },
