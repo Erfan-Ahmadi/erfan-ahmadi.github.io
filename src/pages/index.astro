@@ -32,6 +32,7 @@ const inYear = (year: number) => posts.filter((p) => yearOf(p) === year).length;
             </li>
           ))}
         </ul>
+        <a class="work" href={SITE.work.href}><Icon name="devsh" />{SITE.work.label}<Icon name="arrowUpRight" /></a>
       </div>
       <figure class="portrait">
         <Image src={avatar} alt="Portrait of Erfan Ahmadi" width={460} height={460} loading="eager" />
@@ -101,6 +102,10 @@ const inYear = (year: number) => posts.filter((p) => yearOf(p) === year).length;
   .hero .lede { font-family: var(--serif); font-size: 29px; line-height: 1.3; color: var(--ink-2); max-width: 640px; margin: 0 0 32px; font-weight: 380; font-variation-settings: 'opsz' 36; }
   .socials { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0; }
   .socials .pill:not(.icon-only) { padding-left: 14px; padding-right: 14px; }
+  /* DevSH's own dark and teal, in both themes. */
+  .work { display: inline-flex; align-items: center; gap: 10px; margin-top: 18px; padding: 10px 16px 10px 14px; border: 1px solid #22322F; border-radius: 12px; background: #0B1211; color: #E9F5F2; font-size: 15px; font-weight: 560; white-space: nowrap; }
+  .work:hover { border-color: #5EE0CC; }
+  .work .icon { color: #5EE0CC; font-size: 16px; }
   .portrait { margin: 0; position: relative; justify-self: end; }
   .portrait::before { content: ''; position: absolute; inset: 16px -16px -16px 16px; border: 1.5px solid var(--accent); border-radius: 28px; }
   .portrait img { width: 340px; height: 404px; object-fit: cover; border-radius: 28px; display: block; position: relative; }
