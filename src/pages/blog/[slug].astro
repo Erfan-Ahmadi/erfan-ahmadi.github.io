@@ -29,7 +29,10 @@ const older = index >= 0 ? listed[index + 1] : undefined;
 const parts = seriesParts(isListed(post) ? listed : [...listed, post], post);
 const toc = post.data.toc ? headings.filter((h) => h.depth === 2 || h.depth === 3) : [];
 const preview = socialImage ?? thumbnail ?? cover;
-const ogImage = preview ? (await getImage({ src: preview, width: 1200, format: 'jpeg' })).src : undefined;
+// Video posts without their own image use YouTube's thumbnail, the same one the cards show.
+const ogImage = preview
+  ? (await getImage({ src: preview, width: 1200, format: 'jpeg' })).src
+  : youtube ? `https://i.ytimg.com/vi/${youtube}/hqdefault.jpg` : undefined;
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 ---
 <Base title={title} description={description} image={ogImage} type="article" published={date} noindex={draft || unlisted}>
