@@ -24,7 +24,7 @@
 html, body { height: 100%; margin: 0; }
 body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 13px; overflow: hidden; -webkit-font-smoothing: antialiased; }
 #app {
-  height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 10px;
+  height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr); gap: 10px;
   padding-block: 12px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
 .bar { display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap; }
@@ -83,7 +83,12 @@ select, .txt input {
 .grp { flex-basis: 100%; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
 .note { margin: 0; max-width: 560px; color: var(--muted); font-size: 12px; line-height: 1.45; padding-bottom: 3px; }
 .note code { font-family: var(--mono); color: var(--fg2); }
-@media (max-width: 760px) { .hint { display: none; } .glob { margin-left: 0; } }
+@media (max-width: 760px) {
+  .hint { display: none; } .glob { margin-left: 0; }
+  /* one row of tabs that scrolls sideways, so the stage keeps its height */
+  .tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; min-width: 0; max-width: 100%; }
+  .tabs::-webkit-scrollbar { display: none; }
+}
 
 /* Recording: H (or Hide controls) leaves only the stage, letterboxed in the window. */
 body.clean #app { grid-template-rows: minmax(0, 1fr); padding: 0; }

@@ -28,7 +28,7 @@
 html, body { height: 100%; margin: 0; }
 body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 13px; overflow: hidden; -webkit-font-smoothing: antialiased; }
 #app {
-  height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 10px;
+  height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr); gap: 10px;
   padding-block: 12px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
 .bar { display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap; }
@@ -87,7 +87,12 @@ select, .txt input {
 .grp { flex-basis: 100%; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
 .note { margin: 0; max-width: 560px; color: var(--muted); font-size: 12px; line-height: 1.45; padding-bottom: 3px; }
 .note code { font-family: var(--mono); color: var(--fg2); }
-@media (max-width: 760px) { .hint { display: none; } .glob { margin-left: 0; } }
+@media (max-width: 760px) {
+  .hint { display: none; } .glob { margin-left: 0; }
+  /* one row of tabs that scrolls sideways, so the stage keeps its height */
+  .tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; min-width: 0; max-width: 100%; }
+  .tabs::-webkit-scrollbar { display: none; }
+}
 
 /* Recording: H (or Hide controls) leaves only the stage, letterboxed in the window. */
 body.clean #app { grid-template-rows: minmax(0, 1fr); padding: 0; }
@@ -167,7 +172,7 @@ const linear = (t) => t;
 // tween(obj, key, to, seconds) animates one number and resolves when it lands. A newer tween on the same
 // number replaces the older one and starts from wherever that one got to. `instant` (used to rebuild a
 // state) and reduced motion make every tween land at once.
-let SPEED = 1, instant = false;
+let SPEED = 1, instant = 0;
 const tweens = [];
 function tween(obj, key, to, dur = 1, { ease = smooth, delay = 0, tag = obj.__tag } = {}) {
   for (let i = tweens.length - 1; i >= 0; i--) if (tweens[i].obj === obj && tweens[i].key === key) tweens.splice(i, 1)[0].resolve();
@@ -1040,8 +1045,8 @@ async function eqGo(k, play) {
   EQ.items.clear(); EQ.morphs.length = 0; EQ.braces = [];
   const steps = PRESETS[EQ.preset].steps;
   k = clamp(k, play ? 0 : -1, steps.length - 1);
-  instant = true;
-  try { for (let i = 0; i < (play ? k : k + 1); i++) await steps[i].run(); } catch (err) { console.error(err); } finally { instant = false; }
+  instant++;
+  try { for (let i = 0; i < (play ? k : k + 1); i++) await steps[i].run(); } catch (err) { console.error(err); } finally { instant--; }
   EQ.step = k;
   if (play && k >= 0) await steps[k].run();
 }
@@ -2093,15 +2098,16 @@ function drawFormulas(ctx, st) {
 
 // ---------- step scenes: Next and Back through a list of steps, as in the equation scene ----------
 // Going to step k rebuilds the steps before it at once, then plays step k. Parameters survive the rebuild.
+// Each rebuild starts from a fresh state object, so a step still finishing from before writes into the old one.
 async function stepGo(sc, k, play) {
   stopTweens(sc.id);
-  const st = sc.st, keep = {};
-  for (const p of sc.params) if (p.key) keep[p.key] = st[p.key];
-  for (const key of Object.keys(st)) delete st[key];
-  Object.assign(st, sc.defaults(), keep, { __tag: sc.id });
+  const keep = {};
+  for (const p of sc.params) if (p.key) keep[p.key] = sc.st[p.key];
+  const st = (sc.st = Object.assign(sc.defaults(), keep, { __tag: sc.id }));
+  if (cur === sc) buildDock();
   k = clamp(k, play ? 0 : -1, sc.steps.length - 1);
-  instant = true;
-  try { for (let i = 0; i < (play ? k : k + 1); i++) await sc.steps[i].run(st); } catch (err) { console.error(err); } finally { instant = false; }
+  instant++;
+  try { for (let i = 0; i < (play ? k : k + 1); i++) await sc.steps[i].run(st); } catch (err) { console.error(err); } finally { instant--; }
   st.step = k;
   if (play && k >= 0) await sc.steps[k].run(st);
 }
@@ -2430,6 +2436,205 @@ function drawPhotons(ctx, dt, st) {
   if (st.cdf > 0.003) drawTex(ctx, String.raw`P(X < x)`, A.X(PH.d), A.Y(0.13), 44, { ax: 1, color: COL.red, alpha: st.cdf });
 }
 
+// ---------- I. A or B? ----------
+// The storyboard's last board: two slabs made of the same two halves, a dense one and a sparse one, in opposite
+// orders. Which lets more light through? Each half lets its own fraction through, e^{−σ₁Δx} and e^{−σ₂Δx}, and
+// what gets out is their product. A product does not care about order, so A = B: either way the exponents add
+// up to σ₁ + σ₂.
+const ABG = { apX: 400, x0: 560, x1: 1240, sx: 1400, rows: [250, 640], h: 180 };
+const AB_S1 = `{{${tc(COL.yellow, String.raw`\sigma_1`)}}}`, AB_S2 = `{{${tc(COL.blue, String.raw`\sigma_2`)}}}`, AB_DX = String.raw`{{\Delta x}}`;
+const abSig = (k) => (k === 1 ? AB_S1 : AB_S2);
+const abFac = (k) => String.raw`e^{-${abSig(k)}\,${AB_DX}}`;
+const abSum = (a, b) => String.raw`e^{-(${abSig(a)} + ${abSig(b)})\,${AB_DX}}`;
+const abPl = (r, x = 900) => ({ x, y: ABG.rows[r] + 150, size: 56 });
+const SAB = stepScene({
+  id: 'order', tab: 'A or B?', shared: true,
+  defaults: () => ({ t1: 0.9, t2: 0.3, shineT: 2.2, mk: 0, labA: 0, quiz: [0, 0, 0], quizA: 1, quizHi: 0, front: 0, F: {}, M: [], step: -1 }),
+  params: [
+    { type: 'range', key: 't1', label: 'Dense half, σ₁Δx', min: 0.1, max: 2, step: 0.05, fmt: (v) => v.toFixed(2) },
+    { type: 'range', key: 't2', label: 'Sparse half, σ₂Δx', min: 0, max: 1, step: 0.05, fmt: (v) => v.toFixed(2) },
+    { type: 'range', key: 'shineT', label: 'Shine time (s)', min: 0.5, max: 6, step: 0.1, fmt: (v) => v.toFixed(1) },
+  ],
+  steps: [
+    { label: 'Two slabs', run: async (st) => { tween(st, 'labA', 1, 0.8, { ease: linear, delay: 0.9 }); await tween(st, 'mk', 1, 1.6); } },
+    { label: 'Which lets more through?', run: async (st) => {
+      for (let i = 0; i < 3; i++) { tween(st.quiz, i, 1, 0.8, { ease: linear, tag: 'order' }); await sleep(0.45, 'order'); }
+      await sleep(0.4, 'order');
+    } },
+    { label: 'Shine', run: async (st) => { await tween(st, 'front', 1, st.shineT, { ease: linear }); await sleep(0.5, 'order'); await tween(st, 'quizHi', 1, 0.6); } },
+    { label: 'Each half lets its share through', run: async (st) => {
+      tween(st, 'quizA', 0, 0.5);
+      await Promise.all([0, 1].flatMap((r) => {
+        const [a, b] = r ? [2, 1] : [1, 2];
+        return [fWrite(st, `f${r}a`, abFac(a), abPl(r, 730), 0.9), fWrite(st, `x${r}`, String.raw`\times`, abPl(r, 900), 0.5), fWrite(st, `f${r}b`, abFac(b), abPl(r, 1070), 0.9)];
+      }));
+    } },
+    { label: 'Multiply: the exponents add', run: (st) => Promise.all([0, 1].map((r) => fMorph(st, `c${r}`, r ? abSum(2, 1) : abSum(1, 2), abPl(r), { from: [`f${r}a`, `x${r}`, `f${r}b`] }))) },
+    { label: 'The order does not matter', run: (st) => fMorph(st, 'c1', abSum(1, 2), abPl(1)) },
+  ],
+  draw: drawOrder,
+});
+function drawOrder(ctx, dt, st) {
+  const color = SH.color, look = SH.container === 'cloud' ? LOOKS.fog : lookOf(SH), lc = hexRgb(look.c), xm = (ABG.x0 + ABG.x1) / 2, hw = xm - ABG.x0;
+  const mk = st.mk, ol = clamp(mk / 0.6, 0, 1), fa = clamp((mk - 0.3) / 0.4, 0, 1), ga = clamp(mk / 0.5, 0, 1), lit = st.front > 0.0005;
+  for (let r = 0; r < 2; r++) {
+    const y = ABG.rows[r], top = y - ABG.h / 2, bot = y + ABG.h / 2, kinds = r ? [2, 1] : [1, 2], taus = kinds.map((k) => (k === 1 ? st.t1 : st.t2));
+    // the two halves: denser colour and more particles where σΔx is bigger; the same dense half in both slabs
+    for (let h = 0; h < 2; h++) {
+      const hx = ABG.x0 + h * hw, k = kinds[h], tau = taus[h], n = Math.round(tau * 30), rnd = rng32(k * 1013 + 7);
+      if (fa > 0.003) { ctx.fillStyle = rgba(lc, fa * lerp(0.06, 0.55, clamp(tau / 1.5, 0, 1))); ctx.fillRect(hx, top, hw, ABG.h); }
+      ctx.fillStyle = '#262626'; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 2;
+      for (let j = 0; j < 60; j++) {
+        const px = lerp(hx + 12, hx + hw - 12, rnd()), py = lerp(top + 12, bot - 12, rnd()); if (j >= n) continue;
+        const g = smooth(clamp((mk - 0.4 - 0.5 * (j / Math.max(1, n))) / 0.12, 0, 1)); if (g <= 0.003) continue;
+        ctx.beginPath(); ctx.arc(px, py, 7 * g, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      }
+    }
+    const per = 2 * (ABG.x1 - ABG.x0 + ABG.h);
+    if (ol > 0.003) { ctx.save(); ctx.strokeStyle = COL.greyA; ctx.lineWidth = 3; if (ol < 1) ctx.setLineDash([ol * per, per]); ctx.strokeRect(ABG.x0, top, ABG.x1 - ABG.x0, ABG.h); ctx.restore(); }
+    if (fa > 0.003) dashed(ctx, xm, top + 4, xm, bot - 4, COL.greyA, 0.7 * fa, 2);
+    // the beam, losing light at its own rate in each half
+    const T = (x) => { const u = clamp((x - ABG.x0) / hw, 0, 2); return Math.exp(-(taus[0] * Math.min(u, 1) + taus[1] * Math.max(0, u - 1))); };
+    if (lit) drawBeam(ctx, ABG.apX, lerp(ABG.apX, ABG.sx - 18, st.front), y, color, SH.I0, T, [ABG.x0, xm, ABG.x1]);
+    ctx.save(); ctx.globalAlpha = ga;
+    drawLaser(ctx, ABG.apX, y, color, lit ? 1 : 0);
+    const reached = st.front >= 0.999;
+    ctx.lineWidth = 3; ctx.strokeStyle = COL.greyB; ctx.fillStyle = '#2C2C2C';
+    ctx.beginPath(); ctx.roundRect(ABG.sx - 15, y - 48, 30, 96, 6); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = hexA(color, 0.16 + 0.84 * (reached ? T(ABG.x1) * SH.I0 : 0)); ctx.fillRect(ABG.sx - 18, y - 28, 5, 56);
+    ctx.restore();
+    if (reached) readoutBox(ctx, ABG.sx + 46, y, T(ABG.x1), 1);
+    if (st.labA > 0.003) drawTex(ctx, r ? 'B' : 'A', 120, y, 84, { p: st.labA });
+  }
+  // the question, between the two slabs
+  const Q = [String.raw`A > B\,?`, String.raw`B > A\,?`, String.raw`A = B\,?`], qx = [500, 900, 1300];
+  for (let i = 0; i < 3; i++) {
+    const p = st.quiz[i], hi = i === 2 ? st.quizHi : 0, a = st.quizA * (i === 2 ? 1 : 1 - 0.65 * st.quizHi);
+    if (p > 0.003 && a > 0.003) drawSprites(ctx, place(tex(Q[i]), { x: qx[i], y: 445, size: 64 }), { p, alpha: a, color: mixRgb([255, 255, 255], hexRgb(COL.yellow), hi) });
+  }
+  drawFormulas(ctx, st);
+}
+
+// ---------- J. from a product to an integral ----------
+// The rest of that board: one slab cut into slices. Each slice lets e^{−σᵢΔz} through and what gets out is the
+// product, so the exponents add: e^{−(σ₁+σ₂+⋯)Δz} = e^{−Σσᵢ Δz}, and the bars of σᵢ have that sum as their area.
+// Cut thinner and the bars close in on the density curve, the sum on the area under it: ∫σ(z)dz, the exponent
+// of Beer–Lambert. Last, the density takes other shapes with the same area (a dense blob, a long thin cloud, two
+// bumps), the particles slide to match, and the light that gets out does not change: only the total counts.
+const PIG = { apX: 400, x0: 480, x1: 1440, y: 600, top: 525, bot: 675, xs: 1610, d: 20, smax: 0.35, n: 400 };
+const piSig0 = (z) => 0.02 + 0.16 * Math.exp(-(((z - 9) / 3.5) ** 2));
+const piSample = (f) => { const a = new Float64Array(PIG.n + 1); for (let i = 0; i <= PIG.n; i++) a[i] = f((i / PIG.n) * PIG.d); return a; };
+const piArea = (P) => { let s = 0; for (let i = 1; i <= PIG.n; i++) s += ((P[i - 1] + P[i]) / 2) * (PIG.d / PIG.n); return s; };
+const PI_A0 = piArea(piSample(piSig0));
+const piShape = (g) => { const P = piSample(g), k = PI_A0 / piArea(P); return P.map((v) => v * k); };
+const PI_SHAPES = [(z) => 0.03 + Math.exp(-(((z - 12) / 2.2) ** 2)), (z) => sigmoid((z - 1) * 3) * sigmoid((19 - z) * 3), (z) => Math.exp(-(((z - 5) / 2) ** 2)) + Math.exp(-(((z - 15) / 2) ** 2)), piSig0];
+const PI_FPL = { x: 960, y: 905, size: 64, fit: 1400 };
+const piS = (sub) => tc(COL.green, String.raw`\sigma_{${sub}}`);
+const piProd = (k) => (k === 2 ? String.raw`T = e^{-${piS(1)}\Delta z}\; e^{-${piS(2)}\Delta z}` : String.raw`T = e^{-${piS(1)}\Delta z}\, e^{-${piS(2)}\Delta z} \cdots e^{-${piS(k)}\Delta z}`);
+const piSumOpen = (k) => String.raw`T = e^{-(${piS(1)} + ${piS(2)} + \cdots + ${piS(k)})\,\Delta z}`;
+const piSigma = (k) => String.raw`T = e^{-\sum_{i=1}^{${k}} ${piS('i')}\,\Delta z}`;
+const PI_INT = String.raw`T = e^{-\int_0^{d} ${tc(COL.green, String.raw`\sigma(z)`)}\,dz}`;
+function piDouble(st) { st.N0 = st.N; st.N = st.N * 2; st.u = 0; return tween(st, 'u', 1, st.dblT); }
+function piMorph(st, target, dur) { st.from = st.prof.slice(); st.to = target; st.mu = 0; return tween(st, 'mu', 1, dur); }
+const SPI = stepScene({
+  id: 'integral', tab: 'Product to integral', shared: true,
+  defaults: () => ({ prof: piSample(piSig0), from: null, to: null, mu: 1, N: 2, N0: 2, u: 1, mk: 0, front: 0, curveA: 0, int: 0, barHi: 0, labN: 0,
+    dblT: 0.9, shown: null, F: {}, M: [], step: -1 }),
+  params: [
+    { type: 'range', key: 'dblT', label: 'Time per doubling (s)', min: 0.3, max: 3, step: 0.1, fmt: (v) => v.toFixed(1) },
+  ],
+  steps: [
+    { label: 'Two slices', run: async (st) => { await tween(st, 'mk', 1, 1.4); await tween(st, 'front', 1, 1.6, { ease: linear }); await fWrite(st, 'T', piProd(2), PI_FPL, 1.2); } },
+    { label: 'Eight slices', run: async (st) => { tween(st, 'labN', 1, 0.5); await piDouble(st); await piDouble(st); await fMorph(st, 'T', piProd(8), PI_FPL); } },
+    { label: 'The exponents add', run: (st) => fMorph(st, 'T', piSumOpen(8), PI_FPL) },
+    { label: 'A sum: the area of the bars', run: async (st) => { await fMorph(st, 'T', piSigma(8), PI_FPL, { style: 'shape' }); await tween(st, 'barHi', 1, 0.6); } },
+    { label: 'Thinner and thinner', run: async (st) => {
+      tween(st, 'barHi', 0, 0.4); tween(st, 'curveA', 1, 0.8);
+      await fMorph(st, 'T', piSigma('N'), PI_FPL, { style: 'shape' });
+      for (let i = 0; i < 3; i++) { await piDouble(st); await sleep(0.3, 'integral'); }
+    } },
+    { label: 'An integral', run: async (st) => { tween(st, 'int', 1, 1.4); tween(st, 'labN', 0, 0.8); await fMorph(st, 'T', PI_INT, PI_FPL, { style: 'shape', dur: 1.6 }); } },
+    { label: 'Only the total counts', run: async (st) => { for (const g of PI_SHAPES) { await piMorph(st, piShape(g), 1.6); await sleep(0.7, 'integral'); } } },
+  ],
+  draw: drawIntegral,
+});
+function drawIntegral(ctx, dt, st) {
+  if (st.from) { for (let i = 0; i <= PIG.n; i++) st.prof[i] = lerp(st.from[i], st.to[i], st.mu); if (st.mu >= 1) st.from = null; }
+  const P = st.prof, n = PIG.n, dz = PIG.d / n, cum = new Float64Array(n + 1);
+  for (let i = 1; i <= n; i++) cum[i] = cum[i - 1] + ((P[i - 1] + P[i]) / 2) * dz;
+  const at = (z) => { const f = clamp(z / PIG.d, 0, 1) * n, i = Math.min(n - 1, Math.floor(f)); return lerp(P[i], P[i + 1], f - i); };
+  const xOf = (z) => PIG.x0 + (z / PIG.d) * (PIG.x1 - PIG.x0);
+  // the slices: midpoint heights; while doubling, each new bar grows out of its parent's height
+  const Nf = st.N, Nc = st.N0, uu = Nf > Nc ? smooth(clamp(st.u, 0, 1)) : 1, wz = PIG.d / Nf, hts = new Float64Array(Nf), pre = new Float64Array(Nf + 1);
+  for (let j = 0; j < Nf; j++) { const own = at((j + 0.5) * wz), par = Nf > Nc ? at((Math.floor((j * Nc) / Nf) + 0.5) * (PIG.d / Nc)) : own; hts[j] = lerp(par, own, uu); pre[j + 1] = pre[j] + hts[j] * wz; }
+  const tauBars = (z) => { const k = Math.min(Nf - 1, Math.floor(z / wz)); return pre[k] + hts[k] * clamp(z - k * wz, 0, wz); };
+  const tauCurve = (z) => { const f = clamp(z / PIG.d, 0, 1) * n, i = Math.min(n - 1, Math.floor(f)); return lerp(cum[i], cum[i + 1], f - i); };
+  const tau = (z) => lerp(tauBars(clamp(z, 0, PIG.d)), tauCurve(z), st.int);
+  // the slab: slices coloured by their σᵢ, blending into the smooth density once the sum is an integral
+  const mk = st.mk, ol = clamp(mk / 0.6, 0, 1), fa = clamp((mk - 0.3) / 0.5, 0, 1), look = SH.container === 'cloud' ? LOOKS.fog : lookOf(SH), lc = hexRgb(look.c);
+  const fillA = (s) => fa * lerp(0.06, 0.85, clamp(s / PIG.smax, 0, 1));
+  if (fa > 0.003) {
+    if (st.int < 0.999) {
+      const g = ctx.createLinearGradient(PIG.x0, 0, PIG.x1, 0);
+      for (let j = 0; j < Nf; j++) { const c = rgba(lc, fillA(hts[j])); g.addColorStop(j / Nf, c); g.addColorStop((j + 1) / Nf, c); }
+      ctx.save(); ctx.globalAlpha = 1 - st.int; ctx.fillStyle = g; ctx.fillRect(PIG.x0, PIG.top, PIG.x1 - PIG.x0, PIG.bot - PIG.top); ctx.restore();
+    }
+    if (st.int > 0.001) {
+      const g = ctx.createLinearGradient(PIG.x0, 0, PIG.x1, 0);
+      for (let i = 0; i <= n; i += 4) g.addColorStop(i / n, rgba(lc, fillA(P[i])));
+      ctx.save(); ctx.globalAlpha = st.int; ctx.fillStyle = g; ctx.fillRect(PIG.x0, PIG.top, PIG.x1 - PIG.x0, PIG.bot - PIG.top); ctx.restore();
+    }
+  }
+  // the particles follow the density itself: each keeps its share of the total, so equal areas keep them all
+  const area = cum[n], cnt = Math.round(PI_A0 * 60), rnd = rng32(4242);
+  if (fa > 0.003 && area > 1e-6) {
+    ctx.save(); ctx.globalAlpha = fa; ctx.fillStyle = '#262626'; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 1.5; ctx.beginPath();
+    for (let i = 0; i < cnt; i++) {
+      const q = ((i + rnd()) / cnt) * area, v = rnd();
+      let lo = 1, hi = n; while (lo < hi) { const m = (lo + hi) >> 1; if (cum[m] < q) lo = m + 1; else hi = m; }
+      const f = (q - cum[lo - 1]) / Math.max(1e-12, cum[lo] - cum[lo - 1]), x = xOf(((lo - 1 + clamp(f, 0, 1)) / n) * PIG.d), y = lerp(PIG.top + 12, PIG.bot - 12, v);
+      ctx.moveTo(x + 5, y); ctx.arc(x, y, 5, 0, Math.PI * 2);
+    }
+    ctx.fill(); ctx.stroke(); ctx.restore();
+  }
+  // the faces between slices: old ones stay, new ones grow from the middle; they go once it is an integral
+  const faceA = (1 - st.int) * fa;
+  if (faceA > 0.003) {
+    ctx.save(); ctx.strokeStyle = hexA(COL.greyA, 0.7 * faceA); ctx.lineWidth = 2; ctx.beginPath();
+    for (let j = 1; j < Nf; j++) {
+      const old = Number.isInteger((j * Nc) / Nf), s = old ? 1 : uu, h = ((PIG.bot - PIG.top) / 2) * smooth(s), x = xOf(j * wz), cy = (PIG.top + PIG.bot) / 2;
+      if (s > 0.003) { ctx.moveTo(x, cy - h); ctx.lineTo(x, cy + h); }
+    }
+    ctx.stroke(); ctx.restore();
+  }
+  if (ol > 0.003) { const per = 2 * (PIG.x1 - PIG.x0 + PIG.bot - PIG.top); ctx.save(); ctx.strokeStyle = COL.greyA; ctx.lineWidth = 3; if (ol < 1) ctx.setLineDash([ol * per, per]); ctx.strokeRect(PIG.x0, PIG.top, PIG.x1 - PIG.x0, PIG.bot - PIG.top); ctx.restore(); }
+  // the laser and the sensor, as in the other scenes
+  const lit = st.front > 0.0005, T = (x) => Math.exp(-tau(((x - PIG.x0) / (PIG.x1 - PIG.x0)) * PIG.d)), knots = [];
+  if (st.int < 1) for (let j = 0; j <= Nf; j++) knots.push(xOf(j * wz));
+  if (lit) drawBeam(ctx, PIG.apX, lerp(PIG.apX, PIG.xs - 18, st.front), PIG.y, SH.color, SH.I0, (x) => (x < PIG.x0 ? 1 : T(Math.min(x, PIG.x1))), knots);
+  ctx.save(); ctx.globalAlpha = clamp(mk / 0.5, 0, 1); drawLaser(ctx, PIG.apX, PIG.y, SH.color, lit ? 1 : 0); ctx.restore();
+  const reading = st.front >= 0.999 && SH.I0 > 0 ? T(PIG.x1) : null;
+  st.shown = reading == null ? null : st.shown == null || reduced ? reading : lerp(st.shown, reading, 1 - Math.exp(-dt * 6));
+  ctx.save(); ctx.globalAlpha = clamp(mk / 0.5, 0, 1); drawSensor(ctx, PIG.xs, PIG.y, SH.color, reading == null ? 0 : reading * SH.I0); ctx.restore();
+  if (st.shown != null) drawReadout(ctx, PIG.xs, PIG.y, st.shown, 1);
+  // the density: bars of σᵢ, then the curve they close in on, then the area under it
+  const A = makeAxes({ L: PIG.x0, R: PIG.x1, T: 120, B: 390, xr: [0, PIG.d, 5], yr: [0, PIG.smax, 0.1], ext: 40, xl: 'z', yl: String.raw`\sigma(z)`, labSize: 50, numSize: 28 });
+  drawAxes(ctx, A, { c: clamp(mk / 0.7, 0, 1), nums: 1, lab: clamp(mk / 0.7, 0, 1) });
+  const ba = (1 - st.int) * clamp((mk - 0.2) / 0.6, 0, 1);
+  if (ba > 0.003) {
+    ctx.save(); ctx.fillStyle = hexA(COL.green, ba * (0.3 + 0.3 * st.barHi)); ctx.strokeStyle = hexA(COL.green, ba); ctx.lineWidth = Nf > 32 ? 1.2 : 2;
+    for (let j = 0; j < Nf; j++) { const x0 = A.X(j * wz), x1 = A.X((j + 1) * wz), y = A.Y(hts[j] * clamp((mk - 0.2) / 0.6, 0, 1)); ctx.fillRect(x0, y, x1 - x0, A.oy - y); ctx.strokeRect(x0, y, x1 - x0, A.oy - y); }
+    ctx.restore();
+  }
+  if (st.int > 0.003) areaFill(ctx, A, at, 0, PIG.d, hexA(COL.green, 0.32 * st.int));
+  if (st.curveA > 0.003) drawCurve(ctx, A, at, { color: COL.green, width: 4, alpha: st.curveA });
+  if (st.labN > 0.003) {
+    const e = drawTex(ctx, 'N =', PIG.x0, 470, 48, { ax: 0, alpha: st.labN }).pop();
+    if (e) drawNumber(ctx, uu < 0.5 && Nf > Nc ? Nc : Nf, e.x + e.w + 0.3 * e.fpx, e.base, { size: e.fpx, dec: 0, color: COL.blue, alpha: st.labN });
+  }
+  drawFormulas(ctx, st);
+}
+
 //@@SCENES@@
 
 // ---------- the stage ----------
@@ -2539,7 +2744,7 @@ function buildTabs() {
 function setScene(id) {
   if (!scenes[id]) id = ORDER[0];
   cur = scenes[id];
-  for (const b of tabsEl.children) b.setAttribute('aria-selected', String(b.dataset.scene === id));
+  for (const b of tabsEl.children) { const on = b.dataset.scene === id; b.setAttribute('aria-selected', String(on)); if (on && tabsEl.scrollWidth > tabsEl.clientWidth) b.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
   buildDock();
   try { if (location.hash !== '#' + id) history.replaceState(null, '', '#' + id); } catch (e) { /* the viewer may not allow it */ }
 }
@@ -2621,7 +2826,7 @@ async function boot() {
   const faces = ['400 40px KaTeX_Main', 'italic 400 40px KaTeX_Main', '700 40px KaTeX_Main', 'italic 400 40px KaTeX_Math', '400 40px KaTeX_Size1', '400 40px KaTeX_Size2', '400 40px KaTeX_Size3', '400 40px KaTeX_Size4', '400 40px KaTeX_AMS', '400 40px KaTeX_Caligraphic'];
   try { await Promise.all(faces.map((f) => document.fonts.load(f))); } catch (e) { /* fall back to whatever loaded */ }
   ascCache.clear(); texCache.clear();
-  for (const id of ORDER) if (scenes[id].init) scenes[id].init();
+  for (const id of ORDER) if (scenes[id].init) await scenes[id].init();
   await eqGo(0, false);
   buildTabs(); setScene(location.hash.slice(1));
   last = performance.now(); raf = requestAnimationFrame(frame);
