@@ -16,3 +16,10 @@ import Base from '../layouts/Base.astro';
   p { font-size: 19px; color: var(--ink-2); }
   .links { display: flex; gap: 10px; margin-top: 28px; }
 </style>
+
+<script>
+  import { track } from '../lib/analytics';
+
+  // GitHub Pages serves this page at the missing URL: which links are broken, and who links to them.
+  track('page-not-found', { path: location.pathname, referrer: document.referrer || 'direct' });
+</script>

@@ -36,7 +36,7 @@ const ogImage = preview
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 ---
 <Base title={title} description={description} image={ogImage} type="article" published={date} noindex={draft || unlisted}>
-  <article class:list={['post', { centered: !post.data.toc }]}>
+  <article class:list={['post', { centered: !post.data.toc }]} data-post={post.id}>
     <header class="post-head wrap">
       <p class="kicker">
         {draft && <span class="badge-draft">Draft</span>} {series ? `${series}${part ? ` · Part ${part}` : ''}` : tags.join(' · ')}
@@ -81,7 +81,7 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
           <h2>{series}</h2>
           <ol>
             {parts.map((p) => (
-              <li><a href={postUrl(p)} aria-current={p.id === post.id ? 'page' : undefined}>{p.data.title}</a></li>
+              <li><a href={postUrl(p)} aria-current={p.id === post.id ? 'page' : undefined} data-track="post-click" data-track-post={p.id} data-track-location="series">{p.data.title}</a></li>
             ))}
           </ol>
         </nav>
@@ -92,13 +92,13 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
           <p class="name">{SITE.name}</p>
           <p>{SITE.description}</p>
           <div class="links">
-            {SITE.socials.map((s) => <a href={s.href} title={s.title} aria-label={s.title}><Icon name={s.icon} /></a>)}
+            {SITE.socials.map((s) => <a href={s.href} title={s.title} aria-label={s.title} data-track="social-click" data-track-network={s.title} data-track-location="post"><Icon name={s.icon} /></a>)}
           </div>
         </div>
       </div>
       <nav class="prev-next" aria-label="More posts">
-        {older ? <a href={postUrl(older)}><small><Icon name="arrowLeft" /> Older</small><span>{older.data.title}</span></a> : <span />}
-        {newer ? <a class="next" href={postUrl(newer)}><small>Newer <Icon name="arrowRight" /></small><span>{newer.data.title}</span></a> : <a class="next" href="/"><small>All posts <Icon name="arrowRight" /></small><span>Back to the front page</span></a>}
+        {older ? <a href={postUrl(older)} data-track="post-click" data-track-post={older.id} data-track-location="older"><small><Icon name="arrowLeft" /> Older</small><span>{older.data.title}</span></a> : <span />}
+        {newer ? <a class="next" href={postUrl(newer)} data-track="post-click" data-track-post={newer.id} data-track-location="newer"><small>Newer <Icon name="arrowRight" /></small><span>{newer.data.title}</span></a> : <a class="next" href="/"><small>All posts <Icon name="arrowRight" /></small><span>Back to the front page</span></a>}
       </nav>
     </footer>
   </article>
@@ -189,6 +189,17 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
 </style>
 
 <script>
+  import { track } from '../../lib/analytics';
+
+  // Readers who reach the end of the post (sent once, and only after scrolling there).
+  const end = document.querySelector<HTMLElement>('.post-foot');
+  const reached = () => {
+    if (!end || end.getBoundingClientRect().top > innerHeight) return;
+    removeEventListener('scroll', reached);
+    track('post-read', { post: document.querySelector<HTMLElement>('.post')!.dataset.post! });
+  };
+  addEventListener('scroll', reached, { passive: true });
+
   // Highlight the section being read in the table of contents.
   const links = new Map([...document.querySelectorAll<HTMLAnchorElement>('.toc a')].map((a) => [decodeURIComponent(a.hash.slice(1)), a]));
   if (links.size) {

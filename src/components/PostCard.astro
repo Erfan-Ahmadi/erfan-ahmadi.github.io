@@ -10,7 +10,7 @@ const tags = youtube ? ['YouTube', ...post.data.tags] : post.data.tags;
 const year = yearOf(post);
 const haystack = [title, description, ...tags, youtube ? 'video' : '', series ?? '', year].join(' ').toLowerCase();
 ---
-<a class="card" href={postUrl(post)} data-year={year} data-search={haystack}>
+<a class="card" href={postUrl(post)} data-year={year} data-search={haystack} data-track="post-click" data-track-post={post.id} data-track-location="home">
   <Cover post={post} sizes="(max-width: 760px) calc(100vw - 36px), (max-width: 1040px) 45vw, 360px" />
   {series ? <div class="series">{series}{part && <> &middot; Part {part}</>}</div> : <PostMeta post={post} />}
   <h3>{title}</h3>

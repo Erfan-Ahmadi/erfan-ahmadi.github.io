@@ -26,13 +26,13 @@ const inYear = (year: number) => posts.filter((p) => yearOf(p) === year).length;
         <ul class="socials">
           {SITE.socials.map((s, i) => (
             <li>
-              <a class:list={['pill', { solid: i === 0, 'icon-only': 'iconOnly' in s }]} href={s.href} title={s.title} aria-label={'iconOnly' in s ? s.title : undefined}>
+              <a class:list={['pill', { solid: i === 0, 'icon-only': 'iconOnly' in s }]} href={s.href} title={s.title} aria-label={'iconOnly' in s ? s.title : undefined} data-track="social-click" data-track-network={s.title} data-track-location="home">
                 <Icon name={s.icon} />{!('iconOnly' in s) && s.label}
               </a>
             </li>
           ))}
         </ul>
-        <a class="work" href={SITE.work.href}><Icon name="devsh" />{SITE.work.label}<Icon name="arrowUpRight" /></a>
+        <a class="work" href={SITE.work.href} data-track="consulting-click" data-track-location="home"><Icon name="devsh" />{SITE.work.label}<Icon name="arrowUpRight" /></a>
       </div>
       <figure class="portrait">
         <Image src={avatar} alt="Portrait of Erfan Ahmadi" width={460} height={460} loading="eager" />
@@ -46,17 +46,17 @@ const inYear = (year: number) => posts.filter((p) => yearOf(p) === year).length;
             <YouTube id={latest.data.youtube} title={`Play: ${latest.data.title}`} />
             <div>
               <p class="kicker">Latest video</p>
-              <h2><a href={postUrl(latest)}>{latest.data.title}</a></h2>
+              <h2><a href={postUrl(latest)} data-track="post-click" data-track-post={latest.id} data-track-location="latest">{latest.data.title}</a></h2>
               <p>{latest.data.description}</p>
               <PostMeta post={latest} />
               <div class="video-links">
-                <a class="pill solid" href={SITE.youtube.channel}><Icon name="youtube" />Subscribe {SITE.youtube.handle}</a>
-                <a class="pill" href={postUrl(latest)}>Read the post<Icon name="arrowRight" /></a>
+                <a class="pill solid" href={SITE.youtube.channel} data-track="subscribe-click" data-track-location="latest-video"><Icon name="youtube" />Subscribe {SITE.youtube.handle}</a>
+                <a class="pill" href={postUrl(latest)} data-track="post-click" data-track-post={latest.id} data-track-location="latest">Read the post<Icon name="arrowRight" /></a>
               </div>
             </div>
           </div>
         ) : (
-          <a class="featured" href={postUrl(latest)}>
+          <a class="featured" href={postUrl(latest)} data-track="post-click" data-track-post={latest.id} data-track-location="latest">
             <Cover post={latest} sizes="(max-width: 760px) calc(100vw - 36px), 640px" eager />
             <div>
               <p class="kicker">Latest post</p>
@@ -82,9 +82,9 @@ const inYear = (year: number) => posts.filter((p) => yearOf(p) === year).length;
       </div>
       <div class="years" role="group" aria-label="Filter by year">
         <span class="label">Year</span>
-        <button class="chip" type="button" data-year="all" aria-pressed="true">All<span class="n">{posts.length}</span></button>
+        <button class="chip" type="button" data-year="all" aria-pressed="true" data-track="year-filter" data-track-year="all">All<span class="n">{posts.length}</span></button>
         {years.map((year) => (
-          <button class="chip" type="button" data-year={year} aria-pressed="false">{year}<span class="n">{inYear(year)}</span></button>
+          <button class="chip" type="button" data-year={year} aria-pressed="false" data-track="year-filter" data-track-year={year}>{year}<span class="n">{inYear(year)}</span></button>
         ))}
       </div>
 
@@ -161,6 +161,8 @@ const inYear = (year: number) => posts.filter((p) => yearOf(p) === year).length;
 </style>
 
 <script>
+  import { track } from '../lib/analytics';
+
   const section = document.querySelector<HTMLElement>('.posts')!;
   const cards = [...section.querySelectorAll<HTMLElement>('#grid .card')];
   const chips = [...section.querySelectorAll<HTMLButtonElement>('.years .chip')];
@@ -184,9 +186,23 @@ const inYear = (year: number) => posts.filter((p) => yearOf(p) === year).length;
     if (year === 'all') url.searchParams.delete('year');
     else url.searchParams.set('year', year);
     history.replaceState(null, '', url);
+    return shown;
+  }
+
+  // What readers look for: the query once they stop typing, with how many posts it found.
+  let searchTimer: ReturnType<typeof setTimeout>;
+  let searched = '';
+  function search() {
+    const shown = apply();
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      const query = input.value.trim().toLowerCase();
+      if (query && query !== searched) track('search', { query, results: shown });
+      searched = query;
+    }, 1500);
   }
 
   chips.forEach((chip) => chip.addEventListener('click', () => { year = chip.dataset.year!; apply(); }));
-  input.addEventListener('input', apply);
+  input.addEventListener('input', search);
   apply();
 </script>

@@ -8,7 +8,7 @@ interface Props {
 const { id, title = 'Play video' } = Astro.props;
 ---
 <div class="yt" data-yt-id={id}>
-  <a class="yt-poster" href={`https://www.youtube.com/watch?v=${id}`} aria-label={title}>
+  <a class="yt-poster" href={`https://www.youtube.com/watch?v=${id}`} aria-label={title} data-track="video-play" data-track-video={id}>
     <img src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`} alt="" loading="lazy" onerror="this.remove()" />
     <span class="yt-play" aria-hidden="true">
       <svg viewBox="0 0 68 48"><rect width="68" height="48" rx="12" fill="#FF0033" /><path d="M27 14v20l18-10z" fill="#fff" /></svg>

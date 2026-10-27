@@ -22,7 +22,7 @@ const years = [...new Set(posts.map(yearOf))];
           <ul>
             {list.map((post) => (
               <li>
-                <a href={postUrl(post)}>
+                <a href={postUrl(post)} data-track="post-click" data-track-post={post.id} data-track-location="archive">
                   <time datetime={post.data.date.toISOString().slice(0, 10)}>{formatDate(post.data.date).replace(/, \d{4}$/, '')}</time>
                   <span class="t">{post.data.title}{post.data.draft && <span class="badge-draft">Draft</span>}</span>
                   <span class="d">{post.data.description}</span>

@@ -74,6 +74,29 @@ The demo runs in a sandboxed frame, follows the site's light/dark theme through 
 
 Push a draft to `master` and send people its link (`https://erfan-ahmadi.github.io/blog/<slug>/`) to proofread it. When it's ready, remove `draft: true`, commit, and push to `master`. The [Build and deploy](.github/workflows/deploy.yml) workflow builds the site and publishes it in a minute or two. Pushes to other branches and pull requests are built and link-checked but not deployed.
 
+## Analytics
+
+Visits are counted with [Umami](https://umami.is): no cookies, so no consent banner. The dashboard at [cloud.umami.is](https://cloud.umami.is) shows the pages read and where readers came from (the referring site, e.g. Google, Reddit, `t.co` for X, `lnkd.in` for LinkedIn; UTM tags; country, browser and device), and under Events, these clicks and actions with their properties:
+
+| Event | When | Properties |
+| --- | --- | --- |
+| `consulting-click` | The Consulting & Training button | `location` |
+| `subscribe-click` | Subscribe under the latest video | `location` |
+| `social-click` | A GitHub, YouTube, X, LinkedIn or RSS link | `network`, `location`: `home`, `post`, `header`, `footer` |
+| `post-click` | A link to a post | `post`, `location`: `latest`, `home`, `archive`, `series`, `older`, `newer` |
+| `outbound-click` | Any other link to another site | `domain`, `url` |
+| `video-play` | Playing an embedded YouTube video | `video` (its id) |
+| `post-read` | Scrolling to the end of a post | `post` |
+| `search` | A search on the home page, once the reader stops typing | `query`, `results` |
+| `year-filter` | A year on the home page | `year` |
+| `page-not-found` | A missing page | `path`, `referrer` |
+| `old-url` | A visit through an old Jekyll URL (`src/redirects.mjs`); the page view keeps the site that linked to it | `from` |
+
+- To count another button or link, give it `data-track="event-name"`, plus `data-track-<property>="value"` for its properties. For anything that isn't a click, call `track()` from `src/lib/analytics.ts`.
+- To see which of your own shares bring readers, add UTM tags to the links you post, e.g. `https://erfan-ahmadi.github.io/blog/gpu-driven-anything/?utm_source=linkedin&utm_medium=social`.
+- To leave out your own visits, open the live site and run `localStorage.setItem('umami.disabled', 1)` in the browser console, once per browser.
+- Only the live site is counted: `npm run dev` doesn't load Umami (it logs the events to the browser console instead), and `npm run preview` runs on localhost, which isn't counted. The website id is in `src/site.ts`.
+
 ## Where things are
 
 | Path | |
