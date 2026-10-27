@@ -919,6 +919,140 @@ const S5 = defScene({
   },
 });
 
+// ---------- A. shadows in a slab (Bohren and Huffman §3.4, their Fig. 3.8) ----------
+// Parallel rays cross a slab of absorbing discs, and a ray stops at the first disc it meets. Yellow: the
+// fraction of rays still going at each depth, counted from the rays on screen. Blue: what independent,
+// uniformly random positions predict, e^{-nσz} with σ = 2r, the width of one disc's shadow. Arranging the
+// same discs differently (a lattice, clumps) breaks the exponential: shadows overlap more, or less.
+const SL = { ex: 250, x0: 400, x1: 1500, top: 110, bot: 520 };   // emitter, slab faces, top and bottom of the sheet of rays
+let parts = [];   // each disc: where it comes from (fx, fy) and goes to (tx, ty) while st.mu runs 0 → 1
+function rng32(seed) { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const gauss = (rnd) => { const u = Math.max(1e-9, rnd()), v = rnd(), m = Math.sqrt(-2 * Math.log(u)); return [m * Math.cos(2 * Math.PI * v), m * Math.sin(2 * Math.PI * v)]; };
+// Centres live in [a, b] × [y0, y1]: inside the slab, and a radius past the sheet's edges, so every ray
+// sees the same number density.
+const slabBox = (st) => ({ a: SL.x0 + st.r, b: SL.x1 - st.r, y0: SL.top - st.r, y1: SL.bot + st.r });
+function layoutDiscs(st) {
+  const { a, b, y0, y1 } = slabBox(st), N = Math.round(st.n), rnd = rng32(st.seed * 7919 + 17), out = [];
+  if (st.dist === 'random') for (let i = 0; i < N; i++) out.push([lerp(a, b, rnd()), lerp(y0, y1, rnd())]);
+  else if (st.dist === 'clumped') {
+    const k = Math.max(2, Math.round(N / 8)), cs = [];
+    for (let i = 0; i < k; i++) cs.push([lerp(a, b, rnd()), lerp(y0, y1, rnd())]);
+    for (let i = 0; i < N; i++) { const c = cs[Math.floor(rnd() * k)], g = gauss(rnd); out.push([clamp(c[0] + g[0] * st.clump, a, b), clamp(c[1] + g[1] * st.clump, y0, y1)]); }
+  } else {
+    // a grid of cells: jittered puts one disc anywhere in each cell; the lattice puts it in the middle, and
+    // tilt slides each column down a little more than the last (wrapping round), so rows stop lining up
+    const nr = Math.max(1, Math.round(Math.sqrt((N * (y1 - y0)) / (b - a)))), nc = Math.ceil(N / nr), sx = (b - a) / nc, sy = (y1 - y0) / nr;
+    const shift = sx * Math.tan((st.tilt * Math.PI) / 180);
+    for (let i = 0; i < N; i++) {
+      const col = i % nc, row = Math.floor(i / nc);
+      if (st.dist === 'jitter') out.push([a + (col + rnd()) * sx, y0 + (row + rnd()) * sy]);
+      else { const y = y0 + (row + 0.5) * sy + col * shift, h = y1 - y0; out.push([a + (col + 0.5) * sx, y0 + ((((y - y0) % h) + h) % h)]); }
+    }
+  }
+  return out;
+}
+const discPos = (st) => parts.map((p) => [lerp(p.fx, p.tx, st.mu), lerp(p.fy, p.ty, st.mu)]);
+function placeDiscs(st) { parts = layoutDiscs(st).map(([x, y]) => ({ fx: x, fy: y, tx: x, ty: y })); st.mu = 1; }
+// Move the discs to a new arrangement. Each new spot takes the nearest disc still free, so paths stay short.
+function moveDiscs(st, dur = 1.5) {
+  const from = discPos(st), to = layoutDiscs(st);
+  if (from.length !== to.length) { placeDiscs(st); return Promise.resolve(); }
+  const used = new Uint8Array(from.length), rnd = rng32(st.seed + 99), order = to.map((_, i) => i).sort(() => rnd() - 0.5);
+  const next = new Array(to.length);
+  for (const j of order) {
+    let best = -1, bd = Infinity;
+    for (let i = 0; i < from.length; i++) if (!used[i]) { const d = (from[i][0] - to[j][0]) ** 2 + (from[i][1] - to[j][1]) ** 2; if (d < bd) { bd = d; best = i; } }
+    used[best] = 1; next[j] = { fx: from[best][0], fy: from[best][1], tx: to[j][0], ty: to[j][1] };
+  }
+  parts = next; st.mu = 0;
+  return tween(st, 'mu', 1, dur);
+}
+const rayYs = (st) => { const k = st.rays === 'sheet' ? Math.round(SL.bot - SL.top) : +st.rays, ys = []; for (let i = 0; i < k; i++) ys.push(SL.top + ((i + 0.5) * (SL.bot - SL.top)) / k); return ys; };
+// Where each ray meets its first disc (Infinity if it never does).
+function firstHits(ys, pos, R) {
+  const hits = new Float64Array(ys.length);
+  for (let i = 0; i < ys.length; i++) {
+    let h = Infinity; const y = ys[i];
+    for (const [x, py] of pos) { const dy = y - py; if (dy > -R && dy < R) { const xh = x - Math.sqrt(R * R - dy * dy); if (xh < h) h = xh; } }
+    hits[i] = h;
+  }
+  return hits;
+}
+// Independent random centres: a ray is still going at x when no centre lies in the strip it has swept, so
+// T(x) = exp(−n · area of that strip). Past the first radius the area grows by 2r per unit of x: e^{−nσz}.
+function predictedT(st, x) {
+  const { a, b, y0, y1 } = slabBox(st), R = st.r, n = Math.round(st.n) / ((b - a) * (y1 - y0));
+  let A = 0; const k = 32;
+  for (let i = 0; i < k; i++) { const u = -R + ((i + 0.5) * 2 * R) / k; A += clamp(x + Math.sqrt(R * R - u * u) - a, 0, b - a); }
+  return Math.exp(-n * A * ((2 * R) / k));
+}
+const SA = defScene({
+  id: 'shadows', tab: 'Shadows in a slab',
+  defaults: () => ({ n: 70, r: 8, dist: 'random', clump: 22, tilt: 0, rays: '120', seed: 1, mu: 1, front: 1, pred: 1, marks: 1, labels: 1, shineT: 2.6 }),
+  init: () => placeDiscs(SA),
+  onReset: () => placeDiscs(SA),
+  actions: [
+    { id: 'shine', label: 'Shine', primary: true, run: (st) => { st.front = 0; return tween(st, 'front', 1, st.shineT, { ease: linear }); } },
+    { id: 'random', label: 'Random', run: (st) => { st.dist = 'random'; return moveDiscs(st); } },
+    { id: 'jitter', label: 'Jittered', run: (st) => { st.dist = 'jitter'; return moveDiscs(st); } },
+    { id: 'lattice', label: 'Lattice', run: (st) => { st.dist = 'lattice'; return moveDiscs(st); } },
+    { id: 'clumped', label: 'Clumped', run: (st) => { st.dist = 'clumped'; return moveDiscs(st); } },
+    { id: 'resample', label: 'Resample', run: (st) => { st.seed += 1; return moveDiscs(st, 1.2); } },
+    { id: 'reset', label: 'Reset', run: (st, alive, sc) => resetScene(sc) },
+  ],
+  params: [
+    { type: 'range', key: 'n', label: 'Discs', min: 5, max: 400, step: 1, fmt: (v) => String(v), set: (v) => { SA.n = v; placeDiscs(SA); } },
+    { type: 'range', key: 'r', label: 'Disc radius', min: 3, max: 30, step: 0.5, fmt: (v) => v.toFixed(1), set: (v) => { SA.r = v; placeDiscs(SA); } },
+    { type: 'select', key: 'rays', label: 'Rays', options: [['30', '30 rays'], ['120', '120 rays'], ['sheet', 'A sheet (every row)']] },
+    { type: 'range', key: 'clump', label: 'Clump size', min: 4, max: 80, step: 1, fmt: (v) => String(v), set: (v) => { SA.clump = v; placeDiscs(SA); }, visible: (st) => st.dist === 'clumped' },
+    { type: 'range', key: 'tilt', label: 'Lattice tilt (°)', min: -30, max: 30, step: 0.5, fmt: (v) => v.toFixed(1), set: (v) => { SA.tilt = v; placeDiscs(SA); }, visible: (st) => st.dist === 'lattice' },
+    { type: 'range', key: 'shineT', label: 'Shine time (s)', min: 0.5, max: 8, step: 0.1, fmt: (v) => v.toFixed(1) },
+    { type: 'check', key: 'pred', label: 'Prediction e^(−nσz)', set: (v) => tween(SA, 'pred', v ? 1 : 0, 0.5) },
+    { type: 'check', key: 'marks', label: 'Where rays stop', set: (v) => tween(SA, 'marks', v ? 1 : 0, 0.4) },
+    { type: 'check', key: 'labels', label: 'Curve labels', set: (v) => tween(SA, 'labels', v ? 1 : 0, 0.4) },
+  ],
+  draw: drawShadows,
+});
+function drawShadows(ctx, dt, st) {
+  const R = st.r, pos = discPos(st), ys = rayYs(st), hits = firstHits(ys, pos, R), color = S1.color;
+  const xf = lerp(SL.ex, W + 10, st.front), sheet = st.rays === 'sheet';
+  dashed(ctx, SL.x0, SL.top - 70, SL.x0, SL.bot + 70, COL.greyC, 1, 2);
+  dashed(ctx, SL.x1, SL.top - 70, SL.x1, SL.bot + 70, COL.greyC, 1, 2);
+  // the rays, each stopping at its first disc (or at the light's front while it travels)
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  const rays = () => { ctx.beginPath(); for (let i = 0; i < ys.length; i++) { const xe = Math.min(hits[i], xf); if (xe > SL.ex) { ctx.moveTo(SL.ex, ys[i]); ctx.lineTo(xe, ys[i]); } } ctx.stroke(); };
+  if (sheet) { ctx.strokeStyle = hexA(color, 0.75); ctx.lineWidth = 1.2; rays(); }
+  else { ctx.strokeStyle = hexA(color, 0.14); ctx.lineWidth = 6; rays(); ctx.strokeStyle = hexA(color, 0.95); ctx.lineWidth = 1.8; rays(); }
+  if (st.marks > 0.003 && !sheet) for (let i = 0; i < ys.length; i++) if (hits[i] < xf) dot(ctx, hits[i], ys[i], 3.2, '#FFFFFF', 0.85 * st.marks);
+  ctx.restore();
+  // the discs
+  ctx.save(); ctx.fillStyle = '#262626'; ctx.strokeStyle = COL.greyB; ctx.lineWidth = Math.min(2.5, R * 0.3);
+  ctx.beginPath(); for (const [x, y] of pos) { ctx.moveTo(x + R, y); ctx.arc(x, y, R, 0, Math.PI * 2); } ctx.fill(); ctx.stroke();
+  ctx.restore();
+  // the emitter
+  ctx.save(); ctx.fillStyle = '#2C2C2C'; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.roundRect(SL.ex - 40, SL.top - 26, 40, SL.bot - SL.top + 52, 8); ctx.fill(); ctx.stroke(); ctx.restore();
+  // the plot, sharing x with the slab: depth in units of the mean free path 1/(nσ), so the prediction is e^{-x}
+  const { a, b, y0, y1 } = slabBox(st), n = Math.round(st.n) / ((b - a) * (y1 - y0)), ns = n * 2 * R, tauMax = ns * (SL.x1 - SL.x0);
+  const step = tauMax > 6 ? 2 : tauMax > 2.5 ? 1 : 0.5;
+  const A = makeAxes({ L: SL.x0, R: SL.x1, T: 640, B: 975, xr: [0, tauMax, step], yr: [0, 1, 0.5], ext: 46, xl: String.raw`n\sigma z`, yl: 'T', labSize: 52, numSize: 30 });
+  drawAxes(ctx, A, { c: 1, nums: 1, lab: 1 });
+  const xr = Math.min(xf, SL.x1);
+  if (st.pred > 0.003) drawCurve(ctx, A, (t) => predictedT(st, SL.x0 + t / ns), { from: 0, to: tauMax, color: COL.blue, alpha: st.pred, width: 4 });
+  if (xr > SL.x0) {
+    const sorted = Array.from(hits).filter((h) => h <= xr).sort((p, q) => p - q), k = ys.length;
+    ctx.save(); ctx.strokeStyle = COL.yellow; ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.beginPath();
+    let alive = k, x = SL.x0; ctx.moveTo(x, A.Y(1));
+    for (const h of sorted) { const hx = Math.max(SL.x0, h); ctx.lineTo(hx, A.Y(alive / k)); alive--; ctx.lineTo(hx, A.Y(alive / k)); }
+    ctx.lineTo(xr, A.Y(alive / k)); ctx.stroke(); ctx.restore();
+  }
+  // a two-line key in the plot's top right corner, which both curves have left by then
+  if (st.labels > 0.003) {
+    drawTex(ctx, String.raw`\text{rays left}`, SL.x1, A.Y(1) + 4, 42, { ax: 1, color: COL.yellow, alpha: st.labels });
+    if (st.pred > 0.003) drawTex(ctx, String.raw`e^{-n\sigma z}`, SL.x1, A.Y(1) + 62, 46, { ax: 1, color: COL.blue, alpha: st.labels * st.pred });
+  }
+}
+
 //@@SCENES@@
 
 // ---------- the stage ----------
@@ -998,8 +1132,11 @@ function control(sc, p) {
   if (p.type === 'note') { const n = mk('p', 'note'); n.innerHTML = p.html; return n; }
   return mk('span');
 }
+// Which parameters are showing: when an animation or a menu changes it, the dock is rebuilt.
+let dockSig = '';
+const visSig = () => cur.params.map((p) => (!p.visible || p.visible(cur.st) ? 1 : 0)).join('');
 function buildDock() {
-  live.length = 0; anims.textContent = ''; params.textContent = '';
+  live.length = 0; anims.textContent = ''; params.textContent = ''; dockSig = visSig();
   for (const a of cur.actions) {
     const b = mk('button', 'btn' + (a.primary ? ' primary' : '')); b.type = 'button'; b.id = `a-${cur.id}-${a.id}`; b.textContent = a.label;
     b.addEventListener('click', () => runAction(cur, a)); anims.appendChild(b);
@@ -1060,6 +1197,7 @@ function frame(now) {
   ctx.setTransform(K, 0, 0, K, 0, 0); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.lineCap = 'butt'; ctx.setLineDash([]);
   try { cur.draw(ctx, dt, cur.st); } catch (err) { console.error(err); }
   for (const f of live) f();
+  if (visSig() !== dockSig) buildDock();
 }
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) cancelAnimationFrame(raf);
