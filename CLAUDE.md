@@ -19,6 +19,12 @@ Erfan Ahmadi's blog about math, computer graphics and GPUs. Astro 7 static site,
 - `.mdx` posts can use `<Artifact />` and `<YouTube />` without importing them. Plain `.md` posts can't use components.
 - Keep the author's wording when editing old posts; fix only formatting or clearly broken links unless asked.
 
+## Analytics
+
+- Umami (`src/components/Analytics.astro`, website id in `src/site.ts`). The events are listed in the README's Analytics section; keep that table up to date.
+- A new button or call-to-action link gets `data-track="kebab-case-name"` and `data-track-<property>="value"` attributes. Other links to other sites are already counted as `outbound-click`. Events that aren't clicks use `track()` from `src/lib/analytics.ts`.
+- Don't use Umami's own `data-umami-event` attributes: they hold links back until the event is sent.
+
 ## Artifacts (interactive demos embedded in posts)
 
 When asked to make a demo for a post, produce one self-contained `.html` file that:

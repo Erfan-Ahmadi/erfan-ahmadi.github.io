@@ -15,7 +15,7 @@ const { src, title = 'Interactive demo', height = 480, caption } = Astro.props;
   <div class="artifact-bar">
     <span class="artifact-pill">Interactive</span>
     <span class="artifact-name">{title}</span>
-    <a href={src} target="_blank" rel="noopener">Open full screen <Icon name="arrowUpRight" /></a>
+    <a href={src} target="_blank" rel="noopener" data-track="demo-fullscreen" data-track-demo={title}>Open full screen <Icon name="arrowUpRight" /></a>
   </div>
   <iframe data-artifact src={src} title={title} loading="lazy" style={`height:${height}px`} sandbox="allow-scripts allow-pointer-lock allow-popups allow-downloads"></iframe>
   {caption && <figcaption>{caption}</figcaption>}

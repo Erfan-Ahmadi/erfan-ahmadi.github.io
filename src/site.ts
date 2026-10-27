@@ -13,6 +13,11 @@ export const SITE = {
     label: 'Consulting & Training',
     href: 'https://www.devsh.eu/when-to-call-devsh?utm_source=blog&utm_medium=homepage&utm_campaign=erfan',
   },
+  // Visitor analytics (src/components/Analytics.astro). The id is from Umami's website settings; '' turns it off.
+  umami: {
+    src: 'https://cloud.umami.is/script.js',
+    websiteId: 'fe560ca8-d728-4d8e-8ba7-f23502c7ea8b',
+  },
   socials: [
     { icon: 'github', label: 'Erfan-Ahmadi', title: 'GitHub', href: 'https://github.com/Erfan-Ahmadi' },
     { icon: 'youtube', label: '@ErFunRender', title: 'YouTube', href: 'https://www.youtube.com/@ErFunRender' },

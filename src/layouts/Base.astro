@@ -5,6 +5,7 @@ import '@fontsource-variable/inter/index.css';
 import '@fontsource-variable/jetbrains-mono/index.css';
 import '../styles/global.css';
 import Icon from '../components/Icon.astro';
+import Analytics from '../components/Analytics.astro';
 import { SITE } from '../site';
 
 interface Props {
@@ -51,6 +52,7 @@ const year = new Date().getFullYear();
         document.documentElement.dataset.theme = theme === 'dark' ? 'dark' : 'light';
       })();
     </script>
+    <Analytics />
   </head>
   <body>
     <header class="top">
@@ -59,7 +61,7 @@ const year = new Date().getFullYear();
         <nav aria-label="Main">
           <a href="/" aria-current={path === '/' ? 'page' : undefined}>Posts</a>
           <a class="hide-sm" href="/blog/" aria-current={path === '/blog/' ? 'page' : undefined}>Archive</a>
-          <a class="ext" href={SITE.youtube.channel}><Icon name="youtube" /><span class="hide-sm">YouTube</span></a>
+          <a class="ext" href={SITE.youtube.channel} data-track="social-click" data-track-network="YouTube" data-track-location="header"><Icon name="youtube" /><span class="hide-sm">YouTube</span></a>
           <button class="theme-btn" type="button" aria-label="Toggle dark mode">
             <span class="moon"><Icon name="moon" /></span><span class="sun"><Icon name="sun" /></span>
           </button>
@@ -72,15 +74,18 @@ const year = new Date().getFullYear();
     <footer class="site-foot">
       <div class="wrap row">
         <span>&copy; {year} {SITE.name}</span>
-        <span><a href="/rss.xml">RSS</a> &middot; <a href="/blog/">Archive</a> &middot; <a href={SITE.youtube.channel}>YouTube</a> &middot; <a href={SITE.repo}>Source</a></span>
+        <span><a href="/rss.xml" data-track="social-click" data-track-network="RSS feed" data-track-location="footer">RSS</a> &middot; <a href="/blog/">Archive</a> &middot; <a href={SITE.youtube.channel} data-track="social-click" data-track-network="YouTube" data-track-location="footer">YouTube</a> &middot; <a href={SITE.repo}>Source</a></span>
       </div>
     </footer>
     <script>
+      import { track } from '../lib/analytics';
+
       document.querySelector('.theme-btn')?.addEventListener('click', () => {
         const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
         document.documentElement.dataset.theme = theme;
         try { localStorage.setItem('theme', theme); } catch {}
         window.dispatchEvent(new CustomEvent('themechange', { detail: theme }));
+        track('theme-toggle', { theme });
       });
     </script>
   </body>
