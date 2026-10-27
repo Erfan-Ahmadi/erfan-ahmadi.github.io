@@ -355,7 +355,7 @@ function drawLiquid(ctx, g, st) {
   ctx.fillStyle = gr; ctx.fillRect(g.x0, lv, g.x1 - g.x0, g.bot - lv);
   ctx.strokeStyle = hexA(L.surf, 0.85); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(g.x0, lv); ctx.lineTo(g.x1, lv); ctx.stroke();
   const depth = g.bot - lv;
-  if (st.look === 'beer' && depth > 24) {
+  if (st.plain) { /* no bubbles or wisps */ } else if (st.look === 'beer' && depth > 24) {
     ctx.strokeStyle = 'rgba(255,255,255,0.32)'; ctx.lineWidth = 1.6;
     for (let i = 0; i < 16; i++) {
       const ph = (i * 0.618) % 1, sp = 0.05 + 0.035 * (((i * 7) % 5) / 4), t = reduced ? ph : (TIME * sp + ph) % 1;
@@ -1042,6 +1042,7 @@ const SA = defScene({
     { id: 'clumped', label: 'Clumped', run: (st) => { st.dist = 'clumped'; return moveDiscs(st); } },
     { id: 'jiggle', label: 'Jiggle on / off', run: (st) => tween(st, 'jig', st.jig > 0.5 ? 0 : 1, 0.8) },
     { id: 'resample', label: 'Resample', run: (st) => { st.seed += 1; return moveDiscs(st, 1.2); } },
+    { id: 'zoomout', label: 'Zoom out to the tank', run: () => { Object.assign(SZ, { hl: 1, zoom: 1, parts: 1 }); setScene('zoom'); runAction(scenes.zoom, { run: (st) => tween(st, 'zoom', 0, st.zoomT * 0.85) }); } },
     RESET,
   ],
   params: [
@@ -1067,9 +1068,13 @@ function drawSheetLaser(ctx, x, top, bot, color) {
   ctx.restore();
 }
 const sensorX6 = (st) => clamp(st.sensorX, SL.x0 - 90, 1860);
-function drawShadows(ctx, dt, st) {
-  const R = st.r, pos = discPos(st), ys = rayYs(st), hits = firstHits(ys, pos, R), color = SH.color, k = ys.length;
-  const xf = lerp(SL.ex, W + 10, st.front), sheet = st.rays === 'sheet', sx = sensorX6(st), power = SH.I0, glow = SH.beamLook === 'glow';
+function shadowsState(st) {
+  const R = st.r, pos = discPos(st), ys = rayYs(st);
+  return { R, pos, ys, hits: firstHits(ys, pos, R), k: ys.length, xf: lerp(SL.ex, W + 10, st.front), sx: sensorX6(st) };
+}
+function drawShadows(ctx, dt, st) { const S = shadowsState(st); drawShadowsPicture(ctx, dt, st, S); drawShadowsPlot(ctx, st, S, 1); }
+function drawShadowsPicture(ctx, dt, st, S) {
+  const { R, pos, ys, hits, k, xf, sx } = S, color = SH.color, sheet = st.rays === 'sheet', power = SH.I0, glow = SH.beamLook === 'glow';
   dashed(ctx, SL.x0, SL.top - 70, SL.x0, SL.bot + 70, COL.greyC, 1, 2);
   dashed(ctx, SL.x1, SL.top - 70, SL.x1, SL.bot + 70, COL.greyC, 1, 2);
   // rays and discs; right of the sensor they are still drawn, faded: the sensor is a probe, not a wall
@@ -1087,19 +1092,27 @@ function drawShadows(ctx, dt, st) {
   ctx.save(); ctx.beginPath(); ctx.rect(sx, 0, W - sx, H); ctx.clip(); ctx.globalAlpha = 0.22; layer(); ctx.restore();
   drawSheetLaser(ctx, SL.ex, SL.top, SL.bot, color);
   // the sensor: lit where rays arrive, with the fraction that arrived beside it (counting as it changes)
-  let reached = null;
+  let reached = null;   // the fraction of rays that reach the sensor
   if (xf >= sx) { let c = 0; for (const h of hits) if (h > sx) c++; reached = c / k; }
   st.shown = reached == null ? null : st.shown == null || reduced ? reached : lerp(st.shown, reached, 1 - Math.exp(-dt * 6));
   ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = COL.greyB; ctx.fillStyle = '#2C2C2C';
   ctx.beginPath(); ctx.roundRect(sx, SL.top - 30, 26, SL.bot - SL.top + 60, 6); ctx.fill(); ctx.stroke();
   if (reached != null) { ctx.fillStyle = hexA(color, 0.95 * power); for (let i = 0; i < k; i++) if (hits[i] > sx) ctx.fillRect(sx - 3, ys[i] - (sheet ? 0.6 : 1.4), 5, sheet ? 1.2 : 2.8); }
   ctx.restore();
-  if (st.shown != null) {
-    const bw = 210, bh = 84, right = sx + 26 + 24 + bw < W - 10, bx = right ? sx + 26 + 24 : sx - 24 - bw, by = (SL.top + SL.bot) / 2 - bh / 2;
-    ctx.save(); ctx.fillStyle = '#000'; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 12); ctx.fill(); ctx.stroke(); ctx.restore();
-    drawNumber(ctx, st.shown * 100, bx + bw / 2, by + bh / 2 + 18, { size: 52, dec: 1, suffix: '%', align: 'center' });
-  }
-  // the plot, on the slab's x: depth in mean free paths 1/(nσ), so the prediction is e^{-x}
+  if (st.shown != null) drawShadowsReadout(ctx, sx, st.shown, 1);
+}
+function drawShadowsReadout(ctx, sx, v, alpha) {
+  const bw = 210, bh = 84, right = sx + 26 + 24 + bw < W - 10, bx = right ? sx + 26 + 24 : sx - 24 - bw, by = (SL.top + SL.bot) / 2 - bh / 2;
+  ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = '#000'; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 12); ctx.fill(); ctx.stroke(); ctx.restore();
+  drawNumber(ctx, v * 100, bx + bw / 2, by + bh / 2 + 18, { size: 52, dec: 1, suffix: '%', align: 'center', alpha });
+}
+// The plot under the slab, on the slab's x: depth in mean free paths 1/(nσ), so the prediction is e^{-x}.
+function drawShadowsPlot(ctx, st, S, alpha) {
+  if (alpha <= 0.003) return;
+  const { R, hits, k, xf, sx } = S;
+  let reached = null;
+  if (xf >= sx) { let c = 0; for (const h of hits) if (h > sx) c++; reached = c / k; }
+  ctx.save(); ctx.globalAlpha = alpha;
   const { a, b, y0, y1 } = slabBox(st), n = Math.round(st.n) / ((b - a) * (y1 - y0)), ns = n * 2 * R, tauMax = ns * (SL.x1 - SL.x0);
   const step = tauMax > 6 ? 2 : tauMax > 2.5 ? 1 : 0.5;
   const A = makeAxes({ L: SL.x0, R: SL.x1, T: 640, B: 975, xr: [0, tauMax, step], yr: [0, 1, 0.5], ext: 46, xl: String.raw`n\sigma z`, yl: 'T', labSize: 52, numSize: 30 });
@@ -1113,7 +1126,7 @@ function drawShadows(ctx, dt, st) {
     path.lineTo(xr, A.Y(alive / k));
     ctx.save(); ctx.strokeStyle = COL.yellow; ctx.lineWidth = 4; ctx.lineJoin = 'round';
     ctx.save(); ctx.beginPath(); ctx.rect(0, 0, sx, H); ctx.clip(); ctx.stroke(path); ctx.restore();
-    ctx.save(); ctx.beginPath(); ctx.rect(sx, 0, W - sx, H); ctx.clip(); ctx.globalAlpha = 0.25; ctx.stroke(path); ctx.restore();
+    ctx.save(); ctx.beginPath(); ctx.rect(sx, 0, W - sx, H); ctx.clip(); ctx.globalAlpha *= 0.25; ctx.stroke(path); ctx.restore();
     ctx.restore();
   }
   // the same x on the plot: a dotted line down from the sensor to its value
@@ -1123,6 +1136,7 @@ function drawShadows(ctx, dt, st) {
     drawTex(ctx, String.raw`\text{rays left}`, SL.x1, A.Y(1) + 4, 42, { ax: 1, color: COL.yellow, alpha: st.labels });
     if (st.pred > 0.003) drawTex(ctx, String.raw`e^{-n\sigma z}`, SL.x1, A.Y(1) + 62, 46, { ax: 1, color: COL.blue, alpha: st.labels * st.pred });
   }
+  ctx.restore();
 }
 function pointerShadows(type, x, y) {
   const st = SA, sx = sensorX6(st), sc = scenes.shadows;
@@ -1203,104 +1217,139 @@ function drawSlices(ctx, dt, st) {
 }
 
 // ---------- Z. zoom into a slab ----------
-// Outline one thin slab of the medium, then fly the camera into it while everything else fades away.
-// Inside, if you like, the particles it is made of: each casts a thin shadow down the beam, and together
-// they block about nσΔz of it. That is the linear law, and it only holds because the slab is thin.
+// Two fronts sweep in from the ends of the medium and meet at the faces of one thin slab, dimming what
+// they pass. Then the camera flies into the slab. The slab is cut so that, zoomed in, it is exactly the
+// "Shadows in a slab" scene: the beam's width becomes the sheet of rays, the medium's particles become its
+// discs, and the laser and sensor slide in to their places there. When the camera lands, that scene takes over.
 const SZ = defScene({
   id: 'zoom', tab: 'Zoom into a slab', shared: true,
-  defaults: () => ({ hl: 0, zoom: 0, parts: 1, zs: 0.45, dz: 14, zmax: 36, block: 0.2, pr: 0.12, seed: 3, nums: 0, zoomT: 3, sigma: 0.05, d: 20, sensorX: 1700 }),
+  defaults: () => ({ hl: 0, zoom: 0, parts: 1, zs: 0.45, zoomT: 3.5, sigma: 0.05, d: 20, sensorX: 1700 }),
   actions: [
-    { id: 'hl', label: 'Highlight slab', run: (st) => tween(st, 'hl', 1, 1.1, { ease: linear }) },
+    { id: 'hl', label: 'Highlight slab', run: (st) => tween(st, 'hl', 1, 1.4) },
     { id: 'in', label: 'Zoom in', primary: true, run: async (st, alive) => {
-      if (st.hl < 1) { await tween(st, 'hl', 1, 0.9, { ease: linear }); if (!alive()) return; await sleep(0.3, 'zoom'); if (!alive()) return; }
-      await tween(st, 'zoom', 1, st.zoomT);
+      if (st.hl < 1) { await tween(st, 'hl', 1, 1.2); if (!alive()) return; await sleep(0.35, 'zoom'); if (!alive()) return; }
+      await tween(st, 'zoom', 1, st.zoomT); if (!alive()) return;
+      if (st.parts > 0.5 && cur === scenes.zoom) setScene('shadows');
     } },
     { id: 'out', label: 'Zoom out', run: (st) => tween(st, 'zoom', 0, st.zoomT * 0.8) },
+    { id: 'unhl', label: 'Clear highlight', run: (st) => tween(st, 'hl', 0, 0.9) },
     { id: 'parts', label: 'Particles on / off', run: (st) => tween(st, 'parts', st.parts > 0.5 ? 0 : 1, 0.8) },
-    { id: 'resample', label: 'Resample', run: (st) => { st.seed += 1; } },
     RESET,
   ],
   params: [
     { type: 'range', key: 'zs', label: 'Slab position', min: 0, max: 1, step: 0.01, fmt: (v) => `${Math.round(v * 100)} %` },
-    { type: 'range', key: 'dz', label: 'Slab thickness Δz (px)', min: 4, max: 60, step: 1, fmt: (v) => String(v) },
-    { type: 'range', key: 'zmax', label: 'Zoom', min: 4, max: 80, step: 1, fmt: (v) => `${v}×` },
-    { type: 'range', key: 'zoomT', label: 'Zoom time (s)', min: 0.5, max: 8, step: 0.1, fmt: (v) => v.toFixed(1) },
-    { type: 'range', key: 'block', label: 'Light the slab blocks', min: 0.02, max: 0.6, step: 0.01, fmt: (v) => `${Math.round(v * 100)} %` },
-    { type: 'range', key: 'pr', label: 'Particle radius (px)', min: 0.04, max: 0.6, step: 0.01, fmt: (v) => v.toFixed(2) },
-    { type: 'check', key: 'parts', label: 'Particles', set: (v) => tween(SZ, 'parts', v ? 1 : 0, 0.6) },
-    { type: 'check', key: 'nums', label: 'Δz and what it blocks', set: (v) => tween(SZ, 'nums', v ? 1 : 0, 0.8, { ease: linear }) },
+    { type: 'range', key: 'zoomT', label: 'Zoom time (s)', min: 0.5, max: 10, step: 0.1, fmt: (v) => v.toFixed(1) },
+    { type: 'check', key: 'parts', label: 'Particles (then the zoom lands in Shadows in a slab)', set: (v) => tween(SZ, 'parts', v ? 1 : 0, 0.6) },
   ],
   draw: drawZoom,
 });
-// The slab's particles fill its whole height, at the density that blocks `block` of the light: n·2r·Δz.
-let zoomCache = { key: '', list: [] };
-function zoomParticles(st, xs, top, bot) {
-  const key = [st.seed, st.dz, st.pr, st.block, xs.toFixed(2), top, bot].join('|');
-  if (zoomCache.key === key) return zoomCache.list;
-  const n = st.block / (2 * st.pr * st.dz), cnt = Math.min(6000, Math.round(n * st.dz * (bot - top))), rnd = rng32(st.seed * 977 + 5), list = [];
-  for (let i = 0; i < cnt; i++) list.push([lerp(xs + st.pr, xs + st.dz - st.pr, rnd()), lerp(top, bot, rnd())]);
-  zoomCache = { key, list };
+// The camera. The zoom at landing is the sheet's height over the beam's width; the slab is as thick as
+// the shadows scene's slab divided by that zoom, so the two pictures line up exactly.
+function zoomCam(st) {
+  const g = geo1(st), w = SH.beamW, Z1 = (SL.bot - SL.top) / w, dz = (SL.x1 - SL.x0) / Z1;
+  const xs = g.x0 + st.zs * (g.cw - dz), xe = xs + dz, fx = (xs + xe) / 2, fy = g.y;
+  const cx1 = (SL.x0 + SL.x1) / 2, cy1 = (SL.top + SL.bot) / 2, s = st.zoom, Z = Math.exp(Math.log(Z1) * s);
+  const tx = lerp(fx, cx1, s), ty = lerp(fy, cy1, s);
+  return { g, w, Z1, dz, xs, xe, fx, fy, cx1, cy1, s, Z, tx, ty, SX: (x) => (x - fx) * Z + tx, SY: (y) => (y - fy) * Z + ty, WX: (X) => (X - tx) / Z + fx };
+}
+const lerpRect = (a, b, t) => a.map((v, i) => lerp(v, b[i], t));
+// More particles away from the beam, at the shadows scene's density, so the slab looks full on the way in.
+let fillerCache = { key: '', list: [] };
+function zoomFiller(c, top, bot) {
+  const rw = SA.r / c.Z1, band = c.w / 2 + rw, key = [SA.n, SA.r, SA.seed, c.xs.toFixed(3), c.dz.toFixed(3), top, bot, c.w].join('|');
+  if (fillerCache.key === key) return fillerCache.list;
+  const { a, b, y0, y1 } = slabBox(SA), nw = (Math.round(SA.n) / ((b - a) * (y1 - y0))) * c.Z1 * c.Z1, rnd = rng32(SA.seed * 31 + 3), list = [];
+  const area = c.dz * Math.max(0, bot - top - 2 * band), cnt = Math.min(2500, Math.round(nw * area));
+  for (let i = 0; i < cnt; i++) {
+    let y = lerp(top, bot - 2 * band, rnd()); if (y > c.fy - band) y += 2 * band;
+    list.push([lerp(c.xs + rw, c.xe - rw, rnd()), y]);
+  }
+  fillerCache = { key, list };
   return list;
 }
 function drawZoom(ctx, dt, st) {
-  const g = geo1(st), cloud = SH.container === 'cloud', s = st.zoom, Z = Math.exp(Math.log(st.zmax) * s);
-  const xs = g.x0 + st.zs * (g.cw - st.dz), xe = xs + st.dz, fx = (xs + xe) / 2, fy = g.y;
-  // the camera: the slab's centre glides to the middle of the screen while the zoom grows
-  const tx = lerp(fx, W / 2, s), ty = lerp(fy, H / 2, s);
-  const SX = (x) => (x - fx) * Z + tx, SY = (y) => (y - fy) * Z + ty, WX = (X) => (X - tx) / Z + fx;
-  const rest = (1 - 0.3 * smooth(clamp(st.hl, 0, 1))) * (1 - smooth(clamp(s * 1.7, 0, 1)));
-  const puffs = cloud ? cloudPuffs(g, { cloud: 1 }) : null;
+  const c = zoomCam(st), { g, s, Z, SX, SY } = c, cloud = SH.container === 'cloud', hl = smooth(clamp(st.hl, 0, 1)), color = SH.color;
+  const mL = cloud ? g.cx - 0.56 * g.cw : g.x0, mR = cloud ? g.cx + 0.56 * g.cw : g.x1;
   const top = cloud ? g.y - 0.45 * g.cw : g.bot - FILL * g.th, bot = cloud ? g.y + 0.45 * g.cw : g.bot;
-  // what the medium lets through up to x, and the part of it that the slab's own particles take over
+  const lf = lerp(mL - 2, c.xs, hl), rf = lerp(mR + 2, c.xe, hl);   // the two fronts
+  const fadeRest = 1 - smooth(clamp(s * 1.6, 0, 1)), slabA = 1 - smooth(clamp((s - 0.45) / 0.45, 0, 1));
+  const puffs = cloud ? cloudPuffs(g, { cloud: 1 }) : null;
   let T;
   if (cloud) { buildCloudTau({ sigma: st.sigma, cloud: 1 }, g, puffs); T = cloudT; }
   else T = (x) => Math.exp((-st.sigma * Math.max(0, Math.min(g.x1, x) - Math.max(g.x0, g.apX))) / g.pxcm);
-  const pa = st.parts * smooth(clamp((s - 0.3) / 0.45, 0, 1));
-  const Tused = (x) => (x <= xs || pa <= 0 ? T(x) : T(x) * Math.pow(T(Math.min(x, xe)) / T(xs), -pa));
-  // the world, under the camera: medium (faded outside the slab), glass, laser, sensor
-  ctx.save(); ctx.translate(tx, ty); ctx.scale(Z, Z); ctx.translate(-fx, -fy);
-  const medium = () => { if (cloud) drawCloud(ctx, puffs, { cloud: 1 }); else drawLiquid(ctx, g, mediumOf(FILL)); };
-  ctx.save(); ctx.beginPath(); ctx.rect(-1e5, -1e5, xs + 1e5, 2e5); ctx.rect(xe, -1e5, 1e5, 2e5); ctx.clip(); ctx.globalAlpha = rest; if (rest > 0.003) medium(); ctx.restore();
-  ctx.save(); ctx.beginPath(); ctx.rect(xs, -1e5, st.dz, 2e5); ctx.clip(); medium(); ctx.restore();
-  if (rest > 0.003) {
-    ctx.save(); ctx.globalAlpha = rest;
-    if (!cloud) drawGlass(ctx, g);
-    drawLaser(ctx, g.apX, g.y, SH.color, 1); drawSensor(ctx, g.xs, g.y, SH.color, T(g.xs - 18) * SH.I0);
-    ctx.restore();
-    drawReadout(ctx, g.xs, g.y, T(g.xs - 18), rest);
-  }
+  // the medium under the camera: dimmer where the fronts have passed, the slab whole until it gives way to black
+  ctx.save(); ctx.translate(c.tx, c.ty); ctx.scale(Z, Z); ctx.translate(-c.fx, -c.fy);
+  const medium = () => (cloud ? drawCloud(ctx, puffs, { cloud: 1 }) : drawLiquid(ctx, g, { ...mediumOf(FILL), plain: true }));
+  const band = (x0, x1, a) => { if (a <= 0.003 || x1 <= x0) return; ctx.save(); ctx.beginPath(); ctx.rect(x0, -1e5, x1 - x0, 2e5); ctx.clip(); ctx.globalAlpha = a; medium(); ctx.restore(); };
+  band(-1e5, lf, 0.4 * fadeRest); band(rf, 1e5, 0.4 * fadeRest);
+  band(lf, c.xs, fadeRest); band(c.xe, rf, fadeRest); band(c.xs, c.xe, slabA);
   ctx.restore();
-  // the beam, in screen space so it stays sharp however close the camera gets
-  const xa = Math.max(SX(g.apX), -80), xb = Math.min(SX(g.xs - 18), W + 80);
-  if (xb > xa) drawBeam(ctx, xa, xb, SY(g.y), SH.color, SH.I0, (X) => Tused(WX(X)), [SX(xs), SX(xe), SX(g.x0), SX(g.x1)], SH.beamW * Z);
-  // the particles, and the shadow each one leaves in the beam behind it
-  if (pa > 0.003) {
-    const list = zoomParticles(st, xs, top, bot), w = SH.beamW, N = 240, r = st.pr, near = list.filter((q) => Math.abs(q[1] - g.y) < w / 2 + r);
-    let blocked = 0;
-    ctx.save(); ctx.strokeStyle = `rgba(0,0,0,${pa})`; ctx.lineWidth = Math.max(1, (w / N) * Z * 1.2); ctx.beginPath();
-    for (let i = 0; i < N; i++) {
-      const y = g.y - w / 2 + ((i + 0.5) * w) / N; let h = Infinity;
-      for (const [px, py] of near) { const dy = y - py; if (dy > -r && dy < r) { const xh = px - Math.sqrt(r * r - dy * dy); if (xh < h) h = xh; } }
-      if (h < Infinity) { blocked++; const X0 = Math.max(SX(h), -80); if (X0 < xb) { ctx.moveTo(X0, SY(y)); ctx.lineTo(xb, SY(y)); } }
-    }
+  // the glass in screen space, so its walls keep their width as the camera closes in
+  if (fadeRest > 0.003 && !cloud) { ctx.save(); ctx.globalAlpha = fadeRest; drawGlass(ctx, { x0: SX(g.x0), x1: SX(g.x1), top: SY(g.top), bot: SY(g.bot), th: (g.bot - g.top) * Z }); ctx.restore(); }
+  // the fronts, which end up as the slab's faces, and then as the shadows scene's dashed faces
+  const fa = (st.hl > 0.003 ? 0.8 : 0) * (1 - smooth(clamp(s * 2, 0, 1)));
+  if (fa > 0.003) {
+    ctx.save(); ctx.strokeStyle = hexA(COL.white, fa); ctx.lineWidth = 2.5; ctx.beginPath();
+    for (const x of [lf, rf]) { ctx.moveTo(SX(x), Math.max(-10, SY(top))); ctx.lineTo(SX(x), Math.min(H + 10, SY(bot))); }
     ctx.stroke(); ctx.restore();
-    ctx.save(); ctx.globalAlpha = pa; ctx.fillStyle = '#262626'; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 1.5; ctx.beginPath();
-    for (const [px, py] of list) { const X = SX(px), Y = SY(py), R = Math.max(0.6, r * Z); if (X < -R || X > W + R || Y < -R || Y > H + R) continue; ctx.moveTo(X + R, Y); ctx.arc(X, Y, R, 0, Math.PI * 2); }
-    ctx.fill(); ctx.stroke(); ctx.restore();
-    // Δz, and the share of the beam its particles block, against nσΔz
-    const na = st.nums * clamp(s * 2 - 1, 0, 1);
-    if (na > 0.003) {
-      const yb = SY(g.y) + (w * Z) / 2 + 70;
-      drawDimension(ctx, SX(xs), SX(xe), yb, String.raw`\Delta z`, na);
-      const lab = drawTex(ctx, String.raw`\text{blocked} =`, SX(xe) + 40, SY(g.y) - (w * Z) / 2 - 70, 54, { ax: 0, alpha: na }).pop();
-      if (lab) drawNumber(ctx, (blocked / N) * 100, lab.x + lab.w + 0.3 * lab.fpx, lab.base, { size: lab.fpx, dec: 1, suffix: '%', color: COL.yellow, alpha: na });
-    }
   }
-  // the slab's outline, drawn in
-  if (st.hl > 0.003) {
-    const X0 = SX(xs), X1 = SX(xe), Y0 = Math.max(-20, SY(top)), Y1 = Math.min(H + 20, SY(bot)), per = 2 * (X1 - X0 + (Y1 - Y0));
-    ctx.save(); ctx.strokeStyle = hexA(COL.yellow, 1 - 0.5 * smooth(clamp(s * 2, 0, 1))); ctx.lineWidth = 3; ctx.setLineDash([per * smooth(clamp(st.hl, 0, 1)), per]);
-    ctx.strokeRect(X0, Y0, X1 - X0, Y1 - Y0); ctx.restore();
+  if (s > 0.003) for (const x of [c.xs, c.xe]) dashed(ctx, SX(x), lerp(SY(top), SL.top - 70, s), SX(x), lerp(SY(bot), SL.bot + 70, s), COL.greyC, s, 2);
+  // the laser slides in and stretches into the sheet laser; the sensor does the same into the plate
+  const body = lerpRect([g.apX - 232, g.y - 42, 212, 84], [SL.ex - 214, SL.top - 30, 192, SL.bot - SL.top + 60], s);
+  const noz = lerpRect([g.apX - 22, g.y - 19, 22, 38], [SL.ex - 22, SL.top - 10, 22, SL.bot - SL.top + 20], s);
+  const head = lerpRect([g.xs - 15, g.y - 48, 30, 96], [sensorX6(SA), SL.top - 30, 26, SL.bot - SL.top + 60], s);
+  const apX = noz[0] + noz[2], px = head[0];
+  // the beam: the continuous one at first, then the shadows scene's rays, stopped by the slab's discs
+  const sr = st.parts * smooth(clamp((s - 0.15) / 0.45, 0, 1)), da = st.parts * smooth(clamp((s - 0.25) / 0.4, 0, 1));
+  if (1 - sr > 0.003) drawBeam(ctx, apX, px, SY(g.y), color, SH.I0 * (1 - sr), (X) => T(c.WX(X)), [SX(g.x0), SX(g.x1)], c.w * Z);
+  const rs = (SA.r * Z) / c.Z1, rw = SA.r / c.Z1;
+  const posS = discPos(SA).map(([x, y]) => [SX((x - c.cx1) / c.Z1 + c.fx), SY((y - c.cy1) / c.Z1 + c.fy)]);
+  const k = SA.rays === 'sheet' ? Math.round(SL.bot - SL.top) : +SA.rays, sheet = SA.rays === 'sheet', ys = [];
+  for (let i = 0; i < k; i++) ys.push(SY(g.y - c.w / 2 + ((i + 0.5) * c.w) / k));
+  const hits = sr > 0.003 ? firstHits(ys, posS, rs) : null, lw = clamp(Math.abs(ys[1] - ys[0] || 1) * 0.55, 0.3, sheet ? 1.2 : 1.8);
+  const fl = st.parts * smooth(clamp((s - 0.2) / 0.3, 0, 1)) * (1 - smooth(clamp((s - 0.6) / 0.3, 0, 1)));
+  // as in the shadows scene: everything right of the sensor is drawn too, faded
+  const layer = () => {
+    if (hits) {
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      const rays = () => { ctx.beginPath(); for (let i = 0; i < k; i++) { const xe = Math.min(hits[i], W + 10); if (xe > apX) { ctx.moveTo(apX, ys[i]); ctx.lineTo(xe, ys[i]); } } ctx.stroke(); };
+      const a = sr * SH.I0;
+      if (sheet) { ctx.strokeStyle = hexA(color, 0.75 * a); ctx.lineWidth = lw; rays(); }
+      else { if (SH.beamLook === 'glow') { ctx.strokeStyle = hexA(color, 0.14 * a); ctx.lineWidth = lw * 3.3; rays(); } ctx.strokeStyle = hexA(color, 0.95 * a); ctx.lineWidth = lw; rays(); }
+      if (SA.marks > 0.003 && !sheet) for (let i = 0; i < k; i++) if (hits[i] < W) dot(ctx, hits[i], ys[i], Math.max(0.6, 3.2 * (Z / c.Z1)), '#FFFFFF', 0.85 * SA.marks * da);
+      ctx.restore();
+    }
+    if (da <= 0.003 && fl <= 0.003) return;
+    ctx.save(); ctx.fillStyle = '#262626'; ctx.strokeStyle = COL.greyB; ctx.lineWidth = Math.min(2.5, rs * 0.3);
+    if (fl > 0.003) {
+      ctx.globalAlpha *= fl; ctx.beginPath();
+      for (const [x, y] of zoomFiller(c, top, bot)) { const X = SX(x), Y = SY(y); if (X < -rs || X > W + rs || Y < -rs || Y > H + rs) continue; ctx.moveTo(X + Math.max(0.5, rw * Z), Y); ctx.arc(X, Y, Math.max(0.5, rw * Z), 0, Math.PI * 2); }
+      ctx.fill(); ctx.stroke(); ctx.globalAlpha /= fl;
+    }
+    if (da > 0.003) { ctx.globalAlpha *= da; ctx.beginPath(); for (const [X, Y] of posS) { ctx.moveTo(X + Math.max(0.5, rs), Y); ctx.arc(X, Y, Math.max(0.5, rs), 0, Math.PI * 2); } ctx.fill(); ctx.stroke(); }
+    ctx.restore();
+  };
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, px, H); ctx.clip(); layer(); ctx.restore();
+  ctx.save(); ctx.beginPath(); ctx.rect(px, 0, W - px, H); ctx.clip(); ctx.globalAlpha = lerp(1, 0.22, s); layer(); ctx.restore();
+  // laser and sensor, on top
+  ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = COL.greyB; ctx.fillStyle = '#2C2C2C';
+  ctx.beginPath(); ctx.roundRect(body[0], body[1], body[2], body[3], 12); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#161616'; ctx.beginPath(); ctx.roundRect(noz[0], noz[1], noz[2], noz[3], 4); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = hexA(color, 1); ctx.beginPath(); ctx.arc(lerp(g.apX - 68, SL.ex - 64, s), lerp(g.y - 20, SL.top - 2, s), 6, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 1 - s; ctx.beginPath();   // the sensor's stand goes; the plate stays
+  const hx = head[0] + head[2] / 2, hb = head[1] + head[3];
+  ctx.moveTo(hx, hb); ctx.lineTo(hx, hb + 202); ctx.moveTo(hx - 56, hb + 202); ctx.lineTo(hx + 56, hb + 202); ctx.stroke();
+  ctx.globalAlpha = 1; ctx.fillStyle = '#2C2C2C'; ctx.beginPath(); ctx.roundRect(head[0], head[1], head[2], head[3], 6); ctx.fill(); ctx.stroke();
+  if (hits) { ctx.fillStyle = hexA(color, 0.95 * sr * SH.I0); for (let i = 0; i < k; i++) if (hits[i] > px) ctx.fillRect(px - 3, ys[i] - (sheet ? 0.6 : 1.4) * Math.min(1, Z / c.Z1 * 3), 5, (sheet ? 1.2 : 2.8) * Math.min(1, Z / c.Z1 * 3)); }
+  ctx.restore();
+  if (fadeRest > 0.003) drawReadout(ctx, hx, head[1] + 48, T(g.xs - 18), fadeRest);
+  // landing: the shadows scene's readout and plot fade in where they will be; then that scene takes over
+  const land = st.parts * smooth(clamp((s - 0.7) / 0.3, 0, 1));
+  if (land > 0.003) {
+    const S6 = shadowsState(SA);
+    let reach = 0; for (const h of S6.hits) if (h > S6.sx) reach++;
+    drawShadowsReadout(ctx, S6.sx, reach / S6.k, land);
+    drawShadowsPlot(ctx, SA, S6, land);
   }
 }
 

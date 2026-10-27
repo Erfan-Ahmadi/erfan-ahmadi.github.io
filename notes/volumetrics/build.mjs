@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { glyphOutlines } from './glyphs.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const dist = path.join(here, '../../node_modules/katex/dist');
@@ -20,14 +21,17 @@ const css = fs.readFileSync(path.join(dist, 'katex.min.css'), 'utf8').replace(/@
 if (/url\(fonts\//.test(css)) throw new Error('a KaTeX font was left pointing at a file');
 
 const js = fs.readFileSync(path.join(dist, 'katex.min.js'), 'utf8');
+// The same faces' outlines, for drawing glyphs as paths and reshaping one formula into another.
+const outlines = JSON.stringify(glyphOutlines(path.join(dist, 'fonts'), [...keep]));
 const app = fs.readFileSync(path.join(here, 'src/app.js'), 'utf8');
 const shell = fs.readFileSync(path.join(here, 'src/shell.html'), 'utf8');
-for (const t of ['<!--KATEX_CSS-->', '<!--KATEX_JS-->', '<!--APP_JS-->']) if (!shell.includes(t)) throw new Error(`shell.html is missing ${t}`);
+for (const t of ['<!--KATEX_CSS-->', '<!--KATEX_JS-->', '<!--GLYPHS-->', '<!--APP_JS-->']) if (!shell.includes(t)) throw new Error(`shell.html is missing ${t}`);
 
 // Function replacements, so a `$&` inside the inlined code is never read as a replacement pattern.
 const out = shell
   .replace('<!--KATEX_CSS-->', () => `<!-- KaTeX ${pkg.version} stylesheet (MIT), fonts inlined. -->\n<style id="katex-css">\n${css}\n</style>`)
   .replace('<!--KATEX_JS-->', () => `<!-- KaTeX ${pkg.version} (MIT), inlined so the page loads nothing but Google Fonts. -->\n<script>\n${js}\n</script>`)
+  .replace('<!--GLYPHS-->', () => `<!-- Glyph outlines of the same KaTeX fonts (OFL), extracted by glyphs.mjs. -->\n<script>\nconst GLYPHS = ${outlines};\n</script>`)
   .replace('<!--APP_JS-->', () => `<script>\n${app}\n</script>`);
 fs.writeFileSync(path.join(here, 'volumetrics-video.html'), out);
 console.log(`volumetrics-video.html: ${Math.round(out.length / 1024)} KB, KaTeX ${pkg.version}`);
