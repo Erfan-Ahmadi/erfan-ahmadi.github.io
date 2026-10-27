@@ -1,7 +1,7 @@
 <!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Laser Through a Tank</title>
+<title>Volumetrics Video</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -47,6 +47,12 @@ body { background: var(--bg2); color: var(--fg); font-family: var(--sans); overf
 }
 .bar { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; min-height: 30px; }
 h1 { margin: 0; font-family: var(--serif); font-weight: 560; font-size: clamp(18px, 1.7vw, 24px); letter-spacing: -0.01em; line-height: 1.1; white-space: nowrap; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.tab { font: inherit; cursor: pointer; text-align: left; display: grid; gap: 1px; border: 1px solid var(--line); background: var(--paper); color: var(--fg2); border-radius: 10px; padding: 5px 10px 6px; }
+.tab .t { font-size: 13px; font-weight: 600; line-height: 1.2; white-space: nowrap; }
+.tab .p { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.03em; color: var(--muted); line-height: 1.2; }
+.tab[aria-selected="true"] { background: var(--fg); border-color: var(--fg); color: var(--paper); }
+.tab[aria-selected="true"] .p { color: color-mix(in oklab, var(--paper) 70%, transparent); }
 .hint { margin-left: auto; color: var(--muted); font-size: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 kbd { font-family: var(--mono); font-size: 10.5px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 1px 5px; color: var(--fg2); background: var(--paper); }
 .btn {
@@ -107,7 +113,8 @@ kbd { font-family: var(--mono); font-size: 10.5px; border: 1px solid var(--line)
 </style>
 <div id="frame">
   <header class="bar">
-    <h1>Laser through a tank</h1>
+    <h1>Volumetrics video</h1>
+    <div class="tabs" role="tablist" aria-label="Scenes"><button class="tab" role="tab" aria-selected="true" type="button"><span class="t">Laser and tank</span><span class="p">scene 1</span></button></div>
     <span class="hint"><kbd>L</kbd> laser · <kbd>F</kbd> fill · drag the sensor · <kbd>C</kbd> controls · <kbd>V</kbd> present</span>
     <button class="btn" id="ctrlBtn" type="button">Controls</button>
     <button class="btn primary" id="presBtn" type="button">Present</button>
