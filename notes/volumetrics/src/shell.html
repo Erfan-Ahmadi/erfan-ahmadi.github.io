@@ -29,10 +29,10 @@ body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-s
 }
 .bar { display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap; }
 h1 { margin: 0; font-family: var(--cm); font-weight: 400; font-size: 24px; line-height: 1.1; white-space: nowrap; }
-.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; flex-basis: 100%; }
 .tab {
   font: inherit; font-size: 13px; cursor: pointer; color: var(--fg2); background: transparent;
-  border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px 5px; display: inline-flex; gap: 7px; align-items: baseline; white-space: nowrap;
+  border: 1px solid var(--line); border-radius: 999px; padding: 3px 11px 4px; display: inline-flex; gap: 7px; align-items: baseline; white-space: nowrap;
 }
 .tab .n { font-family: var(--mono); font-size: 11px; color: var(--muted); }
 .tab:hover { color: var(--fg); border-color: var(--line2); }
@@ -99,8 +99,8 @@ body.clean .stage { border: 0; border-radius: 0; }
 <div id="app">
   <header class="bar">
     <h1>Volumetrics video</h1>
+    <span class="hint"><kbd>1</kbd>–<kbd id="lastKey">9</kbd> or <kbd>[</kbd><kbd>]</kbd> scene · <kbd>Space</kbd> play · <kbd>R</kbd> reset · <kbd>←</kbd><kbd>→</kbd> steps · <kbd>H</kbd> hide controls · <kbd>F</kbd> full screen</span>
     <nav class="tabs" id="tabs" role="tablist" aria-label="Scenes"></nav>
-    <span class="hint"><kbd>1</kbd>–<kbd>9</kbd> scene · <kbd>Space</kbd> play · <kbd>R</kbd> reset · <kbd>←</kbd><kbd>→</kbd> steps · <kbd>H</kbd> hide controls · <kbd>F</kbd> full screen</span>
   </header>
   <main class="stagewrap"><div class="stage" id="stage"><canvas id="cv" aria-label="Animation stage"></canvas></div></main>
   <footer class="ctl">

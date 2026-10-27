@@ -33,10 +33,10 @@ body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-s
 }
 .bar { display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap; }
 h1 { margin: 0; font-family: var(--cm); font-weight: 400; font-size: 24px; line-height: 1.1; white-space: nowrap; }
-.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; flex-basis: 100%; }
 .tab {
   font: inherit; font-size: 13px; cursor: pointer; color: var(--fg2); background: transparent;
-  border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px 5px; display: inline-flex; gap: 7px; align-items: baseline; white-space: nowrap;
+  border: 1px solid var(--line); border-radius: 999px; padding: 3px 11px 4px; display: inline-flex; gap: 7px; align-items: baseline; white-space: nowrap;
 }
 .tab .n { font-family: var(--mono); font-size: 11px; color: var(--muted); }
 .tab:hover { color: var(--fg); border-color: var(--line2); }
@@ -103,8 +103,8 @@ body.clean .stage { border: 0; border-radius: 0; }
 <div id="app">
   <header class="bar">
     <h1>Volumetrics video</h1>
+    <span class="hint"><kbd>1</kbd>–<kbd id="lastKey">9</kbd> or <kbd>[</kbd><kbd>]</kbd> scene · <kbd>Space</kbd> play · <kbd>R</kbd> reset · <kbd>←</kbd><kbd>→</kbd> steps · <kbd>H</kbd> hide controls · <kbd>F</kbd> full screen</span>
     <nav class="tabs" id="tabs" role="tablist" aria-label="Scenes"></nav>
-    <span class="hint"><kbd>1</kbd>–<kbd>9</kbd> scene · <kbd>Space</kbd> play · <kbd>R</kbd> reset · <kbd>←</kbd><kbd>→</kbd> steps · <kbd>H</kbd> hide controls · <kbd>F</kbd> full screen</span>
   </header>
   <main class="stagewrap"><div class="stage" id="stage"><canvas id="cv" aria-label="Animation stage"></canvas></div></main>
   <footer class="ctl">
@@ -676,8 +676,6 @@ function drawGlass(ctx, g) {
   ctx.save(); ctx.strokeStyle = COL.greyA; ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   ctx.beginPath(); ctx.moveTo(g.x0, g.top); ctx.lineTo(g.x0, g.bot - r); ctx.quadraticCurveTo(g.x0, g.bot, g.x0 + r, g.bot);
   ctx.lineTo(g.x1 - r, g.bot); ctx.quadraticCurveTo(g.x1, g.bot, g.x1, g.bot - r); ctx.lineTo(g.x1, g.top); ctx.stroke();
-  ctx.strokeStyle = 'rgba(255,255,255,0.13)'; ctx.lineWidth = 6;
-  ctx.beginPath(); ctx.moveTo(g.x0 + 22, g.top + 0.12 * g.th); ctx.lineTo(g.x0 + 22, g.bot - 0.22 * g.th); ctx.stroke();
   ctx.restore();
 }
 function drawLaser(ctx, apX, y, color, on) {
@@ -1685,14 +1683,15 @@ function drawZoom(ctx, dt, st) {
 }
 
 // ---------- C. optical depth is an area ----------
-// The exponent of Beer–Lambert is the area under the density along the path: τ(z) = ∫₀^z σₐ(s) ds. Paint a
-// density (drag on its plot), sweep along it, and watch the area pile up while T(z) = e^{−τ(z)} falls:
-// steep where the medium is dense, flat where it is empty. Mirror the profile: the curve changes, but the
-// light that gets out does not, because the area is the same. The laser, the medium and the sensor sit
-// between the two plots, on the same z. (PBRT's transmittance chapter; the Production Volume Rendering
-// course notes.)
+// The exponent of Beer–Lambert is the area under the density along the path: τ(z) = ∫₀^z σₐ(s) ds. Create the
+// medium and its density fills in above it; shine the laser and what gets through, T(z) = e^{−τ(z)}, is traced
+// below it as the light goes. A dashed marker (drag it) splits the area into the part the light has crossed and
+// the part still ahead. Paint a density on its plot. Mirror the profile: the curve changes, but the light that
+// gets out does not, because the area is the same. (PBRT's transmittance chapter; the Production Volume
+// Rendering course notes.)
 const AZ = { n: 200, d: 20, x0: 480, x1: 1440, smax: 0.25, y: 540, top: 420, bot: 660, apX: 400, xs: 1610 };
 const azX = (z) => AZ.x0 + (z / AZ.d) * (AZ.x1 - AZ.x0);
+const azZ = (x) => ((x - AZ.x0) / (AZ.x1 - AZ.x0)) * AZ.d;
 const azShapes = {
   uniform: () => 0.1,
   ramp: (z) => (0.2 * z) / AZ.d,
@@ -1704,17 +1703,23 @@ const azSample = (f) => { const a = new Float64Array(AZ.n + 1); for (let i = 0; 
 function azMorph(st, target, dur = 1.2) { st.from = st.prof.slice(); st.to = target; st.mu = 0; return tween(st, 'mu', 1, dur); }
 const SC = defScene({
   id: 'area', tab: 'Optical depth is an area', shared: true,
-  defaults: () => ({ prof: azSample(azShapes.bump), from: null, to: null, mu: 1, zs: AZ.d, sweepT: 4.5, shown: null, sensorA: 1 }),
+  defaults: () => ({ prof: azSample(azShapes.bump), from: null, to: null, mu: 1, zs: AZ.d, sweepT: 4.5, shown: null, sensorA: 1,
+    build: 1, front: 1, marker: 0, buildT: 3, shineT: 2.6, eA: 1 }),
   actions: [
-    { id: 'sweep', label: 'Sweep', primary: true, run: (st) => { st.zs = 0; return tween(st, 'zs', AZ.d, st.sweepT, { ease: linear }); } },
+    { id: 'create', label: 'Create the medium', run: (st) => { untween(st, 'front'); st.front = 0; st.shown = null; st.build = 0; return tween(st, 'build', 1, st.buildT, { ease: linear }); } },
+    { id: 'shine', label: 'Shine', primary: true, run: (st) => { st.front = 0; st.shown = null; return tween(st, 'front', 1, st.shineT, { ease: linear }); } },
+    { id: 'sweep', label: 'Sweep the marker', run: async (st, alive) => { tween(st, 'marker', 1, 0.4); untween(st, 'zs'); st.zs = 0; await sleep(0.3, 'area'); if (alive()) await tween(st, 'zs', AZ.d, st.sweepT, { ease: linear }); } },
     ...[['uniform', 'Uniform'], ['ramp', 'Ramp'], ['bump', 'Bump'], ['slabs', 'Two slabs'], ['uneven', 'Uneven']].map(([id, label]) => ({ id, label, run: (st) => azMorph(st, azSample(azShapes[id])) })),
     { id: 'mirror', label: 'Mirror', run: (st) => azMorph(st, st.prof.slice().reverse()) },
     RESET,
   ],
   params: [
+    { type: 'range', key: 'buildT', label: 'Create time (s)', min: 0.5, max: 10, step: 0.1, fmt: (v) => v.toFixed(1) },
+    { type: 'range', key: 'shineT', label: 'Shine time (s)', min: 0.5, max: 10, step: 0.1, fmt: (v) => v.toFixed(1) },
     { type: 'range', key: 'sweepT', label: 'Sweep time (s)', min: 0.5, max: 12, step: 0.1, fmt: (v) => v.toFixed(1) },
+    { type: 'check', key: 'marker', label: 'Marker (drag it)', set: (v) => tween(SC, 'marker', v ? 1 : 0, 0.4) },
     { type: 'check', key: 'sensorA', label: 'Sensor readout', set: (v) => tween(SC, 'sensorA', v ? 1 : 0, 0.4) },
-    { type: 'note', html: 'Drag on the density plot to paint σ<sub>a</sub>(z). Mirror keeps the area, so the light that gets out stays the same while the curve changes.' },
+    { type: 'note', html: 'Drag on the density plot to paint σ<sub>a</sub>(z); with the marker on, drag the dashed line. Mirror keeps the area, so the light that gets out stays the same while the curve changes.' },
   ],
   draw: drawArea, pointer: pointerArea,
 });
@@ -1739,55 +1744,279 @@ function drawAreaMedium(ctx, P) {
   ctx.strokeStyle = surf; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(g.x0, lv); ctx.lineTo(g.x1, lv); ctx.stroke();
   ctx.restore();
 }
+// The area under f on axes A between a and b.
+function areaFill(ctx, A, f, a, b, fill) {
+  if (b - a < 1e-6) return;
+  ctx.save(); ctx.beginPath(); ctx.moveTo(A.X(a), A.Y(0));
+  for (let i = 0, n = Math.max(2, Math.ceil((b - a) * 20)); i <= n; i++) { const z = lerp(a, b, i / n); ctx.lineTo(A.X(z), A.Y(f(z))); }
+  ctx.lineTo(A.X(b), A.Y(0)); ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); ctx.restore();
+}
 function drawArea(ctx, dt, st) {
   if (st.from) { for (let i = 0; i <= AZ.n; i++) st.prof[i] = lerp(st.from[i], st.to[i], st.mu); if (st.mu >= 1) st.from = null; }
   const P = st.prof, n = AZ.n, dz = AZ.d / n, tau = new Float64Array(n + 1);
   for (let i = 1; i <= n; i++) tau[i] = tau[i - 1] + ((P[i - 1] + P[i]) / 2) * dz;
   const at = (arr, z) => { const f = clamp(z / AZ.d, 0, 1) * n, i = Math.min(n - 1, Math.floor(f)); return lerp(arr[i], arr[i + 1], f - i); };
-  const zs = clamp(st.zs, 0, AZ.d), T = (z) => Math.exp(-at(tau, z)), zOf = (x) => ((x - AZ.x0) / (AZ.x1 - AZ.x0)) * AZ.d;
+  // Only the part of the medium created so far absorbs, and the light has only got as far as its front.
+  const zb = clamp(st.build, 0, 1) * AZ.d, sig = (z) => at(P, z), tauAt = (z) => at(tau, Math.min(clamp(z, 0, AZ.d), zb)), T = (z) => Math.exp(-tauAt(z));
+  const lit = st.front > 0.0005, xF = lerp(AZ.apX, AZ.xs - 18, st.front), zF = clamp(azZ(xF), 0, AZ.d), zT = lit ? zF : 0;
+  // the z everything reads at: the marker when it is on, else the light's front, else the medium's front
+  const zc = st.marker > 0.5 ? clamp(st.zs, 0, AZ.d) : lit ? zF : zb;
+  const moving = (st.build > 0 && st.build < 1) || (st.front > 0 && st.front < 1);
   // τ as shown, to two places: every percentage on screen is worked out from it, so they all agree on a calculator
-  const tauShown = (z) => Math.round(at(tau, z) * 100) / 100;
-  // the laser, the medium and the sensor, as in the other scenes, between the two plots
-  const cloud = SH.container === 'cloud';
-  drawAreaMedium(ctx, P);
-  drawBeam(ctx, AZ.apX, AZ.xs - 18, AZ.y, SH.color, SH.I0, (x) => T(clamp(zOf(x), 0, AZ.d)), cloud ? [] : [AZ.x0, AZ.x1]);
-  if (!cloud) drawGlass(ctx, azTank());
-  drawLaser(ctx, AZ.apX, AZ.y, SH.color, 1);
-  const reading = SH.I0 > 0 ? Math.exp(-tauShown(AZ.d)) : null;   // the sensor counts toward its value
+  const tauShown = (z) => Math.round(tauAt(z) * 100) / 100;
+  // the laser, the medium and the sensor, as in the other scenes; the tank is created from left to right
+  const cloud = SH.container === 'cloud', xb = azX(zb);
+  if (zb > 0) { ctx.save(); ctx.beginPath(); ctx.rect(0, 0, xb, H); ctx.clip(); drawAreaMedium(ctx, P); ctx.restore(); }
+  if (lit) drawBeam(ctx, AZ.apX, xF, AZ.y, SH.color, SH.I0, (x) => T(clamp(azZ(x), 0, AZ.d)), cloud ? [] : [AZ.x0, AZ.x1]);
+  if (!cloud && st.build > 0) { ctx.save(); ctx.beginPath(); ctx.rect(0, 0, lerp(AZ.x0 - 8, AZ.x1 + 8, clamp(st.build, 0, 1)), H); ctx.clip(); drawGlass(ctx, azTank()); ctx.restore(); }
+  drawLaser(ctx, AZ.apX, AZ.y, SH.color, lit ? 1 : 0);
+  const reading = st.front >= 0.999 && SH.I0 > 0 ? Math.exp(-tauShown(AZ.d)) : null;   // the sensor counts toward its value
   st.shown = reading == null ? null : st.shown == null || reduced ? reading : lerp(st.shown, reading, 1 - Math.exp(-dt * 6));
   drawSensor(ctx, AZ.xs, AZ.y, SH.color, reading == null ? 0 : reading * SH.I0);
   if (st.shown != null) drawReadout(ctx, AZ.xs, AZ.y, st.shown, st.sensorA);
-  // the density, and the area under it up to the sweep: that area is τ
-  const [A1, A2] = azAxes();
+  // the density, filled in as the medium is created: highlighted up to the current z, greyed past it
+  const [A1, A2] = azAxes(), zh = Math.min(zc, zb);
   drawAxes(ctx, A1, { c: 1, nums: 1, lab: 1 });
-  ctx.save(); ctx.beginPath(); ctx.moveTo(A1.X(0), A1.Y(0));
-  for (let i = 0; i * dz < zs; i++) ctx.lineTo(A1.X(i * dz), A1.Y(P[i]));
-  ctx.lineTo(A1.X(zs), A1.Y(at(P, zs))); ctx.lineTo(A1.X(zs), A1.Y(0)); ctx.closePath();
-  ctx.fillStyle = hexA(COL.green, 0.32); ctx.fill(); ctx.restore();
-  drawCurve(ctx, A1, (z) => at(P, z), { color: COL.green, width: 5 });
-  // what gets through, traced as far as the sweep has gone
+  areaFill(ctx, A1, sig, 0, zh, hexA(COL.green, 0.32)); areaFill(ctx, A1, sig, zh, zb, hexA(COL.grey, 0.12));
+  if (zh > 1e-6) drawCurve(ctx, A1, sig, { from: 0, to: zh, color: COL.green, width: 5 });
+  if (zb - zh > 1e-6) drawCurve(ctx, A1, sig, { from: zh, to: zb, color: COL.grey, width: 5, alpha: 0.75 });
+  // what gets through, traced as the light goes: blue up to the current z, greyed past it
   drawAxes(ctx, A2, { c: 1, nums: 1, lab: 1 });
-  drawCurve(ctx, A2, T, { p: zs / AZ.d, color: COL.blue });
-  // the sweep: one z through the density, the medium and the light
-  dashed(ctx, azX(zs), A1.Y(AZ.smax) - 14, azX(zs), A2.oy, COL.white, 0.45, 2);
-  dot(ctx, A1.X(zs), A1.Y(at(P, zs)), 9, COL.green); dot(ctx, A2.X(zs), A2.Y(T(zs)), 9, COL.blue);
-  const tz = tauShown(zs);
+  const zl = Math.min(zc, zT);
+  if (zl > 1e-6) drawCurve(ctx, A2, T, { from: 0, to: zl, color: COL.blue });
+  if (zT - zl > 1e-6) drawCurve(ctx, A2, T, { from: zl, to: zT, color: COL.grey, alpha: 0.75 });
+  // the marker: one z through the density, the medium and the light
+  if (st.marker > 0.003) dashed(ctx, azX(st.zs), A1.Y(AZ.smax) - 14, azX(st.zs), A2.oy, COL.white, 0.5 * st.marker, 2);
+  const reached = lit && xF >= azX(zc) - 0.5;
+  st.eA = reduced ? +reached : lerp(st.eA, +reached, 1 - Math.exp(-dt * 10));
+  if (st.marker > 0.5 || moving) {
+    if (zc <= zb + 1e-6) dot(ctx, A1.X(zc), A1.Y(sig(zc)), 9, COL.green);
+    if (reached) dot(ctx, A2.X(zc), A2.Y(T(zc)), 9, COL.blue);
+  }
+  const tz = tauShown(zc);
   const e1 = drawTex(ctx, String.raw`\tau =`, 1505, (A1.T + A1.B) / 2, 60, { ax: 0, color: COL.green }).pop();
   if (e1) drawNumber(ctx, tz, e1.x + e1.w + 0.3 * e1.fpx, e1.base, { size: e1.fpx, dec: 2, color: COL.green });
-  const e2 = drawTex(ctx, String.raw`e^{-\tau} =`, 1505, 880, 60, { ax: 0, color: COL.blue }).pop();
-  if (e2) drawNumber(ctx, Math.exp(-tz) * 100, e2.x + e2.w + 0.3 * e2.fpx, e2.base, { size: e2.fpx, dec: 1, suffix: '%', color: COL.blue });
+  if (st.eA > 0.01) {
+    const e2 = drawTex(ctx, String.raw`e^{-\tau} =`, 1505, 880, 60, { ax: 0, color: COL.blue, alpha: st.eA }).pop();
+    if (e2) drawNumber(ctx, Math.exp(-tz) * 100, e2.x + e2.w + 0.3 * e2.fpx, e2.base, { size: e2.fpx, dec: 1, suffix: '%', color: COL.blue, alpha: st.eA });
+  }
 }
-// Painting the density: a soft brush pulls σ toward where the pointer is.
+// Dragging: the marker, anywhere in its column when it is on (on the density plot, only near the line);
+// elsewhere on the density plot, a soft brush pulls σ toward the pointer.
 function pointerArea(type, x, y) {
-  const st = SC, sc = scenes.area, A1 = azAxes()[0], inside = x > AZ.x0 - 12 && x < AZ.x1 + 12 && y > A1.T - 24 && y < A1.B + 20;
+  const st = SC, sc = scenes.area, [A1, A2] = azAxes();
+  const inPlot = x > AZ.x0 - 12 && x < AZ.x1 + 12 && y > A1.T - 24 && y < A1.B + 20;
+  const inColumn = x > AZ.x0 - 24 && x < AZ.x1 + 24 && y > A1.T - 30 && y < A2.B + 30;
+  const onMarker = st.marker > 0.5 && inColumn && (!inPlot || Math.abs(x - azX(st.zs)) < 22);
+  const setZ = () => { st.zs = clamp(azZ(x), 0, AZ.d); };
   const paint = () => {
-    const z = clamp((x - AZ.x0) / (AZ.x1 - AZ.x0), 0, 1) * AZ.d, s = clamp(((A1.B - y) / (A1.B - A1.T)) * AZ.smax, 0, AZ.smax), dz = AZ.d / AZ.n;
+    const z = clamp(azZ(x), 0, AZ.d), s = clamp(((A1.B - y) / (A1.B - A1.T)) * AZ.smax, 0, AZ.smax), dz = AZ.d / AZ.n;
     for (let i = 0; i <= AZ.n; i++) { const w = Math.exp(-(((i * dz - z) / 0.7) ** 2)); if (w > 0.001) st.prof[i] = lerp(st.prof[i], s, w); }
   };
-  if (type === 'down') { sc.drag = inside; if (inside) { sc.epoch++; untween(st, 'mu'); untween(st, 'zs'); st.from = null; st.zs = AZ.d; paint(); } return inside; }
-  if (type === 'up') { sc.drag = false; return false; }
-  if (sc.drag) { paint(); return true; }
-  return inside;
+  if (type === 'down') {
+    sc.drag = onMarker ? 'marker' : inPlot ? 'paint' : null;
+    if (!sc.drag) return false;
+    sc.epoch++;
+    if (sc.drag === 'marker') { untween(st, 'zs'); setZ(); }
+    else { untween(st, 'mu'); st.from = null; if (st.build < 1) { untween(st, 'build'); st.build = 1; } paint(); }
+    return true;
+  }
+  if (type === 'up') { sc.drag = null; return false; }
+  if (sc.drag === 'marker') { setZ(); return true; }
+  if (sc.drag === 'paint') { paint(); return true; }
+  return onMarker || inPlot;
+}
+
+// ---------- D. what light can do at a particle ----------
+// The storyboard's first row: one photon meets one particle. Absorption: the photon is gone and the particle
+// warms a little. Out-scattering: it leaves in another direction. Emission: a warm particle sends one out along
+// the beam. In-scattering: one from another direction is turned into the beam's. These are the four terms of
+// the transfer equation, coloured as its braces are: blue takes light out of the beam, green puts light in.
+// Then the other three fade, and absorption, the one this video is about, fills the stage.
+const IA = {
+  cells: [[225, 110, 700, 330], [995, 110, 700, 330], [225, 560, 700, 330], [995, 560, 700, 330]],
+  full: [120, 70, 1680, 792],
+  names: ['absorption', 'out-scattering', 'emission', 'in-scattering'],
+  cols: [COL.blue, COL.blue, COL.green, COL.green],
+  R: 34, L: 120,
+};
+// Each photon's path in a cell's own units (700 × 330). Paths turn at the particle's centre, where the particle hides the turn.
+const IA_PATHS = (() => {
+  const c = [350, 165], d = (deg, len) => [c[0] + len * Math.cos((deg * Math.PI) / 180), c[1] + len * Math.sin((deg * Math.PI) / 180)];
+  return [[[-150, 165], c], [[-150, 165], c, d(-50, 420)], [c, [950, 165]], [d(140, 420), c, [950, 165]]];
+})();
+// A photon: a short wave packet riding along a path (a polyline), its head at arc length sHead, with an arrowhead.
+// The wave is fixed to the packet, so it travels with it without shimmering.
+function drawPacket(ctx, path, sHead, color, alpha, { L = 120, lam = 24, amp = 11, w = 4 } = {}) {
+  if (alpha <= 0.003) return;
+  const cum = [0];
+  for (let i = 1; i < path.length; i++) cum.push(cum[i - 1] + Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]));
+  const total = cum[cum.length - 1], s0 = Math.max(0, sHead - L), s1 = Math.min(total, sHead);
+  if (s1 <= s0) return;
+  const at = (s) => {
+    let j = 1; while (j < path.length - 1 && cum[j] < s) j++;
+    const p = path[j - 1], q = path[j], seg = cum[j] - cum[j - 1] || 1, t = (s - cum[j - 1]) / seg;
+    return [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t, (q[0] - p[0]) / seg, (q[1] - p[1]) / seg];
+  };
+  ctx.save(); ctx.strokeStyle = hexA(color, alpha); ctx.fillStyle = hexA(color, alpha); ctx.lineWidth = w; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  ctx.beginPath();
+  for (let k = 0, n = 64; k <= n; k++) {
+    const s = lerp(s0, s1, k / n), q = clamp((sHead - s) / L, 0, 1), env = Math.pow(Math.sin(Math.PI * q), 0.7);
+    const [x, y, tx, ty] = at(s), off = amp * env * Math.sin((2 * Math.PI * (sHead - s)) / lam);
+    if (k) ctx.lineTo(x - ty * off, y + tx * off); else ctx.moveTo(x - ty * off, y + tx * off);
+  }
+  ctx.stroke();
+  if (sHead <= total) { const [x, y, tx, ty] = at(s1); arrowTip(ctx, x + tx * 14, y + ty * 14, tx, ty, 18, 9); }
+  ctx.restore();
+}
+// A particle, warmer (gold) for a while after it takes in a photon, or before it sends one out.
+function drawParticle(ctx, x, y, r, warm, alpha) {
+  if (alpha <= 0.003) return;
+  if (warm > 0.003) {
+    const rg = ctx.createRadialGradient(x, y, r * 0.8, x, y, r * 2.5);
+    rg.addColorStop(0, hexA(COL.gold, 0.42 * warm * alpha)); rg.addColorStop(1, hexA(COL.gold, 0));
+    ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(x, y, r * 2.5, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.fillStyle = rgba(mixRgb([38, 38, 38], hexRgb(COL.gold), 0.55 * clamp(warm, 0, 1)), alpha); ctx.strokeStyle = hexA(COL.greyB, alpha); ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+}
+const SI = defScene({
+  id: 'interact', tab: 'What light can do', shared: true,
+  defaults: () => ({ show: [1, 1, 1, 1], lab: [1, 1, 1, 1], focus: 0, loopT: 3.2, t0: [0, 0.8, 1.6, 2.4], axis: 0 }),
+  actions: [
+    { id: 'play', label: 'Play', primary: true, run: async (st, alive) => {
+      for (let i = 0; i < 4; i++) { untween(st.show, i); untween(st.lab, i); st.show[i] = 0; st.lab[i] = 0; }
+      untween(st, 'focus'); st.focus = 0;
+      for (let i = 0; i < 4; i++) {
+        st.t0[i] = TIME + 0.35;
+        tween(st.show, i, 1, 0.9, { tag: 'interact' }); tween(st.lab, i, 1, 0.9, { ease: linear, delay: 0.5, tag: 'interact' });
+        await sleep(i === 0 ? 3.2 : 2.4, 'interact'); if (!alive()) return;
+      }
+      await sleep(0.6, 'interact'); if (!alive()) return;
+      await tween(st, 'focus', 1, 1.8);
+    } },
+    { id: 'four', label: 'All four', run: (st) => Promise.all([tween(st, 'focus', 0, 1.4), ...[0, 1, 2, 3].flatMap((i) => [tween(st.show, i, 1, 0.8, { tag: 'interact' }), tween(st.lab, i, 1, 0.8, { tag: 'interact' })])]) },
+    { id: 'focus', label: 'Only absorption', run: (st) => tween(st, 'focus', 1, 1.8) },
+    RESET,
+  ],
+  params: [
+    { type: 'range', key: 'loopT', label: 'Time per photon (s)', min: 1.5, max: 8, step: 0.1, fmt: (v) => v.toFixed(1) },
+    { type: 'check', key: 'axis', label: "The beam's direction", set: (v) => tween(SI, 'axis', v ? 1 : 0, 0.4) },
+  ],
+  draw: drawInteract,
+});
+// One cell's picture, in the cell's own units; u is the time into this cell's loop (u < 0: a still, for reduced motion).
+function drawIACell(ctx, i, u, P, alpha, axis) {
+  const v = 1140 / (0.85 * P), R = IA.R, L = IA.L;
+  if (u < 0) u = [(500 - R - 70) / v, (500 + 170) / v, 0.45 + (R + 150) / v, (420 + 210) / v][i];
+  if (axis > 0.003) dashed(ctx, 0, 165, 700, 165, COL.greyC, 0.8 * axis * alpha, 2);
+  let s = v * u, warm = 0;
+  if (i === 0) { const ua = (500 - R) / v, ub = (500 + 0.5 * L) / v; warm = u < ua ? 0 : u < ub ? smooth((u - ua) / (ub - ua)) : Math.exp(-(u - ub) / 0.7); }
+  else if (i === 2) { s = v * (u - 0.45); warm = u < 0.55 ? smooth(u / 0.55) : Math.exp(-(u - 0.55) / 0.6); }
+  drawPacket(ctx, IA_PATHS[i], s, SH.color, alpha, { L });
+  drawParticle(ctx, 350, 165, R, warm, alpha);
+}
+function drawInteract(ctx, dt, st) {
+  const f = smooth(clamp(st.focus, 0, 1)), P = st.loopT;
+  for (const i of [1, 2, 3, 0]) {
+    const show = st.show[i], a = i === 0 ? 1 : 1 - f;
+    if (show <= 0.003 || a <= 0.003) continue;
+    const r = i === 0 ? lerpRect(IA.cells[0], IA.full, f) : IA.cells[i], s = r[2] / 700;
+    const op = clamp(show / 0.6, 0, 1), ca = clamp((show - 0.4) / 0.6, 0, 1) * a;
+    if (ca > 0.003) {
+      ctx.save(); ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip();
+      ctx.translate(r[0], r[1]); ctx.scale(s, s);
+      drawIACell(ctx, i, reduced ? -1 : (((TIME - st.t0[i]) % P) + P) % P, P, ca, st.axis);
+      ctx.restore();
+    }
+    // the frame, drawn in as manim's Create draws a rectangle
+    const per = 2 * (r[2] + r[3]);
+    ctx.save(); ctx.strokeStyle = hexA(COL.greyB, a); ctx.lineWidth = 3; if (op < 1) ctx.setLineDash([op * per, per]);
+    ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.stroke(); ctx.restore();
+    const lp = st.lab[i];
+    if (lp > 0.003) { const size = i === 0 ? lerp(52, 66, f) : 52; drawTex(ctx, String.raw`\text{${IA.names[i]}}`, r[0] + r[2] / 2, r[1] + r[3] + 0.95 * size, size, { p: lp, alpha: a, color: IA.cols[i] }); }
+  }
+}
+
+// ---------- E. sparse and dense ----------
+// The storyboard's second row: how much of the light gets through? Two slabs of the same kind of particles, one
+// with a few and one with many, each with its own sheet of rays and its own sensor. More particles, more rays
+// stopped, less light. As a count grows, particles pop in one at a time.
+const SD = { ex: 330, x0: 560, x1: 1300, sx: 1440, rows: [[150, 390], [650, 890]], nMax: 400 };
+function sdDiscs(st, row) {
+  const [top, bot] = SD.rows[row], r = st.r, rnd = rng32(st.seed * 7919 + 101 * (row + 1)), out = [], n = row ? st.nB : st.nA, amp = reduced ? 0 : st.jig * 5;
+  for (let k = 0; k < SD.nMax; k++) {
+    let x = lerp(SD.x0 + r, SD.x1 - r, rnd()), y = lerp(top - r, bot + r, rnd());
+    const g = clamp(n - k, 0, 1); if (g <= 0) continue;
+    if (amp > 0.01) { const [px, py, fx, fy] = jigOf(k + 1000 * (row + 1)); x += amp * Math.sin(TIME * fx * 6.283 + px); y += amp * Math.sin(TIME * fy * 6.283 + py); }
+    out.push([x, y, r * smooth(g)]);
+  }
+  return out;
+}
+// Where each ray meets its first disc, for discs of their own sizes.
+function firstHitsR(ys, discs) {
+  const hits = new Float64Array(ys.length);
+  for (let i = 0; i < ys.length; i++) {
+    let h = Infinity; const y = ys[i];
+    for (const [x, py, R] of discs) { const dy = y - py; if (dy > -R && dy < R) { const xh = x - Math.sqrt(R * R - dy * dy); if (xh < h) h = xh; } }
+    hits[i] = h;
+  }
+  return hits;
+}
+function readoutBox(ctx, x, yc, v, alpha) {
+  if (alpha <= 0.01) return;
+  const bw = 210, bh = 84, by = yc - bh / 2;
+  ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = '#000'; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(x, by, bw, bh, 12); ctx.fill(); ctx.stroke(); ctx.restore();
+  drawNumber(ctx, v * 100, x + bw / 2, by + bh / 2 + 18, { size: 52, dec: 1, suffix: '%', align: 'center', alpha });
+}
+const SE = defScene({
+  id: 'density', tab: 'Sparse and dense', shared: true,
+  defaults: () => ({ nA: 4, nB: 35, r: 5, rays: '120', seed: 3, jig: 1, front: 1, shineT: 2.4, shown: [null, null] }),
+  actions: [
+    { id: 'shine', label: 'Shine', primary: true, run: (st) => { st.front = 0; st.shown = [null, null]; return tween(st, 'front', 1, st.shineT, { ease: linear }); } },
+    { id: 'more', label: 'More particles', run: (st) => tween(st, 'nB', Math.min(SD.nMax, Math.round(st.nB) + 40), 2.6, { ease: linear }) },
+    { id: 'fewer', label: 'Fewer particles', run: (st) => tween(st, 'nB', Math.max(0, Math.round(st.nB) - 40), 2.6, { ease: linear }) },
+    { id: 'same', label: 'Same as the top', run: (st) => tween(st, 'nB', st.nA, 2.2, { ease: linear }) },
+    { id: 'resample', label: 'Resample', run: (st) => { st.seed += 1; } },
+    RESET,
+  ],
+  params: [
+    { type: 'range', key: 'nA', label: 'Particles, top', min: 0, max: 400, step: 1, fmt: (v) => String(Math.round(v)), set: (v) => { untween(SE, 'nA'); SE.nA = v; } },
+    { type: 'range', key: 'nB', label: 'Particles, bottom', min: 0, max: 400, step: 1, fmt: (v) => String(Math.round(v)), set: (v) => { untween(SE, 'nB'); SE.nB = v; } },
+    { type: 'range', key: 'r', label: 'Particle radius', min: 2, max: 20, step: 0.5, fmt: (v) => v.toFixed(1) },
+    { type: 'select', key: 'rays', label: 'Rays', options: [['30', '30 rays'], ['120', '120 rays'], ['sheet', 'A sheet (every row)']] },
+    { type: 'range', key: 'shineT', label: 'Shine time (s)', min: 0.5, max: 8, step: 0.1, fmt: (v) => v.toFixed(1) },
+    { type: 'check', key: 'jig', label: 'Jiggle', set: (v) => tween(SE, 'jig', v ? 1 : 0, 0.6) },
+  ],
+  draw: drawDensity,
+});
+function drawDensity(ctx, dt, st) {
+  const color = SH.color, power = SH.I0, sheet = st.rays === 'sheet', glow = SH.beamLook === 'glow', xf = lerp(SD.ex, SD.sx, st.front);
+  for (let row = 0; row < 2; row++) {
+    const [top, bot] = SD.rows[row], k = sheet ? Math.round(bot - top) : +st.rays, ys = [];
+    for (let i = 0; i < k; i++) ys.push(top + ((i + 0.5) * (bot - top)) / k);
+    const discs = sdDiscs(st, row), hits = firstHitsR(ys, discs);
+    dashed(ctx, SD.x0, top - 50, SD.x0, bot + 50, COL.greyC, 1, 2);
+    dashed(ctx, SD.x1, top - 50, SD.x1, bot + 50, COL.greyC, 1, 2);
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    const rays = () => { ctx.beginPath(); for (let i = 0; i < k; i++) { const xe = Math.min(hits[i], xf, SD.sx); if (xe > SD.ex) { ctx.moveTo(SD.ex, ys[i]); ctx.lineTo(xe, ys[i]); } } ctx.stroke(); };
+    if (sheet) { ctx.strokeStyle = hexA(color, 0.75 * power); ctx.lineWidth = 1.2; rays(); }
+    else { if (glow) { ctx.strokeStyle = hexA(color, 0.14 * power); ctx.lineWidth = 6; rays(); } ctx.strokeStyle = hexA(color, 0.95 * power); ctx.lineWidth = 1.8; rays(); }
+    if (!sheet) for (let i = 0; i < k; i++) if (hits[i] < xf && hits[i] < SD.sx) dot(ctx, hits[i], ys[i], 3, '#FFFFFF', 0.85);
+    ctx.restore();
+    ctx.fillStyle = '#262626'; ctx.strokeStyle = COL.greyB; ctx.lineWidth = Math.min(2.5, st.r * 0.3);
+    ctx.beginPath(); for (const [x, y, R] of discs) { if (R < 0.3) continue; ctx.moveTo(x + R, y); ctx.arc(x, y, R, 0, Math.PI * 2); } ctx.fill(); ctx.stroke();
+    drawSheetLaser(ctx, SD.ex, top, bot, color);
+    // the sensor plate, lit where rays arrive, and the fraction that arrived (counting toward it as it changes)
+    let reached = null;
+    if (xf >= SD.sx - 0.5) { let c = 0; for (const h of hits) if (h > SD.sx) c++; reached = c / k; }
+    st.shown[row] = reached == null ? null : st.shown[row] == null || reduced ? reached : lerp(st.shown[row], reached, 1 - Math.exp(-dt * 6));
+    ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = COL.greyB; ctx.fillStyle = '#2C2C2C';
+    ctx.beginPath(); ctx.roundRect(SD.sx, top - 30, 26, bot - top + 60, 6); ctx.fill(); ctx.stroke();
+    if (reached != null) { ctx.fillStyle = hexA(color, 0.95 * power); for (let i = 0; i < k; i++) if (hits[i] > SD.sx) ctx.fillRect(SD.sx - 3, ys[i] - (sheet ? 0.6 : 1.4), 5, sheet ? 1.2 : 2.8); }
+    ctx.restore();
+    if (st.shown[row] != null) readoutBox(ctx, SD.sx + 50, (top + bot) / 2, st.shown[row], 1);
+  }
 }
 
 //@@SCENES@@
@@ -1888,7 +2117,7 @@ function buildDock() {
   }
 }
 function buildTabs() {
-  tabsEl.textContent = '';
+  tabsEl.textContent = ''; $('lastKey').textContent = String(ORDER.length);
   const fs = $('fadeSel'); fs.length = 1; ORDER.forEach((id, i) => fs.add(new Option(`${i + 1} · ${scenes[id].tab}`, id)));
   ORDER.forEach((id, i) => {
     const b = mk('button', 'tab'); b.type = 'button'; b.setAttribute('role', 'tab'); b.dataset.scene = id;
@@ -1915,12 +2144,20 @@ function toggleFull() {
 }
 document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) setClean(false); });
 $('fsBtn').addEventListener('click', toggleFull);
+let digitBuf = null, digitT = 0;
 addEventListener('keydown', (e) => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   const t = e.target, k = e.key;
   if (t.matches && t.matches('input, select, textarea')) { if (k === 'Escape') t.blur(); return; }
   const onButton = t.matches && t.matches('button');
-  if (/^[1-9]$/.test(k) && ORDER[+k - 1]) { setScene(ORDER[+k - 1]); e.preventDefault(); }
+  if (/^[0-9]$/.test(k)) {
+    // a second digit typed soon after the first picks a two-digit scene: 1 then 2 is scene 12
+    const now = performance.now(), d = +k, two = digitBuf != null && now - digitT < 700 ? digitBuf * 10 + d : null;
+    const n = two != null && two <= ORDER.length ? two : d;
+    digitBuf = two != null && two <= ORDER.length ? null : d; digitT = now;
+    if (n >= 1 && ORDER[n - 1]) { setScene(ORDER[n - 1]); e.preventDefault(); }
+  }
+  else if (k === '[' || k === ']') { const i = ORDER.indexOf(cur.id) + (k === ']' ? 1 : -1); setScene(ORDER[(i + ORDER.length) % ORDER.length]); e.preventDefault(); }
   else if (k === ' ' && !onButton) { const a = cur.actions.find((x) => x.primary) || cur.actions[0]; runAction(cur, a); e.preventDefault(); }
   else if (k === 'r' || k === 'R') { const a = cur.actions.find((x) => x.id === 'reset'); if (a) runAction(cur, a); else if (cur.onReset) cur.onReset(); }
   else if (k === 'ArrowRight' && cur.next) { cur.next(); e.preventDefault(); }
