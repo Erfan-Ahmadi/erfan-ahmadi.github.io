@@ -12,22 +12,12 @@ const domain = new URL(SITE.url).hostname;
     <script is:inline>
       // One page load is one view: the home page's year filter rewrites the query with
       // history.replaceState, which Umami would count as another view of the same page.
-      // Visits through an old URL (src/redirects.mjs, see src/integrations/redirect-html.mjs) keep the
-      // site that linked to it as their referrer, and send old-url with the path they used.
       (() => {
-        let redirect, lastPath;
-        try {
-          redirect = JSON.parse(sessionStorage.getItem('redirected-from'));
-          sessionStorage.removeItem('redirected-from');
-        } catch {}
+        let lastPath;
         window.umamiBeforeSend = (type, payload) => {
           if (type !== 'event' || payload.name) return payload;
           const path = new URL(payload.url, location.href).pathname;
           if (path === lastPath) return null;
-          if (!lastPath && redirect) {
-            payload.referrer = redirect.referrer;
-            setTimeout(() => window.umami.track('old-url', { from: redirect.from }));
-          }
           lastPath = path;
           return payload;
         };

@@ -12,6 +12,7 @@ Erfan Ahmadi's blog about math, computer graphics and GPUs. Astro 7 static site,
 ## Posts
 
 - One folder per post: `src/content/posts/YYYY-MM-DD-slug/index.md` or `index.mdx`. The URL is `/blog/<slug>/` (the folder name without the date).
+- YouTube thumbnails are served from `src/assets/youtube/<video id>.(png|jpg|webp)`, never from YouTube (`src/lib/youtube.ts`, `scripts/youtube-thumbnails.mjs`).
 - The schema is in `src/content.config.ts`; `title`, `description` and `date` are required.
 - Images go in the post folder and are referenced with relative Markdown images (`![alt](./x.png)`) so Astro optimizes them. Videos, HTML demos and other files in the folder are served as-is at `/blog/<slug>/<file>` (`src/integrations/post-assets.mjs`).
 - Never change the slug or date of a published post. If a slug must change, add the old URL to `src/redirects.mjs`; every URL in that file has to keep working.
@@ -30,6 +31,7 @@ Erfan Ahmadi's blog about math, computer graphics and GPUs. Astro 7 static site,
 When asked to make a demo for a post, produce one self-contained `.html` file that:
 
 - Inlines its CSS and JS. External libraries only from `cdnjs.cloudflare.com`, `cdn.jsdelivr.net` or `unpkg.com`, pinned to exact versions.
+- Loads no fonts from other sites (no Google Fonts): use system fonts, or inline `.woff2` files as base64 `data:` URLs (the site's Fraunces, Inter and JetBrains Mono are in `node_modules/@fontsource-variable/*/files/`).
 - Reads the theme from `new URLSearchParams(location.search).get('theme')` (`light` or `dark`), falling back to `prefers-color-scheme`, and uses the site palette:
   - light: background `#FFFDF9`, text `#1B1A17`, muted `#6F6A60`, lines `#E2DDD2`, accent `#C4471F`
   - dark: background `#1C1B18`, text `#EEEAE2`, muted `#948E82`, lines `#2E2C27`, accent `#F0784F`

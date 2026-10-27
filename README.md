@@ -60,6 +60,8 @@ In the body:
 
 A video is a post with `youtube: <video id>` in its front matter (the id is the part after `watch?v=`). It's listed in the grid with a YouTube badge, its page plays the video at the top, and when it's the newest post the home page features it as "Latest video" instead of "Latest post".
 
+Its thumbnail, on the card, the player and link previews, is served from this site so that readers' browsers don't contact YouTube until they press play. Put the thumbnail you made at `src/assets/youtube/<video id>.png` (or `.jpg`, `.webp`; 1920×1080 or larger is best) and commit it. If there's none, `npm run dev` and `npm run build` download YouTube's (1280×720) into that folder; commit that file too.
+
 ## Interactive demos and Claude artifacts
 
 Any self-contained HTML page can be embedded in a post, like a demo Claude made for you:
@@ -76,7 +78,7 @@ Push a draft to `master` and send people its link (`https://erfan-ahmadi.github.
 
 ## Analytics
 
-Visits are counted with [Umami](https://umami.is): no cookies, so no consent banner. The dashboard at [cloud.umami.is](https://cloud.umami.is) shows the pages read and where readers came from (the referring site, e.g. Google, Reddit, `t.co` for X, `lnkd.in` for LinkedIn; UTM tags; country, browser and device), and under Events, these clicks and actions with their properties:
+Visits are counted with [Umami](https://umami.is), which sets no cookies and stores nothing in the reader's browser. The dashboard at [cloud.umami.is](https://cloud.umami.is) shows the pages read and where readers came from (the referring site, e.g. Google, Reddit, `t.co` for X, `lnkd.in` for LinkedIn; UTM tags; country, browser and device), and under Events, these clicks and actions with their properties:
 
 | Event | When | Properties |
 | --- | --- | --- |
@@ -90,7 +92,6 @@ Visits are counted with [Umami](https://umami.is): no cookies, so no consent ban
 | `search` | A search on the home page, once the reader stops typing | `query`, `results` |
 | `year-filter` | A year on the home page | `year` |
 | `page-not-found` | A missing page | `path`, `referrer` |
-| `old-url` | A visit through an old Jekyll URL (`src/redirects.mjs`); the page view keeps the site that linked to it | `from` |
 
 - To count another button or link, give it `data-track="event-name"`, plus `data-track-<property>="value"` for its properties. For anything that isn't a click, call `track()` from `src/lib/analytics.ts`.
 - To see which of your own shares bring readers, add UTM tags to the links you post, e.g. `https://erfan-ahmadi.github.io/blog/gpu-driven-anything/?utm_source=linkedin&utm_medium=social`.

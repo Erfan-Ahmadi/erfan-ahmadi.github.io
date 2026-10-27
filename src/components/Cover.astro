@@ -2,6 +2,7 @@
 import { Image } from 'astro:assets';
 import Icon from './Icon.astro';
 import type { Post } from '../lib/posts';
+import { youtubeThumbnail } from '../lib/youtube';
 
 interface Props {
   post: Post;
@@ -10,16 +11,14 @@ interface Props {
 }
 const { post, sizes, eager = false } = Astro.props;
 const { cover, coverAlt, thumbnail, diagram, title, draft, youtube } = post.data;
-const image = thumbnail ?? cover;
+const image = thumbnail ?? cover ?? (youtube ? youtubeThumbnail(youtube) : undefined);
 // Posts without a cover get a generated one: the title on a tinted triangle grid.
 const hue = [...post.id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 0);
 ---
 <div class:list={['thumb', { diagram: diagram && !thumbnail, video: youtube }]}>
   {image ? (
     <Image src={image} alt={coverAlt} widths={[480, 800, 1280]} sizes={sizes} loading={eager ? 'eager' : 'lazy'} />
-  ) : youtube ? (
-    <img src={`https://i.ytimg.com/vi/${youtube}/hqdefault.jpg`} alt="" loading="lazy" onerror="this.remove()" />
-  ) : (
+  ) : !youtube && (
     <div class="gen" style={`--h:${hue}`} aria-hidden="true"><span>{title}</span></div>
   )}
   {youtube && <span class="yt-badge"><Icon name="youtube" />YouTube</span>}

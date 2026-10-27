@@ -8,7 +8,9 @@
     "node": ">=22.22.0"
   },
   "scripts": {
+    "predev": "node scripts/youtube-thumbnails.mjs",
     "dev": "astro dev",
+    "prebuild": "node scripts/youtube-thumbnails.mjs",
     "build": "astro build && node scripts/check-links.mjs",
     "preview": "astro preview",
     "new": "node scripts/new-post.mjs",
