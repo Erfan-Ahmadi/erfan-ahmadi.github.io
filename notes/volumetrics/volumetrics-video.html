@@ -1764,9 +1764,10 @@ function drawArea(ctx, dt, st) {
   // Only the part of the medium created so far absorbs, and the light has only got as far as its front.
   const zb = clamp(st.build, 0, 1) * AZ.d, sig = (z) => at(P, z), tauAt = (z) => at(tau, Math.min(clamp(z, 0, AZ.d), zb)), T = (z) => Math.exp(-tauAt(z));
   const lit = st.front > 0.0005, xF = lerp(AZ.apX, AZ.xs - 18, st.front), zF = clamp(azZ(xF), 0, AZ.d), zT = lit ? zF : 0;
-  // the z everything reads at: the marker when it is on, else the light's front, else the medium's front
-  const zc = st.marker > 0.5 ? clamp(st.zs, 0, AZ.d) : lit ? zF : zb;
-  const moving = (st.build > 0 && st.build < 1) || (st.front > 0 && st.front < 1);
+  // the z the density and the readouts use: the marker when it is on, else all of the medium created so far.
+  // Shining does not move it; the light only traces what gets through, on the plot below.
+  const mk = st.marker > 0.5, zm = clamp(st.zs, 0, AZ.d), zc = mk ? zm : zb;
+  const creating = st.build > 0 && st.build < 1, shining = st.front > 0 && st.front < 1;
   // τ as shown, to two places: every percentage on screen is worked out from it, so they all agree on a calculator
   const tauShown = (z) => Math.round(tauAt(z) * 100) / 100;
   // the laser, the medium and the sensor, as in the other scenes; the tank is created from left to right
@@ -1785,18 +1786,22 @@ function drawArea(ctx, dt, st) {
   areaFill(ctx, A1, sig, 0, zh, hexA(COL.green, 0.32)); areaFill(ctx, A1, sig, zh, zb, hexA(COL.grey, 0.12));
   if (zh > 1e-6) drawCurve(ctx, A1, sig, { from: 0, to: zh, color: COL.green, width: 5 });
   if (zb - zh > 1e-6) drawCurve(ctx, A1, sig, { from: zh, to: zb, color: COL.grey, width: 5, alpha: 0.75 });
-  // what gets through, traced as the light goes: blue up to the current z, greyed past it
+  // what gets through, traced as the light goes: blue, or with the marker on, blue up to it and greyed past it
   drawAxes(ctx, A2, { c: 1, nums: 1, lab: 1 });
-  const zl = Math.min(zc, zT);
+  const zl = mk ? Math.min(zm, zT) : zT;
   if (zl > 1e-6) drawCurve(ctx, A2, T, { from: 0, to: zl, color: COL.blue });
   if (zT - zl > 1e-6) drawCurve(ctx, A2, T, { from: zl, to: zT, color: COL.grey, alpha: 0.75 });
   // the marker: one z through the density, the medium and the light
   if (st.marker > 0.003) dashed(ctx, azX(st.zs), A1.Y(AZ.smax) - 14, azX(st.zs), A2.oy, COL.white, 0.5 * st.marker, 2);
   const reached = lit && xF >= azX(zc) - 0.5;
   st.eA = reduced ? +reached : lerp(st.eA, +reached, 1 - Math.exp(-dt * 10));
-  if (st.marker > 0.5 || moving) {
-    if (zc <= zb + 1e-6) dot(ctx, A1.X(zc), A1.Y(sig(zc)), 9, COL.green);
-    if (reached) dot(ctx, A2.X(zc), A2.Y(T(zc)), 9, COL.blue);
+  // dots at the marker; without it, at the head of whatever is being drawn
+  if (mk) {
+    if (zm <= zb + 1e-6) dot(ctx, A1.X(zm), A1.Y(sig(zm)), 9, COL.green);
+    if (reached) dot(ctx, A2.X(zm), A2.Y(T(zm)), 9, COL.blue);
+  } else {
+    if (creating) dot(ctx, A1.X(zb), A1.Y(sig(zb)), 9, COL.green);
+    if (shining && xF >= AZ.x0) dot(ctx, A2.X(zT), A2.Y(T(zT)), 9, COL.blue);
   }
   const tz = tauShown(zc);
   const e1 = drawTex(ctx, String.raw`\tau =`, 1505, (A1.T + A1.B) / 2, 60, { ax: 0, color: COL.green }).pop();
