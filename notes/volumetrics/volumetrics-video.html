@@ -2293,6 +2293,143 @@ function drawCompound(ctx, dt, st) {
   drawFormulas(ctx, st);
 }
 
+// ---------- H. one photon at a time ----------
+// The storyboard's "why a fraction?": light is photons, and each one either meets a particle on its way or does
+// not. Fire them one at a time: each stops where it first touches a particle (which warms a little), or reaches
+// the sensor. Count enough of them and the fraction that gets through settles: it is a probability, P(X ≥ d),
+// where X is how far a photon gets before it is absorbed. Where they stop builds P(X ≥ x), which follows e^{−μx};
+// its complement P(X < x) = 1 − e^{−μx} is the chance of being absorbed before x. A dim stream and a bright one
+// settle on the same fraction: only the count changes.
+const PH = { ex: 330, x0: 560, x1: 1320, top: 130, bot: 410, sx: 1440, pxcm: 38, d: 20 };
+function phDiscs(st) {
+  const key = `${Math.round(st.n)}|${st.r}|${st.seed}`;
+  if (st.discKey !== key) {
+    const r = st.r, rnd = rng32(st.seed * 7919 + 555), list = [];
+    for (let i = 0; i < Math.round(st.n); i++) list.push({ x: lerp(PH.x0 + r, PH.x1 - r, rnd()), y: lerp(PH.top - r, PH.bot + r, rnd()), warm: 0 });
+    st.discs = list; st.discKey = key;
+  }
+  return st.discs;
+}
+function phClear(st) { st.photons = []; st.depths = []; st.through = 0; st.total = 0; st.marks = []; st.flashes = []; st.ticks = []; st.queue = 0; st.acc = 0; }
+const phRecord = (st, depth) => {
+  st.total++;
+  if (depth === Infinity) { st.through++; return; }
+  const a = st.depths; let lo = 0, hi = a.length; while (lo < hi) { const m = (lo + hi) >> 1; if (a[m] < depth) lo = m + 1; else hi = m; } a.splice(lo, 0, depth);
+};
+function phSpawn(st) {
+  const discs = phDiscs(st), y = lerp(PH.top, PH.bot, Math.random()), R = st.r;
+  let hit = Infinity, hi = -1;
+  for (let i = 0; i < discs.length; i++) { const dy = y - discs[i].y; if (dy > -R && dy < R) { const xh = discs[i].x - Math.sqrt(R * R - dy * dy); if (xh < hit) { hit = xh; hi = i; } } }
+  const p = { x: PH.ex, y, hit, hi };
+  if (reduced) phLand(st, p); else st.photons.push(p);
+}
+function phLand(st, p) {
+  if (p.hit < Infinity) {
+    phRecord(st, Math.max(0, (p.hit - PH.x0) / PH.pxcm));
+    st.marks.push([p.hit, p.y]); if (st.marks.length > 600) st.marks.shift();
+    st.flashes.push([p.hit, p.y, TIME]); if (p.hi >= 0) st.discs[p.hi].warm = 1;
+  } else { phRecord(st, Infinity); st.ticks.push([p.y, TIME]); }
+}
+// What independent, uniformly placed particles predict: still going at x when no centre lies in the strip swept so far.
+function phPred(st, xcm) {
+  const r = st.r, a = PH.x0 + r, b = PH.x1 - r, n = Math.round(st.n) / ((b - a) * (PH.bot - PH.top + 2 * r)), x = PH.x0 + xcm * PH.pxcm;
+  let A = 0; const k = 24;
+  for (let i = 0; i < k; i++) { const u = -r + ((i + 0.5) * 2 * r) / k; A += clamp(x + Math.sqrt(r * r - u * u) - a, 0, b - a); }
+  return Math.exp(-n * A * ((2 * r) / k));
+}
+const SH8 = defScene({
+  id: 'photons', tab: 'One photon at a time', shared: true,
+  defaults: () => ({ n: 30, r: 6, seed: 1, speed: 1000, rate: 40, stream: false, lr: Math.log(2), pred: 1, cdf: 0,
+    discs: [], discKey: '', photons: [], depths: [], through: 0, total: 0, marks: [], flashes: [], ticks: [], queue: 0, acc: 0 }),
+  actions: [
+    { id: 'one', label: 'Fire one', run: (st) => { phSpawn(st); } },
+    { id: 'ten', label: 'Fire ten', run: (st) => { st.lr = Math.log(6); st.queue += 10; } },
+    { id: 'many', label: 'Fire many', primary: true, run: async (st) => { st.queue += 1500; st.lr = Math.log(2); await tween(st, 'lr', Math.log(220), 7, { ease: linear }); } },
+    { id: 'stream', label: 'Stream on / off', run: (st) => { st.stream = !st.stream; } },
+    { id: 'clear', label: 'Clear', run: (st) => phClear(st) },
+    { id: 'resample', label: 'Resample', run: (st) => { st.seed += 1; phClear(st); } },
+    RESET,
+  ],
+  params: [
+    { type: 'range', key: 'n', label: 'Particles', min: 0, max: 150, step: 1, fmt: (v) => String(Math.round(v)), set: (v) => { SH8.n = v; phClear(SH8); } },
+    { type: 'range', key: 'r', label: 'Particle radius', min: 2, max: 16, step: 0.5, fmt: (v) => v.toFixed(1), set: (v) => { SH8.r = v; phClear(SH8); } },
+    { type: 'range', key: 'rate', label: 'Stream (photons/s)', min: 1, max: 300, step: 1, fmt: (v) => String(v) },
+    { type: 'range', key: 'speed', label: 'Photon speed (px/s)', min: 200, max: 3000, step: 50, fmt: (v) => String(v) },
+    { type: 'check', key: 'pred', label: 'Prediction e^(−μx)', set: (v) => tween(SH8, 'pred', v ? 1 : 0, 0.5) },
+    { type: 'check', key: 'cdf', label: 'P(X < x) too', set: (v) => tween(SH8, 'cdf', v ? 1 : 0, 0.5) },
+  ],
+  draw: drawPhotons,
+});
+function drawPhotons(ctx, dt, st) {
+  const discs = phDiscs(st), color = SH.color, R = st.r;
+  // fire, fly, land
+  if (st.queue > 0 || st.stream) {
+    st.acc += dt * (st.queue > 0 ? Math.exp(st.lr) : st.rate);
+    while (st.acc >= 1) { st.acc -= 1; if (st.queue > 0) st.queue--; else if (!st.stream) { st.acc = 0; break; } phSpawn(st); }
+  } else st.acc = 0;
+  for (let i = st.photons.length - 1; i >= 0; i--) {
+    const p = st.photons[i]; p.x += st.speed * dt;
+    if (p.x >= Math.min(p.hit, PH.sx)) { phLand(st, p); st.photons.splice(i, 1); }
+  }
+  const k = Math.exp(-dt / 0.5); for (const d of discs) d.warm *= k;
+  st.flashes = st.flashes.filter((f) => TIME - f[2] < 0.35); st.ticks = st.ticks.filter((t) => TIME - t[1] < 0.5);
+  // the slab: where photons stopped, the particles, the photons in flight
+  dashed(ctx, PH.x0, PH.top - 50, PH.x0, PH.bot + 50, COL.greyC, 1, 2);
+  dashed(ctx, PH.x1, PH.top - 50, PH.x1, PH.bot + 50, COL.greyC, 1, 2);
+  if (st.marks.length) { ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.beginPath(); for (const [x, y] of st.marks) { ctx.moveTo(x + 2.6, y); ctx.arc(x, y, 2.6, 0, Math.PI * 2); } ctx.fill(); }
+  ctx.save(); ctx.strokeStyle = COL.greyB; ctx.lineWidth = Math.min(2.5, R * 0.3);
+  for (const d of discs) { ctx.fillStyle = rgba(mixRgb([38, 38, 38], hexRgb(COL.gold), 0.6 * d.warm), 1); ctx.beginPath(); ctx.arc(d.x, d.y, R, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+  ctx.restore();
+  if (st.photons.length) {
+    const c = hexRgb(color);
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
+    ctx.strokeStyle = rgba(c, 0.35); ctx.lineWidth = 4; ctx.beginPath();
+    for (const p of st.photons) { ctx.moveTo(Math.max(PH.ex, p.x - 26), p.y); ctx.lineTo(p.x, p.y); } ctx.stroke();
+    ctx.fillStyle = rgba(c, 1); ctx.beginPath(); for (const p of st.photons) { ctx.moveTo(p.x + 4.5, p.y); ctx.arc(p.x, p.y, 4.5, 0, Math.PI * 2); } ctx.fill();
+    ctx.restore();
+  }
+  for (const [x, y, t0] of st.flashes) { const u = (TIME - t0) / 0.35; ctx.strokeStyle = hexA(COL.white, 0.9 * (1 - u)); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 4 + 16 * u, 0, Math.PI * 2); ctx.stroke(); }
+  drawSheetLaser(ctx, PH.ex, PH.top, PH.bot, color);
+  // the sensor, flashing where photons arrive, and the fraction of all photons that got here
+  ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = COL.greyB; ctx.fillStyle = '#2C2C2C';
+  ctx.beginPath(); ctx.roundRect(PH.sx, PH.top - 30, 26, PH.bot - PH.top + 60, 6); ctx.fill(); ctx.stroke();
+  for (const [y, t0] of st.ticks) { ctx.fillStyle = hexA(color, 1 - (TIME - t0) / 0.5); ctx.fillRect(PH.sx - 3, y - 2, 6, 4); }
+  ctx.restore();
+  if (st.total > 0) readoutBox(ctx, PH.sx + 50, (PH.top + PH.bot) / 2, st.through / st.total, 1);
+  const e0 = drawTex(ctx, String.raw`\text{photons} =`, 820, 62, 52, { ax: 0 }).pop();
+  if (e0) drawNumber(ctx, st.total, e0.x + e0.w + 0.3 * e0.fpx, e0.base, { size: e0.fpx, dec: 0, color: COL.blue });
+  // where they stopped: the fraction still going at each depth, P(X ≥ x), against e^{-μx}
+  const A = makeAxes({ L: PH.x0, R: PH.x1, T: 600, B: 960, xr: [0, PH.d, 5], yr: [0, 1, 0.5], ext: 46, xl: 'x', labSize: 52, numSize: 30 });
+  drawAxes(ctx, A, { c: 1, nums: 1, lab: 1 });
+  if (st.pred > 0.003) {
+    drawCurve(ctx, A, (x) => phPred(st, x), { color: COL.blue, alpha: 0.85 * st.pred, width: 3.5 });
+    if (st.cdf > 0.003) drawCurve(ctx, A, (x) => 1 - phPred(st, x), { color: COL.blue, alpha: 0.85 * st.pred * st.cdf, width: 3.5 });
+  }
+  const N = st.total;
+  if (N > 0) {
+    const stairs = (flip) => {
+      const path = new Path2D(), Yv = (s) => A.Y(flip ? 1 - s : s); let alive = N;
+      path.moveTo(A.X(0), Yv(1));
+      for (const d of st.depths) { const x = A.X(Math.min(d, PH.d)); path.lineTo(x, Yv(alive / N)); alive--; path.lineTo(x, Yv(alive / N)); }
+      path.lineTo(A.X(PH.d), Yv(alive / N));
+      return path;
+    };
+    ctx.save(); ctx.lineWidth = 4; ctx.lineJoin = 'round';
+    ctx.strokeStyle = COL.yellow; ctx.stroke(stairs(false));
+    if (st.cdf > 0.003) { ctx.globalAlpha = st.cdf; ctx.strokeStyle = COL.red; ctx.stroke(stairs(true)); }
+    ctx.restore();
+    // the two ends' values, kept off the axis and apart from each other
+    const s = st.through / N, top = A.oy - 22;
+    let yS = Math.min(A.Y(s) + 12, top), yA = Math.min(A.Y(1 - s) + 12, top);
+    if (st.cdf > 0.003 && Math.abs(yS - yA) < 40) { const m = (yS + yA) / 2, up = s >= 0.5 ? -1 : 1; yS = Math.min(m + up * 20, top); yA = Math.min(m - up * 20, top); if (Math.abs(yS - yA) < 40) (s >= 0.5 ? (yS = yA - 40) : (yA = yS - 40)); }
+    drawNumber(ctx, s * 100, A.X(PH.d) + 16, yS, { size: 36, dec: 1, suffix: '%', color: COL.yellow });
+    if (st.cdf > 0.003) drawNumber(ctx, (1 - s) * 100, A.X(PH.d) + 16, yA, { size: 36, dec: 1, suffix: '%', color: COL.red, alpha: st.cdf });
+  }
+  drawTex(ctx, String.raw`P(X \ge x)`, A.X(PH.d), A.Y(1) + 6, 44, { ax: 1, color: COL.yellow });
+  if (st.pred > 0.003) drawTex(ctx, String.raw`e^{-\mu x}`, A.X(PH.d), A.Y(1) + 64, 46, { ax: 1, color: COL.blue, alpha: st.pred });
+  if (st.cdf > 0.003) drawTex(ctx, String.raw`P(X < x)`, A.X(PH.d), A.Y(0.13), 44, { ax: 1, color: COL.red, alpha: st.cdf });
+}
+
 //@@SCENES@@
 
 // ---------- the stage ----------
