@@ -11,17 +11,22 @@ const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const SVGNS = 'http://www.w3.org/2000/svg';
 const W = 1920, H = 1080;
 
-// manim's colors
+// The palette of the GPU-driven rendering video (the blog's dark theme): a warm near-black stage, warm white
+// and greys, and its accents in manim's roles (blue numbers, lavender fractions, amber and orange results).
+const BG = '#1C1B18';
 const COL = {
-  white: '#FFFFFF', greyA: '#DDDDDD', greyB: '#BBBBBB', grey: '#888888', greyC: '#666666', greyD: '#444444', greyE: '#222222',
-  blue: '#58C4DD', blueE: '#236B8E', green: '#83C167', yellow: '#F4D06F', gold: '#F0AC5F', goldE: '#C78D46', red: '#FC6255', lavender: '#C7C8F2',
+  white: '#EEEAE2', greyA: '#DCD7CC', greyB: '#C8C2B6', grey: '#948E82', greyC: '#6E675F', greyD: '#47443D', greyE: '#2E2C27',
+  blue: '#74A6EA', blueE: '#34506A', green: '#6FC08E', yellow: '#EDB24E', gold: '#F0784F', goldE: '#C4471F', red: '#EE7F94', lavender: '#A396EA',
 };
-const AXIS = '#C8C8C8';
+const AXIS = '#C8C2B6';
+const BODY = '#2A2824', NOZZLE = '#151412', PART = '#2A2824';   // laser and sensor bodies, laser nozzles, particles
 function hexRgb(h) { h = String(h).replace('#', ''); if (h.length === 3) h = [...h].map((c) => c + c).join(''); const n = parseInt(h, 16) || 0; return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
 const rgba = (c, a = 1) => `rgba(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])},${clamp(a, 0, 1)})`;
 const hexA = (h, a = 1) => rgba(hexRgb(h), a);
 const mixRgb = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
 const isWhite = (c) => c[0] > 250 && c[1] > 250 && c[2] > 250;
+// KaTeX lays formulas out in pure white; on the stage that white is the palette's warm white.
+const WHITE_RGB = hexRgb(COL.white), ink = (c) => (isWhite(c) ? WHITE_RGB : c);
 
 // manim's rate functions
 const sigmoid = (x) => 1 / (1 + Math.exp(-x));
@@ -187,6 +192,7 @@ function svgXf(s) {
 }
 function drawSprite(ctx, s, alpha = s.alpha, color = s.color) {
   if (alpha <= 0.003) return;
+  color = ink(color);
   const a = s.a; ctx.fillStyle = rgba(color, alpha);
   if (a.k === 'g') {
     const o = outlineOf(a);
@@ -205,6 +211,7 @@ function drawSprite(ctx, s, alpha = s.alpha, color = s.color) {
 // manim's Write on one piece: q in 0..1. The first half draws the outline, the second fills it in.
 function drawWriting(ctx, s, q, alpha, color) {
   if (q <= 0) return;
+  color = ink(color);
   if (q >= 1) { drawSprite(ctx, s, alpha, color); return; }
   const a = s.a, border = Math.min(1, q * 2), fill = clamp(q * 2 - 1, 0, 1);
   const lw = Math.max(1.3, (s.fpx || s.size * 1.2) * 0.022);
@@ -458,7 +465,7 @@ function drawReshape(ctx, P, t, alpha = 1) {
       for (let i = 0; i < K; i++) { const x = a[2 * i] + (b[2 * i] - a[2 * i]) * u, y = a[2 * i + 1] + (b[2 * i + 1] - a[2 * i + 1]) * u; if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); }
       ctx.closePath();
     }
-    ctx.fillStyle = rgba(mixRgb(g.ca, g.cb, u), lerp(g.aa, g.ab, u) * alpha); ctx.fill();
+    ctx.fillStyle = rgba(mixRgb(ink(g.ca), ink(g.cb), u), lerp(g.aa, g.ab, u) * alpha); ctx.fill();
   }
 }
 // Plain shapes, to reshape a formula into something that is not a formula at all: @circle, @square, @triangle, @star.
@@ -506,7 +513,7 @@ function drawBrace(ctx, cx, top, width, h, th, color, alpha = 1) {
 // ---------- shared pieces: laser, beam, tank, sensor ----------
 let TIME = 0;   // stage clock in seconds; stops while the tab is hidden
 const LOOKS = {
-  beer: { c: COL.gold, c2: COL.goldE, a: 0.42, a2: 0.62, surf: '#F7C797' },
+  beer: { c: '#F0AC5F', c2: '#C78D46', a: 0.42, a2: 0.62, surf: '#F7C797' },
   fog: { c: '#BBBBBB', c2: '#888888', a: 0.15, a2: 0.24, surf: '#DDDDDD' },
   ink: { c: '#236B8E', c2: '#16465E', a: 0.72, a2: 0.86, surf: '#58C4DD' },
   water: { c: '#58C4DD', c2: '#29ABCA', a: 0.15, a2: 0.24, surf: '#9CDCEB' },
@@ -545,16 +552,16 @@ function drawGlass(ctx, g) {
   ctx.restore();
 }
 function drawLaser(ctx, apX, y, color, on) {
-  ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = COL.greyB; ctx.fillStyle = '#2C2C2C';
+  ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = COL.greyB; ctx.fillStyle = BODY;
   ctx.beginPath(); ctx.roundRect(apX - 232, y - 42, 212, 84, 12); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = '#161616'; ctx.beginPath(); ctx.roundRect(apX - 22, y - 19, 22, 38, 4); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = on > 0.5 ? hexA(color, 1) : '#3A3A3A'; ctx.beginPath(); ctx.arc(apX - 68, y - 20, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = NOZZLE; ctx.beginPath(); ctx.roundRect(apX - 22, y - 19, 22, 38, 4); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = on > 0.5 ? hexA(color, 1) : '#3E3B35'; ctx.beginPath(); ctx.arc(apX - 68, y - 20, 6, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
 }
 function drawSensor(ctx, xs, y, color, lit) {
   ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = COL.greyB; ctx.lineCap = 'round';
   ctx.beginPath(); ctx.moveTo(xs, y + 48); ctx.lineTo(xs, y + 250); ctx.moveTo(xs - 56, y + 250); ctx.lineTo(xs + 56, y + 250); ctx.stroke();
-  ctx.fillStyle = '#2C2C2C'; ctx.beginPath(); ctx.roundRect(xs - 15, y - 48, 30, 96, 6); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = BODY; ctx.beginPath(); ctx.roundRect(xs - 15, y - 48, 30, 96, 6); ctx.fill(); ctx.stroke();
   ctx.fillStyle = hexA(color, 0.16 + 0.84 * clamp(lit, 0, 1)); ctx.fillRect(xs - 18, y - 28, 5, 56);
   ctx.restore();
 }
@@ -563,7 +570,7 @@ function drawReadout(ctx, xs, y, value, alpha) {
   const bw = 236, bh = 92, bx = clamp(xs - bw / 2, 20, W - bw - 20), by = y - 48 - 46 - bh;
   ctx.save(); ctx.globalAlpha = alpha; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 2.5;
   ctx.beginPath(); ctx.moveTo(xs, y - 48); ctx.lineTo(xs, by + bh); ctx.stroke();
-  ctx.fillStyle = '#000'; ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 12); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = BG; ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 12); ctx.fill(); ctx.stroke();
   ctx.restore();
   drawNumber(ctx, value * 100, bx + bw / 2, by + bh / 2 + 20, { size: 58, dec: 1, suffix: '%', align: 'center', alpha });
 }
@@ -655,7 +662,7 @@ function runAction(sc, a) {
 const RESET = { id: 'reset', label: 'Reset', run: (st, alive, sc) => resetScene(sc) };
 
 // ---------- shared: the laser and the medium, the same in every scene that shows them ----------
-const SH = { __tag: 'shared', color: '#FF3B30', I0: 1, beamLook: 'solid', beamW: 8, container: 'tank', look: 'beer', custom: '#83C167' };
+const SH = { __tag: 'shared', color: '#FF3B30', I0: 1, beamLook: 'solid', beamW: 8, container: 'tank', look: 'beer', custom: '#6FC08E' };
 const SHARED = { id: 'shared', st: SH, params: [
   { type: 'chips', key: 'color', label: 'Laser colour', options: ['#FF3B30', '#35D36A', '#3B7BFF', '#FFFFFF'] },
   { type: 'range', key: 'I0', label: 'Intensity I₀', min: 0, max: 1, step: 0.01, fmt: (v) => `${Math.round(v * 100)} %` },
@@ -1249,9 +1256,9 @@ const SA = defScene({
 });
 // A laser that emits a sheet as tall as the slab.
 function drawSheetLaser(ctx, x, top, bot, color) {
-  ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = COL.greyB; ctx.fillStyle = '#2C2C2C';
+  ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = COL.greyB; ctx.fillStyle = BODY;
   ctx.beginPath(); ctx.roundRect(x - 214, top - 30, 192, bot - top + 60, 12); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = '#161616'; ctx.beginPath(); ctx.roundRect(x - 22, top - 10, 22, bot - top + 20, 4); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = NOZZLE; ctx.beginPath(); ctx.roundRect(x - 22, top - 10, 22, bot - top + 20, 4); ctx.fill(); ctx.stroke();
   ctx.fillStyle = hexA(color, 1); ctx.beginPath(); ctx.arc(x - 64, top - 2, 6, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
 }
@@ -1273,7 +1280,7 @@ function drawShadowsPicture(ctx, dt, st, S) {
     else { if (glow) { ctx.strokeStyle = hexA(color, 0.14 * power); ctx.lineWidth = 6; rays(); } ctx.strokeStyle = hexA(color, 0.95 * power); ctx.lineWidth = 1.8; rays(); }
     if (st.marks > 0.003 && !sheet) for (let i = 0; i < k; i++) if (hits[i] < xf) dot(ctx, hits[i], ys[i], 3.2, '#FFFFFF', 0.85 * st.marks);
     ctx.restore();
-    ctx.fillStyle = '#262626'; ctx.strokeStyle = COL.greyB; ctx.lineWidth = Math.min(2.5, R * 0.3);
+    ctx.fillStyle = PART; ctx.strokeStyle = COL.greyB; ctx.lineWidth = Math.min(2.5, R * 0.3);
     ctx.beginPath(); for (const [x, y] of pos) { ctx.moveTo(x + R, y); ctx.arc(x, y, R, 0, Math.PI * 2); } ctx.fill(); ctx.stroke();
   };
   ctx.save(); ctx.beginPath(); ctx.rect(0, 0, sx, H); ctx.clip(); layer(); ctx.restore();
@@ -1283,7 +1290,7 @@ function drawShadowsPicture(ctx, dt, st, S) {
   let reached = null;   // the fraction of rays that reach the sensor
   if (xf >= sx) { let c = 0; for (const h of hits) if (h > sx) c++; reached = c / k; }
   st.shown = reached == null ? null : st.shown == null || reduced ? reached : lerp(st.shown, reached, 1 - Math.exp(-dt * 6));
-  ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = COL.greyB; ctx.fillStyle = '#2C2C2C';
+  ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = COL.greyB; ctx.fillStyle = BODY;
   ctx.beginPath(); ctx.roundRect(sx, SL.top - 30, 26, SL.bot - SL.top + 60, 6); ctx.fill(); ctx.stroke();
   if (reached != null) { ctx.fillStyle = hexA(color, 0.95 * power); for (let i = 0; i < k; i++) if (hits[i] > sx) ctx.fillRect(sx - 3, ys[i] - (sheet ? 0.6 : 1.4), 5, sheet ? 1.2 : 2.8); }
   ctx.restore();
@@ -1291,7 +1298,7 @@ function drawShadowsPicture(ctx, dt, st, S) {
 }
 function drawShadowsReadout(ctx, sx, v, alpha) {
   const bw = 210, bh = 84, right = sx + 26 + 24 + bw < W - 10, bx = right ? sx + 26 + 24 : sx - 24 - bw, by = (SL.top + SL.bot) / 2 - bh / 2;
-  ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = '#000'; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 12); ctx.fill(); ctx.stroke(); ctx.restore();
+  ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = BG; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 12); ctx.fill(); ctx.stroke(); ctx.restore();
   drawNumber(ctx, v * 100, bx + bw / 2, by + bh / 2 + 18, { size: 52, dec: 1, suffix: '%', align: 'center', alpha });
 }
 // The plot under the slab, on the slab's x: depth in mean free paths 1/(nσ), so the prediction is e^{-x}.
@@ -1515,7 +1522,7 @@ function drawZoom(ctx, dt, st) {
       ctx.restore();
     }
     if (da <= 0.003 && fl <= 0.003) return;
-    ctx.save(); ctx.fillStyle = '#262626'; ctx.strokeStyle = COL.greyB; ctx.lineWidth = Math.min(2.5, rs * 0.3);
+    ctx.save(); ctx.fillStyle = PART; ctx.strokeStyle = COL.greyB; ctx.lineWidth = Math.min(2.5, rs * 0.3);
     if (fl > 0.003) {
       ctx.globalAlpha *= fl; ctx.beginPath();
       for (const [x, y] of zoomFiller(c, top, bot)) { const X = SX(x), Y = SY(y); if (X < -rs || X > W + rs || Y < -rs || Y > H + rs) continue; ctx.moveTo(X + Math.max(0.5, rw * Z), Y); ctx.arc(X, Y, Math.max(0.5, rw * Z), 0, Math.PI * 2); }
@@ -1527,14 +1534,14 @@ function drawZoom(ctx, dt, st) {
   ctx.save(); ctx.beginPath(); ctx.rect(0, 0, px, H); ctx.clip(); layer(); ctx.restore();
   ctx.save(); ctx.beginPath(); ctx.rect(px, 0, W - px, H); ctx.clip(); ctx.globalAlpha = lerp(1, 0.22, s); layer(); ctx.restore();
   // laser and sensor, on top
-  ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = COL.greyB; ctx.fillStyle = '#2C2C2C';
+  ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = COL.greyB; ctx.fillStyle = BODY;
   ctx.beginPath(); ctx.roundRect(body[0], body[1], body[2], body[3], 12); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = '#161616'; ctx.beginPath(); ctx.roundRect(noz[0], noz[1], noz[2], noz[3], 4); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = NOZZLE; ctx.beginPath(); ctx.roundRect(noz[0], noz[1], noz[2], noz[3], 4); ctx.fill(); ctx.stroke();
   ctx.fillStyle = hexA(color, 1); ctx.beginPath(); ctx.arc(lerp(g.apX - 68, SL.ex - 64, s), lerp(g.y - 20, SL.top - 2, s), 6, 0, Math.PI * 2); ctx.fill();
   ctx.globalAlpha = 1 - s; ctx.beginPath();   // the sensor's stand goes; the plate stays
   const hx = head[0] + head[2] / 2, hb = head[1] + head[3];
   ctx.moveTo(hx, hb); ctx.lineTo(hx, hb + 202); ctx.moveTo(hx - 56, hb + 202); ctx.lineTo(hx + 56, hb + 202); ctx.stroke();
-  ctx.globalAlpha = 1; ctx.fillStyle = '#2C2C2C'; ctx.beginPath(); ctx.roundRect(head[0], head[1], head[2], head[3], 6); ctx.fill(); ctx.stroke();
+  ctx.globalAlpha = 1; ctx.fillStyle = BODY; ctx.beginPath(); ctx.roundRect(head[0], head[1], head[2], head[3], 6); ctx.fill(); ctx.stroke();
   if (hits) { ctx.fillStyle = hexA(color, 0.95 * sr * SH.I0); for (let i = 0; i < k; i++) if (hits[i] > px) ctx.fillRect(px - 3, ys[i] - (sheet ? 0.6 : 1.4) * Math.min(1, Z / c.Z1 * 3), 5, (sheet ? 1.2 : 2.8) * Math.min(1, Z / c.Z1 * 3)); }
   ctx.restore();
   if (fadeRest > 0.003) drawReadout(ctx, hx, head[1] + 48, T(g.xs - 18), fadeRest);
@@ -1780,7 +1787,7 @@ function drawParticle(ctx, x, y, r, warm, alpha) {
     rg.addColorStop(0, hexA(COL.gold, 0.42 * warm * alpha)); rg.addColorStop(1, hexA(COL.gold, 0));
     ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(x, y, r * 2.5, 0, Math.PI * 2); ctx.fill();
   }
-  ctx.fillStyle = rgba(mixRgb([38, 38, 38], hexRgb(COL.gold), 0.55 * clamp(warm, 0, 1)), alpha); ctx.strokeStyle = hexA(COL.greyB, alpha); ctx.lineWidth = 3;
+  ctx.fillStyle = rgba(mixRgb(hexRgb(PART), hexRgb(COL.gold), 0.55 * clamp(warm, 0, 1)), alpha); ctx.strokeStyle = hexA(COL.greyB, alpha); ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 }
 const SI = defScene({
@@ -1878,7 +1885,7 @@ function firstHitsR(ys, discs) {
 function readoutBox(ctx, x, yc, v, alpha) {
   if (alpha <= 0.01) return;
   const bw = 210, bh = 84, by = yc - bh / 2;
-  ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = '#000'; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(x, by, bw, bh, 12); ctx.fill(); ctx.stroke(); ctx.restore();
+  ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = BG; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(x, by, bw, bh, 12); ctx.fill(); ctx.stroke(); ctx.restore();
   drawNumber(ctx, v * 100, x + bw / 2, by + bh / 2 + 18, { size: 52, dec: 1, suffix: '%', align: 'center', alpha });
 }
 const SE = defScene({
@@ -1916,14 +1923,14 @@ function drawDensity(ctx, dt, st) {
     else { if (glow) { ctx.strokeStyle = hexA(color, 0.14 * power); ctx.lineWidth = 6; rays(); } ctx.strokeStyle = hexA(color, 0.95 * power); ctx.lineWidth = 1.8; rays(); }
     if (!sheet) for (let i = 0; i < k; i++) if (hits[i] < xf && hits[i] < SD.sx) dot(ctx, hits[i], ys[i], 3, '#FFFFFF', 0.85);
     ctx.restore();
-    ctx.fillStyle = '#262626'; ctx.strokeStyle = COL.greyB; ctx.lineWidth = Math.min(2.5, st.r * 0.3);
+    ctx.fillStyle = PART; ctx.strokeStyle = COL.greyB; ctx.lineWidth = Math.min(2.5, st.r * 0.3);
     ctx.beginPath(); for (const [x, y, R] of discs) { if (R < 0.3) continue; ctx.moveTo(x + R, y); ctx.arc(x, y, R, 0, Math.PI * 2); } ctx.fill(); ctx.stroke();
     drawSheetLaser(ctx, SD.ex, top, bot, color);
     // the sensor plate, lit where rays arrive, and the fraction that arrived (counting toward it as it changes)
     let reached = null;
     if (xf >= SD.sx - 0.5) { let c = 0; for (const h of hits) if (h > SD.sx) c++; reached = c / k; }
     st.shown[row] = reached == null ? null : st.shown[row] == null || reduced ? reached : lerp(st.shown[row], reached, 1 - Math.exp(-dt * 6));
-    ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = COL.greyB; ctx.fillStyle = '#2C2C2C';
+    ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = COL.greyB; ctx.fillStyle = BODY;
     ctx.beginPath(); ctx.roundRect(SD.sx, top - 30, 26, bot - top + 60, 6); ctx.fill(); ctx.stroke();
     if (reached != null) { ctx.fillStyle = hexA(color, 0.95 * power); for (let i = 0; i < k; i++) if (hits[i] > SD.sx) ctx.fillRect(SD.sx - 3, ys[i] - (sheet ? 0.6 : 1.4), 5, sheet ? 1.2 : 2.8); }
     ctx.restore();
@@ -2135,7 +2142,7 @@ function drawCompound(ctx, dt, st) {
     ctx.fillStyle = hexA(look.c, lerp(0.12, 0.7, dens)); ctx.strokeStyle = COL.greyA; ctx.lineWidth = 2.5;
     ctx.beginPath(); ctx.roundRect(x, y, ww, hh, 6); ctx.fill(); ctx.stroke();
     if (st.parts > 0.003) {
-      const rnd = rng32(k * 977 + 13); ctx.globalAlpha = e * st.parts; ctx.fillStyle = '#262626'; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 1.5; ctx.beginPath();
+      const rnd = rng32(k * 977 + 13); ctx.globalAlpha = e * st.parts; ctx.fillStyle = PART; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 1.5; ctx.beginPath();
       for (let i = 0; i < np; i++) { const px = lerp(x + 9, x + ww - 9, rnd()), py = lerp(y + 12, y + hh - 12, rnd()); ctx.moveTo(px + 5, py); ctx.arc(px, py, 5, 0, Math.PI * 2); }
       ctx.fill(); ctx.stroke();
     }
@@ -2250,7 +2257,7 @@ function drawPhotons(ctx, dt, st) {
   dashed(ctx, PH.x1, PH.top - 50, PH.x1, PH.bot + 50, COL.greyC, 1, 2);
   if (st.marks.length) { ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.beginPath(); for (const [x, y] of st.marks) { ctx.moveTo(x + 2.6, y); ctx.arc(x, y, 2.6, 0, Math.PI * 2); } ctx.fill(); }
   ctx.save(); ctx.strokeStyle = COL.greyB; ctx.lineWidth = Math.min(2.5, R * 0.3);
-  for (const d of discs) { ctx.fillStyle = rgba(mixRgb([38, 38, 38], hexRgb(COL.gold), 0.6 * d.warm), 1); ctx.beginPath(); ctx.arc(d.x, d.y, R, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+  for (const d of discs) { ctx.fillStyle = rgba(mixRgb(hexRgb(PART), hexRgb(COL.gold), 0.6 * d.warm), 1); ctx.beginPath(); ctx.arc(d.x, d.y, R, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
   ctx.restore();
   if (st.photons.length) {
     const c = hexRgb(color);
@@ -2263,7 +2270,7 @@ function drawPhotons(ctx, dt, st) {
   for (const [x, y, t0] of st.flashes) { const u = (TIME - t0) / 0.35; ctx.strokeStyle = hexA(COL.white, 0.9 * (1 - u)); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 4 + 16 * u, 0, Math.PI * 2); ctx.stroke(); }
   drawSheetLaser(ctx, PH.ex, PH.top, PH.bot, color);
   // the sensor, flashing where photons arrive, and the fraction of all photons that got here
-  ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = COL.greyB; ctx.fillStyle = '#2C2C2C';
+  ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = COL.greyB; ctx.fillStyle = BODY;
   ctx.beginPath(); ctx.roundRect(PH.sx, PH.top - 30, 26, PH.bot - PH.top + 60, 6); ctx.fill(); ctx.stroke();
   for (const [y, t0] of st.ticks) { ctx.fillStyle = hexA(color, 1 - (TIME - t0) / 0.5); ctx.fillRect(PH.sx - 3, y - 2, 6, 4); }
   ctx.restore();
@@ -2349,7 +2356,7 @@ function drawOrder(ctx, dt, st) {
     for (let h = 0; h < 2; h++) {
       const hx = ABG.x0 + h * hw, k = kinds[h], tau = taus[h], n = Math.round(tau * 30), rnd = rng32(k * 1013 + 7);
       if (fa > 0.003) { ctx.fillStyle = rgba(lc, fa * lerp(0.06, 0.55, clamp(tau / 1.5, 0, 1))); ctx.fillRect(hx, top, hw, ABG.h); }
-      ctx.fillStyle = '#262626'; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 2;
+      ctx.fillStyle = PART; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 2;
       for (let j = 0; j < 60; j++) {
         const px = lerp(hx + 12, hx + hw - 12, rnd()), py = lerp(top + 12, bot - 12, rnd()); if (j >= n) continue;
         const g = smooth(clamp((mk - 0.4 - 0.5 * (j / Math.max(1, n))) / 0.12, 0, 1)); if (g <= 0.003) continue;
@@ -2365,7 +2372,7 @@ function drawOrder(ctx, dt, st) {
     ctx.save(); ctx.globalAlpha = ga;
     drawLaser(ctx, ABG.apX, y, color, lit ? 1 : 0);
     const reached = st.front >= 0.999;
-    ctx.lineWidth = 3; ctx.strokeStyle = COL.greyB; ctx.fillStyle = '#2C2C2C';
+    ctx.lineWidth = 3; ctx.strokeStyle = COL.greyB; ctx.fillStyle = BODY;
     ctx.beginPath(); ctx.roundRect(ABG.sx - 15, y - 48, 30, 96, 6); ctx.fill(); ctx.stroke();
     ctx.fillStyle = hexA(color, 0.16 + 0.84 * (reached ? T(ABG.x1) * SH.I0 : 0)); ctx.fillRect(ABG.sx - 18, y - 28, 5, 56);
     ctx.restore();
@@ -2376,7 +2383,7 @@ function drawOrder(ctx, dt, st) {
   const Q = [String.raw`A > B\,?`, String.raw`B > A\,?`, String.raw`A = B\,?`], qx = [500, 900, 1300];
   for (let i = 0; i < 3; i++) {
     const p = st.quiz[i], hi = i === 2 ? st.quizHi : 0, a = st.quizA * (i === 2 ? 1 : 1 - 0.65 * st.quizHi);
-    if (p > 0.003 && a > 0.003) drawSprites(ctx, place(tex(Q[i]), { x: qx[i], y: 445, size: 64 }), { p, alpha: a, color: mixRgb([255, 255, 255], hexRgb(COL.yellow), hi) });
+    if (p > 0.003 && a > 0.003) drawSprites(ctx, place(tex(Q[i]), { x: qx[i], y: 445, size: 64 }), { p, alpha: a, color: mixRgb(WHITE_RGB, hexRgb(COL.yellow), hi) });
   }
   drawFormulas(ctx, st);
 }
@@ -2454,7 +2461,7 @@ function drawIntegral(ctx, dt, st) {
   // the particles follow the density itself: each keeps its share of the total, so equal areas keep them all
   const area = cum[n], cnt = Math.round(PI_A0 * 60), rnd = rng32(4242);
   if (fa > 0.003 && area > 1e-6) {
-    ctx.save(); ctx.globalAlpha = fa; ctx.fillStyle = '#262626'; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 1.5; ctx.beginPath();
+    ctx.save(); ctx.globalAlpha = fa; ctx.fillStyle = PART; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 1.5; ctx.beginPath();
     for (let i = 0; i < cnt; i++) {
       const q = ((i + rnd()) / cnt) * area, v = rnd();
       let lo = 1, hi = n; while (lo < hi) { const m = (lo + hi) >> 1; if (cum[m] < q) lo = m + 1; else hi = m; }
@@ -2673,7 +2680,7 @@ function frame(now) {
   tick(dt); TIME += dt;
   fitCanvas();
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
-  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, cv.width, cv.height);
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, cv.width, cv.height);
   ctx.setTransform(K, 0, 0, K, 0, 0); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.lineCap = 'butt'; ctx.setLineDash([]);
   try {
     if (fade) {
