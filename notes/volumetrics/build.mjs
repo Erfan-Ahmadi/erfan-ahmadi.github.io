@@ -26,7 +26,7 @@ const outlines = JSON.stringify(glyphOutlines(path.join(dist, 'fonts'), [...keep
 // The 3D scenes (src/volume.js) go in where app.js marks the end of its scenes, so they register after the 2D ones.
 const volume = fs.readFileSync(path.join(here, 'src/volume.js'), 'utf8');
 const app = fs.readFileSync(path.join(here, 'src/app.js'), 'utf8').replace('//@@SCENES@@', () => volume + '\n//@@SCENES@@');
-if (!app.includes('function g3render')) throw new Error('app.js is missing the //@@SCENES@@ marker');
+if (!app.includes('function g3draw')) throw new Error('app.js is missing the //@@SCENES@@ marker');
 const shell = fs.readFileSync(path.join(here, 'src/shell.html'), 'utf8');
 for (const t of ['<!--KATEX_CSS-->', '<!--KATEX_JS-->', '<!--GLYPHS-->', '<!--APP_JS-->']) if (!shell.includes(t)) throw new Error(`shell.html is missing ${t}`);
 

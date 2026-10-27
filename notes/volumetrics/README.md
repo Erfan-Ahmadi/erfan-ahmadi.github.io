@@ -13,7 +13,8 @@ node notes/volumetrics/build.mjs
 Edit `src/`, never the built page:
 
 - `src/shell.html` is the markup and the CSS.
-- `src/app.js` is the engine and every scene.
+- `src/app.js` is the engine and the 2D scenes.
+- `src/volume.js` is the WebGL2 volume renderer and scene 17. The build inserts it into `app.js`, so it can use the engine's helpers.
 - `build.mjs` puts KaTeX's stylesheet (fonts inlined as data URIs), KaTeX's script, the glyph outlines and `app.js` into the shell. KaTeX comes from the blog's `node_modules`, so run `npm install` first.
 - `glyphs.mjs` reads the outlines of KaTeX's fonts, which the morphs and the write animation draw as paths.
 
@@ -37,6 +38,9 @@ Edit `src/`, never the built page:
 | 14 | One photon at a time | Photons fired one by one stop at the first particle they touch. Where they stop builds $P(X \ge x)$, which follows $e^{-\mu x}$; $P(X < x)$ is its complement. |
 | 15 | A or B? | The same dense and sparse halves in opposite orders. The factors multiply, the exponents add, and the order does not matter. Steps with Next and Back. |
 | 16 | Product to integral | Slices, a product of factors, a sum in the exponent, bars that close in on $\int_0^d \sigma(z)\,dz$. Last, the density changes shape at equal area and the light that gets out stays put. |
+| 17 | Cloud in 3D | A cumulus made from noise and lit by the sun, with a laser through it and a sensor reading $T = e^{-(\sigma_a + \sigma_s)\int \rho\,ds}$. Drag to orbit and scroll to come closer. Scattering, absorption and the sun turn on and off. "Zoom into the beam" dissolves the cloud into the particles of scene 6 and lands on it, and scene 6 zooms back out. "The eye" shows an eye, the rays it looks along, and what it sees. |
+
+Scene 17 needs WebGL2; while the camera is still it keeps averaging frames until the picture settles.
 
 Buttons under the stage play each scene's animations. The laser, the beam's look and width, the container and the medium are shared, so a change shows in every scene that uses them. "Fade into scene…" crossfades slowly into another scene, and the speed slider scales every animation.
 
