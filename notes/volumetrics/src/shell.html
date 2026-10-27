@@ -61,7 +61,8 @@ kbd { font-family: var(--mono); font-size: 10.5px; border: 1px solid var(--line2
 .btn.quiet { background: transparent; color: var(--fg2); }
 .btn:focus-visible, .tab:focus-visible, select:focus-visible, input:focus-visible, .chip:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .stepinfo { font-family: var(--mono); font-size: 12px; color: var(--muted); padding: 0 4px; }
-.glob { margin-left: auto; display: flex; gap: 6px; align-items: center; color: var(--muted); }
+.glob { margin-left: auto; display: flex; gap: 6px 10px; align-items: center; color: var(--fg2); flex-wrap: wrap; }
+.glob .rng.speed { width: 170px; }
 .params { display: flex; flex-wrap: wrap; gap: 6px 20px; align-items: end; color: var(--fg2); }
 .rng { display: grid; grid-template-columns: 1fr auto; gap: 0 10px; width: 190px; }
 .rng output { font-family: var(--mono); font-size: 11.5px; color: var(--fg); }
@@ -104,8 +105,7 @@ body.clean .stage { border: 0; border-radius: 0; }
     <div class="row1">
       <div class="anims" id="anims" role="group" aria-label="Animations"></div>
       <div class="glob">
-        <label for="speed">Speed</label>
-        <select id="speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option></select>
+        <label class="rng speed" for="speed"><span>Animation speed</span><output id="speedOut">1.00×</output><input type="range" id="speed" min="0.1" max="3" step="0.05" value="1"></label>
         <button class="btn quiet" id="hideBtn" type="button">Hide controls</button>
         <button class="btn quiet" id="fsBtn" type="button">Full screen</button>
       </div>
