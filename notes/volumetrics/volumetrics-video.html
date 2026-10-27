@@ -1586,13 +1586,20 @@ function drawZoom(ctx, dt, st) {
   let T;
   if (cloud) { buildCloudTau({ sigma: st.sigma, cloud: 1 }, g, puffs); T = cloudT; }
   else T = (x) => Math.exp((-st.sigma * Math.max(0, Math.min(g.x1, x) - Math.max(g.x0, g.apX))) / g.pxcm);
-  // the medium under the camera: dimmer where the fronts have passed, the slab whole until it gives way to black
-  ctx.save(); ctx.translate(c.tx, c.ty); ctx.scale(Z, Z); ctx.translate(-c.fx, -c.fy);
+  // the medium under the camera: dimmer where the fronts have passed, the slab whole until it gives way to black.
+  // Neighbouring bands of equal opacity merge, and every edge snaps to a device pixel, so no seam shows where two meet.
   const medium = () => (cloud ? drawCloud(ctx, puffs, { cloud: 1 }) : drawLiquid(ctx, g, { ...mediumOf(FILL), plain: true }));
-  const band = (x0, x1, a) => { if (a <= 0.003 || x1 <= x0) return; ctx.save(); ctx.beginPath(); ctx.rect(x0, -1e5, x1 - x0, 2e5); ctx.clip(); ctx.globalAlpha = a; medium(); ctx.restore(); };
-  band(-1e5, lf, 0.4 * fadeRest); band(rf, 1e5, 0.4 * fadeRest);
-  band(lf, c.xs, fadeRest); band(c.xe, rf, fadeRest); band(c.xs, c.xe, slabA);
-  ctx.restore();
+  const m = ctx.getTransform(), snap = (X) => (Math.round(m.a * clamp(X, -20, W + 20) + m.e) - m.e) / m.a, bands = [];
+  for (const [x0, x1, a] of [[-1e5, lf, 0.4 * fadeRest], [lf, c.xs, fadeRest], [c.xs, c.xe, slabA], [c.xe, rf, fadeRest], [rf, 1e5, 0.4 * fadeRest]]) {
+    const X0 = snap(SX(x0)), X1 = snap(SX(x1)), p = bands[bands.length - 1];
+    if (X1 <= X0) continue;
+    if (p && p[1] === X0 && Math.abs(p[2] - a) < 1e-3) p[1] = X1; else bands.push([X0, X1, a]);
+  }
+  for (const [X0, X1, a] of bands) {
+    if (a <= 0.003) continue;
+    ctx.save(); ctx.beginPath(); ctx.rect(X0, -20, X1 - X0, H + 40); ctx.clip();
+    ctx.translate(c.tx, c.ty); ctx.scale(Z, Z); ctx.translate(-c.fx, -c.fy); ctx.globalAlpha = a; medium(); ctx.restore();
+  }
   // the glass in screen space, so its walls keep their width as the camera closes in
   if (fadeRest > 0.003 && !cloud) { ctx.save(); ctx.globalAlpha = fadeRest; drawGlass(ctx, { x0: SX(g.x0), x1: SX(g.x1), top: SY(g.top), bot: SY(g.bot), th: (g.bot - g.top) * Z }); ctx.restore(); }
   // the fronts, which end up as the slab's faces, and then as the shadows scene's dashed faces
@@ -1660,6 +1667,90 @@ function drawZoom(ctx, dt, st) {
     drawShadowsReadout(ctx, S6.sx, reach / S6.k, land);
     drawShadowsPlot(ctx, SA, S6, land);
   }
+}
+
+// ---------- C. optical depth is an area ----------
+// The exponent of Beer–Lambert is the area under the density along the path: τ(z) = ∫₀^z σₐ(s) ds. Paint a
+// density (drag on its plot), sweep along it, and watch the area pile up while T(z) = e^{−τ(z)} falls:
+// steep where the medium is dense, flat where it is empty. Mirror the profile: the curve changes, but the
+// light that gets out does not, because the area is the same. (PBRT's transmittance chapter; the
+// Production Volume Rendering course notes.)
+const AZ = { n: 200, d: 20, x0: 330, x1: 1400, smax: 0.25 };
+const azX = (z) => AZ.x0 + (z / AZ.d) * (AZ.x1 - AZ.x0);
+const azShapes = {
+  uniform: () => 0.1,
+  ramp: (z) => (0.2 * z) / AZ.d,
+  bump: (z) => 0.02 + 0.2 * Math.exp(-(((z - 10) / 3) ** 2)),
+  slabs: (z) => ((z > 3 && z < 7) || (z > 12 && z < 16) ? 0.16 : 0.01),
+  uneven: (z) => clamp(0.11 + 0.06 * Math.sin(z * 0.9 + 1) + 0.04 * Math.sin(z * 2.3 + 2) + 0.03 * Math.sin(z * 5.1), 0.01, 0.24),
+};
+const azSample = (f) => { const a = new Float64Array(AZ.n + 1); for (let i = 0; i <= AZ.n; i++) a[i] = f((i / AZ.n) * AZ.d); return a; };
+function azMorph(st, target, dur = 1.2) { st.from = st.prof.slice(); st.to = target; st.mu = 0; return tween(st, 'mu', 1, dur); }
+const SC = defScene({
+  id: 'area', tab: 'Optical depth is an area', shared: true,
+  defaults: () => ({ prof: azSample(azShapes.bump), from: null, to: null, mu: 1, zs: AZ.d, sweepT: 4.5 }),
+  actions: [
+    { id: 'sweep', label: 'Sweep', primary: true, run: (st) => { st.zs = 0; return tween(st, 'zs', AZ.d, st.sweepT, { ease: linear }); } },
+    ...[['uniform', 'Uniform'], ['ramp', 'Ramp'], ['bump', 'Bump'], ['slabs', 'Two slabs'], ['uneven', 'Uneven']].map(([id, label]) => ({ id, label, run: (st) => azMorph(st, azSample(azShapes[id])) })),
+    { id: 'mirror', label: 'Mirror', run: (st) => azMorph(st, st.prof.slice().reverse()) },
+    RESET,
+  ],
+  params: [
+    { type: 'range', key: 'sweepT', label: 'Sweep time (s)', min: 0.5, max: 12, step: 0.1, fmt: (v) => v.toFixed(1) },
+    { type: 'note', html: 'Drag on the density plot to paint σ<sub>a</sub>(z). Mirror keeps the area, so the light that gets out stays the same while the curve changes.' },
+  ],
+  draw: drawArea, pointer: pointerArea,
+});
+const azAxes = () => [
+  makeAxes({ L: AZ.x0, R: AZ.x1, T: 275, B: 520, xr: [0, AZ.d, 5], yr: [0, AZ.smax, 0.1], ext: 40, xl: 'z', yl: String.raw`\sigma_a(z)`, labSize: 50, numSize: 28 }),
+  makeAxes({ L: AZ.x0, R: AZ.x1, T: 655, B: 960, xr: [0, AZ.d, 5], yr: [0, 1, 0.5], ext: 40, xl: 'z', yl: 'T(z)', labSize: 50, numSize: 28 }),
+];
+function drawArea(ctx, dt, st) {
+  if (st.from) { for (let i = 0; i <= AZ.n; i++) st.prof[i] = lerp(st.from[i], st.to[i], st.mu); if (st.mu >= 1) st.from = null; }
+  const P = st.prof, n = AZ.n, dz = AZ.d / n, tau = new Float64Array(n + 1);
+  for (let i = 1; i <= n; i++) tau[i] = tau[i - 1] + ((P[i - 1] + P[i]) / 2) * dz;
+  const at = (arr, z) => { const f = clamp(z / AZ.d, 0, 1) * n, i = Math.min(n - 1, Math.floor(f)); return lerp(arr[i], arr[i + 1], f - i); };
+  const zs = clamp(st.zs, 0, AZ.d), T = (z) => Math.exp(-at(tau, z));
+  // the medium as a strip, more opaque where it is denser, and the beam through it fading as e^{-τ}
+  const sy = 140, sh = 100, look = SH.container === 'cloud' ? LOOKS.fog : lookOf(SH), lc = hexRgb(look.c);
+  const strip = ctx.createLinearGradient(AZ.x0, 0, AZ.x1, 0);
+  for (let i = 0; i <= n; i += 2) strip.addColorStop(i / n, rgba(lc, 0.9 * clamp(P[i] / AZ.smax, 0, 1)));
+  ctx.fillStyle = strip; ctx.fillRect(AZ.x0, sy - sh / 2, AZ.x1 - AZ.x0, sh);
+  ctx.save(); ctx.strokeStyle = COL.greyC; ctx.lineWidth = 2; ctx.strokeRect(AZ.x0, sy - sh / 2, AZ.x1 - AZ.x0, sh); ctx.restore();
+  drawBeam(ctx, AZ.x0 - 40, AZ.x1 + 80, sy, SH.color, SH.I0, (x) => T(((x - AZ.x0) / (AZ.x1 - AZ.x0)) * AZ.d), []);
+  drawLaser(ctx, AZ.x0 - 40, sy, SH.color, 1);
+  // the density, and the area under it up to the sweep: that area is τ
+  const [A1, A2] = azAxes();
+  drawAxes(ctx, A1, { c: 1, nums: 1, lab: 1 });
+  ctx.save(); ctx.beginPath(); ctx.moveTo(A1.X(0), A1.Y(0));
+  for (let i = 0; i * dz < zs; i++) ctx.lineTo(A1.X(i * dz), A1.Y(P[i]));
+  ctx.lineTo(A1.X(zs), A1.Y(at(P, zs))); ctx.lineTo(A1.X(zs), A1.Y(0)); ctx.closePath();
+  ctx.fillStyle = hexA(COL.green, 0.32); ctx.fill(); ctx.restore();
+  drawCurve(ctx, A1, (z) => at(P, z), { color: COL.green, width: 5 });
+  // what gets through, traced as far as the sweep has gone
+  drawAxes(ctx, A2, { c: 1, nums: 1, lab: 1 });
+  drawCurve(ctx, A2, T, { p: zs / AZ.d, color: COL.blue });
+  // the sweep: one z through the strip and both plots
+  dashed(ctx, azX(zs), sy - sh / 2 - 12, azX(zs), A2.oy, COL.white, 0.45, 2);
+  dot(ctx, A1.X(zs), A1.Y(at(P, zs)), 9, COL.green); dot(ctx, A2.X(zs), A2.Y(T(zs)), 9, COL.blue);
+  // the percentage is worked out from τ as shown, so the two readouts agree on a calculator
+  const tz = Math.round(at(tau, zs) * 100) / 100;
+  const e1 = drawTex(ctx, String.raw`\tau =`, 1505, 400, 60, { ax: 0, color: COL.green }).pop();
+  if (e1) drawNumber(ctx, tz, e1.x + e1.w + 0.3 * e1.fpx, e1.base, { size: e1.fpx, dec: 2, color: COL.green });
+  const e2 = drawTex(ctx, String.raw`e^{-\tau} =`, 1505, 810, 60, { ax: 0, color: COL.blue }).pop();
+  if (e2) drawNumber(ctx, Math.exp(-tz) * 100, e2.x + e2.w + 0.3 * e2.fpx, e2.base, { size: e2.fpx, dec: 1, suffix: '%', color: COL.blue });
+}
+// Painting the density: a soft brush pulls σ toward where the pointer is.
+function pointerArea(type, x, y) {
+  const st = SC, sc = scenes.area, A1 = azAxes()[0], inside = x > AZ.x0 - 12 && x < AZ.x1 + 12 && y > A1.T - 24 && y < A1.B + 20;
+  const paint = () => {
+    const z = clamp((x - AZ.x0) / (AZ.x1 - AZ.x0), 0, 1) * AZ.d, s = clamp(((A1.B - y) / (A1.B - A1.T)) * AZ.smax, 0, AZ.smax), dz = AZ.d / AZ.n;
+    for (let i = 0; i <= AZ.n; i++) { const w = Math.exp(-(((i * dz - z) / 0.7) ** 2)); if (w > 0.001) st.prof[i] = lerp(st.prof[i], s, w); }
+  };
+  if (type === 'down') { sc.drag = inside; if (inside) { sc.epoch++; untween(st, 'mu'); untween(st, 'zs'); st.from = null; st.zs = AZ.d; paint(); } return inside; }
+  if (type === 'up') { sc.drag = false; return false; }
+  if (sc.drag) { paint(); return true; }
+  return inside;
 }
 
 //@@SCENES@@
