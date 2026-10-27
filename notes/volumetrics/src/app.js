@@ -404,32 +404,44 @@ function drawReadout(ctx, xs, y, value, alpha) {
   ctx.restore();
   drawNumber(ctx, value * 100, bx + bw / 2, by + bh / 2 + 20, { size: 58, dec: 1, suffix: '%', align: 'center', alpha });
 }
-// The beam: brightness along x is exactly power · T(x); across it, one smooth glow with a bright core.
-// Built on its own canvas (colour along the beam, then the cross-section as a mask) and added on top.
+// The beam: its brightness along x is exactly power · T(x). Across it, one of three looks (shared
+// settings): Solid, a flat band; Soft edge, a flat band with a short falloff; Glow, a bright core in a wide
+// halo that is added on top of whatever is behind it.
 const beamCv = document.createElement('canvas'), bctx = beamCv.getContext('2d');
-const BEAM_R = 26;
-const BEAM_PROFILE = (() => {
-  const f = (y) => 0.95 * Math.exp(-((y / 2.6) ** 2)) + 0.3 * Math.exp(-((y / 8) ** 2)) + 0.07 * Math.exp(-((y / 17) ** 2)), f0 = f(0), out = [];
-  for (let k = 0; k <= 26; k++) { const y = (k / 26) * BEAM_R; out.push([y / (2 * BEAM_R), f(y) / f0]); }
-  return out;
-})();
-function drawBeam(ctx, xa, xb, y, color, power, T, knots = [], width = 1) {
+function beamProfile(look, w) {
+  const out = [];
+  if (look === 'soft') {
+    const e = Math.max(1.5, w * 0.3), R = w / 2 + 2.5 * e;
+    for (let k = 0; k <= 24; k++) { const y = (k / 24) * R; out.push([y / (2 * R), y <= w / 2 ? 1 : Math.exp(-(((y - w / 2) / e) ** 2))]); }
+    return [R, out];
+  }
+  const s = w / 8, R = 26 * s, f = (y) => 0.95 * Math.exp(-((y / (2.6 * s)) ** 2)) + 0.3 * Math.exp(-((y / (8 * s)) ** 2)) + 0.07 * Math.exp(-((y / (17 * s)) ** 2)), f0 = f(0);
+  for (let k = 0; k <= 26; k++) { const y = (k / 26) * R; out.push([y / (2 * R), f(y) / f0]); }
+  return [R, out];
+}
+function drawBeam(ctx, xa, xb, y, color, power, T, knots = []) {
   const len = xb - xa; if (len < 1 || power <= 0.002) return;
-  const R = BEAM_R * width, pw = Math.max(1, Math.ceil(len * K)), ph = Math.max(1, Math.ceil(2 * R * K));
-  if (beamCv.width < pw || beamCv.height < ph) { beamCv.width = Math.max(beamCv.width, pw); beamCv.height = Math.max(beamCv.height, ph); }
-  bctx.setTransform(K, 0, 0, K, 0, 0); bctx.globalCompositeOperation = 'source-over'; bctx.clearRect(0, 0, len + 2, 2 * R + 2);
-  const c = hexRgb(color), xs = [];
+  const c = hexRgb(color), xs = [], look = SH.beamLook, w = SH.beamW;
   for (let i = 0; i <= 120; i++) xs.push(xa + (len * i) / 120);
   for (const k of knots) if (k > xa && k < xb) xs.push(k);
   xs.sort((p, q) => p - q);
+  if (look === 'solid') {
+    const along = ctx.createLinearGradient(xa, 0, xb, 0);
+    for (const x of xs) along.addColorStop(clamp((x - xa) / len, 0, 1), rgba(c, clamp(T(x) * power, 0, 1)));
+    ctx.fillStyle = along; ctx.fillRect(xa, y - w / 2, len, w);
+    return;
+  }
+  const [R, prof] = beamProfile(look, w), pw = Math.max(1, Math.ceil(len * K)), ph = Math.max(1, Math.ceil(2 * R * K));
+  if (beamCv.width < pw || beamCv.height < ph) { beamCv.width = Math.max(beamCv.width, pw); beamCv.height = Math.max(beamCv.height, ph); }
+  bctx.setTransform(K, 0, 0, K, 0, 0); bctx.globalCompositeOperation = 'source-over'; bctx.clearRect(0, 0, len + 2, 2 * R + 2);
   const along = bctx.createLinearGradient(0, 0, len, 0);
   for (const x of xs) along.addColorStop(clamp((x - xa) / len, 0, 1), rgba(c, clamp(T(x) * power, 0, 1)));
   bctx.fillStyle = along; bctx.fillRect(0, 0, len, 2 * R);
   bctx.globalCompositeOperation = 'destination-in';
   const across = bctx.createLinearGradient(0, 0, 0, 2 * R);
-  for (const [o, a] of BEAM_PROFILE) { across.addColorStop(0.5 - o, `rgba(0,0,0,${a})`); if (o > 0) across.addColorStop(0.5 + o, `rgba(0,0,0,${a})`); }
+  for (const [o, a] of prof) { across.addColorStop(0.5 - o, `rgba(0,0,0,${a})`); if (o > 0) across.addColorStop(0.5 + o, `rgba(0,0,0,${a})`); }
   bctx.fillStyle = across; bctx.fillRect(0, 0, len, 2 * R);
-  ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.drawImage(beamCv, 0, 0, pw, ph, xa, y - R, len, 2 * R); ctx.restore();
+  ctx.save(); ctx.globalCompositeOperation = look === 'glow' ? 'lighter' : 'source-over'; ctx.drawImage(beamCv, 0, 0, pw, ph, xa, y - R, len, 2 * R); ctx.restore();
 }
 function dot(ctx, x, y, r, color, a = 1) { if (a <= 0.003) return; ctx.fillStyle = hexA(color, a); ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
 function dotted(ctx, x1, y1, x2, y2, color, a = 1, w = 4, gap = 13) {
@@ -464,11 +476,24 @@ function runAction(sc, a) {
 }
 const RESET = { id: 'reset', label: 'Reset', run: (st, alive, sc) => resetScene(sc) };
 
+// ---------- shared: the laser and the medium, the same in every scene that shows them ----------
+const SH = { __tag: 'shared', color: '#FF3B30', I0: 1, beamLook: 'solid', beamW: 8, container: 'tank', look: 'beer', custom: '#83C167' };
+const SHARED = { id: 'shared', st: SH, params: [
+  { type: 'chips', key: 'color', label: 'Laser colour', options: ['#FF3B30', '#35D36A', '#3B7BFF', '#FFFFFF'] },
+  { type: 'range', key: 'I0', label: 'Intensity I₀', min: 0, max: 1, step: 0.01, fmt: (v) => `${Math.round(v * 100)} %` },
+  { type: 'select', key: 'beamLook', label: 'Beam look', options: [['solid', 'Solid'], ['soft', 'Soft edge'], ['glow', 'Glow']] },
+  { type: 'range', key: 'beamW', label: 'Beam width (px)', min: 1, max: 40, step: 0.5, fmt: (v) => v.toFixed(1) },
+  { type: 'select', key: 'container', label: 'Medium', options: [['tank', 'Tank of liquid'], ['cloud', 'Cloud']] },
+  { type: 'select', key: 'look', label: 'Liquid', options: [['beer', 'Beer'], ['fog', 'Fog'], ['ink', 'Ink'], ['water', 'Water'], ['custom', 'Custom']], visible: () => SH.container === 'tank' },
+  { type: 'color', key: 'custom', label: 'Liquid colour', visible: () => SH.container === 'tank' && SH.look === 'custom' },
+] };
+const mediumOf = (fill) => ({ fill, look: SH.look, custom: SH.custom });
+
 // ---------- 1. laser and tank ----------
 const FILL = 0.82;
 const S1 = defScene({
-  id: 'laser', tab: 'Laser and tank',
-  defaults: () => ({ on: 1, front: 1, color: '#FF3B30', I0: 1, beamW: 1, sigma: 0.05, d: 20, fill: FILL, container: 'tank', look: 'beer', custom: '#83C167', cloud: 1, sensorX: 1700, readA: 1, shown: null, showI0: 0, showD: 0, shineT: 0.9, fillT: 3 }),
+  id: 'laser', tab: 'Laser and tank', shared: true,
+  defaults: () => ({ on: 1, front: 1, sigma: 0.05, d: 20, fill: FILL, cloud: 1, sensorX: 1700, readA: 1, shown: null, showI0: 0, showD: 0, shineT: 0.9, fillT: 3 }),
   actions: [
     { id: 'shine', label: 'Shine', primary: true, run: async (st, alive) => {
       st.on = 0; st.front = 0; st.readA = 0; st.shown = null;
@@ -477,27 +502,21 @@ const S1 = defScene({
       await tween(st, 'readA', 1, 0.4);
     } },
     { id: 'fill', label: 'Fill', run: async (st) => {
-      if (st.container === 'cloud') { st.cloud = 0; await tween(st, 'cloud', 1, st.fillT); } else { st.fill = 0; await tween(st, 'fill', FILL, st.fillT); }
+      if (SH.container === 'cloud') { st.cloud = 0; await tween(st, 'cloud', 1, st.fillT); } else { st.fill = 0; await tween(st, 'fill', FILL, st.fillT); }
     } },
-    { id: 'drain', label: 'Drain', run: (st) => (st.container === 'cloud' ? tween(st, 'cloud', 0, st.fillT * 0.75) : tween(st, 'fill', 0, st.fillT * 0.8)) },
+    { id: 'drain', label: 'Drain', run: (st) => (SH.container === 'cloud' ? tween(st, 'cloud', 0, st.fillT * 0.75) : tween(st, 'fill', 0, st.fillT * 0.8)) },
     { id: 'off', label: 'Laser off', run: async (st, alive) => { tween(st, 'readA', 0, 0.25); await tween(st, 'on', 0, 0.3); if (alive()) st.front = 0; } },
     RESET,
   ],
   params: [
-    { type: 'chips', key: 'color', label: 'Laser colour', options: ['#FF3B30', '#35D36A', '#3B7BFF', '#FFFFFF'] },
-    { type: 'range', key: 'I0', label: 'Intensity I₀', min: 0, max: 1, step: 0.01, fmt: (v) => `${Math.round(v * 100)} %` },
-    { type: 'range', key: 'beamW', label: 'Beam width', min: 0.25, max: 4, step: 0.05, fmt: (v) => `${v.toFixed(2)}×` },
-    { type: 'select', key: 'container', label: 'Medium', options: [['tank', 'Tank'], ['cloud', 'Cloud']], rebuild: true },
-    { type: 'select', key: 'look', label: 'Look', options: [['beer', 'Beer'], ['fog', 'Fog'], ['ink', 'Ink'], ['water', 'Water'], ['custom', 'Custom']], rebuild: true, visible: (st) => st.container === 'tank' },
-    { type: 'color', key: 'custom', label: 'Liquid colour', visible: (st) => st.container === 'tank' && st.look === 'custom' },
     { type: 'range', key: 'sigma', label: 'Absorption σₐ (1/cm)', min: 0, max: 0.3, step: 0.005, fmt: (v) => v.toFixed(3) },
     { type: 'range', key: 'd', label: 'Distance d (cm)', min: 5, max: 30, step: 0.5, fmt: (v) => v.toFixed(1) },
-    { type: 'range', key: 'fill', label: 'Fill level', min: 0, max: 1, step: 0.01, fmt: (v) => `${Math.round(v * 100)} %`, visible: (st) => st.container === 'tank' },
-    { type: 'range', key: 'cloud', label: 'Cloud density', min: 0, max: 1, step: 0.01, fmt: (v) => `${Math.round(v * 100)} %`, visible: (st) => st.container === 'cloud' },
+    { type: 'range', key: 'fill', label: 'Fill level', min: 0, max: 1, step: 0.01, fmt: (v) => `${Math.round(v * 100)} %`, visible: () => SH.container === 'tank' },
+    { type: 'range', key: 'cloud', label: 'Cloud density', min: 0, max: 1, step: 0.01, fmt: (v) => `${Math.round(v * 100)} %`, visible: () => SH.container === 'cloud' },
     { type: 'range', key: 'shineT', label: 'Shine time (s)', min: 0.2, max: 4, step: 0.1, fmt: (v) => v.toFixed(1) },
     { type: 'range', key: 'fillT', label: 'Fill time (s)', min: 0.5, max: 8, step: 0.1, fmt: (v) => v.toFixed(1) },
     { type: 'check', key: 'showI0', label: 'I₀ label', set: (v) => tween(S1, 'showI0', v ? 1 : 0, 0.9, { ease: linear }) },
-    { type: 'check', key: 'showD', label: 'd label', set: (v) => tween(S1, 'showD', v ? 1 : 0, 1.3, { ease: linear }), visible: (st) => st.container === 'tank' },
+    { type: 'check', key: 'showD', label: 'd label', set: (v) => tween(S1, 'showD', v ? 1 : 0, 1.3, { ease: linear }), visible: () => SH.container === 'tank' },
   ],
   draw: draw1, pointer: pointer1,
 });
@@ -513,7 +532,7 @@ function tankT(st, g) {
 // The cloud: soft puffs whose density adds up; optical depth is integrated along the beam, 2px at a time.
 const PUFFS = [[-0.36, 0.02, 0.2], [-0.16, -0.1, 0.27], [0.08, -0.07, 0.3], [0.33, 0.03, 0.21], [0, 0.12, 0.25], [-0.27, 0.15, 0.17], [0.23, 0.17, 0.18]];
 let cloudTau = new Float32Array(1), cloudN = 1, cloudX0 = 0;
-function cloudPuffs(g, st) { const k = 0.55 + 0.45 * st.cloud; return PUFFS.map(([dx, dy, r]) => [g.cx + dx * g.cw, g.y + dy * g.cw, r * g.cw * k]); }
+function cloudPuffs(g, st, sy = 1, sr = 1) { const k = (0.55 + 0.45 * st.cloud) * sr; return PUFFS.map(([dx, dy, r]) => [g.cx + dx * g.cw, g.y + dy * g.cw * sy, r * g.cw * k]); }
 function cloudDensity(x, y, puffs, st) {
   let s = 0;
   for (const [px, py, R] of puffs) { const t = clamp((R - Math.hypot(x - px, y - py)) / (R * 0.6), 0, 1); s += t * t * (3 - 2 * t); }
@@ -534,18 +553,18 @@ function drawCloud(ctx, puffs, st) {
   }
 }
 function draw1(ctx, dt, st) {
-  const g = geo1(st), tank = st.container === 'tank';
+  const g = geo1(st), tank = SH.container === 'tank';
   let T;
-  if (tank) { T = tankT(st, g); drawLiquid(ctx, g, st); }
+  if (tank) { T = tankT(st, g); drawLiquid(ctx, g, mediumOf(st.fill)); }
   else { const puffs = cloudPuffs(g, st); buildCloudTau(st, g, puffs); T = cloudT; drawCloud(ctx, puffs, st); }
   const end = g.xs - 18;
-  drawBeam(ctx, g.apX, lerp(g.apX, end, st.front), g.y, st.color, st.on * st.I0, T, tank ? [g.x0, g.x1] : [], st.beamW);
+  drawBeam(ctx, g.apX, lerp(g.apX, end, st.front), g.y, SH.color, st.on * SH.I0, T, tank ? [g.x0, g.x1] : []);
   if (tank) drawGlass(ctx, g);
-  drawLaser(ctx, g.apX, g.y, st.color, st.on);
+  drawLaser(ctx, g.apX, g.y, SH.color, st.on);
   // The readout counts toward the sensor's value instead of jumping to it.
-  const reading = st.on > 0.5 && st.front >= 0.999 && st.I0 > 0 ? T(end) : null;
+  const reading = st.on > 0.5 && st.front >= 0.999 && SH.I0 > 0 ? T(end) : null;
   st.shown = reading == null ? null : st.shown == null || reduced ? reading : lerp(st.shown, reading, 1 - Math.exp(-dt * 5));
-  drawSensor(ctx, g.xs, g.y, st.color, reading == null ? 0 : reading * st.I0);
+  drawSensor(ctx, g.xs, g.y, SH.color, reading == null ? 0 : reading * SH.I0);
   if (st.shown != null) drawReadout(ctx, g.xs, g.y, st.shown, st.readA);
   if (st.showI0 > 0.003) drawTex(ctx, 'I_0', g.apX - 122, g.y - 96, 62, { p: st.showI0 });
   if (st.showD > 0.003 && tank) drawDimension(ctx, g.x0, g.x1, g.bot + 58, 'd', st.showD);
@@ -774,7 +793,7 @@ function drawAxes(ctx, A, st) {
   }
 }
 // A curve drawn from `from` to `to` in x; p < 1 draws only its first part (manim's Create on a graph).
-function drawCurve(ctx, A, f, { p = 1, from = A.xr[0], to = A.xr[1], color = COL.blue, width = 5, alpha = 1 } = {}) {
+function drawCurve(ctx, A, f, { p = 1, from = A.xr[0], to = A.xr[1], color = COL.blue, width = 6, alpha = 1 } = {}) {
   if (p <= 0.0005 || alpha <= 0.003) return null;
   const q = clamp(p, 0, 1), xe = lerp(from, to, q), n = Math.max(2, Math.ceil(320 * q)), top = A.Y(A.yr[1]) - A.ext * 0.5;
   ctx.save(); ctx.beginPath(); ctx.rect(A.X(A.xr[0]) - 20, top, A.X(A.xr[1]) - A.X(A.xr[0]) + 40, A.Y(A.yr[0]) - top + 20); ctx.clip();
@@ -823,50 +842,60 @@ const S3 = defScene({
 
 // ---------- 4. beam and plot, the same x ----------
 const S4 = defScene({
-  id: 'sync', tab: 'Beam and plot',
+  id: 'sync', tab: 'Beam and plot', shared: true,
   defaults: () => ({ c: 1, nums: 1, lab: 1, p: 1, z: 7, probeA: 1, trace: 0, sigma: 0.06, d: 20, fmt: 'pct', guides: 1, hline: 0, sweepT: 3.6 }),
   actions: [
     { id: 'axes', label: 'Create axes', run: async (st) => { st.trace = 0; st.p = 0; st.c = 0; st.lab = 0; st.probeA = 0; tween(st, 'lab', 1, 0.9, { ease: linear, delay: 1.2 }); await tween(st, 'c', 1, 1.6); } },
     { id: 'plot', label: 'Plot', run: async (st) => { st.trace = 0; st.p = 0; await tween(st, 'p', 1, 2.2); } },
     { id: 'sweep', label: 'Sweep the point', primary: true, run: async (st, alive) => {
-      st.trace = 0; tween(st, 'probeA', 1, 0.3); await tween(st, 'z', 0, 0.7); if (!alive()) return; await tween(st, 'z', st.d, st.sweepT);
+      st.trace = 0; tween(st, 'probeA', 1, 0.3); await tween(st, 'z', 0, 0.7); if (!alive()) return; await tween(st, 'z', zMax4(st), st.sweepT);
     } },
     { id: 'trace', label: 'Trace the curve', run: async (st, alive) => {
-      st.trace = 1; st.p = 0; st.z = 0; tween(st, 'probeA', 1, 0.3); await tween(st, 'z', st.d, st.sweepT); if (alive()) { st.trace = 0; st.p = 1; }
+      st.trace = 1; st.p = 0; st.z = 0; tween(st, 'probeA', 1, 0.3); await tween(st, 'z', zMax4(st), st.sweepT); if (alive()) { st.trace = 0; st.p = 1; }
     } },
     RESET,
   ],
   params: [
     { type: 'range', key: 'sigma', label: 'Absorption σₐ (1/cm)', min: 0.01, max: 0.2, step: 0.005, fmt: (v) => v.toFixed(3) },
     { type: 'range', key: 'd', label: 'Distance d (cm)', min: 8, max: 28, step: 1, fmt: (v) => v.toFixed(0), set: (v) => { S4.d = v; S4.z = Math.min(S4.z, v); } },
-    { type: 'range', key: 'beamW', label: 'Beam width', min: 0.25, max: 4, step: 0.05, fmt: (v) => `${v.toFixed(2)}×`, get: () => S1.beamW, set: (v) => { S1.beamW = v; } },
     { type: 'range', key: 'sweepT', label: 'Sweep time (s)', min: 0.5, max: 10, step: 0.1, fmt: (v) => v.toFixed(1) },
     { type: 'range', key: 'z', label: 'Point at z (cm)', min: 0, max: 28, step: 0.1, fmt: (v) => v.toFixed(1), set: (v) => { untween(S4, 'z'); S4.z = Math.min(v, S4.d); } },
     { type: 'select', key: 'fmt', label: 'Readout', options: [['pct', 'Percent'], ['frac', 'Fraction'], ['none', 'None']] },
-    { type: 'check', key: 'guides', label: 'Plot range from the tank walls', set: (v) => tween(S4, 'guides', v ? 1 : 0, 0.4) },
+    { type: 'check', key: 'guides', label: 'Plot range from the medium', set: (v) => tween(S4, 'guides', v ? 1 : 0, 0.4) },
     { type: 'check', key: 'hline', label: 'Line to the y axis', set: (v) => tween(S4, 'hline', v ? 1 : 0, 0.4) },
   ],
   draw: draw4, pointer: pointer4,
 });
-function geo4(st) { const y = 240, apX = 340, pxcm = 34, cw = st.d * pxcm; return { y, apX, pxcm, cx: 960, cw, x0: 960 - cw / 2, x1: 960 + cw / 2, top: 100, bot: 392, th: 292 }; }
-function axes4(g, st) {
-  const step = st.d <= 10 ? 2 : st.d <= 24 ? 5 : 10;
-  return makeAxes({ L: g.x0, R: g.x1, T: 640, B: 975, xr: [0, st.d, step], yr: [0, 1, 0.5], ext: 46, xl: 'z', yl: String.raw`I/I_0`, labSize: 56, numSize: 32 });
+// With a cloud as the volume, the plot spans the cloud, so z = 0 is where the beam first meets it.
+function geo4(st) {
+  const y = 240, apX = 340, pxcm = 34, cw = st.d * pxcm, g = { y, apX, pxcm, cx: 960, cw, x0: 960 - cw / 2, x1: 960 + cw / 2, top: 100, bot: 392, th: 292 };
+  if (SH.container === 'cloud') {
+    g.puffs = cloudPuffs(g, { cloud: 1 }, 0.55, 0.8);
+    g.x0 = Math.max(apX + 30, Math.min(...g.puffs.map((q) => q[0] - q[2]))); g.x1 = Math.max(...g.puffs.map((q) => q[0] + q[2]));
+  }
+  return g;
+}
+const zMax4 = (st) => { const g = geo4(st); return (g.x1 - g.x0) / g.pxcm; };
+function axes4(g) {
+  const dz = (g.x1 - g.x0) / g.pxcm, step = dz <= 10 ? 2 : dz <= 24 ? 5 : 10;
+  return makeAxes({ L: g.x0, R: g.x1, T: 640, B: 975, xr: [0, dz, step], yr: [0, 1, 0.5], ext: 46, xl: 'z', yl: String.raw`I/I_0`, labSize: 56, numSize: 32 });
 }
 function draw4(ctx, dt, st) {
-  const g = geo4(st), A = axes4(g, st), color = S1.color;
-  const T = (x) => Math.exp((-st.sigma * Math.max(0, Math.min(g.x1, x) - Math.max(g.x0, g.apX))) / g.pxcm);
-  drawLiquid(ctx, g, { fill: 0.86, look: 'beer' });
-  drawBeam(ctx, g.apX, W + 2, g.y, color, S1.I0, T, [g.x0, g.x1], S1.beamW);
-  drawGlass(ctx, g); drawLaser(ctx, g.apX, g.y, color, 1);
-  // the plot's range, carried down from the tank's walls
-  const ga = st.guides * st.c;
-  dashed(ctx, g.x0, g.bot + 14, g.x0, A.Y(A.yr[1]) - A.ext - 14, COL.greyC, ga, 2);
-  dashed(ctx, g.x1, g.bot + 14, g.x1, A.oy - 2, COL.greyC, ga, 2);
+  const g = geo4(st), A = axes4(g), cloud = SH.container === 'cloud', dz = (g.x1 - g.x0) / g.pxcm;
+  let T;
+  if (cloud) { buildCloudTau({ sigma: st.sigma, cloud: 1 }, g, g.puffs); T = cloudT; drawCloud(ctx, g.puffs, { cloud: 1 }); }
+  else { T = (x) => Math.exp((-st.sigma * Math.max(0, Math.min(g.x1, x) - Math.max(g.x0, g.apX))) / g.pxcm); drawLiquid(ctx, g, mediumOf(0.86)); }
+  drawBeam(ctx, g.apX, W + 2, g.y, SH.color, SH.I0, T, cloud ? [] : [g.x0, g.x1]);
+  if (!cloud) drawGlass(ctx, g);
+  drawLaser(ctx, g.apX, g.y, SH.color, 1);
+  // the plot's range, carried down from where the medium starts and ends
+  const ga = st.guides * st.c, gy = cloud ? g.y + 70 : g.bot + 14;
+  dashed(ctx, g.x0, gy, g.x0, A.Y(A.yr[1]) - A.ext - 14, COL.greyC, ga, 2);
+  dashed(ctx, g.x1, gy, g.x1, A.oy - 2, COL.greyC, ga, 2);
   drawAxes(ctx, A, st);
-  drawCurve(ctx, A, (z) => T(A.X(z)), { p: st.trace ? clamp(st.z / st.d, 0, 1) : st.p, from: 0, to: st.d });
+  drawCurve(ctx, A, (z) => T(A.X(z)), { p: st.trace ? clamp(st.z / dz, 0, 1) : st.p, from: 0, to: dz });
   if (st.probeA > 0.003) {
-    const z = clamp(st.z, 0, st.d), x = A.X(z), v = T(x), py = A.Y(v), a = st.probeA;
+    const z = clamp(st.z, 0, dz), x = A.X(z), v = T(x), py = A.Y(v), a = st.probeA;
     dotted(ctx, x, g.y + 20, x, py - 18, COL.white, 0.7 * a);
     if (st.hline > 0.003) dotted(ctx, x - 18, py, A.ox + 14, py, COL.white, 0.55 * a * st.hline);
     dot(ctx, x, g.y, 11, COL.yellow, a); dot(ctx, x, py, 11, COL.yellow, a);
@@ -874,9 +903,9 @@ function draw4(ctx, dt, st) {
   }
 }
 function pointer4(type, x, y) {
-  const st = S4, g = geo4(st), A = axes4(g, st), sc = scenes.sync;
+  const st = S4, g = geo4(st), A = axes4(g), sc = scenes.sync, dz = (g.x1 - g.x0) / g.pxcm;
   const over = x > g.x0 - 40 && x < g.x1 + 40 && (Math.abs(y - g.y) < 70 || (y > A.Y(1) - 40 && y < A.oy + 20));
-  const setZ = () => { st.z = clamp((x - g.x0) / g.pxcm, 0, st.d); };
+  const setZ = () => { st.z = clamp((x - g.x0) / g.pxcm, 0, dz); };
   if (type === 'down') { sc.drag = over; if (over) { sc.epoch++; untween(st, 'z'); st.trace = 0; st.probeA = 1; setZ(); } return over; }
   if (type === 'up') { sc.drag = false; return false; }
   if (sc.drag) { setZ(); return true; }
@@ -886,8 +915,8 @@ function pointer4(type, x, y) {
 // ---------- 5. e^{ax} ----------
 const aId = (v) => 'a' + String(v).replace('-', 'm').replace('.', 'p');
 const S5 = defScene({
-  id: 'eax', tab: 'e^ax', tabHtml: 'e<sup>ax</sup>',
-  defaults: () => ({ c: 1, nums: 1, lab: 1, p: 1, a: -0.5, numA: 1, dot0: 0, dur: 1.2 }),
+  id: 'eax', tab: 'e^-ax', tabHtml: 'e<sup>−ax</sup>',
+  defaults: () => ({ c: 1, nums: 1, lab: 1, p: 1, a: 0.5, numA: 1, dot0: 0, dur: 1.2 }),
   actions: [
     { id: 'create', label: 'Create', run: async (st, alive) => {
       st.c = 0; st.lab = 0; st.p = 0; st.numA = 0;
@@ -895,9 +924,9 @@ const S5 = defScene({
       tween(st, 'numA', 1, 0.5, { delay: 0.8 }); await tween(st, 'lab', 1, 1.2, { ease: linear }); if (!alive()) return;
       await tween(st, 'p', 1, 1.8);
     } },
-    ...[-1, -0.5, 0, 0.5, 1].map((v) => ({ id: aId(v), label: `a = ${fmtNum(v, Number.isInteger(v) ? 0 : 1)}`, run: (st) => tween(st, 'a', v, st.dur) })),
+    ...[2, 1, 0.5, 0, -0.5].map((v) => ({ id: aId(v), label: `a = ${fmtNum(v, Number.isInteger(v) ? 0 : 1)}`, run: (st) => tween(st, 'a', v, st.dur) })),
     { id: 'sweep', label: 'Sweep a', primary: true, run: async (st, alive) => {
-      for (const v of [-1.5, 1.2, -0.5]) { await tween(st, 'a', v, st.dur * 1.5); if (!alive()) return; await sleep(0.3, 'eax'); if (!alive()) return; }
+      for (const v of [1.5, -0.4, 0.5]) { await tween(st, 'a', v, st.dur * 1.5); if (!alive()) return; await sleep(0.3, 'eax'); if (!alive()) return; }
     } },
     RESET,
   ],
@@ -909,10 +938,10 @@ const S5 = defScene({
   draw: (ctx, dt, st) => {
     const A = makeAxes({ L: 330, R: 1590, T: 330, B: 950, xr: [-3, 3, 1], yr: [0, 6, 1], xl: 'x', yl: 'y', skipX0: true });
     drawAxes(ctx, A, st);
-    drawCurve(ctx, A, (x) => Math.exp(st.a * x), { p: st.p });
+    drawCurve(ctx, A, (x) => Math.exp(-st.a * x), { p: st.p });
     dot(ctx, A.X(0), A.Y(1), 10, COL.white, st.dot0);
     if (st.lab > 0.003) {
-      drawTex(ctx, String.raw`y = e^{${tc(COL.yellow, 'a')}x}`, 170, 150, 84, { ax: 0, p: st.lab });
+      drawTex(ctx, String.raw`y = e^{-${tc(COL.yellow, 'a')}x}`, 170, 150, 84, { ax: 0, p: st.lab });
       const sp = drawTex(ctx, `${tc(COL.yellow, 'a')} =`, 170, 262, 84, { ax: 0, p: st.lab }), eq = sp[sp.length - 1];
       if (eq) drawNumber(ctx, st.a, eq.x + eq.w + 0.3 * eq.fpx, eq.base, { size: eq.fpx, dec: 2, color: COL.yellow, alpha: st.numA * st.lab });
     }
@@ -951,11 +980,23 @@ function layoutDiscs(st) {
   }
   return out;
 }
-const discPos = (st) => parts.map((p) => [lerp(p.fx, p.tx, st.mu), lerp(p.fy, p.ty, st.mu)]);
+const discBase = (st) => parts.map((p) => [lerp(p.fx, p.tx, st.mu), lerp(p.fy, p.ty, st.mu)]);
+// Jiggle: each disc drifts around its place on its own slow loop, so the medium looks alive while the
+// arrangement, on average, stays the same.
+const JIG = [];
+const jigOf = (i) => JIG[i] || (JIG[i] = (() => { const r = rng32(i * 2654435761 + 7); return [r() * 6.283, r() * 6.283, 0.25 + 0.4 * r(), 0.25 + 0.4 * r()]; })());
+const discPos = (st) => {
+  const amp = reduced ? 0 : st.jig * st.jigAmp;
+  return parts.map((p, i) => {
+    let x = lerp(p.fx, p.tx, st.mu), y = lerp(p.fy, p.ty, st.mu);
+    if (amp > 0.01) { const [px, py, fx, fy] = jigOf(i); x += amp * Math.sin(TIME * fx * 6.283 + px); y += amp * Math.sin(TIME * fy * 6.283 + py); }
+    return [x, y];
+  });
+};
 function placeDiscs(st) { parts = layoutDiscs(st).map(([x, y]) => ({ fx: x, fy: y, tx: x, ty: y })); st.mu = 1; }
 // Move the discs to a new arrangement. Each new spot takes the nearest disc still free, so paths stay short.
 function moveDiscs(st, dur = 1.5) {
-  const from = discPos(st), to = layoutDiscs(st);
+  const from = discBase(st), to = layoutDiscs(st);
   if (from.length !== to.length) { placeDiscs(st); return Promise.resolve(); }
   const used = new Uint8Array(from.length), rnd = rng32(st.seed + 99), order = to.map((_, i) => i).sort(() => rnd() - 0.5);
   const next = new Array(to.length);
@@ -987,23 +1028,26 @@ function predictedT(st, x) {
   return Math.exp(-n * A * ((2 * R) / k));
 }
 const SA = defScene({
-  id: 'shadows', tab: 'Shadows in a slab',
-  defaults: () => ({ n: 70, r: 8, dist: 'random', clump: 22, tilt: 0, rays: '120', seed: 1, mu: 1, front: 1, pred: 1, marks: 1, labels: 1, shineT: 2.6 }),
+  id: 'shadows', tab: 'Shadows in a slab', shared: true,
+  defaults: () => ({ n: 70, r: 8, dist: 'random', clump: 22, tilt: 0, rays: '120', seed: 1, mu: 1, front: 1, pred: 1, marks: 1, labels: 1, shineT: 2.6,
+    jig: 1, jigAmp: 6, sensorX: 1600, shown: null }),
   init: () => placeDiscs(SA),
   onReset: () => placeDiscs(SA),
   actions: [
-    { id: 'shine', label: 'Shine', primary: true, run: (st) => { st.front = 0; return tween(st, 'front', 1, st.shineT, { ease: linear }); } },
-    { id: 'random', label: 'Random', run: (st) => { st.dist = 'random'; return moveDiscs(st); } },
+    { id: 'shine', label: 'Shine', primary: true, run: (st) => { st.front = 0; st.shown = null; return tween(st, 'front', 1, st.shineT, { ease: linear }); } },
+    { id: 'random', label: 'Uniform', run: (st) => { st.dist = 'random'; return moveDiscs(st); } },
     { id: 'jitter', label: 'Jittered', run: (st) => { st.dist = 'jitter'; return moveDiscs(st); } },
     { id: 'lattice', label: 'Lattice', run: (st) => { st.dist = 'lattice'; return moveDiscs(st); } },
     { id: 'clumped', label: 'Clumped', run: (st) => { st.dist = 'clumped'; return moveDiscs(st); } },
+    { id: 'jiggle', label: 'Jiggle on / off', run: (st) => tween(st, 'jig', st.jig > 0.5 ? 0 : 1, 0.8) },
     { id: 'resample', label: 'Resample', run: (st) => { st.seed += 1; return moveDiscs(st, 1.2); } },
-    { id: 'reset', label: 'Reset', run: (st, alive, sc) => resetScene(sc) },
+    RESET,
   ],
   params: [
     { type: 'range', key: 'n', label: 'Discs', min: 5, max: 400, step: 1, fmt: (v) => String(v), set: (v) => { SA.n = v; placeDiscs(SA); } },
     { type: 'range', key: 'r', label: 'Disc radius', min: 3, max: 30, step: 0.5, fmt: (v) => v.toFixed(1), set: (v) => { SA.r = v; placeDiscs(SA); } },
     { type: 'select', key: 'rays', label: 'Rays', options: [['30', '30 rays'], ['120', '120 rays'], ['sheet', 'A sheet (every row)']] },
+    { type: 'range', key: 'jigAmp', label: 'Jiggle size (px)', min: 0, max: 40, step: 1, fmt: (v) => String(v) },
     { type: 'range', key: 'clump', label: 'Clump size', min: 4, max: 80, step: 1, fmt: (v) => String(v), set: (v) => { SA.clump = v; placeDiscs(SA); }, visible: (st) => st.dist === 'clumped' },
     { type: 'range', key: 'tilt', label: 'Lattice tilt (°)', min: -30, max: 30, step: 0.5, fmt: (v) => v.toFixed(1), set: (v) => { SA.tilt = v; placeDiscs(SA); }, visible: (st) => st.dist === 'lattice' },
     { type: 'range', key: 'shineT', label: 'Shine time (s)', min: 0.5, max: 8, step: 0.1, fmt: (v) => v.toFixed(1) },
@@ -1011,28 +1055,50 @@ const SA = defScene({
     { type: 'check', key: 'marks', label: 'Where rays stop', set: (v) => tween(SA, 'marks', v ? 1 : 0, 0.4) },
     { type: 'check', key: 'labels', label: 'Curve labels', set: (v) => tween(SA, 'labels', v ? 1 : 0, 0.4) },
   ],
-  draw: drawShadows,
+  draw: drawShadows, pointer: pointerShadows,
 });
+// A laser that emits a sheet as tall as the slab.
+function drawSheetLaser(ctx, x, top, bot, color) {
+  ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = COL.greyB; ctx.fillStyle = '#2C2C2C';
+  ctx.beginPath(); ctx.roundRect(x - 214, top - 30, 192, bot - top + 60, 12); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#161616'; ctx.beginPath(); ctx.roundRect(x - 22, top - 10, 22, bot - top + 20, 4); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = hexA(color, 1); ctx.beginPath(); ctx.arc(x - 64, top - 2, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+const sensorX6 = (st) => clamp(st.sensorX, SL.x0 - 90, 1860);
 function drawShadows(ctx, dt, st) {
-  const R = st.r, pos = discPos(st), ys = rayYs(st), hits = firstHits(ys, pos, R), color = S1.color;
-  const xf = lerp(SL.ex, W + 10, st.front), sheet = st.rays === 'sheet';
+  const R = st.r, pos = discPos(st), ys = rayYs(st), hits = firstHits(ys, pos, R), color = SH.color, k = ys.length;
+  const xf = lerp(SL.ex, W + 10, st.front), sheet = st.rays === 'sheet', sx = sensorX6(st), power = SH.I0, glow = SH.beamLook === 'glow';
   dashed(ctx, SL.x0, SL.top - 70, SL.x0, SL.bot + 70, COL.greyC, 1, 2);
   dashed(ctx, SL.x1, SL.top - 70, SL.x1, SL.bot + 70, COL.greyC, 1, 2);
-  // the rays, each stopping at its first disc (or at the light's front while it travels)
-  ctx.save(); ctx.globalCompositeOperation = 'lighter';
-  const rays = () => { ctx.beginPath(); for (let i = 0; i < ys.length; i++) { const xe = Math.min(hits[i], xf); if (xe > SL.ex) { ctx.moveTo(SL.ex, ys[i]); ctx.lineTo(xe, ys[i]); } } ctx.stroke(); };
-  if (sheet) { ctx.strokeStyle = hexA(color, 0.75); ctx.lineWidth = 1.2; rays(); }
-  else { ctx.strokeStyle = hexA(color, 0.14); ctx.lineWidth = 6; rays(); ctx.strokeStyle = hexA(color, 0.95); ctx.lineWidth = 1.8; rays(); }
-  if (st.marks > 0.003 && !sheet) for (let i = 0; i < ys.length; i++) if (hits[i] < xf) dot(ctx, hits[i], ys[i], 3.2, '#FFFFFF', 0.85 * st.marks);
+  // rays and discs; right of the sensor they are still drawn, faded: the sensor is a probe, not a wall
+  const layer = () => {
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    const rays = () => { ctx.beginPath(); for (let i = 0; i < k; i++) { const xe = Math.min(hits[i], xf); if (xe > SL.ex) { ctx.moveTo(SL.ex, ys[i]); ctx.lineTo(xe, ys[i]); } } ctx.stroke(); };
+    if (sheet) { ctx.strokeStyle = hexA(color, 0.75 * power); ctx.lineWidth = 1.2; rays(); }
+    else { if (glow) { ctx.strokeStyle = hexA(color, 0.14 * power); ctx.lineWidth = 6; rays(); } ctx.strokeStyle = hexA(color, 0.95 * power); ctx.lineWidth = 1.8; rays(); }
+    if (st.marks > 0.003 && !sheet) for (let i = 0; i < k; i++) if (hits[i] < xf) dot(ctx, hits[i], ys[i], 3.2, '#FFFFFF', 0.85 * st.marks);
+    ctx.restore();
+    ctx.fillStyle = '#262626'; ctx.strokeStyle = COL.greyB; ctx.lineWidth = Math.min(2.5, R * 0.3);
+    ctx.beginPath(); for (const [x, y] of pos) { ctx.moveTo(x + R, y); ctx.arc(x, y, R, 0, Math.PI * 2); } ctx.fill(); ctx.stroke();
+  };
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, sx, H); ctx.clip(); layer(); ctx.restore();
+  ctx.save(); ctx.beginPath(); ctx.rect(sx, 0, W - sx, H); ctx.clip(); ctx.globalAlpha = 0.22; layer(); ctx.restore();
+  drawSheetLaser(ctx, SL.ex, SL.top, SL.bot, color);
+  // the sensor: lit where rays arrive, with the fraction that arrived beside it (counting as it changes)
+  let reached = null;
+  if (xf >= sx) { let c = 0; for (const h of hits) if (h > sx) c++; reached = c / k; }
+  st.shown = reached == null ? null : st.shown == null || reduced ? reached : lerp(st.shown, reached, 1 - Math.exp(-dt * 6));
+  ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = COL.greyB; ctx.fillStyle = '#2C2C2C';
+  ctx.beginPath(); ctx.roundRect(sx, SL.top - 30, 26, SL.bot - SL.top + 60, 6); ctx.fill(); ctx.stroke();
+  if (reached != null) { ctx.fillStyle = hexA(color, 0.95 * power); for (let i = 0; i < k; i++) if (hits[i] > sx) ctx.fillRect(sx - 3, ys[i] - (sheet ? 0.6 : 1.4), 5, sheet ? 1.2 : 2.8); }
   ctx.restore();
-  // the discs
-  ctx.save(); ctx.fillStyle = '#262626'; ctx.strokeStyle = COL.greyB; ctx.lineWidth = Math.min(2.5, R * 0.3);
-  ctx.beginPath(); for (const [x, y] of pos) { ctx.moveTo(x + R, y); ctx.arc(x, y, R, 0, Math.PI * 2); } ctx.fill(); ctx.stroke();
-  ctx.restore();
-  // the emitter
-  ctx.save(); ctx.fillStyle = '#2C2C2C'; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.roundRect(SL.ex - 40, SL.top - 26, 40, SL.bot - SL.top + 52, 8); ctx.fill(); ctx.stroke(); ctx.restore();
-  // the plot, sharing x with the slab: depth in units of the mean free path 1/(nσ), so the prediction is e^{-x}
+  if (st.shown != null) {
+    const bw = 210, bh = 84, right = sx + 26 + 24 + bw < W - 10, bx = right ? sx + 26 + 24 : sx - 24 - bw, by = (SL.top + SL.bot) / 2 - bh / 2;
+    ctx.save(); ctx.fillStyle = '#000'; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 12); ctx.fill(); ctx.stroke(); ctx.restore();
+    drawNumber(ctx, st.shown * 100, bx + bw / 2, by + bh / 2 + 18, { size: 52, dec: 1, suffix: '%', align: 'center' });
+  }
+  // the plot, on the slab's x: depth in mean free paths 1/(nσ), so the prediction is e^{-x}
   const { a, b, y0, y1 } = slabBox(st), n = Math.round(st.n) / ((b - a) * (y1 - y0)), ns = n * 2 * R, tauMax = ns * (SL.x1 - SL.x0);
   const step = tauMax > 6 ? 2 : tauMax > 2.5 ? 1 : 0.5;
   const A = makeAxes({ L: SL.x0, R: SL.x1, T: 640, B: 975, xr: [0, tauMax, step], yr: [0, 1, 0.5], ext: 46, xl: String.raw`n\sigma z`, yl: 'T', labSize: 52, numSize: 30 });
@@ -1040,17 +1106,99 @@ function drawShadows(ctx, dt, st) {
   const xr = Math.min(xf, SL.x1);
   if (st.pred > 0.003) drawCurve(ctx, A, (t) => predictedT(st, SL.x0 + t / ns), { from: 0, to: tauMax, color: COL.blue, alpha: st.pred, width: 4 });
   if (xr > SL.x0) {
-    const sorted = Array.from(hits).filter((h) => h <= xr).sort((p, q) => p - q), k = ys.length;
-    ctx.save(); ctx.strokeStyle = COL.yellow; ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.beginPath();
-    let alive = k, x = SL.x0; ctx.moveTo(x, A.Y(1));
-    for (const h of sorted) { const hx = Math.max(SL.x0, h); ctx.lineTo(hx, A.Y(alive / k)); alive--; ctx.lineTo(hx, A.Y(alive / k)); }
-    ctx.lineTo(xr, A.Y(alive / k)); ctx.stroke(); ctx.restore();
+    const sorted = Array.from(hits).filter((h) => h <= xr).sort((p, q) => p - q), path = new Path2D();
+    let alive = k; path.moveTo(SL.x0, A.Y(1));
+    for (const h of sorted) { const hx = Math.max(SL.x0, h); path.lineTo(hx, A.Y(alive / k)); alive--; path.lineTo(hx, A.Y(alive / k)); }
+    path.lineTo(xr, A.Y(alive / k));
+    ctx.save(); ctx.strokeStyle = COL.yellow; ctx.lineWidth = 4; ctx.lineJoin = 'round';
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, sx, H); ctx.clip(); ctx.stroke(path); ctx.restore();
+    ctx.save(); ctx.beginPath(); ctx.rect(sx, 0, W - sx, H); ctx.clip(); ctx.globalAlpha = 0.25; ctx.stroke(path); ctx.restore();
+    ctx.restore();
   }
+  // the same x on the plot: a dotted line down from the sensor to its value
+  if (reached != null && sx >= SL.x0 && sx <= SL.x1) { dotted(ctx, sx, SL.bot + 46, sx, A.Y(reached) - 16, COL.white, 0.6); dot(ctx, sx, A.Y(reached), 9, COL.yellow); }
   // a two-line key in the plot's top right corner, which both curves have left by then
   if (st.labels > 0.003) {
     drawTex(ctx, String.raw`\text{rays left}`, SL.x1, A.Y(1) + 4, 42, { ax: 1, color: COL.yellow, alpha: st.labels });
     if (st.pred > 0.003) drawTex(ctx, String.raw`e^{-n\sigma z}`, SL.x1, A.Y(1) + 62, 46, { ax: 1, color: COL.blue, alpha: st.labels * st.pred });
   }
+}
+function pointerShadows(type, x, y) {
+  const st = SA, sx = sensorX6(st), sc = scenes.shadows;
+  const over = x > sx - 26 && x < sx + 52 && y > SL.top - 50 && y < SL.bot + 50;
+  if (type === 'down') { sc.drag = over; return over; }
+  if (type === 'up') { sc.drag = false; return false; }
+  if (sc.drag) { st.sensorX = clamp(x - 13, SL.x0 - 90, 1860); return true; }
+  return over;
+}
+
+// ---------- B. slice the slab: (1 − τ/N)^N → e^{−τ} ----------
+// A thin slab removes light in proportion to its thickness: the linear law, which only holds when the slab
+// is thin. Cut a slab of optical depth τ into N equal slabs and give each the linear law: each lets
+// 1 − τ/N through, so together they let (1 − τ/N)^N through. Doubling N, the chain of straight pieces
+// closes in on e^{−τz/d}. This is Bernoulli's compound interest, as Maor tells it in "e: The Story of a Number".
+const SBG = { x0: 420, x1: 1500, top: 150, bot: 430, y: 290, apX: 330 };
+const sliceF = (tau, n) => Math.max(0, 1 - tau / n);
+// The light left at depth z (0..1) with n slabs: straight within each slab, multiplied slab after slab.
+function chainT(tau, n, z) { const f = sliceF(tau, n), k = Math.min(n, Math.floor(z * n)), fr = z * n - k; return Math.pow(f, k) * (k >= n ? 1 : 1 - (1 - f) * fr); }
+const SB = defScene({
+  id: 'slices', tab: 'Slice the slab', shared: true,
+  defaults: () => ({ N: 4, M: 4, u: 1, tau: 1, expA: 1, dotsA: 1, morphT: 1.2 }),
+  actions: [
+    { id: 'double', label: 'Double N', primary: true, run: (st) => sliceTo(st, Math.min(256, st.M * 2)) },
+    { id: 'halve', label: 'Halve N', run: (st) => sliceTo(st, Math.max(1, st.M / 2)) },
+    { id: 'keep', label: 'Keep doubling', run: async (st, alive) => {
+      if (st.M >= 64) { await sliceTo(st, 1); if (!alive()) return; await sleep(0.4, 'slices'); }
+      while (alive() && st.M < 64) { await sliceTo(st, st.M * 2); if (!alive()) return; await sleep(0.45, 'slices'); }
+    } },
+    { id: 'one', label: 'One slab', run: (st) => sliceTo(st, 1) },
+    RESET,
+  ],
+  params: [
+    { type: 'range', key: 'tau', label: 'Optical depth τ', min: 0.25, max: 4, step: 0.05, fmt: (v) => v.toFixed(2) },
+    { type: 'range', key: 'morphT', label: 'Time per doubling (s)', min: 0.3, max: 4, step: 0.1, fmt: (v) => v.toFixed(1) },
+    { type: 'check', key: 'expA', label: 'Curve e^(−τz/d)', set: (v) => tween(SB, 'expA', v ? 1 : 0, 0.5) },
+    { type: 'check', key: 'dotsA', label: 'Dots at slab faces', set: (v) => tween(SB, 'dotsA', v ? 1 : 0, 0.4) },
+  ],
+  draw: drawSlices,
+});
+function sliceTo(st, m) {
+  st.N = st.M; st.M = m; st.u = 0;
+  return tween(st, 'u', 1, st.morphT).then(() => { if (st.u >= 1) st.N = st.M; });
+}
+function drawSlices(ctx, dt, st) {
+  const g = SBG, L = g.x1 - g.x0, u = st.u, T = (z) => lerp(chainT(st.tau, st.N, z), chainT(st.tau, st.M, z), u);
+  // the slabs: one band, with the faces between them; faces that are new grow from the middle, old ones shrink away
+  const look = SH.container === 'cloud' ? LOOKS.fog : lookOf(SH);
+  ctx.save(); ctx.fillStyle = hexA(look.c, clamp(look.a, 0.2, 0.75)); ctx.fillRect(g.x0, g.top, L, g.bot - g.top);
+  ctx.strokeStyle = COL.greyA; ctx.lineWidth = 3; ctx.strokeRect(g.x0, g.top, L, g.bot - g.top);
+  const faces = new Map();
+  for (let k = 1; k < st.N; k++) faces.set(Math.round((k / st.N) * 1e6), [k / st.N, 1 - u]);
+  for (let k = 1; k < st.M; k++) { const key = Math.round((k / st.M) * 1e6), had = faces.get(key); faces.set(key, [k / st.M, had ? 1 : u]); }
+  ctx.strokeStyle = hexA(COL.greyA, 0.75); ctx.lineWidth = 2; ctx.beginPath();
+  for (const [z, s] of faces.values()) { if (s <= 0.003) continue; const x = g.x0 + z * L, h = ((g.bot - g.top) / 2) * smooth(s), cy = (g.top + g.bot) / 2; ctx.moveTo(x, cy - h); ctx.lineTo(x, cy + h); }
+  ctx.stroke(); ctx.restore();
+  // the beam, losing light slab by slab
+  const knots = []; for (let k = 0; k <= Math.max(st.N, st.M); k++) knots.push(g.x0 + (k / Math.max(st.N, st.M)) * L);
+  drawBeam(ctx, g.apX, g.x1 + 90, g.y, SH.color, SH.I0, (x) => T(clamp((x - g.x0) / L, 0, 1)), knots);
+  drawLaser(ctx, g.apX, g.y, SH.color, 1);
+  // N, above the slabs
+  const sp = drawTex(ctx, 'N =', 900, 82, 64, { ax: 0.5 }), eq = sp[sp.length - 1];
+  if (eq) { const shownN = u < 0.5 ? st.N : st.M; drawNumber(ctx, shownN, eq.x + eq.w + 0.3 * eq.fpx, eq.base, { size: eq.fpx, dec: 0, alpha: Math.abs(2 * u - 1) }); }
+  // the plot, on the same x as the slab
+  const A = makeAxes({ L: g.x0, R: g.x1, T: 600, B: 960, xr: [0, 1, 0.25], yr: [0, 1, 0.5], ext: 46, xl: 'z/d', yl: 'T', labSize: 52, numSize: 30 });
+  drawAxes(ctx, A, { c: 1, nums: 1, lab: 1 });
+  if (st.expA > 0.003) drawCurve(ctx, A, (z) => Math.exp(-st.tau * z), { color: COL.blue, alpha: st.expA, width: 4 });
+  drawCurve(ctx, A, T, { color: COL.yellow, width: 4 });
+  const dn = st.dotsA * clamp((48 - Math.max(st.N, st.M)) / 24, 0, 1);
+  if (dn > 0.003) for (const [n, a] of [[st.N, 1 - u], [st.M, u]]) for (let k = 0; k <= n; k++) dot(ctx, A.X(k / n), A.Y(chainT(st.tau, n, k / n)), 7, COL.yellow, dn * a);
+  // what comes out, against e^{-τ}
+  const out = lerp(Math.pow(sliceF(st.tau, st.N), st.N), Math.pow(sliceF(st.tau, st.M), st.M), u);
+  drawTex(ctx, String.raw`\left(1-\frac{\tau}{N}\right)^{N}`, 1570, 650, 54, { ax: 0, color: COL.yellow });
+  const e1 = drawTex(ctx, '=', 1570, 755, 54, { ax: 0, color: COL.yellow }).pop();
+  if (e1) drawNumber(ctx, out, e1.x + e1.w + 0.3 * e1.fpx, e1.base, { size: e1.fpx, dec: 3, color: COL.yellow });
+  const e2 = drawTex(ctx, String.raw`e^{-\tau} =`, 1570, 850, 54, { ax: 0, color: COL.blue, alpha: Math.max(0.35, st.expA) }).pop();
+  if (e2) drawNumber(ctx, Math.exp(-st.tau), e2.x + e2.w + 0.3 * e2.fpx, e2.base, { size: e2.fpx, dec: 3, color: COL.blue, alpha: Math.max(0.35, st.expA) });
 }
 
 //@@SCENES@@
@@ -1059,7 +1207,8 @@ function drawShadows(ctx, dt, st) {
 const stageEl = $('stage'), cv = $('cv'), ctx = cv.getContext('2d');
 let K = 1, cssW = 0, cssH = 0, DPR = 0;
 function fitCanvas() {
-  const w = stageEl.clientWidth, h = stageEl.clientHeight, dpr = Math.min(2, window.devicePixelRatio || 1);
+  // At least 2× the CSS size (3× on dense screens), so curves and edges stay smooth when the stage is small.
+  const w = stageEl.clientWidth, h = stageEl.clientHeight, dpr = Math.min(3, Math.max(2, window.devicePixelRatio || 1));
   if (w === cssW && h === cssH && dpr === DPR) return;
   cssW = w; cssH = h; DPR = dpr;
   cv.width = Math.max(1, Math.round(w * dpr)); cv.height = Math.max(1, Math.round(h * dpr));
@@ -1072,7 +1221,7 @@ const pointerUp = () => { if (cur.pointer) cur.pointer('up', 0, 0); stageEl.clas
 cv.addEventListener('pointerup', pointerUp); cv.addEventListener('pointercancel', pointerUp);
 
 // ---------- controls under the stage ----------
-const anims = $('anims'), params = $('params'), tabsEl = $('tabs');
+const anims = $('anims'), params = $('params'), sharedEl = $('sharedParams'), tabsEl = $('tabs');
 let cur = null;
 const live = [];   // small callbacks that keep controls in step with animated values, run every frame
 const mk = (tag, cls) => { const e = document.createElement(tag); if (cls) e.className = cls; return e; };
@@ -1134,7 +1283,7 @@ function control(sc, p) {
 }
 // Which parameters are showing: when an animation or a menu changes it, the dock is rebuilt.
 let dockSig = '';
-const visSig = () => cur.params.map((p) => (!p.visible || p.visible(cur.st) ? 1 : 0)).join('');
+const visSig = () => cur.params.concat(cur.shared ? SHARED.params : []).map((p) => (!p.visible || p.visible(cur.st) ? 1 : 0)).join('');
 function buildDock() {
   live.length = 0; anims.textContent = ''; params.textContent = ''; dockSig = visSig();
   for (const a of cur.actions) {
@@ -1143,6 +1292,11 @@ function buildDock() {
   }
   if (cur.extra) anims.appendChild(cur.extra());
   for (const p of cur.params) if (!p.visible || p.visible(cur.st)) params.appendChild(control(cur, p));
+  sharedEl.textContent = ''; sharedEl.hidden = !cur.shared;
+  if (cur.shared) {
+    const h = mk('span', 'grp'); h.textContent = 'Laser and medium · shared by every scene'; sharedEl.appendChild(h);
+    for (const p of SHARED.params) if (!p.visible || p.visible(SH)) sharedEl.appendChild(control(SHARED, p));
+  }
 }
 function buildTabs() {
   tabsEl.textContent = '';

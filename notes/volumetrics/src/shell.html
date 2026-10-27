@@ -79,6 +79,8 @@ select, .txt input {
 .chip { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--line2); cursor: pointer; padding: 0; }
 .chip[aria-pressed="true"] { border-color: var(--fg); box-shadow: 0 0 0 2px #000 inset; }
 .chips input[type="color"] { width: 30px; height: 24px; padding: 0 2px; border: 1px solid var(--line2); border-radius: 6px; background: var(--raise); }
+.params.shared { border-top: 1px solid var(--line); padding-top: 8px; }
+.grp { flex-basis: 100%; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
 .note { margin: 0; max-width: 560px; color: var(--muted); font-size: 12px; line-height: 1.45; padding-bottom: 3px; }
 .note code { font-family: var(--mono); color: var(--fg2); }
 @media (max-width: 760px) { .hint { display: none; } .glob { margin-left: 0; } }
@@ -111,6 +113,7 @@ body.clean .stage { border: 0; border-radius: 0; }
       </div>
     </div>
     <div class="params" id="params"></div>
+    <div class="params shared" id="sharedParams" hidden></div>
   </footer>
 </div>
 <button class="btn" id="showBtn" type="button" hidden>Show controls</button>
