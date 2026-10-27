@@ -742,6 +742,21 @@ function drawBeam(ctx, xa, xb, y, color, power, T, knots = [], w = SH.beamW) {
   bctx.fillStyle = across; bctx.fillRect(0, 0, len, 2 * R);
   ctx.save(); ctx.globalCompositeOperation = look === 'glow' ? 'lighter' : 'source-over'; ctx.drawImage(beamCv, 0, 0, pw, ph, xa, y - R, len, 2 * R); ctx.restore();
 }
+// A band with colour stops along x and a Gaussian falloff across it: a medium with no walls, like fog.
+const bandCv = document.createElement('canvas'), bandCtx = bandCv.getContext('2d');
+function softBand(ctx, x0, x1, yc, R, stops) {
+  const len = x1 - x0; if (len < 1) return;
+  const pw = Math.max(1, Math.ceil(len * K)), ph = Math.max(1, Math.ceil(2 * R * K)), b = bandCtx;
+  if (bandCv.width < pw || bandCv.height < ph) { bandCv.width = Math.max(bandCv.width, pw); bandCv.height = Math.max(bandCv.height, ph); }
+  b.setTransform(K, 0, 0, K, 0, 0); b.globalCompositeOperation = 'source-over'; b.clearRect(0, 0, len + 2, 2 * R + 2);
+  const along = b.createLinearGradient(0, 0, len, 0); for (const [t, c] of stops) along.addColorStop(clamp(t, 0, 1), c);
+  b.fillStyle = along; b.fillRect(0, 0, len, 2 * R);
+  b.globalCompositeOperation = 'destination-in';
+  const across = b.createLinearGradient(0, 0, 0, 2 * R);
+  for (let k = 0; k <= 20; k++) { const o = k / 20, a = Math.exp(-((o * 2.2) ** 2)).toFixed(4); across.addColorStop(0.5 - o / 2, `rgba(0,0,0,${a})`); if (k) across.addColorStop(0.5 + o / 2, `rgba(0,0,0,${a})`); }
+  b.fillStyle = across; b.fillRect(0, 0, len, 2 * R);
+  ctx.drawImage(bandCv, 0, 0, pw, ph, x0, yc - R, len, 2 * R);
+}
 function dot(ctx, x, y, r, color, a = 1) { if (a <= 0.003) return; ctx.fillStyle = hexA(color, a); ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
 function dotted(ctx, x1, y1, x2, y2, color, a = 1, w = 4, gap = 13) {
   if (a <= 0.003) return;
@@ -1673,9 +1688,10 @@ function drawZoom(ctx, dt, st) {
 // The exponent of Beer–Lambert is the area under the density along the path: τ(z) = ∫₀^z σₐ(s) ds. Paint a
 // density (drag on its plot), sweep along it, and watch the area pile up while T(z) = e^{−τ(z)} falls:
 // steep where the medium is dense, flat where it is empty. Mirror the profile: the curve changes, but the
-// light that gets out does not, because the area is the same. (PBRT's transmittance chapter; the
-// Production Volume Rendering course notes.)
-const AZ = { n: 200, d: 20, x0: 330, x1: 1400, smax: 0.25 };
+// light that gets out does not, because the area is the same. The laser, the medium and the sensor sit
+// between the two plots, on the same z. (PBRT's transmittance chapter; the Production Volume Rendering
+// course notes.)
+const AZ = { n: 200, d: 20, x0: 480, x1: 1440, smax: 0.25, y: 540, top: 420, bot: 660, apX: 400, xs: 1610 };
 const azX = (z) => AZ.x0 + (z / AZ.d) * (AZ.x1 - AZ.x0);
 const azShapes = {
   uniform: () => 0.1,
@@ -1688,7 +1704,7 @@ const azSample = (f) => { const a = new Float64Array(AZ.n + 1); for (let i = 0; 
 function azMorph(st, target, dur = 1.2) { st.from = st.prof.slice(); st.to = target; st.mu = 0; return tween(st, 'mu', 1, dur); }
 const SC = defScene({
   id: 'area', tab: 'Optical depth is an area', shared: true,
-  defaults: () => ({ prof: azSample(azShapes.bump), from: null, to: null, mu: 1, zs: AZ.d, sweepT: 4.5 }),
+  defaults: () => ({ prof: azSample(azShapes.bump), from: null, to: null, mu: 1, zs: AZ.d, sweepT: 4.5, shown: null, sensorA: 1 }),
   actions: [
     { id: 'sweep', label: 'Sweep', primary: true, run: (st) => { st.zs = 0; return tween(st, 'zs', AZ.d, st.sweepT, { ease: linear }); } },
     ...[['uniform', 'Uniform'], ['ramp', 'Ramp'], ['bump', 'Bump'], ['slabs', 'Two slabs'], ['uneven', 'Uneven']].map(([id, label]) => ({ id, label, run: (st) => azMorph(st, azSample(azShapes[id])) })),
@@ -1697,28 +1713,50 @@ const SC = defScene({
   ],
   params: [
     { type: 'range', key: 'sweepT', label: 'Sweep time (s)', min: 0.5, max: 12, step: 0.1, fmt: (v) => v.toFixed(1) },
+    { type: 'check', key: 'sensorA', label: 'Sensor readout', set: (v) => tween(SC, 'sensorA', v ? 1 : 0, 0.4) },
     { type: 'note', html: 'Drag on the density plot to paint σ<sub>a</sub>(z). Mirror keeps the area, so the light that gets out stays the same while the curve changes.' },
   ],
   draw: drawArea, pointer: pointerArea,
 });
 const azAxes = () => [
-  makeAxes({ L: AZ.x0, R: AZ.x1, T: 275, B: 520, xr: [0, AZ.d, 5], yr: [0, AZ.smax, 0.1], ext: 40, xl: 'z', yl: String.raw`\sigma_a(z)`, labSize: 50, numSize: 28 }),
-  makeAxes({ L: AZ.x0, R: AZ.x1, T: 655, B: 960, xr: [0, AZ.d, 5], yr: [0, 1, 0.5], ext: 40, xl: 'z', yl: 'T(z)', labSize: 50, numSize: 28 }),
+  makeAxes({ L: AZ.x0, R: AZ.x1, T: 110, B: 320, xr: [0, AZ.d, 5], yr: [0, AZ.smax, 0.1], ext: 40, xl: 'z', yl: String.raw`\sigma_a(z)`, labSize: 50, numSize: 28 }),
+  makeAxes({ L: AZ.x0, R: AZ.x1, T: 775, B: 985, xr: [0, AZ.d, 5], yr: [0, 1, 0.5], ext: 40, xl: 'z', yl: 'T(z)', labSize: 50, numSize: 28 }),
 ];
+const azTank = () => ({ x0: AZ.x0, x1: AZ.x1, top: AZ.top, bot: AZ.bot, th: AZ.bot - AZ.top });
+// The medium, darker where it is denser: liquid in the glass tank, or a band of fog with soft edges.
+function drawAreaMedium(ctx, P) {
+  const n = AZ.n, k = (i) => clamp(P[i] / AZ.smax, 0, 1);
+  if (SH.container === 'cloud') {
+    const stops = []; for (let i = 0; i <= n; i += 2) stops.push([i / n, `rgba(215,215,215,${(0.5 * k(i)).toFixed(4)})`]);
+    softBand(ctx, AZ.x0, AZ.x1, AZ.y, 150, stops);
+    return;
+  }
+  const g = azTank(), L = lookOf(SH), lv = g.bot - 0.86 * g.th, lc = hexRgb(L.c), sc = hexRgb(L.surf);
+  ctx.save(); ctx.beginPath(); ctx.roundRect(g.x0, g.top - 10, g.x1 - g.x0, g.th + 10, [0, 0, 16, 16]); ctx.clip();
+  const body = ctx.createLinearGradient(g.x0, 0, g.x1, 0), surf = ctx.createLinearGradient(g.x0, 0, g.x1, 0);
+  for (let i = 0; i <= n; i += 2) { body.addColorStop(i / n, rgba(lc, lerp(0.06, 0.9, k(i)))); surf.addColorStop(i / n, rgba(sc, lerp(0.3, 0.9, k(i)))); }
+  ctx.fillStyle = body; ctx.fillRect(g.x0, lv, g.x1 - g.x0, g.bot - lv);
+  ctx.strokeStyle = surf; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(g.x0, lv); ctx.lineTo(g.x1, lv); ctx.stroke();
+  ctx.restore();
+}
 function drawArea(ctx, dt, st) {
   if (st.from) { for (let i = 0; i <= AZ.n; i++) st.prof[i] = lerp(st.from[i], st.to[i], st.mu); if (st.mu >= 1) st.from = null; }
   const P = st.prof, n = AZ.n, dz = AZ.d / n, tau = new Float64Array(n + 1);
   for (let i = 1; i <= n; i++) tau[i] = tau[i - 1] + ((P[i - 1] + P[i]) / 2) * dz;
   const at = (arr, z) => { const f = clamp(z / AZ.d, 0, 1) * n, i = Math.min(n - 1, Math.floor(f)); return lerp(arr[i], arr[i + 1], f - i); };
-  const zs = clamp(st.zs, 0, AZ.d), T = (z) => Math.exp(-at(tau, z));
-  // the medium as a strip, more opaque where it is denser, and the beam through it fading as e^{-τ}
-  const sy = 140, sh = 100, look = SH.container === 'cloud' ? LOOKS.fog : lookOf(SH), lc = hexRgb(look.c);
-  const strip = ctx.createLinearGradient(AZ.x0, 0, AZ.x1, 0);
-  for (let i = 0; i <= n; i += 2) strip.addColorStop(i / n, rgba(lc, 0.9 * clamp(P[i] / AZ.smax, 0, 1)));
-  ctx.fillStyle = strip; ctx.fillRect(AZ.x0, sy - sh / 2, AZ.x1 - AZ.x0, sh);
-  ctx.save(); ctx.strokeStyle = COL.greyC; ctx.lineWidth = 2; ctx.strokeRect(AZ.x0, sy - sh / 2, AZ.x1 - AZ.x0, sh); ctx.restore();
-  drawBeam(ctx, AZ.x0 - 40, AZ.x1 + 80, sy, SH.color, SH.I0, (x) => T(((x - AZ.x0) / (AZ.x1 - AZ.x0)) * AZ.d), []);
-  drawLaser(ctx, AZ.x0 - 40, sy, SH.color, 1);
+  const zs = clamp(st.zs, 0, AZ.d), T = (z) => Math.exp(-at(tau, z)), zOf = (x) => ((x - AZ.x0) / (AZ.x1 - AZ.x0)) * AZ.d;
+  // τ as shown, to two places: every percentage on screen is worked out from it, so they all agree on a calculator
+  const tauShown = (z) => Math.round(at(tau, z) * 100) / 100;
+  // the laser, the medium and the sensor, as in the other scenes, between the two plots
+  const cloud = SH.container === 'cloud';
+  drawAreaMedium(ctx, P);
+  drawBeam(ctx, AZ.apX, AZ.xs - 18, AZ.y, SH.color, SH.I0, (x) => T(clamp(zOf(x), 0, AZ.d)), cloud ? [] : [AZ.x0, AZ.x1]);
+  if (!cloud) drawGlass(ctx, azTank());
+  drawLaser(ctx, AZ.apX, AZ.y, SH.color, 1);
+  const reading = SH.I0 > 0 ? Math.exp(-tauShown(AZ.d)) : null;   // the sensor counts toward its value
+  st.shown = reading == null ? null : st.shown == null || reduced ? reading : lerp(st.shown, reading, 1 - Math.exp(-dt * 6));
+  drawSensor(ctx, AZ.xs, AZ.y, SH.color, reading == null ? 0 : reading * SH.I0);
+  if (st.shown != null) drawReadout(ctx, AZ.xs, AZ.y, st.shown, st.sensorA);
   // the density, and the area under it up to the sweep: that area is τ
   const [A1, A2] = azAxes();
   drawAxes(ctx, A1, { c: 1, nums: 1, lab: 1 });
@@ -1730,14 +1768,13 @@ function drawArea(ctx, dt, st) {
   // what gets through, traced as far as the sweep has gone
   drawAxes(ctx, A2, { c: 1, nums: 1, lab: 1 });
   drawCurve(ctx, A2, T, { p: zs / AZ.d, color: COL.blue });
-  // the sweep: one z through the strip and both plots
-  dashed(ctx, azX(zs), sy - sh / 2 - 12, azX(zs), A2.oy, COL.white, 0.45, 2);
+  // the sweep: one z through the density, the medium and the light
+  dashed(ctx, azX(zs), A1.Y(AZ.smax) - 14, azX(zs), A2.oy, COL.white, 0.45, 2);
   dot(ctx, A1.X(zs), A1.Y(at(P, zs)), 9, COL.green); dot(ctx, A2.X(zs), A2.Y(T(zs)), 9, COL.blue);
-  // the percentage is worked out from τ as shown, so the two readouts agree on a calculator
-  const tz = Math.round(at(tau, zs) * 100) / 100;
-  const e1 = drawTex(ctx, String.raw`\tau =`, 1505, 400, 60, { ax: 0, color: COL.green }).pop();
+  const tz = tauShown(zs);
+  const e1 = drawTex(ctx, String.raw`\tau =`, 1505, (A1.T + A1.B) / 2, 60, { ax: 0, color: COL.green }).pop();
   if (e1) drawNumber(ctx, tz, e1.x + e1.w + 0.3 * e1.fpx, e1.base, { size: e1.fpx, dec: 2, color: COL.green });
-  const e2 = drawTex(ctx, String.raw`e^{-\tau} =`, 1505, 810, 60, { ax: 0, color: COL.blue }).pop();
+  const e2 = drawTex(ctx, String.raw`e^{-\tau} =`, 1505, 880, 60, { ax: 0, color: COL.blue }).pop();
   if (e2) drawNumber(ctx, Math.exp(-tz) * 100, e2.x + e2.w + 0.3 * e2.fpx, e2.base, { size: e2.fpx, dec: 1, suffix: '%', color: COL.blue });
 }
 // Painting the density: a soft brush pulls σ toward where the pointer is.
