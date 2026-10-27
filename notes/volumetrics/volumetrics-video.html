@@ -111,6 +111,7 @@ body.clean .stage { border: 0; border-radius: 0; }
     <div class="row1">
       <div class="anims" id="anims" role="group" aria-label="Animations"></div>
       <div class="glob">
+        <select id="fadeSel" aria-label="Fade slowly into another scene"><option value="">Fade into scene…</option></select>
         <label class="rng speed" for="speed"><span>Animation speed</span><output id="speedOut">1.00×</output><input type="range" id="speed" min="0.1" max="3" step="0.05" value="1"></label>
         <button class="btn quiet" id="hideBtn" type="button">Hide controls</button>
         <button class="btn quiet" id="fsBtn" type="button">Full screen</button>
@@ -548,9 +549,9 @@ function beamProfile(look, w) {
   for (let k = 0; k <= 26; k++) { const y = (k / 26) * R; out.push([y / (2 * R), f(y) / f0]); }
   return [R, out];
 }
-function drawBeam(ctx, xa, xb, y, color, power, T, knots = []) {
+function drawBeam(ctx, xa, xb, y, color, power, T, knots = [], w = SH.beamW) {
   const len = xb - xa; if (len < 1 || power <= 0.002) return;
-  const c = hexRgb(color), xs = [], look = SH.beamLook, w = SH.beamW;
+  const c = hexRgb(color), xs = [], look = SH.beamLook;
   for (let i = 0; i <= 120; i++) xs.push(xa + (len * i) / 120);
   for (const k of knots) if (k > xa && k < xb) xs.push(k);
   xs.sort((p, q) => p - q);
@@ -979,6 +980,7 @@ const S4 = defScene({
     { id: 'sweep', label: 'Sweep the point', primary: true, run: async (st, alive) => {
       st.trace = 0; tween(st, 'probeA', 1, 0.3); await tween(st, 'z', 0, 0.7); if (!alive()) return; await tween(st, 'z', zMax4(st), st.sweepT);
     } },
+    { id: 'to6', label: 'Fade into shadows', run: () => fadeTo('shadows', 4) },
     { id: 'trace', label: 'Trace the curve', run: async (st, alive) => {
       st.trace = 1; st.p = 0; st.z = 0; tween(st, 'probeA', 1, 0.3); await tween(st, 'z', zMax4(st), st.sweepT); if (alive()) { st.trace = 0; st.p = 1; }
     } },
@@ -1330,6 +1332,108 @@ function drawSlices(ctx, dt, st) {
   if (e2) drawNumber(ctx, Math.exp(-st.tau), e2.x + e2.w + 0.3 * e2.fpx, e2.base, { size: e2.fpx, dec: 3, color: COL.blue, alpha: Math.max(0.35, st.expA) });
 }
 
+// ---------- Z. zoom into a slab ----------
+// Outline one thin slab of the medium, then fly the camera into it while everything else fades away.
+// Inside, if you like, the particles it is made of: each casts a thin shadow down the beam, and together
+// they block about nσΔz of it. That is the linear law, and it only holds because the slab is thin.
+const SZ = defScene({
+  id: 'zoom', tab: 'Zoom into a slab', shared: true,
+  defaults: () => ({ hl: 0, zoom: 0, parts: 1, zs: 0.45, dz: 14, zmax: 36, block: 0.2, pr: 0.12, seed: 3, nums: 0, zoomT: 3, sigma: 0.05, d: 20, sensorX: 1700 }),
+  actions: [
+    { id: 'hl', label: 'Highlight slab', run: (st) => tween(st, 'hl', 1, 1.1, { ease: linear }) },
+    { id: 'in', label: 'Zoom in', primary: true, run: async (st, alive) => {
+      if (st.hl < 1) { await tween(st, 'hl', 1, 0.9, { ease: linear }); if (!alive()) return; await sleep(0.3, 'zoom'); if (!alive()) return; }
+      await tween(st, 'zoom', 1, st.zoomT);
+    } },
+    { id: 'out', label: 'Zoom out', run: (st) => tween(st, 'zoom', 0, st.zoomT * 0.8) },
+    { id: 'parts', label: 'Particles on / off', run: (st) => tween(st, 'parts', st.parts > 0.5 ? 0 : 1, 0.8) },
+    { id: 'resample', label: 'Resample', run: (st) => { st.seed += 1; } },
+    RESET,
+  ],
+  params: [
+    { type: 'range', key: 'zs', label: 'Slab position', min: 0, max: 1, step: 0.01, fmt: (v) => `${Math.round(v * 100)} %` },
+    { type: 'range', key: 'dz', label: 'Slab thickness Δz (px)', min: 4, max: 60, step: 1, fmt: (v) => String(v) },
+    { type: 'range', key: 'zmax', label: 'Zoom', min: 4, max: 80, step: 1, fmt: (v) => `${v}×` },
+    { type: 'range', key: 'zoomT', label: 'Zoom time (s)', min: 0.5, max: 8, step: 0.1, fmt: (v) => v.toFixed(1) },
+    { type: 'range', key: 'block', label: 'Light the slab blocks', min: 0.02, max: 0.6, step: 0.01, fmt: (v) => `${Math.round(v * 100)} %` },
+    { type: 'range', key: 'pr', label: 'Particle radius (px)', min: 0.04, max: 0.6, step: 0.01, fmt: (v) => v.toFixed(2) },
+    { type: 'check', key: 'parts', label: 'Particles', set: (v) => tween(SZ, 'parts', v ? 1 : 0, 0.6) },
+    { type: 'check', key: 'nums', label: 'Δz and what it blocks', set: (v) => tween(SZ, 'nums', v ? 1 : 0, 0.8, { ease: linear }) },
+  ],
+  draw: drawZoom,
+});
+// The slab's particles fill its whole height, at the density that blocks `block` of the light: n·2r·Δz.
+let zoomCache = { key: '', list: [] };
+function zoomParticles(st, xs, top, bot) {
+  const key = [st.seed, st.dz, st.pr, st.block, xs.toFixed(2), top, bot].join('|');
+  if (zoomCache.key === key) return zoomCache.list;
+  const n = st.block / (2 * st.pr * st.dz), cnt = Math.min(6000, Math.round(n * st.dz * (bot - top))), rnd = rng32(st.seed * 977 + 5), list = [];
+  for (let i = 0; i < cnt; i++) list.push([lerp(xs + st.pr, xs + st.dz - st.pr, rnd()), lerp(top, bot, rnd())]);
+  zoomCache = { key, list };
+  return list;
+}
+function drawZoom(ctx, dt, st) {
+  const g = geo1(st), cloud = SH.container === 'cloud', s = st.zoom, Z = Math.exp(Math.log(st.zmax) * s);
+  const xs = g.x0 + st.zs * (g.cw - st.dz), xe = xs + st.dz, fx = (xs + xe) / 2, fy = g.y;
+  // the camera: the slab's centre glides to the middle of the screen while the zoom grows
+  const tx = lerp(fx, W / 2, s), ty = lerp(fy, H / 2, s);
+  const SX = (x) => (x - fx) * Z + tx, SY = (y) => (y - fy) * Z + ty, WX = (X) => (X - tx) / Z + fx;
+  const rest = (1 - 0.3 * smooth(clamp(st.hl, 0, 1))) * (1 - smooth(clamp(s * 1.7, 0, 1)));
+  const puffs = cloud ? cloudPuffs(g, { cloud: 1 }) : null;
+  const top = cloud ? g.y - 0.45 * g.cw : g.bot - FILL * g.th, bot = cloud ? g.y + 0.45 * g.cw : g.bot;
+  // what the medium lets through up to x, and the part of it that the slab's own particles take over
+  let T;
+  if (cloud) { buildCloudTau({ sigma: st.sigma, cloud: 1 }, g, puffs); T = cloudT; }
+  else T = (x) => Math.exp((-st.sigma * Math.max(0, Math.min(g.x1, x) - Math.max(g.x0, g.apX))) / g.pxcm);
+  const pa = st.parts * smooth(clamp((s - 0.3) / 0.45, 0, 1));
+  const Tused = (x) => (x <= xs || pa <= 0 ? T(x) : T(x) * Math.pow(T(Math.min(x, xe)) / T(xs), -pa));
+  // the world, under the camera: medium (faded outside the slab), glass, laser, sensor
+  ctx.save(); ctx.translate(tx, ty); ctx.scale(Z, Z); ctx.translate(-fx, -fy);
+  const medium = () => { if (cloud) drawCloud(ctx, puffs, { cloud: 1 }); else drawLiquid(ctx, g, mediumOf(FILL)); };
+  ctx.save(); ctx.beginPath(); ctx.rect(-1e5, -1e5, xs + 1e5, 2e5); ctx.rect(xe, -1e5, 1e5, 2e5); ctx.clip(); ctx.globalAlpha = rest; if (rest > 0.003) medium(); ctx.restore();
+  ctx.save(); ctx.beginPath(); ctx.rect(xs, -1e5, st.dz, 2e5); ctx.clip(); medium(); ctx.restore();
+  if (rest > 0.003) {
+    ctx.save(); ctx.globalAlpha = rest;
+    if (!cloud) drawGlass(ctx, g);
+    drawLaser(ctx, g.apX, g.y, SH.color, 1); drawSensor(ctx, g.xs, g.y, SH.color, T(g.xs - 18) * SH.I0);
+    ctx.restore();
+    drawReadout(ctx, g.xs, g.y, T(g.xs - 18), rest);
+  }
+  ctx.restore();
+  // the beam, in screen space so it stays sharp however close the camera gets
+  const xa = Math.max(SX(g.apX), -80), xb = Math.min(SX(g.xs - 18), W + 80);
+  if (xb > xa) drawBeam(ctx, xa, xb, SY(g.y), SH.color, SH.I0, (X) => Tused(WX(X)), [SX(xs), SX(xe), SX(g.x0), SX(g.x1)], SH.beamW * Z);
+  // the particles, and the shadow each one leaves in the beam behind it
+  if (pa > 0.003) {
+    const list = zoomParticles(st, xs, top, bot), w = SH.beamW, N = 240, r = st.pr, near = list.filter((q) => Math.abs(q[1] - g.y) < w / 2 + r);
+    let blocked = 0;
+    ctx.save(); ctx.strokeStyle = `rgba(0,0,0,${pa})`; ctx.lineWidth = Math.max(1, (w / N) * Z * 1.2); ctx.beginPath();
+    for (let i = 0; i < N; i++) {
+      const y = g.y - w / 2 + ((i + 0.5) * w) / N; let h = Infinity;
+      for (const [px, py] of near) { const dy = y - py; if (dy > -r && dy < r) { const xh = px - Math.sqrt(r * r - dy * dy); if (xh < h) h = xh; } }
+      if (h < Infinity) { blocked++; const X0 = Math.max(SX(h), -80); if (X0 < xb) { ctx.moveTo(X0, SY(y)); ctx.lineTo(xb, SY(y)); } }
+    }
+    ctx.stroke(); ctx.restore();
+    ctx.save(); ctx.globalAlpha = pa; ctx.fillStyle = '#262626'; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 1.5; ctx.beginPath();
+    for (const [px, py] of list) { const X = SX(px), Y = SY(py), R = Math.max(0.6, r * Z); if (X < -R || X > W + R || Y < -R || Y > H + R) continue; ctx.moveTo(X + R, Y); ctx.arc(X, Y, R, 0, Math.PI * 2); }
+    ctx.fill(); ctx.stroke(); ctx.restore();
+    // Δz, and the share of the beam its particles block, against nσΔz
+    const na = st.nums * clamp(s * 2 - 1, 0, 1);
+    if (na > 0.003) {
+      const yb = SY(g.y) + (w * Z) / 2 + 70;
+      drawDimension(ctx, SX(xs), SX(xe), yb, String.raw`\Delta z`, na);
+      const lab = drawTex(ctx, String.raw`\text{blocked} =`, SX(xe) + 40, SY(g.y) - (w * Z) / 2 - 70, 54, { ax: 0, alpha: na }).pop();
+      if (lab) drawNumber(ctx, (blocked / N) * 100, lab.x + lab.w + 0.3 * lab.fpx, lab.base, { size: lab.fpx, dec: 1, suffix: '%', color: COL.yellow, alpha: na });
+    }
+  }
+  // the slab's outline, drawn in
+  if (st.hl > 0.003) {
+    const X0 = SX(xs), X1 = SX(xe), Y0 = Math.max(-20, SY(top)), Y1 = Math.min(H + 20, SY(bot)), per = 2 * (X1 - X0 + (Y1 - Y0));
+    ctx.save(); ctx.strokeStyle = hexA(COL.yellow, 1 - 0.5 * smooth(clamp(s * 2, 0, 1))); ctx.lineWidth = 3; ctx.setLineDash([per * smooth(clamp(st.hl, 0, 1)), per]);
+    ctx.strokeRect(X0, Y0, X1 - X0, Y1 - Y0); ctx.restore();
+  }
+}
+
 //@@SCENES@@
 
 // ---------- the stage ----------
@@ -1429,6 +1533,7 @@ function buildDock() {
 }
 function buildTabs() {
   tabsEl.textContent = '';
+  const fs = $('fadeSel'); fs.length = 1; ORDER.forEach((id, i) => fs.add(new Option(`${i + 1} · ${scenes[id].tab}`, id)));
   ORDER.forEach((id, i) => {
     const b = mk('button', 'tab'); b.type = 'button'; b.setAttribute('role', 'tab'); b.dataset.scene = id;
     b.innerHTML = `<span class="n">${i + 1}</span>${scenes[id].tabHtml || ''}`; if (!scenes[id].tabHtml) b.append(scenes[id].tab);
@@ -1443,6 +1548,7 @@ function setScene(id) {
   try { if (location.hash !== '#' + id) history.replaceState(null, '', '#' + id); } catch (e) { /* the viewer may not allow it */ }
 }
 addEventListener('hashchange', () => { const id = location.hash.slice(1); if (scenes[id] && cur !== scenes[id]) setScene(id); });
+$('fadeSel').addEventListener('change', (e) => { const id = e.target.value; e.target.value = ''; if (id) fadeTo(id, 3.5); });
 $('speed').addEventListener('input', (e) => { SPEED = +e.target.value; $('speedOut').textContent = `${SPEED.toFixed(2)}×`; });
 const setClean = (on) => { document.body.classList.toggle('clean', on); $('showBtn').hidden = !on; };
 $('hideBtn').addEventListener('click', () => setClean(true));
@@ -1469,6 +1575,22 @@ addEventListener('keydown', (e) => {
 });
 
 // ---------- running it ----------
+// A slow crossfade from one scene into another: each is drawn on its own canvas, then the two are blended.
+let fade = null;
+const fadeCv = [document.createElement('canvas'), document.createElement('canvas')], fadeCtx = fadeCv.map((c) => c.getContext('2d'));
+function fadeTo(id, dur = 3.5) {
+  if (!scenes[id] || cur === scenes[id]) return;
+  const f = { from: cur, t: 0 }; fade = f; setScene(id);
+  tween(f, 't', 1, dur, { tag: 'fade' }).then(() => { if (fade === f) fade = null; });
+}
+function drawInto(i, sc, dt) {
+  const c = fadeCv[i], x = fadeCtx[i];
+  if (c.width !== cv.width || c.height !== cv.height) { c.width = cv.width; c.height = cv.height; }
+  x.setTransform(1, 0, 0, 1, 0, 0); x.globalAlpha = 1; x.globalCompositeOperation = 'source-over'; x.clearRect(0, 0, c.width, c.height);
+  x.setTransform(K, 0, 0, K, 0, 0); x.textAlign = 'left'; x.textBaseline = 'alphabetic'; x.lineCap = 'butt'; x.setLineDash([]);
+  sc.draw(x, dt, sc.st);
+  return c;
+}
 let raf = 0, last = 0;
 function frame(now) {
   raf = requestAnimationFrame(frame);
@@ -1478,7 +1600,12 @@ function frame(now) {
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, cv.width, cv.height);
   ctx.setTransform(K, 0, 0, K, 0, 0); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.lineCap = 'butt'; ctx.setLineDash([]);
-  try { cur.draw(ctx, dt, cur.st); } catch (err) { console.error(err); }
+  try {
+    if (fade) {
+      const a = drawInto(0, fade.from, dt), b = drawInto(1, cur, dt), u = fade.t;
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1 - u; ctx.drawImage(a, 0, 0); ctx.globalAlpha = u; ctx.drawImage(b, 0, 0); ctx.globalAlpha = 1;
+    } else cur.draw(ctx, dt, cur.st);
+  } catch (err) { console.error(err); }
   for (const f of live) f();
   if (visSig() !== dockSig) buildDock();
 }
