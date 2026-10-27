@@ -86,11 +86,9 @@ Visits are counted with [Umami](https://umami.is): no cookies, so no consent ban
 | `post-click` | A link to a post | `post`, `location`: `latest`, `home`, `archive`, `series`, `older`, `newer` |
 | `outbound-click` | Any other link to another site | `domain`, `url` |
 | `video-play` | Playing an embedded YouTube video | `video` (its id) |
-| `demo-fullscreen` | Open full screen on an interactive demo | `demo` |
 | `post-read` | Scrolling to the end of a post | `post` |
 | `search` | A search on the home page, once the reader stops typing | `query`, `results` |
 | `year-filter` | A year on the home page | `year` |
-| `theme-toggle` | The dark mode button | `theme` |
 | `page-not-found` | A missing page | `path`, `referrer` |
 | `old-url` | A visit through an old Jekyll URL (`src/redirects.mjs`); the page view keeps the site that linked to it | `from` |
 

@@ -78,14 +78,11 @@ const year = new Date().getFullYear();
       </div>
     </footer>
     <script>
-      import { track } from '../lib/analytics';
-
       document.querySelector('.theme-btn')?.addEventListener('click', () => {
         const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
         document.documentElement.dataset.theme = theme;
         try { localStorage.setItem('theme', theme); } catch {}
         window.dispatchEvent(new CustomEvent('themechange', { detail: theme }));
-        track('theme-toggle', { theme });
       });
     </script>
   </body>
