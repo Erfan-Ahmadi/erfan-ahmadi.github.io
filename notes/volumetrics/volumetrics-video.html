@@ -271,7 +271,7 @@ function tex(src, inline = false) {
     const ds = [...el.querySelectorAll('path')].map((p) => p.getAttribute('d') || '');
     atoms.push({ k: 's', x: l, y: t, w: rr - l, h: b - t, sx: r.left, sy: r.top, sw: r.width, sh: r.height,
       vb: vb && vb.width ? [vb.x, vb.y, vb.width, vb.height] : [0, 0, r.width, r.height], al: par ? par.align : 6, sl: par ? par.meetOrSlice === 2 : false,
-      paths: ds.map((d) => new Path2D(d)), color: col.c, ca: col.a, tag, terms, key: `${tag}|s|${el.closest('.sqrt') ? 'sqrt' : (ds[0] || '').slice(0, 12)}` });
+      paths: ds.map((d) => new Path2D(d)), ds, color: col.c, ca: col.a, tag, terms, key: `${tag}|s|${el.closest('.sqrt') ? 'sqrt' : (ds[0] || '').slice(0, 12)}` });
   };
   const walk = (el, tag, terms) => {
     for (const n of el.childNodes) {
@@ -322,8 +322,13 @@ function svgXf(s) {
 function drawSprite(ctx, s, alpha = s.alpha, color = s.color) {
   if (alpha <= 0.003) return;
   const a = s.a; ctx.fillStyle = rgba(color, alpha);
-  if (a.k === 'g') { ctx.font = fontStr(a.sty, a.wt, s.fpx, a.fam); ctx.fillText(a.ch, s.x, s.base); }
+  if (a.k === 'g') {
+    const o = outlineOf(a);
+    if (o) { const k = s.fpx / o.u; ctx.save(); ctx.transform(k, 0, 0, -k, s.x, s.base); ctx.fill(o.path); ctx.restore(); }
+    else { ctx.font = fontStr(a.sty, a.wt, s.fpx, a.fam); ctx.fillText(a.ch, s.x, s.base); }
+  }
   else if (a.k === 'r') ctx.fillRect(s.x, s.y, s.w, s.h);
+  else if (a.k === 'p') { ctx.beginPath(); for (const c of s.contours) { c.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath(); } ctx.fill(); }
   else {
     const [kx, ky, tx, ty] = svgXf(s);
     ctx.save(); ctx.beginPath(); ctx.rect(s.x, s.y, s.w, s.h); ctx.clip(); ctx.transform(kx, 0, 0, ky, tx, ty);
@@ -337,11 +342,26 @@ function drawWriting(ctx, s, q, alpha, color) {
   if (q >= 1) { drawSprite(ctx, s, alpha, color); return; }
   const a = s.a, border = Math.min(1, q * 2), fill = clamp(q * 2 - 1, 0, 1);
   const lw = Math.max(1.3, (s.fpx || s.size * 1.2) * 0.022);
-  if (a.k === 'g') {
+  const o = a.k === 'g' ? outlineOf(a) : null;
+  if (o) {   // trace the glyph's real outline, every contour at once, then fill it in
+    if (!o.flat) o.flat = flatten(o.d);
+    if (!o.len) o.len = Math.max(1, ...o.flat.map(polyLen));
+    const k = s.fpx / o.u;
+    ctx.save(); ctx.transform(k, 0, 0, -k, s.x, s.base);
+    if (fill < 1) { ctx.setLineDash([border * o.len, o.len]); ctx.lineWidth = lw / k; ctx.strokeStyle = rgba(color, alpha * (1 - fill)); ctx.stroke(o.path); ctx.setLineDash([]); }
+    if (fill > 0) { ctx.fillStyle = rgba(color, alpha * fill); ctx.fill(o.path); }
+    ctx.restore();
+  } else if (a.k === 'g') {
     ctx.font = fontStr(a.sty, a.wt, s.fpx, a.fam);
     if (fill < 1) { const L = s.fpx * 6; ctx.setLineDash([border * L, L]); ctx.lineWidth = lw; ctx.strokeStyle = rgba(color, alpha * (1 - fill)); ctx.strokeText(a.ch, s.x, s.base); ctx.setLineDash([]); }
     if (fill > 0) { ctx.fillStyle = rgba(color, alpha * fill); ctx.fillText(a.ch, s.x, s.base); }
   } else if (a.k === 'r') { ctx.fillStyle = rgba(color, alpha); ctx.fillRect(s.x, s.y, s.w * smooth(border), s.h); }
+  else if (a.k === 'p') {
+    const path = new Path2D(); for (const c of s.contours) { c.forEach(([x, y], i) => (i ? path.lineTo(x, y) : path.moveTo(x, y))); path.closePath(); }
+    const L = Math.max(...s.contours.map(polyLen));
+    if (fill < 1) { ctx.setLineDash([border * L, L]); ctx.lineWidth = lw; ctx.strokeStyle = rgba(color, alpha * (1 - fill)); ctx.stroke(path); ctx.setLineDash([]); }
+    if (fill > 0) { ctx.fillStyle = rgba(color, alpha * fill); ctx.fill(path); }
+  }
   else {
     const [kx, ky, tx, ty] = svgXf(s);
     ctx.save(); ctx.beginPath(); ctx.rect(s.x, s.y, s.w, s.h); ctx.clip(); ctx.transform(kx, 0, 0, ky, tx, ty);
@@ -439,6 +459,151 @@ function drawMorph(ctx, P, t, alpha = 1) {
   const ko = smooth(clamp(t / 0.6, 0, 1)), ki = smooth(clamp((t - 0.4) / 0.6, 0, 1));
   for (const o of P.outs) { const s = P.A[o.i]; drawSprite(ctx, shifted(s, o.dx * u, o.dy * u), s.alpha * (1 - ko) * alpha, s.color); }
   for (const o of P.ins) { const s = P.B[o.j]; drawSprite(ctx, shifted(s, -o.dx * (1 - u), -o.dy * (1 - u)), s.alpha * ki * alpha, s.color); }
+}
+
+// ---------- glyph outlines (KaTeX's own fonts, extracted when the page is built) ----------
+// Glyphs are drawn from their outlines, so Write traces the real outline and a reshape can move its points.
+const fontFile = (fam, sty, wt) => {
+  const f = String(fam).split(',')[0].trim().replace(/["']/g, ''), it = sty === 'italic' || sty === 'oblique', bold = +wt >= 600;
+  return `${f}-${f === 'KaTeX_Math' ? (bold ? 'BoldItalic' : 'Italic') : bold ? (it ? 'BoldItalic' : 'Bold') : it ? 'Italic' : 'Regular'}`;
+};
+const outlineCache = new Map();
+function outlineOf(a) {
+  const key = `${a.fam}|${a.sty}|${a.wt}|${a.ch}`;
+  if (outlineCache.has(key)) return outlineCache.get(key);
+  const file = typeof GLYPHS === 'undefined' ? null : GLYPHS[fontFile(a.fam, a.sty, a.wt)], d = file && file.g[a.ch.codePointAt(0)];
+  const o = d ? { u: file.u, d, path: new Path2D(d), flat: null, len: 0 } : null;
+  outlineCache.set(key, o);
+  return o;
+}
+// An outline's contours as polylines in font units, each quadratic piece cut into 8 straight ones.
+function flatten(d) {
+  const out = []; let c = null, x = 0, y = 0, m;
+  const re = /([MlqzZ])([^MlqzZ]*)/g;
+  while ((m = re.exec(d))) {
+    const n = (m[2].match(/-?\d*\.?\d+/g) || []).map(Number);
+    if (m[1] === 'M') { if (c && c.length > 2) out.push(c); x = n[0]; y = n[1]; c = [[x, y]]; }
+    else if (m[1] === 'l') for (let i = 0; i + 1 < n.length; i += 2) { x += n[i]; y += n[i + 1]; c.push([x, y]); }
+    else if (m[1] === 'q') for (let i = 0; i + 3 < n.length; i += 4) {
+      const cx = x + n[i], cy = y + n[i + 1], ex = x + n[i + 2], ey = y + n[i + 3];
+      for (let k = 1; k <= 8; k++) { const t = k / 8, mt = 1 - t; c.push([mt * mt * x + 2 * mt * t * cx + t * t * ex, mt * mt * y + 2 * mt * t * cy + t * t * ey]); }
+      x = ex; y = ey;
+    } else { if (c && c.length > 2) out.push(c); c = null; }
+  }
+  if (c && c.length > 2) out.push(c);
+  return out;
+}
+const polyArea = (c) => { let a = 0; for (let i = 0, n = c.length; i < n; i++) { const p = c[i], q = c[(i + 1) % n]; a += p[0] * q[1] - q[0] * p[1]; } return a / 2; };
+const polyLen = (c) => { let L = 0; for (let i = 0, n = c.length; i < n; i++) { const p = c[i], q = c[(i + 1) % n]; L += Math.hypot(q[0] - p[0], q[1] - p[1]); } return L; };
+// K points spaced evenly along a closed polyline, flat as [x0, y0, x1, y1, …].
+function resample(c, K) {
+  const n = c.length, cum = new Float64Array(n + 1), out = new Float64Array(2 * K);
+  for (let i = 0; i < n; i++) { const p = c[i], q = c[(i + 1) % n]; cum[i + 1] = cum[i] + Math.hypot(q[0] - p[0], q[1] - p[1]); }
+  const L = cum[n] || 1;
+  for (let k = 0, j = 0; k < K; k++) {
+    const t = (k / K) * L; while (j < n - 1 && cum[j + 1] < t) j++;
+    const p = c[j], q = c[(j + 1) % n], f = (t - cum[j]) / Math.max(1e-9, cum[j + 1] - cum[j]);
+    out[2 * k] = p[0] + (q[0] - p[0]) * f; out[2 * k + 1] = p[1] + (q[1] - p[1]) * f;
+  }
+  return out;
+}
+const meanOf = (r) => { let x = 0, y = 0; const K = r.length / 2; for (let i = 0; i < K; i++) { x += r[2 * i]; y += r[2 * i + 1]; } return [x / K, y / K]; };
+const pointRing = (K, x, y) => { const r = new Float64Array(2 * K); for (let i = 0; i < K; i++) { r[2 * i] = x; r[2 * i + 1] = y; } return r; };
+// Start b where it lines up best with a (both centred), so the outline turns into the other without twisting.
+function alignStart(a, b) {
+  const K = a.length / 2, [ax, ay] = meanOf(a), [bx, by] = meanOf(b), step = Math.max(1, Math.floor(K / 48));
+  let best = 0, bd = Infinity;
+  for (let s = 0; s < K; s++) {
+    let d = 0;
+    for (let i = 0; i < K; i += step) { const j = (i + s) % K; d += (a[2 * i] - ax - (b[2 * j] - bx)) ** 2 + (a[2 * i + 1] - ay - (b[2 * j + 1] - by)) ** 2; }
+    if (d < bd) { bd = d; best = s; }
+  }
+  if (!best) return b;
+  const out = new Float64Array(2 * K);
+  for (let i = 0; i < K; i++) { const j = (i + best) % K; out[2 * i] = b[2 * j]; out[2 * i + 1] = b[2 * j + 1]; }
+  return out;
+}
+const svgProbe = (() => { const svg = document.createElementNS(SVGNS, 'svg'), p = document.createElementNS(SVGNS, 'path'); svg.setAttribute('width', '0'); svg.setAttribute('height', '0'); svg.appendChild(p); texHost.appendChild(svg); return p; })();
+// Any piece as closed polylines on the stage: a glyph's outline, a rule's rectangle, an SVG piece sampled
+// along its path (kept inside the box KaTeX clips it to), or a shape's own contours.
+function contoursOf(s) {
+  const a = s.a;
+  if (a.k === 'g') {
+    const o = outlineOf(a);
+    if (!o) { const [l, r, t, b] = inkBox(s); return [[[l, t], [l, b], [r, b], [r, t]]]; }
+    if (!o.flat) o.flat = flatten(o.d);
+    const k = s.fpx / o.u;
+    return o.flat.map((c) => c.map(([x, y]) => [s.x + x * k, s.base - y * k]));
+  }
+  if (a.k === 'r') return [[[s.x, s.y], [s.x, s.y + s.h], [s.x + s.w, s.y + s.h], [s.x + s.w, s.y]]];
+  if (a.k === 'p') return s.contours;
+  const [kx, ky, tx, ty] = svgXf(s), out = [];
+  for (const d of a.ds || []) {
+    svgProbe.setAttribute('d', d); const L = svgProbe.getTotalLength(); if (!(L > 0)) continue;
+    const c = []; for (let i = 0; i < 200; i++) { const p = svgProbe.getPointAtLength((i / 200) * L); c.push([clamp(tx + p.x * kx, s.x, s.x + s.w), clamp(ty + p.y * ky, s.y, s.y + s.h)]); }
+    out.push(c);
+  }
+  return out;
+}
+
+// ---------- reshaping one formula (or shape) into any other, like manim's Transform ----------
+// Pieces are paired in reading order; when one side has more, pieces split or merge, as manim's do. Within a
+// pair, outer contours pair with outer contours and holes with holes (biggest first); a contour with no
+// partner shrinks to a point or grows from one. Every pair is resampled to the same number of points,
+// started where they line up best, and the points glide straight across.
+function reshapePlan(A, B) {
+  const read = (S) => S.map((s) => {
+    const cs = contoursOf(s).filter((c) => c.length > 2); if (!cs.length) return null;
+    let big = cs[0], ba = -1, x = 0, y = 0, n = 0;
+    for (const c of cs) { const ar = Math.abs(polyArea(c)); if (ar > ba) { ba = ar; big = c; } for (const p of c) { x += p[0]; y += p[1]; n++; } }
+    return { s, cs, orient: Math.sign(polyArea(big)) || 1, cx: x / n, cy: y / n };
+  }).filter(Boolean).sort((p, q) => p.cx - q.cx || p.cy - q.cy);
+  const a = read(A), b = read(B), n = a.length, m = b.length, N = Math.max(n, m), groups = [];
+  if (n && m) for (let i = 0; i < N; i++) groups.push(pairShapes(a[n === N ? i : Math.floor((i * n) / N)], b[m === N ? i : Math.floor((i * m) / N)]));
+  return { groups };
+}
+function pairShapes(pa, pb) {
+  const off = [pb.cx - pa.cx, pb.cy - pa.cy], flip = pa.orient !== pb.orient;
+  // outer contours and holes, told apart by winding relative to the piece's biggest contour
+  const split = (P, rev) => {
+    const outer = [], holes = [];
+    for (const c0 of P.cs) { const o = { c: rev ? c0.slice().reverse() : c0, ar: Math.abs(polyArea(c0)), L: polyLen(c0) }; (polyArea(c0) * P.orient >= 0 ? outer : holes).push(o); }
+    outer.sort((p, q) => q.ar - p.ar); holes.sort((p, q) => q.ar - p.ar);
+    return [outer, holes];
+  };
+  const [ao, ah] = split(pa, false), [bo, bh] = split(pb, flip), pairs = [];
+  for (const [X, Y] of [[ao, bo], [ah, bh]]) {
+    for (let i = 0, k = Math.max(X.length, Y.length); i < k; i++) {
+      const x = X[i], y = Y[i], K = clamp(Math.round(Math.max(x ? x.L : 0, y ? y.L : 0) / 4), 24, 240);
+      let ra = x ? resample(x.c, K) : null, rb = y ? resample(y.c, K) : null;
+      if (!ra) { const [cx, cy] = meanOf(rb); ra = pointRing(K, cx - off[0], cy - off[1]); }
+      else if (!rb) { const [cx, cy] = meanOf(ra); rb = pointRing(K, cx + off[0], cy + off[1]); }
+      else rb = alignStart(ra, rb);
+      pairs.push({ a: ra, b: rb, K });
+    }
+  }
+  return { pairs, ca: pa.s.color, cb: pb.s.color, aa: pa.s.alpha, ab: pb.s.alpha };
+}
+function drawReshape(ctx, P, t, alpha = 1) {
+  const u = smooth(t);
+  for (const g of P.groups) {
+    ctx.beginPath();
+    for (const { a, b, K } of g.pairs) {
+      for (let i = 0; i < K; i++) { const x = a[2 * i] + (b[2 * i] - a[2 * i]) * u, y = a[2 * i + 1] + (b[2 * i + 1] - a[2 * i + 1]) * u; if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); }
+      ctx.closePath();
+    }
+    ctx.fillStyle = rgba(mixRgb(g.ca, g.cb, u), lerp(g.aa, g.ab, u) * alpha); ctx.fill();
+  }
+}
+// Plain shapes, to reshape a formula into something that is not a formula at all: @circle, @square, @triangle, @star.
+function shapeSprites(name, pl) {
+  const r = (pl.size ?? 84) * EQ.scale * 1.2, x = pl.ax === 0 ? (pl.x ?? 0) + r : pl.x ?? W / 2, y = pl.y ?? H / 2, c = [];
+  const poly = (pts, per) => { for (let e = 0; e < pts.length; e++) { const p = pts[e], q = pts[(e + 1) % pts.length]; for (let i = 0; i < per; i++) c.push([x + r * lerp(p[0], q[0], i / per), y + r * lerp(p[1], q[1], i / per)]); } };
+  if (name === 'square') poly([[-1, -1], [-1, 1], [1, 1], [1, -1]], 40);
+  else if (name === 'triangle') poly([[0, -1.1], [-1.05, 0.75], [1.05, 0.75]], 50);
+  else if (name === 'star') { const pts = []; for (let i = 0; i < 10; i++) { const ang = -Math.PI / 2 + (i * Math.PI) / 5, rr = i % 2 ? 0.45 : 1.1; pts.push([rr * Math.cos(ang), rr * Math.sin(ang)]); } poly(pts, 16); }
+  else for (let i = 0; i < 160; i++) { const t = (i / 160) * 2 * Math.PI; c.push([x + r * Math.cos(t), y - r * Math.sin(t)]); }
+  return [{ a: { k: 'p', terms: [], key: '@' + name }, key: '@' + name, contours: [c], x: x - r, y: y - r, w: 2 * r, h: 2 * r, color: hexRgb(COL.blue), alpha: 1, size: pl.size ?? 84 }];
 }
 
 // ---------- braces: a LaTeX-like underbrace that stretches from its centre ----------
@@ -735,7 +900,7 @@ const LX = 200, EX = 640, ROWS = [300, 520, 740], MID = { x: 960, y: 540, size: 
 
 const EQ = defScene({
   id: 'morph', tab: 'Equation morph',
-  defaults: () => ({ preset: 'tanks', step: -1, morphDur: 1.2, writeMul: 1, scale: 1, subs: true,
+  defaults: () => ({ preset: 'reshape', style: 'shape', step: -1, morphDur: 1.4, writeMul: 1, scale: 1, subs: true,
     from: String.raw`I = I_0\, e^{-{{\sigma_a}}\, {{d}}}`, to: String.raw`I = I_0\, e^{-\int_0^{ {{d}} } {{\sigma_a}}(s)\, ds}`,
     items: new Map(), morphs: [], braces: [] }),
   actions: [
@@ -750,14 +915,15 @@ const EQ = defScene({
     return s;
   },
   params: [
-    { type: 'select', key: 'preset', label: 'Sequence', options: [['tanks', 'Tanks: copy and morph'], ['base', 'Any base works'], ['beer', 'Beer–Lambert grows an integral'], ['rte', 'RTE with braces'], ['custom', 'Your own']], set: (v) => { EQ.preset = v; eqGo(0, false); }, rebuild: true },
+    { type: 'select', key: 'preset', label: 'Sequence', options: [['reshape', 'Unrelated formulas, reshaped'], ['tanks', 'Tanks: copy and morph'], ['base', 'Any base works'], ['beer', 'Beer–Lambert grows an integral'], ['rte', 'RTE with braces'], ['custom', 'Your own']], set: (v) => { EQ.preset = v; eqGo(0, false); }, rebuild: true },
+    { type: 'select', key: 'style', label: 'Morph style', options: [['shape', 'Reshape outlines (Transform)'], ['match', 'Match pieces (TransformMatchingTex)']], visible: () => EQ.preset !== 'reshape' && EQ.preset !== 'rte' },
     { type: 'range', key: 'morphDur', label: 'Morph time (s)', min: 0.4, max: 4, step: 0.1, fmt: (v) => v.toFixed(1) },
     { type: 'range', key: 'writeMul', label: 'Write time', min: 0.3, max: 3, step: 0.05, fmt: (v) => `${v.toFixed(2)}×` },
     { type: 'range', key: 'scale', label: 'Size', min: 0.6, max: 1.4, step: 0.05, fmt: (v) => `${v.toFixed(2)}×`, set: (v) => { EQ.scale = v; eqGo(EQ.step, false); } },
-    { type: 'check', key: 'subs', label: 'Cross-fade mismatched pieces' },
+    { type: 'check', key: 'subs', label: 'Cross-fade mismatched pieces', visible: () => EQ.style === 'match' && EQ.preset !== 'reshape' && EQ.preset !== 'rte' },
     { type: 'text', key: 'from', label: 'From (TeX)', wide: true, visible: () => EQ.preset === 'custom', enter: () => eqGo(0, true) },
     { type: 'text', key: 'to', label: 'To (TeX)', wide: true, visible: () => EQ.preset === 'custom', enter: () => eqGo(1, true) },
-    { type: 'note', html: 'Press Enter in a field to play it. Pieces with the same shape glide to their new place. Wrap a part in <code>{{ }}</code> in both formulas to pair it by hand, as in manim.', visible: () => EQ.preset === 'custom' },
+    { type: 'note', html: 'Press Enter in a field to play it. Reshape turns any outline into any other; <code>@circle</code>, <code>@square</code>, <code>@triangle</code> and <code>@star</code> work as formulas too. With Match pieces, wrap a part in <code>{{ }}</code> in both formulas to pair it by hand, as in manim.', visible: () => EQ.preset === 'custom' },
   ],
   draw: draw2, next: () => eqGo(EQ.step + 1, true), prev: () => eqGo(EQ.step - 1, false),
   onReset: () => eqGo(0, false),
@@ -766,6 +932,7 @@ const EQ = defScene({
 // Primitives a step is made of. eqEpoch guards against a step that was cut short by Back, Next or Reset.
 let eqEpoch = 0;
 function inst(src, pl) {
+  if (src.trim().startsWith('@')) return { T: null, size: (pl.size ?? 84) * EQ.scale, sprites: shapeSprites(src.trim().slice(1), pl), alpha: 1, writeP: 1, visible: true, hi: {}, dim: 0 };
   const T = tex(src), want = (pl.size ?? 84) * EQ.scale, size = Math.min(want, (pl.fit ?? 1800) / Math.max(T.w, 0.01));
   return { T, size, sprites: place(T, { ...pl, size }), alpha: 1, writeP: 1, visible: true, hi: {}, dim: 0 };
 }
@@ -773,10 +940,10 @@ async function eqWrite(id, src, pl, dur) {
   const I = inst(src, pl); I.writeP = 0; EQ.items.set(id, I);
   await tween(I, 'writeP', 1, (dur ?? (I.sprites.length < 15 ? 1 : 2)) * EQ.writeMul, { ease: linear, tag: 'morph' });
 }
-async function eqMorph(fromId, toId, src, pl, { copy = false } = {}) {
+async function eqMorph(fromId, toId, src, pl, { copy = false, style = null } = {}) {
   const e = eqEpoch, A = EQ.items.get(fromId), B = inst(src, pl);
-  if (!A) { EQ.items.set(toId, B); return; }
-  const m = { plan: matchPlan(A.sprites, B.sprites, { subs: EQ.subs }), t: 0 };
+  if (!A || instant || reduced) { if (A && !copy && fromId !== toId) EQ.items.delete(fromId); EQ.items.set(toId, B); return; }
+  const m = (style || EQ.style) === 'shape' ? { kind: 'shape', plan: reshapePlan(A.sprites, B.sprites), t: 0 } : { kind: 'match', plan: matchPlan(A.sprites, B.sprites, { subs: EQ.subs }), t: 0 };
   if (!copy) A.visible = false;
   EQ.morphs.push(m);
   await tween(m, 't', 1, EQ.morphDur, { ease: linear, tag: 'morph' });
@@ -815,6 +982,14 @@ async function focusTerm(term) {
   if (e === eqEpoch) EQ.braces = EQ.braces.filter((b) => b.term === term);
 }
 const PRESETS = {
+  reshape: { steps: [
+    { label: 'Write', run: () => eqWrite('f', String.raw`T(a+b) = T(a)\,T(b)`, MID) },
+    { label: 'Into the exponential', run: () => eqMorph('f', 'f', String.raw`T(z) = e^{-\sigma z}`, MID, { style: 'shape' }) },
+    { label: "Into Bernoulli's limit", run: () => eqMorph('f', 'f', String.raw`\lim_{N\to\infty}\left(1-\frac{\tau}{N}\right)^{N}`, MID, { style: 'shape' }) },
+    { label: 'Into a circle', run: () => eqMorph('f', 'f', '@circle', MID, { style: 'shape' }) },
+    { label: 'Into the transfer equation', run: () => eqMorph('f', 'f', RTE, { x: 960, y: 500, size: 80, fit: 1800 }, { style: 'shape' }) },
+    { label: 'Back to Beer–Lambert', run: () => eqMorph('f', 'f', String.raw`I = I_0\, e^{-\sigma_a d}`, MID, { style: 'shape' }) },
+  ] },
   tanks: { steps: [
     { label: 'Write the first line', run: () => Promise.all([eqWrite('L1', tankLabel(1), { x: LX, y: ROWS[0], ax: 0 }), eqWrite('E1', tankExpr(1, '50\\%'), { x: EX, y: ROWS[0], ax: 0 })]) },
     { label: 'Copy it down and morph', run: () => Promise.all([eqMorph('L1', 'L2', tankLabel(2), { x: LX, y: ROWS[1], ax: 0 }, { copy: true }), eqMorph('E1', 'E2', tankExpr(2, '25\\%'), { x: EX, y: ROWS[1], ax: 0 }, { copy: true })]) },
@@ -859,7 +1034,7 @@ async function eqGo(k, play) {
 }
 function draw2(ctx, dt, st) {
   for (const I of st.items.values()) if (I.visible && I.alpha > 0.003) drawSprites(ctx, I.sprites, { p: I.writeP, alpha: I.alpha, hi: I.hi, dim: I.dim });
-  for (const m of st.morphs) drawMorph(ctx, m.plan, m.t);
+  for (const m of st.morphs) (m.kind === 'shape' ? drawReshape : drawMorph)(ctx, m.plan, m.t);
   for (const b of st.braces) {
     drawBrace(ctx, (b.x0 + b.x1) / 2, b.top, (b.x1 - b.x0) * b.g, b.h, b.th, b.color, Math.min(1, b.g * 4));
     if (b.l > 0.003) for (const s of b.lab) drawSprite(ctx, shifted(s, 0, (1 - b.l) * 14), s.alpha * b.l, b.color);
