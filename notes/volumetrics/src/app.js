@@ -2526,6 +2526,7 @@ cv.addEventListener('pointerdown', (e) => { const [x, y] = toStage(e); if (cur.p
 cv.addEventListener('pointermove', (e) => { const [x, y] = toStage(e); stageEl.classList.toggle('grab', !!(cur.pointer && cur.pointer('move', x, y))); });
 const pointerUp = () => { if (cur.pointer) cur.pointer('up', 0, 0); stageEl.classList.remove('grabbing'); };
 cv.addEventListener('pointerup', pointerUp); cv.addEventListener('pointercancel', pointerUp);
+cv.addEventListener('wheel', (e) => { if (cur.wheel) { e.preventDefault(); cur.wheel(e.deltaY); } }, { passive: false });
 
 // ---------- controls under the stage ----------
 const anims = $('anims'), params = $('params'), sharedEl = $('sharedParams'), tabsEl = $('tabs');

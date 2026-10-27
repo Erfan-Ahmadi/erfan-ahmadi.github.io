@@ -23,7 +23,10 @@ if (/url\(fonts\//.test(css)) throw new Error('a KaTeX font was left pointing at
 const js = fs.readFileSync(path.join(dist, 'katex.min.js'), 'utf8');
 // The same faces' outlines, for drawing glyphs as paths and reshaping one formula into another.
 const outlines = JSON.stringify(glyphOutlines(path.join(dist, 'fonts'), [...keep]));
-const app = fs.readFileSync(path.join(here, 'src/app.js'), 'utf8');
+// The 3D scenes (src/volume.js) go in where app.js marks the end of its scenes, so they register after the 2D ones.
+const volume = fs.readFileSync(path.join(here, 'src/volume.js'), 'utf8');
+const app = fs.readFileSync(path.join(here, 'src/app.js'), 'utf8').replace('//@@SCENES@@', () => volume + '\n//@@SCENES@@');
+if (!app.includes('function g3render')) throw new Error('app.js is missing the //@@SCENES@@ marker');
 const shell = fs.readFileSync(path.join(here, 'src/shell.html'), 'utf8');
 for (const t of ['<!--KATEX_CSS-->', '<!--KATEX_JS-->', '<!--GLYPHS-->', '<!--APP_JS-->']) if (!shell.includes(t)) throw new Error(`shell.html is missing ${t}`);
 
