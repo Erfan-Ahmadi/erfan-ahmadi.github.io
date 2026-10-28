@@ -14,7 +14,7 @@ Edit `src/`, never the built page:
 
 - `src/shell.html` is the markup and the CSS.
 - `src/app.js` is the engine and the 2D scenes.
-- `src/volume.js` is the WebGL2 volume renderer and scene 17, and `src/million.js` is scene 18. The build inserts them into `app.js`, after its scenes, so they can use the engine's helpers and keep their numbers.
+- `src/volume.js` is the WebGL2 volume renderer and scene 17; `src/million.js`, `sheets.js`, `bases.js` and `average.js` are scenes 18 to 21. The build inserts them into `app.js`, after its scenes and in that order, so they can use the engine's helpers and keep their numbers.
 - `build.mjs` puts KaTeX's stylesheet (fonts inlined as data URIs), KaTeX's script, the glyph outlines and `app.js` into the shell. KaTeX comes from the blog's `node_modules`, so run `npm install` first.
 - `glyphs.mjs` reads the outlines of KaTeX's fonts, which the morphs and the write animation draw as paths.
 
@@ -40,6 +40,9 @@ Edit `src/`, never the built page:
 | 16 | Product to integral | Slices, a product of factors, a sum in the exponent, bars that close in on $\int_0^d \sigma(z)\,dz$. Last, the density changes shape at equal area and the light that gets out stays put. |
 | 17 | Cloud in 3D | A cumulus made from noise and lit by the sun, with a laser through it and a sensor reading $T = e^{-(\sigma_a + \sigma_s)\int \rho\,ds}$. Drag to orbit and scroll to come closer. Scattering, absorption and the sun turn on and off. "Zoom into the beam" dissolves the cloud into the particles of scene 6 and lands on it, and scene 6 zooms back out. "The eye" shows an eye, the rays it looks along, and what it sees. |
 | 18 | Millions of particles | Scene 6's slab zoomed out across the beam, with the depth kept where it is: more rays and discs come into view, the discs shrink below a pixel, and the fraction of rays still going closes in on $e^{-n\sigma z}$. At a million discs the medium is a liquid in a tank. Zooming in takes the liquid back apart into discs and lands on scene 6. The middle of the beam is simulated, about 80,000 discs; past a thousandfold zoom the picture and the curve are the limit. |
+| 19 | Where the shadows fall | Slabs as transparencies, seen beside the beam and turned to look down it, where each ray is a dot. Each slab puts particles on a share $c$ of the rays. Slabs that don't care where earlier shadows fell overlap them and leave $(1-c)^n$; slabs that fill the gaps give the tempting $1 - cn$ and a wall; slabs that line up let the first slab's light through them all; clumps fall in between. "Half and half" is the second-tank question: 50% twice is 25%, not 0. A log scale makes the exponential a straight line. |
+| 20 | Same curve, any base | $0.5^x$ and $e^{-kx}$: $k$ slides to 0.693 and the curves become one, which is also $2^{-x}$ and $10^{-0.301x}$. Every $a^x$ starts at 1, and $a = 1$ is a vacuum. Slope over height is the same everywhere, and in base $e$ it is the number in the exponent. |
+| 21 | Average, then exponentiate? | Rays through clumps each see their own $\tau$; the sensor reads the average of $e^{-\tau}$. Smear the clumps into the same amount spread evenly, as a coarser level of detail would, and it reads $e^{-\bar\tau}$, which is less: on the convex curve the average of the points lies above the curve. |
 
 Scene 17 needs WebGL2; while the camera is still it keeps averaging frames until the picture settles.
 
