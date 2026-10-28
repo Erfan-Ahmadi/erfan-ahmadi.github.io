@@ -1239,6 +1239,11 @@ const SA = defScene({
     { id: 'resample', label: 'Resample', run: (st) => { st.seed += 1; return moveDiscs(st, 1.2); } },
     { id: 'zoomout', label: 'Zoom out to the tank', run: () => { Object.assign(SZ, { hl: 1, zoom: 1, parts: 1 }); setScene('zoom'); runAction(scenes.zoom, { run: (st) => tween(st, 'zoom', 0, st.zoomT * 0.85) }); } },
     { id: 'tocloud', label: 'Zoom out to the cloud', run: () => { SK.zoom = 1; SK.eye = 0; setScene('cloud'); runAction(scenes.cloud, { run: (st) => tween(st, 'zoom', 0, st.zoomT * 0.85) }); } },
+    { id: 'millions', label: 'Zoom out to millions', run: async (st, alive) => {
+      untween(st, 'front'); st.front = 1;
+      if (st.dist !== 'random') { st.dist = 'random'; await moveDiscs(st, 1.2); if (!alive()) return; }
+      SM.p = 0; SM.shown = st.shown; setScene('million'); runAction(scenes.million, scenes.million.actions[0]);
+    } },
     RESET,
   ],
   params: [
