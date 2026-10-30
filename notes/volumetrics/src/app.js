@@ -1300,7 +1300,7 @@ function drawShadowsPicture(ctx, dt, st, S) {
   ctx.beginPath(); ctx.roundRect(sx, SL.top - 30, 26, SL.bot - SL.top + 60, 6); ctx.fill(); ctx.stroke();
   if (reached != null) { ctx.fillStyle = hexA(color, 0.95 * power); for (let i = 0; i < k; i++) if (hits[i] > sx) ctx.fillRect(sx - 3, ys[i] - (sheet ? 0.6 : 1.4), 5, sheet ? 1.2 : 2.8); }
   ctx.restore();
-  if (st.shown != null) drawShadowsReadout(ctx, sx, st.shown, 1);
+  if (st.shown != null && !st.noReadout) drawShadowsReadout(ctx, sx, st.shown, 1);
 }
 function drawShadowsReadout(ctx, sx, v, alpha) {
   const bw = 210, bh = 84, right = sx + 26 + 24 + bw < W - 10, bx = right ? sx + 26 + 24 : sx - 24 - bw, by = (SL.top + SL.bot) / 2 - bh / 2;

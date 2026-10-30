@@ -4,14 +4,17 @@
 // Going to a beat rebuilds the ones before it instantly, so stepping back shows a beat the way it ends. The state
 // of a presentation lives in PS; the scenes it borrows (the cloud) keep their own.
 const PRES = { on: false, paused: false, beat: 0, toast: -99, epoch: 0 };
-const PS_DEFAULTS = () => ({ orbit: 1, mag: 0, aside: 0, fig: 0, thoughts: 0, think: '', writeP: 1, eq: 0, eqP: 0, corner: 0, braces: [], hiTerm: null, hi: {}, dim: 0, box: 0, cap: '', capP: 0 });
+const PS_DEFAULTS = () => ({ orbit: 1, mag: 0, aside: 0, fig: 0, thoughts: 0, think: '', writeP: 1, eq: 0, eqP: 0, corner: 0, braces: [], hiTerm: null, hi: {}, dim: 0, box: 0, cap: '', capP: 0, cells: [0, 0, 0, 0], cellT: [0, 0, 0, 0], grid: 1 });
+// The four effects' cells under the equation, in the order of the terms: absorption, out-scattering, emission, in-scattering.
+const PCELLS = [[370, 480, 590, 278], [990, 480, 590, 278], [370, 790, 590, 278], [990, 790, 590, 278]];
+const PFX = [['t-pabs', 'absorption', COL.red], ['t-pout', 'out-scattering', COL.red], ['t-pem', 'emission', COL.green], ['t-pin', 'in-scattering', COL.green]];
 const PS = PS_DEFAULTS();
 // Placeholders for what the figure thinks while the narration is about me; replace them with the real thoughts.
 const THOUGHTS = ['clouds… from physics?!', 'one day', 'later. definitely later.'];
 // The equation, with its terms named: the four effects for the braces, and the parts the questions point at.
-const PRTE = String.raw`L(p,\omega) = \htmlClass{t-qouter}{\int_0^{d}} \htmlClass{t-qe}{e}^{\htmlClass{t-qexp}{\htmlClass{t-pabs}{-\int_0^{t}\sigma_a(p_s)\,ds}\htmlClass{t-pout}{-\int_0^{t}\sigma_s(p_s)\,ds}}}\left[\htmlClass{t-pem}{\sigma_a(p_t)\,L_e(p_t,\omega)} + \htmlClass{t-pin}{\sigma_s(p_t)\int_{4\pi} f_p(\omega,\omega')\,L(p_t,\omega')\,d\omega'}\right]\htmlClass{t-qouter}{dt}`;
+const PRTE = String.raw`L(p,\omega) = \htmlClass{t-qouter}{\int_0^{d}} \htmlClass{t-qe}{e}^{\htmlClass{t-qexp}{\htmlClass{t-pabs}{-\int_0^{t}\sigma_a(p_s)\,ds}\htmlClass{t-pout}{-\int_0^{t}\sigma_s(p_s)\,ds}}}\left[\htmlClass{t-pem}{\sigma_a(p_t)\,L_e(p_t,\omega)} + \htmlClass{t-pin}{\sigma_s(p_t)\int_{4\pi} f_p(\omega,\omega')\,L(p_t,\omega')\,d\omega'}\right]dt`;
 Object.assign(TERM_COL, { 't-pabs': hexRgb(COL.red), 't-pout': hexRgb(COL.red), 't-pem': hexRgb(COL.green), 't-pin': hexRgb(COL.green), 't-qe': WHITE_RGB, 't-qexp': WHITE_RGB, 't-qouter': WHITE_RGB });
-const PEQ = { x: 960, y: 470, size: 76, fit: 1760 };
+const PEQ = { x: 960, y: 300, size: 76, fit: 1760 };
 let peqSprites = null;
 const peq = () => peqSprites || (peqSprites = place(tex(PRTE), { ...PEQ, size: Math.min(PEQ.size, PEQ.fit / Math.max(tex(PRTE).w, 0.01)) }));
 const ptw = (key, to, dur, o = {}) => tween(PS, key, to, dur, { tag: 'pres', ...o });
@@ -26,10 +29,7 @@ const BEATS = [
     ptw('corner', 1, 1.4); ptw('aside', 2, 1.4);
     await ptw('eqP', 1, 3.2, { ease: linear, delay: 0.5 });
   } },
-  { name: 'four effects', run: async () => {
-    const list = [['t-pabs', 'absorption', COL.red], ['t-pout', 'out-scattering', COL.red], ['t-pem', 'emission', COL.green], ['t-pin', 'in-scattering', COL.green]];
-    for (let i = 0; i < list.length; i++) { const p = presBrace(...list[i]); if (i < list.length - 1) await sleep(0.7, 'pres'); else await p; }
-  } },
+  ...PFX.map(([term, label, color], i) => ({ name: label, run: () => { PS.cellT[i] = TIME + 0.4; return Promise.all([presBrace(term, label, color), tween(PS.cells, i, 1, 0.8, { tag: 'pres' })]); } })),
   { name: 'why e?', run: () => presQuestion('t-qe', String.raw`\text{why } e\text{?}`) },
   { name: 'why an integral in the exponent?', run: () => presQuestion('t-qexp', String.raw`\text{why an integral in the exponent?}`) },
   { name: 'why another integral?', run: () => presQuestion('t-qouter', String.raw`\text{inside another integral?}`) },
@@ -52,6 +52,7 @@ function presBrace(term, label, color) {
 async function presQuestion(term, caption) {
   for (const k of Object.keys(PS.hi)) if (k !== term) tween(PS.hi, k, 0, 0.5, { tag: 'pres' });
   for (const b of PS.braces) tween(b, 'a', 0, 0.5, { tag: 'pres' });
+  ptw('grid', 0, 0.5);
   tween(PS.hi, term, 1, 0.6, { tag: 'pres' }); ptw('dim', 1, 0.7);
   PS.hiTerm = term; PS.cap = caption; PS.capP = 0;
   if (PS.box < 1) ptw('box', 1, 0.6); else { PS.box = 0; ptw('box', 1, 0.6); }
@@ -70,8 +71,8 @@ function setPresent(on, beat = 0) {
   PRES.on = on; PRES.paused = false;
   document.body.classList.toggle('presenting', on);
   setClean(on);
-  if (on) { SK.yaw = 0.62; SK.pitch = 0.16; SK.dist = 4.6; presGo(beat, true); }
-  else { stopTweens('pres'); SK.yaw = 0.62; }
+  if (on) { PRES.saved = { readout: SK.readout }; SK.readout = 0; SK.yaw = 0.62; SK.pitch = 0.16; SK.dist = 4.6; presGo(beat, true); }
+  else { stopTweens('pres'); if (PRES.saved) { SK.readout = PRES.saved.readout; PRES.saved = null; } }
 }
 function presKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -118,29 +119,30 @@ function drawThought(ctx, x, y, w, h, text, p, a) {
   }
   ctx.restore();
 }
-// The magnifier over the beam: a ring on the beam marking the section, and a big circle beside it showing that
-// section as the shadows scene draws it, particles wobbling and rays stopping at them.
+// The zoom panel over the beam: a ring on the beam marks the section, and a panel beside it shows that section the
+// way the shadows scene draws it, particles wobbling and rays stopping at them, with its step plot of the rays left
+// under them against e^{−nσz}: the discrete version of what the cloud does.
+const PANEL = { x: 1130, y: 36, w: 760, h: 600 }, PSRC = { x: SL.x0 - 70, y: SL.top - 70, w: SL.x1 - SL.x0 + 260, h: 1010 - (SL.top - 70) };
 function drawMagnifier(ctx, cam, B, m) {
   if (m <= 0.003) return;
-  const e = smooth(m), q = cam.project(vAdd(B.b0, vMul(B.d, B.len * 0.52))) || [960, 560];
-  const R = 235 * e, cx = lerp(q[0], 1400, e), cy = lerp(q[1], 262, e), r0 = 22;
+  const e = smooth(m), q = cam.project(vAdd(B.b0, vMul(B.d, B.len * 0.52))) || [960, 560], r0 = 22;
+  const R = lerpRect([q[0] - r0, q[1] - r0, 2 * r0, 2 * r0], [PANEL.x, PANEL.y, PANEL.w, PANEL.h], e);
   ctx.save(); ctx.globalAlpha = e;
-  // the small ring on the beam and the two lines to the big circle
   ctx.strokeStyle = hexA(COL.white, 0.8); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(q[0], q[1], r0, 0, Math.PI * 2); ctx.stroke();
-  if (R > r0 + 10) {
-    const d = Math.hypot(cx - q[0], cy - q[1]), ang = Math.atan2(cy - q[1], cx - q[0]), th = Math.acos(clamp((R - r0) / Math.max(d, 1e-6), -1, 1));
+  if (e > 0.1) {   // the section's ring to the panel's near corners
     ctx.setLineDash([6, 8]); ctx.beginPath();
-    for (const s of [-1, 1]) { const a = ang + s * th; ctx.moveTo(q[0] + r0 * Math.cos(a), q[1] + r0 * Math.sin(a)); ctx.lineTo(cx + R * Math.cos(a), cy + R * Math.sin(a)); }
+    for (const [cx, cy] of [[R[0], R[1]], [R[0], R[1] + R[3]]]) { const a = Math.atan2(cy - q[1], cx - q[0]); ctx.moveTo(q[0] + r0 * Math.cos(a), q[1] + r0 * Math.sin(a)); ctx.lineTo(cx, cy); }
     ctx.stroke(); ctx.setLineDash([]);
   }
-  // inside: a window onto the middle of the shadows scene's slab, scaled so the slab's height fills the circle
-  ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.clip();
-  ctx.fillStyle = hexA(BG, 0.93); ctx.fill();
-  const k = (2 * R) / (SL.bot - SL.top), mx = (SL.x0 + SL.x1) / 2, my = (SL.top + SL.bot) / 2;
-  ctx.translate(cx, cy); ctx.scale(k, k); ctx.translate(-mx, -my);
-  const sa = { ...SA, rays: '40' }, S = shadowsState(sa); drawShadowsPicture(ctx, 0, sa, S);
+  ctx.save(); ctx.beginPath(); ctx.roundRect(R[0], R[1], R[2], R[3], 16 * e); ctx.clip();
+  ctx.fillStyle = hexA(BG, 0.94); ctx.fill();
+  const k = Math.min(R[2] / PSRC.w, R[3] / PSRC.h), ox = R[0] + (R[2] - PSRC.w * k) / 2 - PSRC.x * k, oy = R[1] + (R[3] - PSRC.h * k) / 2 - PSRC.y * k;
+  ctx.translate(ox, oy); ctx.scale(k, k);
+  // only the discrete version: no e^{−nσz} curve; the sensor stays outside the panel, and no reading
+  const sa = { ...SA, rays: '40', pred: 0, labels: 1, sensorX: 1850, noReadout: true }, S = shadowsState(sa);
+  drawShadowsPicture(ctx, 0, sa, S); drawShadowsPlot(ctx, sa, S, 1);
   ctx.restore();
-  ctx.strokeStyle = COL.greyA; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = COL.greyA; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(R[0], R[1], R[2], R[3], 16 * e); ctx.stroke();
   ctx.restore();
 }
 const presCv = document.createElement('canvas'), presCtx = presCv.getContext('2d');
@@ -148,7 +150,6 @@ function drawPresent(ctx, dt) {
   const st = PS;
   // the cloud, with the laser on and turning slowly; while it is the whole picture it draws straight onto the stage,
   // inside the aside it is drawn offscreen and shown in a card
-  if (st.orbit && !reduced) SK.yaw = 0.62 + 0.16 * Math.sin(TIME * 0.11);
   const asideIn = smooth(clamp(st.aside, 0, 1)), asideOut = smooth(clamp(st.aside - 1, 0, 1)), cloudA = 1 - asideOut;
   if (cloudA > 0.003) {
     const cloud = (c) => { drawCloud3D(c, dt, SK); if (st.mag > 0.003) drawMagnifier(c, v3cam(SK), v3beam(SK), st.mag); };
@@ -158,7 +159,7 @@ function drawPresent(ctx, dt) {
       const c = presCtx; c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; c.fillStyle = BG; c.fillRect(0, 0, presCv.width, presCv.height);
       c.setTransform(K, 0, 0, K, 0, 0); c.textAlign = 'left'; c.textBaseline = 'alphabetic'; c.lineCap = 'butt'; c.setLineDash([]);
       cloud(c);
-      const card = lerpRect([0, 0, W, H], [70, 150, 880, 495], asideIn);
+      const card = lerpRect([0, 0, W, H], [60, 110, 1120, 630], asideIn);
       ctx.save(); ctx.globalAlpha = cloudA; ctx.beginPath(); ctx.roundRect(card[0], card[1], card[2], card[3], 14 * asideIn); ctx.clip();
       ctx.drawImage(presCv, card[0], card[1], card[2], card[3]); ctx.restore();
       if (asideIn > 0.003) { ctx.save(); ctx.globalAlpha = cloudA * asideIn; ctx.strokeStyle = COL.greyC; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(card[0], card[1], card[2], card[3], 14); ctx.stroke(); ctx.restore(); }
@@ -166,9 +167,9 @@ function drawPresent(ctx, dt) {
   }
   // the figure and its thought: beside the card, then small in the corner once the equation takes the stage
   if (st.fig > 0.003) {
-    const c = smooth(clamp(st.corner, 0, 1)), fx = lerp(1400, 150, c), fy = lerp(800, 1030, c), fs = lerp(1.9, 1, c), fa = smooth(clamp(st.fig, 0, 1));
+    const c = smooth(clamp(st.corner, 0, 1)), fx = lerp(1500, 150, c), fy = lerp(840, 1030, c), fs = lerp(1.24, 1, c), fa = smooth(clamp(st.fig, 0, 1));
     drawFigure(ctx, fx, fy, fs, fa);
-    const tw = lerp(520, 150, c), th = lerp(180, 90, c), tx = fx + lerp(150, 110, c), ty = fy - lerp(610, 330, c);
+    const tw = lerp(400, 150, c), th = lerp(140, 90, c), tx = fx + lerp(110, 110, c), ty = fy - lerp(410, 330, c);
     drawThought(ctx, tx, ty, tw, th, st.think, st.writeP, fa);
   }
   // the equation, its braces, and the question's box and caption
@@ -180,13 +181,22 @@ function drawPresent(ctx, dt) {
       drawBrace(ctx, (b.x0 + b.x1) / 2, b.top, (b.x1 - b.x0) * b.g, b.h, b.th, b.color, Math.min(1, b.g * 4) * b.a);
       if (b.l > 0.003) for (const s of b.lab) drawSprite(ctx, shifted(s, 0, (1 - b.l) * 14), s.alpha * b.l * b.a, b.color);
     }
+    const ga = smooth(clamp(st.grid, 0, 1));
+    if (ga > 0.003) for (let i = 0; i < 4; i++) {
+      const show = st.cells[i]; if (show <= 0.003) continue;
+      const pop = smooth(clamp(show, 0, 1)), R0 = PCELLS[i], k = lerp(0.6, 1, pop), r = [R0[0] + (R0[2] * (1 - k)) / 2, R0[1] + (R0[3] * (1 - k)) / 2, R0[2] * k, R0[3] * k], sc = r[2] / 700, a = pop * ga;
+      ctx.save(); ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip(); ctx.translate(r[0], r[1]); ctx.scale(sc, (r[3] / 330));
+      drawIACell(ctx, i, reduced ? -1 : (((TIME - st.cellT[i]) % SI.loopT) + SI.loopT) % SI.loopT, SI.loopT, a, 0, SI.look);
+      ctx.restore();
+      ctx.save(); ctx.strokeStyle = hexA(PFX[i][2], 0.9 * a); ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.stroke(); ctx.restore();
+    }
     if (st.hiTerm && st.box > 0.003) {
       const ss = sp.filter((s) => s.a.terms.includes(st.hiTerm));
       let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
       for (const s of ss) { const [l, r, t, b] = inkBox(s); x0 = Math.min(x0, l); x1 = Math.max(x1, r); y0 = Math.min(y0, t); y1 = Math.max(y1, b); }
       const pad = 16, bx = smooth(st.box);
       ctx.save(); ctx.strokeStyle = hexA(COL.yellow, bx); ctx.lineWidth = 3.5; ctx.beginPath(); ctx.roundRect(x0 - pad, y0 - pad, x1 - x0 + 2 * pad, y1 - y0 + 2 * pad, 10); ctx.stroke(); ctx.restore();
-      if (st.cap) drawTex(ctx, st.cap, 960, 820, 58, { p: st.capP, color: COL.yellow });
+      if (st.cap) drawTex(ctx, st.cap, 960, 640, 58, { p: st.capP, color: COL.yellow });
     }
   }
   // a small counter after each press, and a pause mark while paused

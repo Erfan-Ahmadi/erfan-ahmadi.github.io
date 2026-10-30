@@ -156,7 +156,29 @@ float hitBox(vec3 ro, vec3 rd, vec3 c, vec3 ax, vec3 ay, vec3 az, vec3 h, out ve
   n = ax * f.x + ay * f.y + az * f.z;
   return tN;
 }
+// A capped cylinder along a, radius R, half-length h. ax: where along the axis the hit is; ed: how far it is from
+// the nearest rim.
+float hitCyl(vec3 ro, vec3 rd, vec3 c, vec3 a, float R, float h, out vec3 n, out float ax, out float ed) {
+  vec3 oc = ro - c;
+  float cd = dot(a, rd), co = dot(a, oc);
+  float A = max(1.0 - cd * cd, 1e-6), B = dot(oc, rd) - co * cd, C = dot(oc, oc) - co * co - R * R;
+  float disc = B * B - A * C, tb = 1e9;
+  if (disc > 0.0) {
+    float t = (-B - sqrt(disc)) / A, y = co + t * cd;
+    if (t > 0.0 && abs(y) < h) { tb = t; n = normalize(oc + rd * t - a * y); ax = y; ed = h - abs(y); }
+  }
+  if (abs(cd) > 1e-6) for (int i = 0; i < 2; i++) {
+    float sg = i == 0 ? -1.0 : 1.0, t = (sg * h - co) / cd;
+    if (t > 0.0 && t < tb) { vec3 p = oc + rd * t - a * sg * h; float r2 = dot(p, p); if (r2 < R * R) { tb = t; n = a * sg; ax = sg * h; ed = R - sqrt(r2); } }
+  }
+  return tb;
+}
 // Flat shading with a key light and an outline along the edges, as the 2D scenes draw their devices.
+vec3 shadeCyl(vec3 n, vec3 rd, float ed, float ew) {
+  vec3 c = uBodyCol * (0.55 + 0.45 * max(dot(n, normalize(vec3(0.3, 0.8, 0.5))), 0.0));
+  c = mix(c, uEdgeCol, smoothstep(ew, ew * 0.4, ed));                 // the rims
+  return mix(c, uEdgeCol, smoothstep(0.26, 0.1, abs(dot(n, rd))));    // the silhouette
+}
 vec3 shadeBox(vec3 n, vec3 lp, vec3 h, float ew) {
   vec3 m = h - abs(lp);
   float lo = min(min(m.x, m.y), m.z), hi = max(max(m.x, m.y), m.z), mid = m.x + m.y + m.z - lo - hi;
@@ -174,16 +196,18 @@ void main() {
   // ---- props: the laser, its nozzle, the sensor ----
   float tP = 1e9; vec3 pc = vec3(0.0), n, lp;
   if (uLaserOn > 0.0) {
-    vec3 hb = vec3(0.3, 0.085, 0.085), cb = uB0 - uBd * 0.33;
-    float t = hitBox(ro, rd, cb, uBd, uBu, uBv, hb, n, lp);
+    // the laser: a cylinder along the beam, a bezel ring, and a narrower nozzle the beam leaves from
+    float ax, ed;
+    float t = hitCyl(ro, rd, uB0 - uBd * 0.36, uBd, 0.085, 0.3, n, ax, ed);
     if (t < tP) {
-      tP = t; pc = shadeBox(n, lp, hb, 0.012);
-      float dotr = length(lp.xz - vec2(-0.13, -0.035));
-      if (dot(n, uBu) > 0.5 && dotr < 0.02) pc = mix(uLaserCol * 2.0, pc, smoothstep(0.016, 0.02, dotr));
+      tP = t; pc = shadeCyl(n, rd, ed, 0.012);
+      float dotr = length(vec2(ax + 0.14, acos(clamp(dot(n, uBu), -1.0, 1.0)) * 0.085));   // the indicator, on top toward the back
+      if (dotr < 0.018) pc = mix(uLaserCol * 2.0, pc, smoothstep(0.014, 0.018, dotr));
     }
-    vec3 hn = vec3(0.03, 0.04, 0.04);
-    t = hitBox(ro, rd, uB0 - uBd * 0.03, uBd, uBu, uBv, hn, n, lp);
-    if (t < tP) { tP = t; pc = shadeBox(n, lp, hn, 0.008) * 0.6; }
+    t = hitCyl(ro, rd, uB0 - uBd * 0.055, uBd, 0.1, 0.012, n, ax, ed);
+    if (t < tP) { tP = t; pc = shadeCyl(n, rd, ed, 0.006) * 0.8; }
+    t = hitCyl(ro, rd, uB0 - uBd * 0.025, uBd, 0.045, 0.028, n, ax, ed);
+    if (t < tP) { tP = t; pc = shadeCyl(n, rd, ed, 0.006) * 0.6; }
     vec3 hs = vec3(0.012, 0.17, 0.17);
     t = hitBox(ro, rd, uB0 + uBd * (uBLen + 0.012), uBd, uBu, uBv, hs, n, lp);
     if (t < tP) {
@@ -615,7 +639,7 @@ const SK = defScene({
     dens: 1, sigA: 0.8, sigS: 10, absorb: 1, scatter: 1, g: 0.55, detail: 0.55, detScale: 3, billow: 0.5, erode: 0.3, seed: 1, powder: 0.6,
     sun: 1, sunAz: -55, sunEl: 26, sunI: 24, amb: 0.22, bg: 'stage',
     laser: 1, front: 1, beamY: 0, beamZ: 0.5, aim: 0, aimUp: 0, bw: 0.012, bpow: 1, core: 1,
-    zoom: 0, zoomT: 5, eye: 0, eyeAz: -48, eyeEl: 10, eyeDist: 3.1, eyeFov: 40, inset: 1,
+    zoom: 0, zoomT: 5, eye: 0, eyeAz: -48, eyeEl: 10, eyeDist: 3.1, eyeFov: 40, inset: 1, readout: 1,
     quality: 'medium', accum: 1, shown: null }),
   actions: [
     { id: 'shine', label: 'Shine', primary: true, run: (st) => { untween(st, 'front'); st.front = 0; st.shown = null; return tween(st, 'front', 1, 2.4, { ease: linear }); } },
@@ -648,6 +672,7 @@ const SK = defScene({
     { type: 'check', key: 'scatter', label: 'Scattering', set: (v) => tween(SK, 'scatter', v ? 1 : 0, 1) },
     { type: 'check', key: 'sun', label: 'Sun', set: (v) => tween(SK, 'sun', v ? 1 : 0, 1) },
     { type: 'check', key: 'laser', label: 'Laser', set: (v) => tween(SK, 'laser', v ? 1 : 0, 0.4) },
+    { type: 'check', key: 'readout', label: 'Reading', set: (v) => { SK.readout = v ? 1 : 0; } },
     { type: 'check', key: 'core', label: 'Beam core (seen without scattering)', set: (v) => tween(SK, 'core', v ? 1 : 0, 0.6) },
     { type: 'check', key: 'eye', label: 'Eye', set: (v) => tween(SK, 'eye', v ? 1 : 0, 0.8) },
     { type: 'check', key: 'inset', label: 'What the eye sees', visible: (st) => st.eye > 0.5, set: (v) => { SK.inset = v ? 1 : 0; } },
@@ -735,7 +760,7 @@ function drawCloud3D(ctx, dt, st) {
   const reading = st.laser > 0.5 && st.front >= 0.999 && SH.I0 > 0 ? Math.exp(-(st.sigA * st.absorb + st.sigS * st.scatter) * st.dens * (R.beamD || 0)) : null;
   st.shown = reading == null ? null : st.shown == null || reduced ? reading : lerp(st.shown, reading, 1 - Math.exp(-dt * 6));
   const ra = 1 - smooth(clamp(st.zoom * 4, 0, 1));
-  if (st.shown != null && ra > 0.01) {
+  if (st.shown != null && ra > 0.01 && st.readout > 0.5) {
     const top = cam.project(vAdd(vAdd(B.b0, vMul(B.d, B.len + 0.012)), vMul(B.u, 0.2)));
     if (top) { const bw = 210, bh = 84, bx = clamp(top[0] - bw / 2, 20, W - bw - 20), by = clamp(top[1] - bh - 20, 20, H - bh - 20); readoutBox(ctx, bx, by + bh / 2, st.shown, ra); }
   }

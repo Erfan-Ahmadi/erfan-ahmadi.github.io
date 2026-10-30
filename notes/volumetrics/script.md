@@ -5,10 +5,10 @@ The working script below has light edits; the original drafts, word for word, ar
 
 ## Part 1: the hook
 
-**1.** [The cloud in 3D, lit by the sun, turning slowly. The laser is already shining through it and the sensor on the far side has its reading.]
+**1.** [The cloud in 3D, lit by the sun, the camera still. The laser is already shining through it onto the sensor; no reading is shown.]
 > Not long after I started making things with computers, I found out that people could simulate the look of clouds with actual physics. I got very excited about that.
 
-**2.** [A magnifier opens over a section of the beam inside the cloud. Inside it, the cloud is particles, wobbling, and the rays stop at the particles.]
+**2.** [A panel opens from a section of the beam inside the cloud: the discrete version. The cloud is particles, wobbling, the rays stop at them, and under them the step plot of how many rays are left. No formula, no smooth curve yet.]
 > Rendering clouds became one of the biggest goals of my career. It's a big part of why I kept going in computer graphics.
 
 **3.** [The picture shrinks into a card on the left and keeps playing. A stick figure, me, appears on the right with an empty thought cloud.]
@@ -20,16 +20,16 @@ The working script below has light edits; the original drafts, word for word, ar
 **7.** [The card goes. The figure shrinks into the bottom-left corner and stays there. The equation writes in, large; the thought cloud becomes "?".]
 > But more likely, it was because the first thing I ran into was a formula that looked like this. And it made me feel… not smart.
 
-**8.** [Braces grow under the four terms, one after another: absorption and out-scattering in red, emission and in-scattering in green.]
-> So this time I tried once more, and it made a little more sense. Each term is a different way light and the medium interact. Some take light away. Some add light.
+**8.–11.** [One press per effect: a brace grows under its term and its cell pops into a 2 × 2 grid under the equation, the photon and the particle playing in it. Absorption and out-scattering in red, emission and in-scattering in green.]
+> So this time I tried once more, and it made a little more sense. Each term is a different way light and the medium interact. [absorption] Some take light away. [out-scattering] [emission] Some add light. [in-scattering]
 
-**9.** [The braces fade back. A box goes around the $e$, and everything outside it greys out. Under the equation: "why $e$?"]
+**12.** [The braces and the grid fade. A box goes around the $e$, and everything outside it greys out. Under the equation: "why $e$?"]
 > But nobody explained to me why $e$, and exponentials, show up here at all.
 
-**10.** [The box moves to the integral in the exponent.]
+**13.** [The box moves to the integral in the exponent.]
 > Why is there an integral inside an exponent…
 
-**11.** [The box moves to the outer integral, from 0 to $d$.]
+**14.** [The box moves to the outer integral sign, from 0 to $d$.]
 > …inside another integral?
 
 (The hook ends here. Next: the equation stays, and the questions become the video's map.)
@@ -37,5 +37,4 @@ The working script below has light edits; the original drafts, word for word, ar
 ## Open
 
 - The three thoughts in beats 4–6 are placeholders.
-- Whether beat 8 should be one press (the four braces staggered, as now) or four presses, one per effect.
-- Whether the question captions in beats 9–11 stay, or the spoken question is enough.
+- Whether the question captions in beats 12–14 stay, or the spoken question is enough.
