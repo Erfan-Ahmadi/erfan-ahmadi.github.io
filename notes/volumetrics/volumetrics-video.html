@@ -1966,8 +1966,8 @@ const SI = defScene({
   ],
   draw: drawInteract,
 });
-// The paths, always there in a neutral grey with arrows along them: the beam's line through the cell toward the eye
-// at the right, the direction we care about, and where a photon's own path leaves that line or joins it.
+// The photon's path, always there in a neutral grey with arrows along it, and the eye at the right: the direction we
+// care about. Only the legs the photon travels are drawn.
 function drawIAPaths(ctx, i, paths, Rc, alpha) {
   if (alpha <= 0.003) return;
   const cx = 350, cy = 165, col = hexA(COL.greyC, 0.85 * alpha);
@@ -1977,8 +1977,10 @@ function drawIAPaths(ctx, i, paths, Rc, alpha) {
     ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
     arrowTip(ctx, (a[0] + b[0]) / 2 + ux * 7, (a[1] + b[1]) / 2 + uy * 7, ux, uy, 14, 6);
   };
-  seg([0, cy], [cx - Rc, cy]); seg([cx + Rc, cy], [606, cy]);
+  // only the legs this photon travels
   const P = paths[i];
+  if (i === 0 || i === 1) seg([0, cy], [cx - Rc, cy]);
+  if (i === 2 || i === 3) seg([cx + Rc, cy], [606, cy]);
   if (i === 1) seg(P[1], P[2]);
   if (i === 3) seg(P[0], P[1]);
   // the eye, looking back along the beam
