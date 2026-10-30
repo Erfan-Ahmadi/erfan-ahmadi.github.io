@@ -46,6 +46,8 @@ Edit `src/`, never the built page:
 
 Scene 17 needs WebGL2; while the camera is still it keeps averaging frames until the picture settles.
 
+Presentation mode (<kbd>V</kbd> or Present) plays the video's beats from `script.md` on the stage, one key press each: <kbd>→</kbd> next, <kbd>←</kbd> back (a beat the way it ends), <kbd>Space</kbd> pauses every animation, <kbd>R</kbd> replays, <kbd>Esc</kbd> leaves. `#present` opens in it, `#present-7` at beat 7. The beats live in `src/present.js`; the narration in `script.md`, with Erfan's drafts word for word in `script-drafts.md`.
+
 Buttons under the stage play each scene's animations. The laser, the beam's look and width, the container and the medium are shared, so a change shows in every scene that uses them. "Fade into scene…" crossfades slowly into another scene, and the speed slider scales every animation.
 
 Keys: <kbd>1</kbd>–<kbd>9</kbd> pick a scene, and two digits typed quickly pick scenes past nine; <kbd>[</kbd> <kbd>]</kbd> step through scenes, <kbd>Space</kbd> plays the main animation, <kbd>R</kbd> resets, <kbd>←</kbd> <kbd>→</kbd> step back and forth in the step scenes, <kbd>H</kbd> hides the controls for recording, <kbd>F</kbd> goes full screen.

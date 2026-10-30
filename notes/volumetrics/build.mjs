@@ -25,9 +25,9 @@ const js = fs.readFileSync(path.join(dist, 'katex.min.js'), 'utf8');
 const outlines = JSON.stringify(glyphOutlines(path.join(dist, 'fonts'), [...keep]));
 // The 3D scenes (src/volume.js), then the scenes added after them (million.js, sheets.js, …), go in where app.js marks
 // the end of its scenes, so they register after the 2D ones and keep their numbers.
-const later = ['volume.js', 'million.js', 'sheets.js', 'bases.js', 'average.js'].map((f) => fs.readFileSync(path.join(here, 'src', f), 'utf8')).join('\n');
+const later = ['volume.js', 'million.js', 'sheets.js', 'bases.js', 'average.js', 'present.js'].map((f) => fs.readFileSync(path.join(here, 'src', f), 'utf8')).join('\n');
 const app = fs.readFileSync(path.join(here, 'src/app.js'), 'utf8').replace('//@@SCENES@@', () => later + '\n//@@SCENES@@');
-if (!app.includes('function g3draw') || !app.includes('function drawMillion')) throw new Error('app.js is missing the //@@SCENES@@ marker');
+if (!app.includes('function g3draw') || !app.includes('function drawPresent')) throw new Error('app.js is missing the //@@SCENES@@ marker');
 const shell = fs.readFileSync(path.join(here, 'src/shell.html'), 'utf8');
 for (const t of ['<!--KATEX_CSS-->', '<!--KATEX_JS-->', '<!--GLYPHS-->', '<!--APP_JS-->']) if (!shell.includes(t)) throw new Error(`shell.html is missing ${t}`);
 

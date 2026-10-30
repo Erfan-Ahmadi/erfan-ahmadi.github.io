@@ -2626,14 +2626,14 @@ function setScene(id) {
   cur = scenes[id];
   for (const b of tabsEl.children) { const on = b.dataset.scene === id; b.setAttribute('aria-selected', String(on)); if (on && tabsEl.scrollWidth > tabsEl.clientWidth) b.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
   buildDock();
-  try { if (location.hash !== '#' + id) history.replaceState(null, '', '#' + id); } catch (e) { /* the viewer may not allow it */ }
+  try { if (!PRES.on && location.hash !== '#' + id) history.replaceState(null, '', '#' + id); } catch (e) { /* the viewer may not allow it */ }
 }
 addEventListener('hashchange', () => { const id = location.hash.slice(1); if (scenes[id] && cur !== scenes[id]) setScene(id); });
 $('fadeSel').addEventListener('change', (e) => { const id = e.target.value; e.target.value = ''; if (id) fadeTo(id, 3.5); });
 $('speed').addEventListener('input', (e) => { SPEED = +e.target.value; $('speedOut').textContent = `${SPEED.toFixed(2)}×`; });
 const setClean = (on) => { document.body.classList.toggle('clean', on); $('showBtn').hidden = !on; };
 $('hideBtn').addEventListener('click', () => setClean(true));
-$('showBtn').addEventListener('click', () => setClean(false));
+$('showBtn').addEventListener('click', () => { if (PRES.on) setPresent(false); else setClean(false); });
 function toggleFull() {
   if (document.fullscreenElement) { document.exitFullscreen().catch(() => {}); return; }
   const p = document.documentElement.requestFullscreen?.(); if (p) p.then(() => setClean(true)).catch(() => {});
@@ -2642,6 +2642,7 @@ document.addEventListener('fullscreenchange', () => { if (!document.fullscreenEl
 $('fsBtn').addEventListener('click', toggleFull);
 let digitBuf = null, digitT = 0;
 addEventListener('keydown', (e) => {
+  if (PRES.on) { presKey(e); return; }
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   const t = e.target, k = e.key;
   if (t.matches && t.matches('input, select, textarea')) { if (k === 'Escape') t.blur(); return; }
@@ -2660,8 +2661,10 @@ addEventListener('keydown', (e) => {
   else if (k === 'ArrowLeft' && cur.prev) { cur.prev(); e.preventDefault(); }
   else if (k === 'h' || k === 'H') setClean(!document.body.classList.contains('clean'));
   else if (k === 'f' || k === 'F') toggleFull();
+  else if (k === 'v' || k === 'V') setPresent(true);
   else if (k === 'Escape' && document.body.classList.contains('clean') && !document.fullscreenElement) setClean(false);
 });
+$('presentBtn').addEventListener('click', () => setPresent(true));
 
 // ---------- running it ----------
 // A slow crossfade from one scene into another: each is drawn on its own canvas, then the two are blended.
@@ -2683,14 +2686,15 @@ function drawInto(i, sc, dt) {
 let raf = 0, last = 0;
 function frame(now) {
   raf = requestAnimationFrame(frame);
-  const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)) * SPEED; last = now;
+  const dt = PRES.on && PRES.paused ? 0 : Math.min(0.1, Math.max(0, (now - last) / 1000)) * SPEED; last = now;
   tick(dt); TIME += dt;
   fitCanvas();
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
   ctx.fillStyle = BG; ctx.fillRect(0, 0, cv.width, cv.height);
   ctx.setTransform(K, 0, 0, K, 0, 0); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.lineCap = 'butt'; ctx.setLineDash([]);
   try {
-    if (fade) {
+    if (PRES.on) drawPresent(ctx, dt);
+    else if (fade) {
       const a = drawInto(0, fade.from, dt), b = drawInto(1, cur, dt), u = fade.t;
       ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1 - u; ctx.drawImage(a, 0, 0); ctx.globalAlpha = u; ctx.drawImage(b, 0, 0); ctx.globalAlpha = 1;
     } else cur.draw(ctx, dt, cur.st);
@@ -2708,7 +2712,10 @@ async function boot() {
   ascCache.clear(); texCache.clear();
   for (const id of ORDER) if (scenes[id].init) await scenes[id].init();
   await eqGo(0, false);
-  buildTabs(); setScene(location.hash.slice(1));
+  buildTabs();
+  const h = location.hash.slice(1), pm = h.match(/^present(?:-(\d+))?$/);
+  setScene(pm ? 'cloud' : h);
+  if (pm) setPresent(true, pm[1] ? +pm[1] - 1 : 0);
   last = performance.now(); raf = requestAnimationFrame(frame);
 }
 if (document.readyState === 'complete') boot(); else addEventListener('load', boot);
