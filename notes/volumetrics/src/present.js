@@ -3,7 +3,11 @@
 // beat, ← for the one before, Space pauses every animation, R replays the beat, Home and End jump, Esc leaves.
 // Going to a beat rebuilds the ones before it instantly, so stepping back shows a beat the way it ends. The state
 // of a presentation lives in PS; the scenes it borrows (the cloud) keep their own.
-const PRES = { on: false, paused: false, beat: 0, toast: -99, epoch: 0 };
+const PRES = { on: false, paused: false, beat: 0, toast: -99, epoch: 0, saved: null };
+// The cloud as the hook shows it: a thin cloud the beam gets a quarter of the way through, no reading, the camera
+// low behind the laser. It drifts to the right the whole time (PRES_DRIFT rad/s; negative drifts the other way).
+const PRES_CLOUD = { readout: 0, dens: 0.04, sigA: 20, sigS: 10, beamY: 0, beamZ: -0.005, aim: 0, aimUp: 0, yaw: -1.2, pitch: 0.22, dist: 3.8, zoom: 0, eye: 0 };
+const PRES_DRIFT = 0.03;
 const PS_DEFAULTS = () => ({ orbit: 1, mag: 0, aside: 0, fig: 0, thoughts: 0, think: '', writeP: 1, eq: 0, eqP: 0, corner: 0, braces: [], hiTerm: null, hi: {}, dim: 0, box: 0, cap: '', capP: 0, cells: [0, 0, 0, 0], cellT: [0, 0, 0, 0], grid: 1 });
 // The four effects' cells under the equation, in the order of the terms: absorption, out-scattering, emission, in-scattering.
 const PCELLS = [[370, 480, 590, 278], [990, 480, 590, 278], [370, 790, 590, 278], [990, 790, 590, 278]];
@@ -29,7 +33,7 @@ const BEATS = [
     ptw('corner', 1, 1.4); ptw('aside', 2, 1.4);
     await ptw('eqP', 1, 3.2, { ease: linear, delay: 0.5 });
   } },
-  ...PFX.map(([term, label, color], i) => ({ name: label, run: () => { PS.cellT[i] = TIME + 0.4; return Promise.all([presBrace(term, label, color), tween(PS.cells, i, 1, 0.8, { tag: 'pres' })]); } })),
+  ...PFX.map(([term, label, color], i) => ({ name: label, run: () => { PS.cellT[i] = TIME + 0.4; return Promise.all([presBrace(term, label, color), tween(PS.cells, i, 1, 1.1, { tag: 'pres' })]); } })),
   { name: 'why e?', run: () => presQuestion('t-qe', String.raw`\text{why } e\text{?}`) },
   { name: 'why an integral in the exponent?', run: () => presQuestion('t-qexp', String.raw`\text{why an integral in the exponent?}`) },
   { name: 'why another integral?', run: () => presQuestion('t-qouter', String.raw`\text{inside another integral?}`) },
@@ -60,7 +64,9 @@ async function presQuestion(term, caption) {
 }
 async function presGo(k, play) {
   k = clamp(k, 0, BEATS.length - 1);
-  const e = ++PRES.epoch; stopTweens('pres'); PRES.beat = k; PRES.toast = TIME;
+  const e = ++PRES.epoch; PRES.toast = TIME;
+  if (play && k === PRES.beat + 1 && PRES.beat >= 0) { PRES.beat = k; Promise.resolve(BEATS[k].run()).catch((err) => { if (e === PRES.epoch) console.error(err); }); return; }
+  stopTweens('pres'); PRES.beat = k;
   Object.assign(PS, PS_DEFAULTS());
   instant++;
   try { for (let i = 0; i < (play ? k : k + 1); i++) await BEATS[i].run(); } catch (err) { console.error(err); } finally { instant--; }
@@ -71,8 +77,12 @@ function setPresent(on, beat = 0) {
   PRES.on = on; PRES.paused = false;
   document.body.classList.toggle('presenting', on);
   setClean(on);
-  if (on) { PRES.saved = { readout: SK.readout }; SK.readout = 0; SK.yaw = 0.62; SK.pitch = 0.16; SK.dist = 4.6; presGo(beat, true); }
-  else { stopTweens('pres'); if (PRES.saved) { SK.readout = PRES.saved.readout; PRES.saved = null; } }
+  if (on) {
+    PRES.saved = {}; for (const k of Object.keys(PRES_CLOUD)) PRES.saved[k] = SK[k];
+    Object.assign(SK, PRES_CLOUD);
+    if (SK.quality !== 'high') { PRES.saved.quality = SK.quality; SK.quality = 'high'; }   // the camera moves, so the frames can't average: render finer instead
+    PRES.beat = -1; presGo(beat, true);
+  } else { stopTweens('pres'); if (PRES.saved) { Object.assign(SK, PRES.saved); PRES.saved = null; } }
 }
 function presKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -122,7 +132,7 @@ function drawThought(ctx, x, y, w, h, text, p, a) {
 // The zoom panel over the beam: a ring on the beam marks the section, and a panel beside it shows that section the
 // way the shadows scene draws it, particles wobbling and rays stopping at them, with its step plot of the rays left
 // under them against e^{−nσz}: the discrete version of what the cloud does.
-const PANEL = { x: 1130, y: 36, w: 760, h: 600 }, PSRC = { x: SL.x0 - 70, y: SL.top - 70, w: SL.x1 - SL.x0 + 260, h: 1010 - (SL.top - 70) };
+const PANEL = { x: 1330, y: 600, w: 540, h: 430 }, PSRC = { x: SL.x0 - 70, y: SL.top - 70, w: SL.x1 - SL.x0 + 260, h: 1010 - (SL.top - 70) };
 function drawMagnifier(ctx, cam, B, m) {
   if (m <= 0.003) return;
   const e = smooth(m), q = cam.project(vAdd(B.b0, vMul(B.d, B.len * 0.52))) || [960, 560], r0 = 22;
@@ -139,7 +149,7 @@ function drawMagnifier(ctx, cam, B, m) {
   const k = Math.min(R[2] / PSRC.w, R[3] / PSRC.h), ox = R[0] + (R[2] - PSRC.w * k) / 2 - PSRC.x * k, oy = R[1] + (R[3] - PSRC.h * k) / 2 - PSRC.y * k;
   ctx.translate(ox, oy); ctx.scale(k, k);
   // only the discrete version: no e^{−nσz} curve; the sensor stays outside the panel, and no reading
-  const sa = { ...SA, rays: '40', pred: 0, labels: 1, sensorX: 1850, noReadout: true }, S = shadowsState(sa);
+  const sa = { ...SA, rays: '40', pred: 0, labels: 1, sensorX: 1850, noReadout: true, noAxisLabels: true }, S = shadowsState(sa);
   drawShadowsPicture(ctx, 0, sa, S); drawShadowsPlot(ctx, sa, S, 1);
   ctx.restore();
   ctx.strokeStyle = COL.greyA; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(R[0], R[1], R[2], R[3], 16 * e); ctx.stroke();
@@ -150,6 +160,7 @@ function drawPresent(ctx, dt) {
   const st = PS;
   // the cloud, with the laser on and turning slowly; while it is the whole picture it draws straight onto the stage,
   // inside the aside it is drawn offscreen and shown in a card
+  if (st.orbit && !reduced) SK.yaw += dt * PRES_DRIFT;
   const asideIn = smooth(clamp(st.aside, 0, 1)), asideOut = smooth(clamp(st.aside - 1, 0, 1)), cloudA = 1 - asideOut;
   if (cloudA > 0.003) {
     const cloud = (c) => { drawCloud3D(c, dt, SK); if (st.mag > 0.003) drawMagnifier(c, v3cam(SK), v3beam(SK), st.mag); };
@@ -178,15 +189,15 @@ function drawPresent(ctx, dt) {
     drawSprites(ctx, sp, { p: st.eqP, alpha: a, hi: st.hi, dim: st.dim });
     for (const b of st.braces) {
       if (b.a <= 0.003) continue;
-      drawBrace(ctx, (b.x0 + b.x1) / 2, b.top, (b.x1 - b.x0) * b.g, b.h, b.th, b.color, Math.min(1, b.g * 4) * b.a);
+      drawBrace(ctx, b.x0 + ((b.x1 - b.x0) * b.g) / 2, b.top, (b.x1 - b.x0) * b.g, b.h, b.th, b.color, Math.min(1, b.g * 4) * b.a);
       if (b.l > 0.003) for (const s of b.lab) drawSprite(ctx, shifted(s, 0, (1 - b.l) * 14), s.alpha * b.l * b.a, b.color);
     }
     const ga = smooth(clamp(st.grid, 0, 1));
     if (ga > 0.003) for (let i = 0; i < 4; i++) {
       const show = st.cells[i]; if (show <= 0.003) continue;
-      const pop = smooth(clamp(show, 0, 1)), R0 = PCELLS[i], k = lerp(0.6, 1, pop), r = [R0[0] + (R0[2] * (1 - k)) / 2, R0[1] + (R0[3] * (1 - k)) / 2, R0[2] * k, R0[3] * k], sc = r[2] / 700, a = pop * ga;
-      ctx.save(); ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip(); ctx.translate(r[0], r[1]); ctx.scale(sc, (r[3] / 330));
-      drawIACell(ctx, i, reduced ? -1 : (((TIME - st.cellT[i]) % SI.loopT) + SI.loopT) % SI.loopT, SI.loopT, a, 0, SI.look);
+      const r = PCELLS[i], sc = r[2] / 700, a = smooth(clamp(show, 0, 1)) * ga;
+      ctx.save(); ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip(); ctx.translate(r[0], r[1]); ctx.scale(sc, r[3] / 330);
+      drawIACell(ctx, i, reduced ? -1 : (((TIME - st.cellT[i]) % SI.loopT) + SI.loopT) % SI.loopT, SI.loopT, a, 1, SI.look, SI.dir);
       ctx.restore();
       ctx.save(); ctx.strokeStyle = hexA(PFX[i][2], 0.9 * a); ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.stroke(); ctx.restore();
     }

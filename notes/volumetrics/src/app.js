@@ -1316,8 +1316,9 @@ function drawShadowsPlot(ctx, st, S, alpha) {
   ctx.save(); ctx.globalAlpha = alpha;
   const { a, b, y0, y1 } = slabBox(st), n = Math.round(st.n) / ((b - a) * (y1 - y0)), ns = n * 2 * R, tauMax = ns * (SL.x1 - SL.x0);
   const step = tauMax > 6 ? 2 : tauMax > 2.5 ? 1 : 0.5;
-  const A = makeAxes({ L: SL.x0, R: SL.x1, T: 640, B: 975, xr: [0, tauMax, step], yr: [0, 1, 0.5], ext: 46, xl: String.raw`n\sigma z`, yl: 'T', labSize: 52, numSize: 30 });
-  drawAxes(ctx, A, { c: 1, nums: 1, lab: 1 });
+  const bare = !!st.noAxisLabels;
+  const A = makeAxes({ L: SL.x0, R: SL.x1, T: 640, B: 975, xr: [0, tauMax, step], yr: [0, 1, 0.5], ext: 46, xl: bare ? '' : String.raw`n\sigma z`, yl: bare ? '' : 'T', labSize: 52, numSize: 30 });
+  drawAxes(ctx, A, { c: 1, nums: bare ? 0 : 1, lab: 1 });
   const xr = Math.min(xf, SL.x1);
   if (st.pred > 0.003) drawCurve(ctx, A, (t) => predictedT(st, SL.x0 + t / ns), { from: 0, to: tauMax, color: COL.blue, alpha: st.pred, width: 4 });
   if (xr > SL.x0) {
@@ -1798,7 +1799,7 @@ function drawParticle(ctx, x, y, r, warm, alpha) {
 }
 const SI = defScene({
   id: 'interact', tab: 'What light can do', shared: true,
-  defaults: () => ({ show: [1, 1, 1, 1], lab: [1, 1, 1, 1], focus: 0, loopT: 3.2, t0: [0, 0.8, 1.6, 2.4], axis: 0, look: 'dot' }),
+  defaults: () => ({ show: [1, 1, 1, 1], lab: [1, 1, 1, 1], focus: 0, loopT: 3.2, t0: [0, 0.8, 1.6, 2.4], axis: 1, look: 'dot', dir: 'arrow' }),
   actions: [
     { id: 'play', label: 'Play', primary: true, run: async (st, alive) => {
       for (let i = 0; i < 4; i++) { untween(st.show, i); untween(st.lab, i); st.show[i] = 0; st.lab[i] = 0; }
@@ -1818,16 +1819,32 @@ const SI = defScene({
   params: [
     { type: 'select', key: 'look', label: 'Photons', options: [['dot', 'Particles'], ['wave', 'Wave packets']] },
     { type: 'range', key: 'loopT', label: 'Time per photon (s)', min: 1.5, max: 8, step: 0.1, fmt: (v) => v.toFixed(1) },
-    { type: 'check', key: 'axis', label: "The beam's direction", set: (v) => tween(SI, 'axis', v ? 1 : 0, 0.4) },
+    { type: 'select', key: 'dir', label: 'Direction of interest', options: [['none', 'Off'], ['arrow', 'An arrow where the beam leaves'], ['sensor', 'A sensor plate at the exit, lit when light reaches it'], ['eye', 'An eye at the exit, looking back along the beam'], ['lane', "A lane along the beam's line"], ['dashed', 'A dashed line along the beam']] },
   ],
   draw: drawInteract,
 });
+// The direction of interest in a cell: the beam's line, toward the sensor at the right. y is that line; hit is where
+// the photon is now, for the sensor plate to light up when light reaches it along the beam.
+function drawDirMark(ctx, dir, y, hit, alpha) {
+  if (alpha <= 0.003 || !dir || dir === 'none') return;
+  ctx.save(); ctx.globalAlpha = alpha;
+  if (dir === 'dashed') dashed(ctx, 0, y, 700, y, COL.greyC, 0.8, 2);
+  else if (dir === 'lane') { ctx.fillStyle = hexA(COL.white, 0.05); ctx.fillRect(0, y - 22, 700, 44); dashed(ctx, 0, y, 700, y, COL.greyC, 0.35, 1.5); }
+  else if (dir === 'arrow') { ctx.strokeStyle = COL.greyB; ctx.fillStyle = COL.greyB; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(596, y); ctx.lineTo(666, y); ctx.stroke(); arrowTip(ctx, 684, y, 1, 0, 20, 9); }
+  else if (dir === 'sensor') {
+    const lit = hit && hit[0] > 650 && Math.abs(hit[1] - y) < 12 ? 1 : 0;
+    ctx.fillStyle = BODY; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(676, y - 46, 16, 92, 4); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = hexA(SH.color, 0.16 + 0.84 * lit); ctx.fillRect(674, y - 26, 5, 52);
+  } else if (dir === 'eye') {
+    ctx.strokeStyle = COL.greyB; ctx.lineWidth = 3; ctx.fillStyle = BG; ctx.beginPath(); ctx.moveTo(618, y); ctx.quadraticCurveTo(655, y - 32, 692, y); ctx.quadraticCurveTo(655, y + 32, 618, y); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = COL.blue; ctx.beginPath(); ctx.arc(648, y, 11, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(646, y, 5, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
 // One cell's picture, in the cell's own units; u is the time into this cell's loop (u < 0: a still, for reduced motion).
-function drawIACell(ctx, i, u, P, alpha, axis, look) {
+function drawIACell(ctx, i, u, P, alpha, axis, look, dir = 'none') {
   const paths = iaPaths(look), S = pathSampler(paths[i]), v = 1080 / (0.85 * P);
   if (u < 0) u = [(S.total - 50) / v, (S.cum[1] + 130) / v, 0.5 + 160 / v, (S.cum[1] + 140) / v][i];
-  // the beam's direction: the line the photon travels along the beam
-  if (axis > 0.003) { const y = i === 3 ? paths[3][1][1] : paths[i][0][1]; dashed(ctx, 0, y, 700, y, COL.greyC, 0.8 * axis * alpha, 2); }
   let s = v * u, warm = 0, scale = 1;
   if (i === 0) {   // stops at the surface and is taken in; the particle warms
     const tc = S.total / v;
@@ -1837,6 +1854,8 @@ function drawIACell(ctx, i, u, P, alpha, axis, look) {
     s = v * (u - 0.5); scale = clamp((u - 0.5) / 0.15, 0, 1);
     warm = u < 0.55 ? smooth(u / 0.55) : Math.exp(-(u - 0.55) / 0.6);
   }
+  // the direction of interest, behind everything else
+  if (axis > 0.003) drawDirMark(ctx, dir, i === 3 ? paths[3][1][1] : paths[i][0][1], s > 0 && s <= S.total + 1 ? S.at(s) : null, axis * alpha);
   drawParticle(ctx, 350, 165, IA.R, warm, alpha);
   if (look === 'wave') drawPacket(ctx, S, s, SH.color, alpha, { L: IA.L });
   else drawPhotonDot(ctx, S, s, SH.color, alpha, { r: IA.pr, trail: IA.trail, scale });
@@ -1851,7 +1870,7 @@ function drawInteract(ctx, dt, st) {
     if (ca > 0.003) {
       ctx.save(); ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip();
       ctx.translate(r[0], r[1]); ctx.scale(s, s);
-      drawIACell(ctx, i, reduced ? -1 : (((TIME - st.t0[i]) % P) + P) % P, P, ca, st.axis, st.look);
+      drawIACell(ctx, i, reduced ? -1 : (((TIME - st.t0[i]) % P) + P) % P, P, ca, st.axis, st.look, st.dir);
       ctx.restore();
     }
     // the frame, drawn in as manim's Create draws a rectangle
