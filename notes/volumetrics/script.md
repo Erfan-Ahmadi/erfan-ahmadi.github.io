@@ -20,17 +20,17 @@ The working script below has light edits; the original drafts, word for word, ar
 **7.** [The card goes. The figure shrinks into the bottom-left corner and stays there. The equation writes in, large; the thought cloud becomes "?".]
 > But more likely, it was because the first thing I ran into was a formula that looked like this. And it made me feel… not smart.
 
-**8.–11.** [One press per effect: a brace grows from the left under its term and its cell fades into its place in a 2 × 2 grid under the equation, the photon and the particle playing in it, with the direction of interest marked (the bench's choice; an arrow where the beam leaves by default). Absorption and out-scattering in red, emission and in-scattering in green. Nothing already on screen changes.]
+**8.–11.** [One press per effect: a brace grows from the left under its term and its cell fades into its place in a 2 × 2 grid under the equation, its name in its corner, the photon and the particle playing in it. Every cell shows the paths in a neutral grey with arrows, the beam's line through the particle toward an eye at the right, all on the centre line. Absorption and out-scattering in red, emission and in-scattering in green. Nothing already on screen changes.]
 > So this time I tried once more, and it made a little more sense. Each term is a different way light and the medium interact. [absorption] Some take light away. [out-scattering] [emission] Some add light. [in-scattering]
 
-**12.** [The braces and the grid fade. A box goes around the $e$, and everything outside it greys out. Under the equation: "why $e$?"]
-> But nobody explained to me why $e$, and exponentials, show up here at all.
+**12.** [The braces and the grid fade. A box goes around the integral in the exponent, and everything outside it greys out. Under the equation: "why an integral in the exponent?"]
+> But nobody explained to me why there is an integral inside an exponent…
 
-**13.** [The box moves to the integral in the exponent.]
-> Why is there an integral inside an exponent…
+**13.** [The box moves to the outer integral sign, from 0 to $d$.]
+> …inside another integral.
 
-**14.** [The box moves to the outer integral sign, from 0 to $d$.]
-> …inside another integral?
+**14.** [The box moves to the $e$. Under the equation: "most importantly: why $e$?"]
+> And most importantly: why $e$? Why exponentials at all?
 
 (The hook ends here. Next: the equation stays, and the questions become the video's map.)
 

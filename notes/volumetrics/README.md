@@ -31,7 +31,7 @@ Edit `src/`, never the built page:
 | 7 | Slice the slab | $\left(1 - \frac{\tau}{N}\right)^N \to e^{-\tau}$ as the slab is cut into more slices. |
 | 8 | Zoom into a slab | Two fronts meet at a thin slab, then the camera closes in and lands on scene 6. |
 | 9 | Optical depth is an area | Create the medium and its density fills in above it; shine and $T(z) = e^{-\tau(z)}$ is traced below. A draggable marker splits the area into what the light has crossed and what is ahead. Paint $\sigma_a(z)$ on its plot. |
-| 10 | What light can do | One photon and one particle: absorption, out-scattering, emission and in-scattering, then absorption alone. Photons are particles that bounce off the surface, or wave packets. |
+| 10 | What light can do | One photon and one particle: absorption, out-scattering, emission and in-scattering, then absorption alone. The paths are drawn in grey with arrows, along the beam's line toward an eye at the right; photons are particles that bounce off the surface, or wave packets. |
 | 11 | Sparse and dense | Two slabs, a few particles and many, each with its rays and sensor. Particles pop in as their number grows. |
 | 12 | Why e? | The slope triangle of $b^x$: slope over height is $\ln b$ everywhere, and at $b = e$ the slope is the height, $\frac{d}{dx}e^x = e^x$. |
 | 13 | Slice by slice | Identical slices each keep the same fraction: 90%, 81%, 72.9%. Bars of what is left, $e^{-\alpha n}$ through them, and $\frac{dI}{dz} = -\alpha I$. |

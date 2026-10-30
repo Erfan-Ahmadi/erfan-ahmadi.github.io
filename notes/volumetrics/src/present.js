@@ -34,9 +34,9 @@ const BEATS = [
     await ptw('eqP', 1, 3.2, { ease: linear, delay: 0.5 });
   } },
   ...PFX.map(([term, label, color], i) => ({ name: label, run: () => { PS.cellT[i] = TIME + 0.4; return Promise.all([presBrace(term, label, color), tween(PS.cells, i, 1, 1.1, { tag: 'pres' })]); } })),
-  { name: 'why e?', run: () => presQuestion('t-qe', String.raw`\text{why } e\text{?}`) },
   { name: 'why an integral in the exponent?', run: () => presQuestion('t-qexp', String.raw`\text{why an integral in the exponent?}`) },
-  { name: 'why another integral?', run: () => presQuestion('t-qouter', String.raw`\text{inside another integral?}`) },
+  { name: 'inside another integral?', run: () => presQuestion('t-qouter', String.raw`\text{inside another integral?}`) },
+  { name: 'most importantly: why e?', run: () => presQuestion('t-qe', String.raw`\text{most importantly: why } e\text{?}`) },
 ];
 // A brace under a term of the equation, in the equation scene's style.
 function presBrace(term, label, color) {
@@ -197,9 +197,10 @@ function drawPresent(ctx, dt) {
       const show = st.cells[i]; if (show <= 0.003) continue;
       const r = PCELLS[i], sc = r[2] / 700, a = smooth(clamp(show, 0, 1)) * ga;
       ctx.save(); ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip(); ctx.translate(r[0], r[1]); ctx.scale(sc, r[3] / 330);
-      drawIACell(ctx, i, reduced ? -1 : (((TIME - st.cellT[i]) % SI.loopT) + SI.loopT) % SI.loopT, SI.loopT, a, 1, SI.look, SI.dir);
+      drawIACell(ctx, i, reduced ? -1 : (((TIME - st.cellT[i]) % SI.loopT) + SI.loopT) % SI.loopT, SI.loopT, a, SI.look);
       ctx.restore();
       ctx.save(); ctx.strokeStyle = hexA(PFX[i][2], 0.9 * a); ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.stroke(); ctx.restore();
+      drawTex(ctx, String.raw`\text{${PFX[i][1]}}`, r[0] + 22, r[1] + 18, 34, { ax: 0, ay: 0, color: PFX[i][2], alpha: a });
     }
     if (st.hiTerm && st.box > 0.003) {
       const ss = sp.filter((s) => s.a.terms.includes(st.hiTerm));
