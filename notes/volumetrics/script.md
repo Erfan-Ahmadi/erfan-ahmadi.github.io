@@ -35,7 +35,7 @@ The working script below has light edits; the original drafts, word for word, ar
 ## Part 2: what this is, and what we keep
 
 **15.** [The equation and the three cards stay. The figure's thought cloud: "?" becomes "!".]
-> This video isn't a physics lecture, and it isn't a shader tutorial. It's the part in between. By the end, I want this equation to feel less like something handed to you, and more like something you could have derived yourself. Including the assumptions it quietly makes, and where they break. So let's start with what it actually describes, in plain words.
+> This video isn't a physics lecture, and it isn't a shader tutorial. It's the part in between. By the end, I want this equation to feel less like something handed to you, and more like something you could have derived yourself. And along the way, we'll run into some surprisingly beautiful physics hiding behind a formula most of us skim over, or just copy and paste into code. So let's start with what it actually describes, in plain words.
 
 **16.** [The equation shrinks to the top. Under it, the caption: "light, travelling some distance, through some stuff."]
 > It describes what happens to light as it travels some distance through some stuff.
