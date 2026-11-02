@@ -46,7 +46,7 @@ const PS_DEFAULTS = () => ({
   eqA: 1, eqTop: 0, spec: [0, 0], chalk: 0, code: 0, specT: 0, ptrX: 0, ptrA: 0, lineP: 0, wig: 0, wigT: 0, side: 0,
   goalsA: 0, figMid: 0, fut: 0, futW: 0, goals: [0, 0, 0], p15: 1, cap: 0,
   uses: [0, 0, 0, 0], grow: 0, usesOut: 0, capOut: 0,
-  fx: { show: 0, t0: 0, focus: [0, 0, 0, 0], grey: [0, 0, 0, 0], big: 0 },
+  fx: { show: [0, 0, 0, 0], t0: 0, focus: [0, 0, 0, 0], grey: [0, 0, 0, 0], big: 0 },
 });
 const PS = PS_DEFAULTS();
 // The equation, with its terms named: the four effects for the braces, and the parts the questions point at.
@@ -178,8 +178,8 @@ async function presUse(i) {
 // four effects come back, playing, filling the stage.
 async function presFxBack() {
   ptw('usesOut', 1, 0.8); ptw('capOut', 1, 0.6);
-  PS.fx.t0 = TIME + 0.5;
-  await ptwi(PS.fx, 'show', 1, 1, { delay: 0.5 });
+  PS.fx.t0 = TIME + 0.7;   // one after another, each fading in as it did the first time
+  await Promise.all([0, 1, 2, 3].map((i) => ptwi(PS.fx.show, i, 1, 1.1, { delay: 0.7 + 0.45 * i })));
 }
 // 21–21d: one named at a time: its tile lights up. (Its term also takes its colour, for when the equation returns.)
 async function presFxName(i) {
@@ -455,15 +455,15 @@ function drawUses(ctx, dt, st) {
 const FXCELLS = [[400, 120, 690, 340], [1190, 120, 690, 340], [400, 540, 690, 340], [1190, 540, 690, 340]], FXBIG = [400, 120, 1480, 760];
 const hexOf = (c) => '#' + c.map((v) => Math.round(clamp(v, 0, 255)).toString(16).padStart(2, '0')).join('');
 function drawFx(ctx, st) {
-  const F = st.fx, show = smooth(clamp(F.show, 0, 1)); if (show <= 0.003) return;
+  const F = st.fx; if (Math.max(...F.show) <= 0.003) return;
   const big = smooth(clamp(F.big, 0, 1));
   for (const i of [1, 2, 3, 0]) {   // absorption last, so it grows over the others
-    const g = smooth(clamp(F.grey[i], 0, 1)), f = smooth(clamp(F.focus[i], 0, 1)), a = show * (i === 0 ? 1 : 1 - big);
+    const g = smooth(clamp(F.grey[i], 0, 1)), f = smooth(clamp(F.focus[i], 0, 1)), a = smooth(clamp(F.show[i], 0, 1)) * (i === 0 ? 1 : 1 - big);
     if (a <= 0.003) continue;
     let r = i === 0 ? lerpRect(FXCELLS[0], FXBIG, big) : FXCELLS[i];
     if (f > 0.003) { const k = 1 + 0.035 * f, cx = r[0] + r[2] / 2, cy = r[1] + r[3] / 2; r = [cx - (r[2] * k) / 2, cy - (r[3] * k) / 2, r[2] * k, r[3] * k]; }
     const col = mixRgb(hexRgb(PFX[i][2]), hexRgb(COL.greyC), g), sc = r[2] / 700, ca = a * lerp(1, 0.5, g);
-    const u = reduced ? -1 : (((TIME - F.t0 - i * 0.8) % SI.loopT) + SI.loopT) % SI.loopT;
+    const u = reduced ? -1 : (((TIME - F.t0 - i * 0.45) % SI.loopT) + SI.loopT) % SI.loopT;
     ctx.save(); ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip();
     ctx.translate(r[0], r[1] + (r[3] - 330 * sc) / 2); ctx.scale(sc, sc);
     if (g > 0.003) ctx.filter = `grayscale(${g.toFixed(3)})`;
