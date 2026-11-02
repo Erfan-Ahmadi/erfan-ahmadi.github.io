@@ -26,7 +26,7 @@ The working script below has light edits; the original drafts, word for word, ar
 **13.–13b.** [A blue box goes around the outer integral sign, from 0 to $d$; next press, it turns into the second card: "inside another integral?" (TODO: optical depth, an integral inside an integral).]
 > …inside another integral.
 
-**14.–14b.** [An orange box goes around the $e$; next press, it turns into the third card: "most importantly: why $e$?" (TODO: the rays, the discrete version on top of the continuous one). The three parts keep their tints, and the three cards sit in a row under the equation: the video's map.]
+**14.–14b.** [An orange box goes around the $e$; next press, it turns into the third card: "Why $e$? Why exponentials?" (TODO: the rays, the discrete version on top of the continuous one). The three parts keep their tints, and the three cards sit in a row under the equation: the video's map.]
 > And most importantly: why $e$? Why exponentials at all? And honestly, the answers turned out to be simpler, and more interesting, than I expected.
 
 ## Part 2: what this is, and what we keep

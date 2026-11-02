@@ -17,7 +17,7 @@ const PFX = [['t-pabs', 'absorption', COL.red], ['t-pout', 'out-scattering', COL
 const QCARDS = [
   { term: 't-qexp', col: COL.yellow, name: 'why an integral in the exponent?', title: [String.raw`\text{why an integral}`, String.raw`\text{in the exponent?}`], todo: ['variable density'] },
   { term: 't-qouter', col: COL.blue, name: 'inside another integral?', title: [String.raw`\text{inside another integral?}`], todo: ['optical depth:', 'an integral inside an integral'] },
-  { term: 't-qe', col: COL.gold, name: 'most importantly: why e?', title: [String.raw`\text{most importantly:}`, String.raw`\text{why }e\text{?}`], todo: ['the rays: the discrete version', 'on top of the continuous one'] },
+  { term: 't-qe', col: COL.gold, name: 'why e? why exponentials?', title: [String.raw`\text{Why }e\text{?}`, String.raw`\text{Why exponentials?}`], todo: ['the rays: the discrete version', 'on top of the continuous one'] },
 ];
 const QCRECT = [[380, 470, 480, 540], [890, 470, 480, 540], [1400, 470, 480, 540]];
 // Beat 15: the spectrum from a physics lecture to a shader tutorial, and the arrow that walks along it. For the goals
