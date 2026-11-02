@@ -4508,7 +4508,7 @@ const PS_DEFAULTS = () => ({
   orbit: 1, mag: 0, aside: 0, fig: 0, think: '', writeP: 1, eq: 0, eqP: 0, corner: 0, braces: [], hi: {}, dim: 0,
   cells: [0, 0, 0, 0], cellT: [0, 0, 0, 0], grid: 1,
   qc: QCARDS.map(() => ({ box: 0, m: 0, title: 0, todo: 0 })), qcA: 1,
-  eqA: 1, eqTop: 0, spec: [0, 0], chalk: 0, code: 0, specT: 0, ptrX: 0, ptrA: 0, lineP: 0, wig: 0, wigT: 0, side: 0,
+  eqA: 1, eqTop: 0, spec: [0, 0], chalk: 0, code: 0, specT: 0, ptrX: 0, ptrA: 0, lineP: 0, wig: 0, wigT: 0, side: 0, specOut: 0, eqAside: 0,
   goalsA: 0, figMid: 0, fut: 0, futW: 0, goals: [0, 0], p15: 1, cap: 0,
   uses: [0, 0, 0, 0], grow: 0,
 });
@@ -4520,8 +4520,9 @@ Object.assign(TERM_COL, { 't-pabs': hexRgb(COL.red), 't-pout': hexRgb(COL.red), 
 for (const q of QCARDS) TERM_COL[q.term] = mixRgb(WHITE_RGB, hexRgb(q.col), 0.5);
 const PEQ = { x: 960, y: 300, size: 76, fit: 1760 };
 // Where the equation sits: big under the hook, small at the top from beat 16 on (it is away during beat 15).
-const EQPOSE = { home: [960, 300, 1], top: [960, 118, 0.6] };
-const eqXf = (st) => { const b = smooth(clamp(st.eqTop, 0, 1)); return [0, 1, 2].map((j) => lerp(EQPOSE.home[j], EQPOSE.top[j], b)); };
+// From beat 15d it sits in the aside, then moves up from there in beat 16.
+const EQPOSE = { home: [960, 300, 1], aside: [960, 250, 0.6], top: [960, 118, 0.6] };
+const eqXf = (st) => { const a = clamp(st.eqAside, 0, 1), b = smooth(clamp(st.eqTop, 0, 1)); return [0, 1, 2].map((j) => lerp(lerp(EQPOSE.home[j], EQPOSE.aside[j], a), EQPOSE.top[j], b)); };
 let peqSprites = null;
 const peq = () => peqSprites || (peqSprites = place(tex(PRTE), { ...PEQ, size: Math.min(PEQ.size, PEQ.fit / Math.max(tex(PRTE).w, 0.01)) }));
 const ptw = (key, to, dur, o = {}) => tween(PS, key, to, dur, { tag: 'pres', ...o });
@@ -4610,7 +4611,8 @@ async function presSpecMiddle() {
 // heading, and I walk from the corner to the middle of the bottom. 15e: the first goal, and an arrow grows from me
 // now to me later, who understands it. 15f: the second goal.
 async function presGoals() {
-  ptw('side', 1, 1.4); ptw('figMid', 1, 1.4);
+  ptw('side', 1, 1.4); ptw('specOut', 1, 0.9); ptw('figMid', 1, 1.4);
+  PS.eqAside = 1; ptw('eqA', 1, 1, { delay: 0.7 });   // the spectrum goes as it shrinks, and the equation comes in, in the aside
   await ptw('goalsA', 1, 0.8, { delay: 0.8 });
 }
 async function presGoal(i) {
@@ -4621,8 +4623,7 @@ async function presGoal(i) {
 // under it.
 async function presDefine() {
   ptw('p15', 0, 0.6); ptw('figMid', 0, 1.2);
-  PS.eqTop = 1;
-  await ptw('eqA', 1, 0.9, { delay: 0.4 });
+  await ptw('eqTop', 1, 1.3);
   await ptw('cap', 1, 1.5, { ease: linear });
 }
 // Beats 17–20: a field's card fades into its place; the cloud's then grows over the other three.
@@ -4772,13 +4773,17 @@ function drawPointer(ctx, x, y, a, ang) {   // an arrow pointing up, its tip at 
   ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-15, 28); ctx.lineTo(15, 28); ctx.closePath(); ctx.fill();
   ctx.restore();
 }
-function drawSpectrum(ctx, st) {
-  const ga = smooth(clamp(st.p15, 0, 1)); if (ga <= 0.003) return;
-  const [l, r] = st.spec.map((v) => smooth(clamp(v, 0, 1))), side = smooth(clamp(st.side, 0, 1));
+// The aside's card: a ground of its own, drawn under the equation that comes into it.
+function drawAsideCard(ctx, st) {
+  const ga = smooth(clamp(st.p15, 0, 1)), side = smooth(clamp(st.side, 0, 1)); if (ga <= 0.003) return;
   if (side > 0.003) {   // the aside: a card with a ground of its own
     const c = SPEC.card; ctx.save(); ctx.globalAlpha = side * ga; ctx.fillStyle = '#26241F'; ctx.strokeStyle = COL.greyC; ctx.lineWidth = 2.5;
     ctx.beginPath(); ctx.roundRect(c[0], c[1], c[2], c[3], 14); ctx.fill(); ctx.stroke(); ctx.restore();
   }
+}
+function drawSpectrum(ctx, st) {
+  const ga = smooth(clamp(st.p15, 0, 1)) * (1 - smooth(clamp(st.specOut, 0, 1))); if (ga <= 0.003) return;
+  const [l, r] = st.spec.map((v) => smooth(clamp(v, 0, 1))), side = smooth(clamp(st.side, 0, 1));
   const [ox, oy, s] = specXf(st), y = SPEC.y, L = SPEC.L, R = SPEC.R, xa = L[0] + L[2] / 2, xb = R[0] + R[2] / 2;
   ctx.save(); ctx.translate(ox, oy); ctx.scale(s, s);
   // the line, as far as the arrow has drawn it, and its ends
@@ -4900,6 +4905,7 @@ function drawPresent(ctx, dt) {
     drawThought(ctx, tx, ty, tw, th, st.think, st.writeP, fa, figHead(fx, fy, fs));
   }
   drawFuture(ctx, st);
+  drawAsideCard(ctx, st);
   // the equation, wherever it is, with its braces; the effects' cells under it; the questions' cards
   if (st.eq) {
     const [ex, ey, ek] = eqXf(st);
