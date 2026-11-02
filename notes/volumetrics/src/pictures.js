@@ -12,7 +12,7 @@ const BOARD_TEX = [   // [TeX, x, y, size] in the board's units, 470 wide
   [String.raw`f_p(\theta) = \frac{1}{4\pi}\, \frac{1 - g^2}{(1 + g^2 - 2g\cos\theta)^{3/2}}`, 26, 272, 23],
   [String.raw`\sigma_s = \frac{8\pi}{3}\, k^4 a^6 \left| \frac{m^2 - 1}{m^2 + 2} \right|^2`, 26, 340, 23],
 ];
-// p writes the board line by line, then the sketch and the ring around the first line.
+// p writes the board line by line, then the sketch.
 function drawChalkboard(ctx, r, a, p) {
   if (a <= 0.003) return;
   const s = r[2] / 470, h = r[3] / s, n = BOARD_TEX.length;
@@ -28,10 +28,9 @@ function drawChalkboard(ctx, r, a, p) {
   ctx.restore();
   // the writing, a little crooked
   ctx.translate(235, h / 2); ctx.rotate(-0.012); ctx.translate(-235, -h / 2);
-  let first = null;
   BOARD_TEX.forEach(([src, x, y, size], i) => {
     const q = clamp(p * (n + 1) - i, 0, 1); if (q <= 0) return;
-    const sp = drawTex(ctx, src, x, y, Math.min(size, 420 / Math.max(tex(src).w, 0.01)), { ax: 0, p: q, color: CHALK, alpha: 0.9 * a }); if (!i) first = sp;
+    drawTex(ctx, src, x, y, Math.min(size, 420 / Math.max(tex(src).w, 0.01)), { ax: 0, p: q, color: CHALK, alpha: 0.9 * a });
   });
   const q = clamp(p * (n + 1) - n, 0, 1);
   if (q > 0.003) {
@@ -43,15 +42,6 @@ function drawChalkboard(ctx, r, a, p) {
     ctx.beginPath(); ctx.moveTo(cx + 16 * ux, cy + 16 * uy); ctx.lineTo(cx + 70 * ux, cy + 70 * uy); ctx.stroke(); arrowTip(ctx, cx + 74 * ux, cy + 74 * uy, ux, uy, 13, 6);
     ctx.setLineDash([4, 7]); ctx.beginPath(); ctx.moveTo(cx + 18, cy); ctx.lineTo(cx + 70, cy); ctx.stroke(); ctx.setLineDash([]);
     ctx.beginPath(); ctx.arc(cx, cy, 44, t, 0); ctx.stroke();
-    // and a ring around the first line, the way a lecturer marks the one that matters
-    if (first && first.length) {
-      let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
-      for (const sp of first) { const [l, rr, tt, b] = inkBox(sp); x0 = Math.min(x0, l); x1 = Math.max(x1, rr); y0 = Math.min(y0, tt); y1 = Math.max(y1, b); }
-      ctx.beginPath();
-      ctx.moveTo(x0 - 14, y0 - 7); ctx.lineTo(x1 + 11, y0 - 10); ctx.moveTo(x1 + 7, y0 - 15); ctx.lineTo(x1 + 10, y1 + 8);
-      ctx.moveTo(x1 + 14, y1 + 6); ctx.lineTo(x0 - 10, y1 + 10); ctx.moveTo(x0 - 6, y1 + 13); ctx.lineTo(x0 - 9, y0 - 11);
-      ctx.stroke();
-    }
     ctx.restore();
     drawTex(ctx, String.raw`\theta`, cx + 58, cy - 13, 22, { color: CHALK, alpha: 0.9 * a * q });
   }
@@ -265,16 +255,24 @@ function drawUseSky(ctx, dt, h, fresh) {
 }
 
 // ---- medical imaging: X-rays through a body, onto a detector ----
-// A slice through a chest: soft tissue, two lungs (mostly air), the spine and the breastbone. The detector shows how
-// much of each ray gets through, the line integral along it; photons that arrive flash where they land.
-const XR = { fx: 98, dx0: 604, half: 165, n: 66 };
+// The body is me, the stick figure, standing in the X-rays, its strokes thickened into a body that absorbs them. The
+// detector shows how much of each ray gets through, the line integral along it; photons that arrive flash where they
+// land. It doesn't have to be exact.
+const XR = { fx: 98, dx0: 604, half: 165, n: 66, me: [452, 112, 0.95], body: 16, sigma: 0.05 };   // me: x, feet below the centre line, scale
+const XR_GRID = { h: 0 };
+function xrayGrid(h) {   // the body drawn at half resolution, so asking how dense it is somewhere is one lookup
+  if (XR_GRID.h === h) return XR_GRID;
+  const w = 350, gh = Math.ceil(h / 2), c = document.createElement('canvas'); c.width = w; c.height = gh;
+  const g = c.getContext('2d'), [mx, my, ms] = XR.me;
+  g.scale(0.5, 0.5); g.lineWidth = XR.body; g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = '#fff';
+  traceFigure(g, mx, h / 2 + my, ms); g.stroke();
+  const d = g.getImageData(0, 0, w, gh).data, a = new Float32Array(w * gh);
+  for (let i = 0; i < w * gh; i++) a[i] = d[4 * i + 3] / 255;
+  return Object.assign(XR_GRID, { h, w, gh, a });
+}
 function xrayDensity(x, y, h) {
-  const cx = 350, cy = h / 2;
-  if (((x - cx) / 128) ** 2 + ((y - cy) / 102) ** 2 > 1) return 0;
-  if ((x - cx) ** 2 + (y - (cy + 64)) ** 2 <= 18 * 18) return 0.045;
-  if (Math.abs(x - cx) <= 9 && Math.abs(y - (cy - 86)) <= 9) return 0.035;
-  for (const sx of [-1, 1]) if (((x - (cx + 52 * sx)) / 40) ** 2 + ((y - (cy - 12)) / 56) ** 2 <= 1) return 0.0012;
-  return 0.0048;
+  const G = xrayGrid(h), i = Math.floor(x / 2), j = Math.floor(y / 2);
+  return i < 0 || j < 0 || i >= G.w || j >= G.gh ? 0 : XR.sigma * G.a[j * G.w + i];
 }
 const XR_CACHE = { h: 0, T: null };
 function xrayProfile(h) {
@@ -289,20 +287,15 @@ function xrayProfile(h) {
 }
 const SPK_XRAY = newSpecks(13), XR_FLASH = [];
 function drawUseXray(ctx, dt, h, fresh) {
-  const cy = h / 2, cx = 350, { fx, dx0, half } = XR, tissue = 'rgba(214,170,150,';
+  const cy = h / 2, { fx, dx0, half } = XR, [mx, my, ms] = XR.me;
   ctx.fillStyle = '#111317'; ctx.fillRect(0, 0, 700, h);
   // the fan of rays
   ctx.save(); ctx.fillStyle = 'rgba(170,200,255,0.05)'; ctx.beginPath(); ctx.moveTo(fx, cy); ctx.lineTo(dx0, cy - half); ctx.lineTo(dx0, cy + half); ctx.closePath(); ctx.fill();
   ctx.strokeStyle = 'rgba(170,200,255,0.25)'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 8]); ctx.beginPath(); ctx.moveTo(fx, cy); ctx.lineTo(dx0, cy - half); ctx.moveTo(fx, cy); ctx.lineTo(dx0, cy + half); ctx.stroke(); ctx.restore();
-  // the body
-  ctx.save(); ctx.fillStyle = tissue + '0.2)'; ctx.strokeStyle = tissue + '0.6)'; ctx.lineWidth = 2.5;
-  ctx.beginPath(); ctx.ellipse(cx, cy, 128, 102, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = 'rgba(12,14,18,0.6)'; ctx.strokeStyle = tissue + '0.3)'; ctx.lineWidth = 2;
-  for (const s2 of [-1, 1]) { ctx.beginPath(); ctx.ellipse(cx + 52 * s2, cy - 12, 40, 56, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
-  ctx.fillStyle = '#E6DFD0'; ctx.beginPath(); ctx.arc(cx, cy + 64, 18, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#3A3530'; ctx.beginPath(); ctx.arc(cx, cy + 60, 6, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#E6DFD0'; ctx.beginPath(); ctx.roundRect(cx - 9, cy - 95, 18, 18, 4); ctx.fill();
-  ctx.restore();
+  // me, in the way: the body the X-rays cross, and my strokes over it
+  ctx.save(); ctx.strokeStyle = 'rgba(214,170,150,0.24)'; ctx.lineWidth = XR.body; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  traceFigure(ctx, mx, cy + my, ms); ctx.stroke(); ctx.restore();
+  drawFigure(ctx, mx, cy + my, ms, 1);
   // the tube
   ctx.save(); ctx.fillStyle = BODY; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 2.5;
   ctx.beginPath(); ctx.roundRect(24, cy - 38, 70, 76, 8); ctx.fill(); ctx.stroke();
