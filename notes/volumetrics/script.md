@@ -51,15 +51,30 @@ The working script below has light edits; the original drafts, word for word, ar
 
 → *Four fields, one equation. We met it in the cloud with a laser, so that's where we'll stay.*
 
-**21.** [The four cells return under the equation. Then out-scattering, emission and in-scattering grey out and stop; absorption keeps playing and grows.]
-> For the rest of this video I'm going to be slightly dishonest. Our stuff doesn't scatter, and it doesn't emit. It does exactly one thing: it absorbs light passing through. The other three I'll come back for in the next videos.
+**21.** [The four tiles return under the equation, playing.]
+> Here's what those four were.
 
-→ *Let me show you what I mean.*
+**21a.** [Absorption's tile brightens; the others dim a little while it is named.]
+> Absorption: the photon hits a particle and is swallowed. Its energy doesn't vanish, it becomes a little heat.
+
+**21b.** [Out-scattering.]
+> Out-scattering: it bounces off and leaves in some other direction, so it never reaches the eye.
+
+**21c.** [Emission.]
+> Emission: the particle gives off light of its own, and some of it heads our way.
+
+**21d.** [In-scattering.]
+> In-scattering: light from somewhere else bounces off a particle, right into our line of sight.
+
+**21e.** [Out-scattering, emission and in-scattering grey out and stop. Absorption keeps playing and grows.]
+> Two take light away. Two add it. And for the rest of this video I'm going to be slightly dishonest: our stuff doesn't scatter, and it doesn't emit. It only absorbs. The other three I'll come back for in the next videos.
+
+→ *So let's see what absorption alone does to our light.*
 
 ## Part 3: the quiz (the body starts here)
 
-**22.** [The laser, the cloud as a slab, the sensor. It reads 50%.]
-> Your sensor reads fifty percent. Half the light made it through.
+**22.** [The laser, the cloud as a slab, the sensor. The beam goes in at full brightness and comes out dimmer. The sensor settles on 50%.]
+> So with absorption alone, here's what happens to our light. It goes in, some of it gets swallowed on the way, and your sensor reads fifty percent. Half made it through.
 
 **23.** [A second, identical slab slides in behind the first. The sensor shows "??%".]
 > Now, quick question. I put a second cloud, same as the first, right behind it. What does your sensor read?
