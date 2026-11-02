@@ -31,28 +31,28 @@ The working script below has light edits; the original drafts, word for word, ar
 
 ## Part 2: what this is, and what we keep
 
-**15.–15f.** [Six presses, at "This video isn't a physics lecture", "and it isn't a shader tutorial", "It's the part in between", "By the end…", once more for the first goal, and "And along the way…". The cards and the equation go. A small physics lecture's chalkboard, scribbles and sketches with nothing readable, fades in, an arrow under it. The arrow walks to the right, drawing a line behind it, and a small raymarcher with its shader code comes in at that end. The arrow walks back to the middle and sways back and forth there from then on. Then, at "By the end…", an aside opens at the top: the spectrum fades out as it shrinks into it, and the equation fades in there instead. Under it, "Goals:" comes in on the left, and the figure walks over to the right. Next press: the first goal, "you could have derived it yourself", while a copy of the figure, "?" and all, walks out to the right along a growing arrow; once there its readout widens and the "?" reshapes into "I understand it now"; "Now" under the first, "Then" under the copy. Last press: the second goal, "the beautiful math and physics behind it". The goals' wording is a placeholder.]
+**15.–15g.** [Seven presses, at "This video isn't a physics lecture", "and it isn't a shader tutorial", "It's the part in between", "By the end,", "I want this equation", "…derived yourself" and "And along the way…". The cards and the equation go. A small physics lecture's chalkboard, scribbles and sketches with nothing readable, fades in, an arrow under it. The arrow walks to the right, drawing a line behind it, and a small raymarcher with its shader code comes in at that end. The arrow walks back to the middle and sways back and forth there from then on. Then, at "By the end,", the whole spectrum moves into an aside at the top, the arrow still swaying; under it, "Goals:" comes in on the left, and the figure walks over to the right. At "I want this equation", the spectrum reshapes into the equation, there in the aside: its names, pictures, line and arrow split and flow into the equation's symbols. Next press: the first goal, "you could have derived it yourself", while a copy of the figure, "?" and all, walks out to the right along a growing arrow, its readout widening and the "?" reshaping into "I understand it now" on the way; "Now" under the first, "Then" under the copy. Last press: the second goal, "the beautiful math and physics behind it". The goals' wording is a placeholder.]
 > This video isn't a physics lecture, and it isn't a shader tutorial. It's the part in between. By the end, I want this equation to feel less like something handed to you, and more like something you could have derived yourself. And along the way, we'll run into some surprisingly beautiful physics hiding behind a formula most of us skim over, or just copy and paste into code. So, forget the symbols for a minute.
 
 **16.** [The aside, the goals and the future self go. The equation moves up out of the aside to the top, and under it the caption writes in: "light, travelling some distance, through some stuff."]
 > In plain words, this equation describes one thing: what happens to light as it travels some distance through some stuff.
 
-**17.–20.** [One press per field, each a playing card in a 2 × 2 grid: astronomy (starlight through dust on its way to a telescope), climate science (sunlight through the atmosphere, the bluer light scattering away), medical imaging (X-rays through the stick figure onto a detector), then computer graphics: the cloud with the laser, which grows to take the space of the other three.]
+**17.–20.** [One press per field, each a playing card in a 2 × 2 grid: astronomy (starlight through dust on its way to a telescope), climate science (sunlight through the atmosphere, the bluer light scattering away), medical imaging (X-rays through the stick figure onto a detector), then computer graphics: the cloud with the laser, which grows to take the space of the other three. One more press, 20b, at "Because whatever the stuff is…": the cards and the caption go, and the four effects come back under the equation, playing.]
 > And "stuff" really can be anything. In astronomy, it's the dust between the stars, and the light is starlight on its way to a telescope. In climate science, it's our own atmosphere. In medical imaging, it's your body, and the light is an X-ray. And for me, it's a cloud, and the light is a laser. Different stuff, same equation. Because whatever the stuff is, there are only four things it can do to light passing through. We saw them a minute ago.
 
-**21.** [The four tiles return under the equation, playing. Absorption's tile brightens; the others dim a little while it is named.]
+**21.** [Absorption is named: its tile lights up in its colour, and its term in the equation turns red and stays red. Nothing else changes; every tile keeps playing.]
 > Absorption: the photon hits a particle and is swallowed. Its energy doesn't vanish, it becomes a little heat.
 
-**21b.** [Out-scattering.]
+**21b.** [Out-scattering is named the same way; the light moves to it.]
 > Out-scattering: it bounces off and leaves in some other direction, so it never reaches the eye.
 
-**21c.** [Emission.]
+**21c.** [Emission, its term green.]
 > Emission: the particle gives off light of its own, and some of it heads our way.
 
-**21d.** [In-scattering.]
+**21d.** [In-scattering, its term green.]
 > In-scattering: light from somewhere else bounces off a particle, right into our line of sight.
 
-**21e.** [Out-scattering, emission and in-scattering grey out and stop. Absorption keeps playing and grows.]
+**21e.–21i.** [Five presses. At "Two take light away.", the two red tiles light up together; at "Two add it.", the two green ones. At "our stuff doesn't scatter,", out-scattering and in-scattering grey out and stop, their terms in the equation too; at "and it doesn't emit.", emission does the same. At "It only absorbs.", absorption, still playing, grows over the other three.]
 > Two take light away. Two add it. And for the rest of this video I'm going to be slightly dishonest: our stuff doesn't scatter, and it doesn't emit. It only absorbs. The other three build on top of absorption, and I'll come back to them in a separate video. So let's see what absorption alone does to our light.
 
 ## Part 3: the quiz (the body starts here)
@@ -69,7 +69,7 @@ The working script below has light edits; the original drafts, word for word, ar
 **25.** [Every "− 50%" becomes "× ½". The sensor settles on 25%. A third slab: 12.5%.]
 > But that's not what happens. It reads 25%. A third: 12.5%. Each cloud halves whatever reaches it. Why half of what's left, and not the same amount again? That question is the whole video.
 
-(Beats 21–25 are narration only so far; their visuals are not built yet.)
+(Beats 22–25 are narration only so far; their visuals are not built yet.)
 
 ## Why this order
 
@@ -79,4 +79,4 @@ Confusion → goal → definition: each block answers the question the one befor
 
 - The cards in beats 12–14 hold TODO placeholders for the animations that answer them.
 - The two goals written on screen in beat 15 are placeholders.
-- Beats 21–25: visuals to build: the four tiles named one by one, three of them greying out, the slabs quiz.
+- Beats 22–25: visuals to build: the slabs quiz.

@@ -4493,7 +4493,7 @@ const GOALXY = [130, 560];   // the goals, under the aside on the left
 const GOALS = ['you could have derived it yourself', 'the beautiful math and physics behind it'];
 // me now and me later, side by side in the middle along the bottom while the goals are up
 // (feet at 960 keeps them and their labels clear of the bottom of a YouTube frame)
-const MIDFIG = 1020, FUT = { x: 1460, y: 925 };
+const MIDFIG = 800, FUT = { x: 1460, y: 925 };
 // Beat 16's caption, and beats 17–20: the fields that use the same equation, each a card with its picture in a 2 × 2
 // grid; the last, the cloud, grows over the other three.
 const PCAP = String.raw`\text{light, travelling some distance, through some }\textcolor{${COL.yellow}}{\text{stuff}}\text{.}`;
@@ -4508,9 +4508,10 @@ const PS_DEFAULTS = () => ({
   orbit: 1, mag: 0, aside: 0, fig: 0, think: '', writeP: 1, eq: 0, eqP: 0, corner: 0, braces: [], hi: {}, dim: 0,
   cells: [0, 0, 0, 0], cellT: [0, 0, 0, 0], grid: 1,
   qc: QCARDS.map(() => ({ box: 0, m: 0, title: 0, todo: 0 })), qcA: 1,
-  eqA: 1, eqTop: 0, spec: [0, 0], chalk: 0, code: 0, specT: 0, ptrX: 0, ptrA: 0, lineP: 0, wig: 0, wigT: 0, side: 0, specOut: 0, eqAside: 0,
+  eqA: 1, eqTop: 0, spec: [0, 0], chalk: 0, code: 0, specT: 0, ptrX: 0, ptrA: 0, lineP: 0, wig: 0, wigT: 0, side: 0, morph: 0, eqAside: 0,
   goalsA: 0, figMid: 0, fut: 0, futW: 0, goals: [0, 0], p15: 1, cap: 0,
-  uses: [0, 0, 0, 0], grow: 0,
+  uses: [0, 0, 0, 0], grow: 0, usesOut: 0, capOut: 0,
+  fx: { show: 0, t0: 0, focus: [0, 0, 0, 0], grey: [0, 0, 0, 0], big: 0 },
 });
 const PS = PS_DEFAULTS();
 // The equation, with its terms named: the four effects for the braces, and the parts the questions point at.
@@ -4543,11 +4544,19 @@ const BEATS = [
   { n: '15', name: 'not a physics lecture', run: presSpecPhysics },
   { n: '15b', name: 'not a shader tutorial', run: presSpecShader },
   { n: '15c', name: 'the part in between', run: presSpecMiddle },
-  { n: '15d', name: 'goals', run: presGoals },
-  { n: '15e', name: 'by the end', run: () => presGoal(0) },
-  { n: '15f', name: 'along the way', run: () => presGoal(1) },
+  { n: '15d', name: 'by the end', run: presAside },
+  { n: '15e', name: 'this equation', run: presMorph },
+  { n: '15f', name: 'derived yourself', run: () => presGoal(0) },
+  { n: '15g', name: 'along the way', run: () => presGoal(1) },
   { n: '16', name: 'some stuff', run: presDefine },
   ...USES.map((u, i) => ({ n: String(17 + i), name: u.name, run: () => presUse(i) })),
+  { n: '20b', name: 'four things', run: presFxBack },
+  ...PFX.map((p, i) => ({ n: i ? `21${'bcd'[i - 1]}` : '21', name: p[1], run: () => presFxName(i) })),
+  { n: '21e', name: 'two take light away', run: () => presFxPair(true) },
+  { n: '21f', name: 'two add it', run: () => presFxPair(false) },
+  { n: '21g', name: "doesn't scatter", run: () => presFxGrey([1, 3]) },
+  { n: '21h', name: "doesn't emit", run: () => presFxGrey([2]) },
+  { n: '21i', name: 'it only absorbs', run: presFxOnly },
 ];
 // A beat by its number in the script; a number between two beats opens the next one.
 function presIndex(label) {
@@ -4607,16 +4616,20 @@ async function presSpecMiddle() {
   await ptw('ptrX', 960, 1.3);
   PS.wigT = TIME; await ptw('wig', 1, 0.6);
 }
-// Beat 15d: all of it goes aside, top left; outside it the goals' card comes in on the right, empty but for its
-// heading, and I walk from the corner to the middle of the bottom. 15e: the first goal, and an arrow grows from me
-// now to me later, who understands it. 15f: the second goal.
-async function presGoals() {
-  ptw('side', 1, 1.4); ptw('specOut', 1, 0.9); ptw('figMid', 1, 1.4);
-  PS.eqAside = 1; ptw('eqA', 1, 1, { delay: 0.7 });   // the spectrum goes as it shrinks, and the equation comes in, in the aside
-  await ptw('goalsA', 1, 0.8, { delay: 0.8 });
+// Beat 15d: all of it moves into an aside at the top, the arrow still swaying; under it "Goals:" comes in on the left,
+// and I walk over to the right. 15e: the spectrum reshapes into the equation, there in the aside. 15f: the first goal,
+// while a copy of me walks out along a growing arrow, its "?" turning into "I understand it now" on the way. 15g:
+// the second goal.
+async function presAside() {
+  ptw('side', 1, 1.5); ptw('figMid', 1, 1.4);
+  await ptw('goalsA', 1, 0.8, { delay: 0.9 });
+}
+async function presMorph() {
+  PS.eqAside = 1; PS.eqA = 1;   // the equation itself shows once the morph has landed
+  await ptw('morph', 1, 2.4, { ease: linear });
 }
 async function presGoal(i) {
-  if (i === 0) { ptw('fut', 1, 2); ptw('futW', 1, 1.3, { ease: linear, delay: 2.1 }); }
+  if (i === 0) { ptw('fut', 1, 2.2); ptw('futW', 1, 1.7, { ease: linear, delay: 0.35 }); }
   await ptwi(PS.goals, i, 1, 1.2, { ease: linear });
 }
 // Beat 16: the aside, the goals and me later go; the equation comes back, small at the top, and the caption writes
@@ -4631,6 +4644,29 @@ async function presUse(i) {
   await ptwi(PS.uses, i, 1, 0.9);
   if (i === 3) await ptw('grow', 1, 1.8, { delay: 0.6 });
 }
+// Beat 20b, "whatever the stuff is, there are only four things it can do": the cards and the caption go, and the
+// four effects come back under the equation, playing.
+async function presFxBack() {
+  ptw('usesOut', 1, 0.8); ptw('capOut', 1, 0.6);
+  PS.fx.t0 = TIME + 0.5;
+  await ptwi(PS.fx, 'show', 1, 1, { delay: 0.5 });
+}
+// 21–21d: one named at a time: its tile lights up and its term in the equation takes its colour, for good.
+async function presFxName(i) {
+  for (let j = 0; j < 4; j++) ptwi(PS.fx.focus, j, j === i ? 1 : 0, 0.5);
+  await ptwi(PS.hi, PFX[i][0], 1, 0.6);
+}
+// 21e: the two that take light away; 21f: the two that add it.
+function presFxPair(away) {
+  return Promise.all([0, 1, 2, 3].map((j) => ptwi(PS.fx.focus, j, (j < 2) === away ? 1 : 0, 0.5)));
+}
+// 21g: our stuff doesn't scatter: out- and in-scattering grey out and stop, tiles and terms; 21h: nor does it emit.
+function presFxGrey(list) {
+  for (let j = 0; j < 4; j++) ptwi(PS.fx.focus, j, 0, 0.4);
+  return Promise.all(list.map((j) => ptwi(PS.fx.grey, j, 1, 0.9)));
+}
+// 21i: it only absorbs: absorption, still playing, grows over the other three.
+function presFxOnly() { return ptwi(PS.fx, 'big', 1, 1.6); }
 async function presGo(k, play) {
   k = clamp(k, 0, BEATS.length - 1);
   const e = ++PRES.epoch; PRES.toast = TIME;
@@ -4782,7 +4818,7 @@ function drawAsideCard(ctx, st) {
   }
 }
 function drawSpectrum(ctx, st) {
-  const ga = smooth(clamp(st.p15, 0, 1)) * (1 - smooth(clamp(st.specOut, 0, 1))); if (ga <= 0.003) return;
+  const ga = smooth(clamp(st.p15, 0, 1)) * (1 - smooth(clamp(st.morph / 0.18, 0, 1))); if (ga <= 0.003) return;
   const [l, r] = st.spec.map((v) => smooth(clamp(v, 0, 1))), side = smooth(clamp(st.side, 0, 1));
   const [ox, oy, s] = specXf(st), y = SPEC.y, L = SPEC.L, R = SPEC.R, xa = L[0] + L[2] / 2, xb = R[0] + R[2] / 2;
   ctx.save(); ctx.translate(ox, oy); ctx.scale(s, s);
@@ -4824,10 +4860,12 @@ function drawFuture(ctx, st) {
     ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1 - 18, y); ctx.stroke(); arrowTip(ctx, x1, y, 1, 0, 26, 12); ctx.restore();
   }
   drawFigure(ctx, fx, FUT.y, 1, ga);
+  // the readout grows and its "?" reshapes into the sentence while the copy walks
   const w = clamp(st.futW, 0, 1), u = smooth(w), R = readoutPlan();
   drawThought(ctx, fx + lerp(RO_Q.dx, RO_U.dx, u), FUT.y + lerp(RO_Q.dy, RO_U.dy, u), lerp(RO_Q.w, RO_U.w, u), lerp(RO_Q.h, RO_U.h, u), '', 1, ga, figHead(fx, FUT.y, 1));
-  if (w <= 0.001) { ctx.save(); ctx.translate(fx - FUT.x, 0); drawSprites(ctx, R.q, { alpha: ga }); ctx.restore(); }
-  else drawReshape(ctx, R.plan, w, ga);
+  ctx.save(); ctx.translate(fx - FUT.x, 0);
+  if (w <= 0.001) drawSprites(ctx, R.q, { alpha: ga }); else drawReshape(ctx, R.plan, w, ga);
+  ctx.restore();
   drawTex(ctx, String.raw`\text{Now}`, MIDFIG - 10, FUT.y + 30, 32, { color: COL.greyA, alpha: ga });
   drawTex(ctx, String.raw`\text{Then}`, FUT.x - 10, FUT.y + 30, 32, { color: COL.greyA, alpha: ga * smooth(clamp((st.fut - 0.8) / 0.2, 0, 1)) });
 }
@@ -4866,7 +4904,7 @@ function drawGoals(ctx, st) {
 function drawUses(ctx, dt, st) {
   const grow = smooth(clamp(st.grow, 0, 1));
   for (let i = 0; i < 4; i++) {
-    const u = USES[i], a = smooth(clamp(st.uses[i], 0, 1)) * (i < 3 ? 1 - grow : 1);
+    const u = USES[i], a = smooth(clamp(st.uses[i], 0, 1)) * (i < 3 ? 1 - grow : 1) * (1 - smooth(clamp(st.usesOut, 0, 1)));
     if (a <= 0.003) { u.seen = false; continue; }
     const r = i === 3 ? lerpRect(UCARDS[3], UGROW, grow) : UCARDS[i], fresh = !u.seen; u.seen = true;
     ctx.save(); ctx.globalAlpha = a; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip();
@@ -4881,8 +4919,63 @@ function drawUses(ctx, dt, st) {
     drawTex(ctx, String.raw`\text{${u.label}}`, r[0] + 22, r[1] + 18, 30, { ax: 0, ay: 0, color: COL.greyA, alpha: a });
   }
 }
+// Beat 15e: the spectrum reshapes into the equation, in the aside, the way manim transforms one picture into another:
+// its pieces (the names, the two pictures as shapes, the line, its ends and the arrow) split and flow into the
+// equation's glyphs, those on the physics side into its left, those on the shader side into its right.
+let specMorph = null;
+function specMorphPlan() {
+  if (specMorph) return specMorph;
+  const [ox, oy, s] = specXf({ side: 1 }), X = (x) => ox + x * s, Y = (y) => oy + y * s, L = SPEC.L, R = SPEC.R, y = SPEC.y;
+  const xa = L[0] + L[2] / 2, xb = R[0] + R[2] / 2;
+  const piece = (pts, color) => ({ a: { k: 'p', terms: [] }, contours: [pts], color: hexRgb(color), alpha: 1 });
+  const rect = (x, yy, w, h, color) => piece([[X(x), Y(yy)], [X(x), Y(yy + h)], [X(x + w), Y(yy + h)], [X(x + w), Y(yy)]], color);
+  const disc = (cx, cy, r, color) => piece(Array.from({ length: 40 }, (_, i) => [X(cx) + r * s * Math.cos((i / 40) * 2 * Math.PI), Y(cy) - r * s * Math.sin((i / 40) * 2 * Math.PI)]), color);
+  const label = (src, x, yy, color) => place(tex(src), { x: X(x), y: Y(yy), size: 28 * s }).map((sp) => ({ ...sp, color: hexRgb(color) }));
+  const A = [
+    ...label(String.raw`\text{physics lecture}`, xa, L[1] - 28, COL.gold), rect(L[0], L[1], L[2], L[3], '#5A4632'),
+    ...label(String.raw`\text{shader tutorial}`, xb, R[1] - 28, COL.blue), rect(R[0], R[1], R[2], R[3] * 0.52, COL.greyD), rect(R[0], R[1] + R[3] * 0.56, R[2], R[3] * 0.44, COL.greyD),
+    rect(xa, y - 2, xb - xa, 4, COL.greyB), disc(xa, y, 7, COL.gold), disc(xb, y, 7, COL.blue),
+    piece([[X(960), Y(y + 16)], [X(945), Y(y + 44)], [X(975), Y(y + 44)]], COL.yellow), rect(957, y + 40, 6, 42, COL.yellow),
+  ];
+  const B = place(tex(PRTE), { x: EQPOSE.aside[0], y: EQPOSE.aside[1], size: peq()[0].size * EQPOSE.aside[2] });
+  return (specMorph = reshapePlan(A, B));
+}
+function drawSpecMorph(ctx, st) {
+  const m = clamp(st.morph, 0, 1); if (m <= 0 || m >= 1) return;
+  drawReshape(ctx, specMorphPlan(), clamp((m - 0.18) / 0.82, 0, 1), smooth(clamp(m / 0.18, 0, 1)) * smooth(clamp(st.p15, 0, 1)));
+}
+// Beats 20b–21i: the four effects again, under the equation. Each is named in turn (its tile lit, its term in its
+// colour); the two that take light away, then the two that add it; then the scatterings grey out and stop, then
+// emission, and absorption, still playing, grows over the rest.
+const FXCELLS = [[370, 250, 590, 278], [990, 250, 590, 278], [370, 560, 590, 278], [990, 560, 590, 278]], FXBIG = [370, 250, 1210, 588];
+const hexOf = (c) => '#' + c.map((v) => Math.round(clamp(v, 0, 255)).toString(16).padStart(2, '0')).join('');
+function drawFx(ctx, st) {
+  const F = st.fx, show = smooth(clamp(F.show, 0, 1)); if (show <= 0.003) return;
+  const big = smooth(clamp(F.big, 0, 1));
+  for (const i of [1, 2, 3, 0]) {   // absorption last, so it grows over the others
+    const g = smooth(clamp(F.grey[i], 0, 1)), f = smooth(clamp(F.focus[i], 0, 1)), a = show * (i === 0 ? 1 : 1 - big);
+    if (a <= 0.003) continue;
+    let r = i === 0 ? lerpRect(FXCELLS[0], FXBIG, big) : FXCELLS[i];
+    if (f > 0.003) { const k = 1 + 0.035 * f, cx = r[0] + r[2] / 2, cy = r[1] + r[3] / 2; r = [cx - (r[2] * k) / 2, cy - (r[3] * k) / 2, r[2] * k, r[3] * k]; }
+    const col = mixRgb(hexRgb(PFX[i][2]), hexRgb(COL.greyC), g), sc = r[2] / 700, ca = a * lerp(1, 0.5, g);
+    const u = reduced ? -1 : (((TIME - F.t0 - i * 0.8) % SI.loopT) + SI.loopT) % SI.loopT;
+    ctx.save(); ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip();
+    ctx.translate(r[0], r[1] + (r[3] - 330 * sc) / 2); ctx.scale(sc, sc);
+    if (g > 0.003) ctx.filter = `grayscale(${g.toFixed(3)})`;
+    // greying out, it settles into its still and stops
+    if (g < 0.997) drawIACell(ctx, i, u, SI.loopT, ca * (1 - g), SI.look);
+    if (g > 0.003) drawIACell(ctx, i, -1, SI.loopT, ca * g, SI.look);
+    ctx.restore();
+    ctx.save(); if (f > 0.003) { ctx.shadowColor = rgba(col, 0.8 * f); ctx.shadowBlur = 26 * f; }
+    ctx.strokeStyle = rgba(col, a * (0.9 + 0.1 * f) * lerp(1, 0.6, g)); ctx.lineWidth = 3 + 2.5 * f;
+    ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.stroke(); ctx.restore();
+    drawTex(ctx, String.raw`\text{${PFX[i][1]}}`, r[0] + 22, r[1] + 18, i === 0 ? lerp(34, 44, big) : 34, { ax: 0, ay: 0, color: hexOf(col), alpha: a * lerp(1, 0.6, g) });
+  }
+}
 function drawPresent(ctx, dt) {
   const st = PS;
+  // the effects' terms take their colour, or grey once their effect is set aside (beats 21g–h)
+  for (let i = 0; i < 4; i++) TERM_COL[PFX[i][0]] = mixRgb(hexRgb(PFX[i][2]), hexRgb(COL.greyC), smooth(clamp(st.fx.grey[i], 0, 1)));
   // the cloud, with the laser on and turning slowly; while it is the whole picture it draws straight onto the stage,
   // inside the aside it is drawn offscreen and shown in a card
   if (st.orbit && !reduced) SK.yaw += dt * PRES_DRIFT;
@@ -4910,7 +5003,7 @@ function drawPresent(ctx, dt) {
   if (st.eq) {
     const [ex, ey, ek] = eqXf(st);
     ctx.save(); ctx.translate(ex, ey); ctx.scale(ek, ek); ctx.translate(-PEQ.x, -PEQ.y);
-    drawSprites(ctx, peq(), { p: st.eqP, alpha: st.eqA, hi: st.hi, dim: st.dim });
+    drawSprites(ctx, peq(), { p: st.eqP, alpha: st.eqA * (st.eqAside && st.morph < 1 ? 0 : 1), hi: st.hi, dim: st.dim });
     for (const b of st.braces) {
       const ba = b.a * st.eqA; if (ba <= 0.003) continue;
       drawBrace(ctx, b.x0 + ((b.x1 - b.x0) * b.g) / 2, b.top, (b.x1 - b.x0) * b.g, b.h, b.th, b.color, Math.min(1, b.g * 4) * ba);
@@ -4930,9 +5023,11 @@ function drawPresent(ctx, dt) {
     drawQCards(ctx, st);
   }
   drawSpectrum(ctx, st);
+  drawSpecMorph(ctx, st);
   drawGoals(ctx, st);
-  if (st.cap > 0.003) drawTex(ctx, PCAP, 960, 250, 46, { p: st.cap });
+  if (st.cap > 0.003) drawTex(ctx, PCAP, 960, 250, 46, { p: st.cap, alpha: 1 - smooth(clamp(st.capOut, 0, 1)) });
   drawUses(ctx, dt, st);
+  drawFx(ctx, st);
   // a small counter after each press, and a pause mark while paused
   const ta = PRES.paused ? 1 : clamp(1.8 - (TIME - PRES.toast), 0, 1);
   if (ta > 0.003) {
