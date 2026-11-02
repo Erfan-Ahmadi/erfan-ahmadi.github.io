@@ -35,15 +35,18 @@ The working script below has light edits; the original drafts, word for word, ar
 ## Part 2: what this is, and what we keep
 
 **15.** [The equation and the three cards stay. The figure's thought cloud: "?" becomes "!".]
-> This video isn't a physics lecture, and it isn't a shader tutorial. It's the part in between. By the end, I want this equation to feel less like something handed to you, and more like something you could have derived yourself. And along the way, we'll run into some surprisingly beautiful physics hiding behind a formula most of us skim over, or just copy and paste into code. So, forget the symbols for a minute.
+> This video isn't a physics lecture, and it isn't a shader tutorial. It's the part in between. By the end, I want this equation to feel less like something handed to you, and more like something you could have derived yourself. And along the way, we'll run into some surprisingly beautiful physics hiding behind a formula most of us skim over, or just copy and paste into code. So let's start with what it actually describes, in plain words.
 
 **16.** [The equation shrinks to the top. Under it, the caption: "light, travelling some distance, through some stuff."]
-> In plain words, this equation describes one thing: what happens to light as it travels some distance through some stuff.
+> It describes what happens to light as it travels some distance through some stuff.
 
 **17.–20.** [One press per field: a card with a picture placeholder. Astronomy, climate, medical imaging, then the cloud with the laser, which grows to take the space of the other three.]
-> And "stuff" really can be anything. In astronomy, it's the dust between the stars, and the light is starlight on its way to a telescope. In climate science, it's our own atmosphere. In medical imaging, it's your body, and the light is an X-ray. And for me, it's a cloud, and the light is a laser. Different stuff, same equation. Because whatever the stuff is, there are only four things it can do to the light passing through. We saw them a minute ago.
+> In astronomy, the stuff is the dust between the stars, and the light is starlight on its way to a telescope. In climate science, the stuff is our own atmosphere. In medical imaging, the stuff is your body, and the light is an X-ray. And for me, the stuff is a cloud, and the light is a laser. Four fields, one equation. We met it in the cloud with a laser, so that's where we'll stay.
 
-**21.** [The four tiles return under the equation, playing. Absorption's tile brightens; the others dim a little while it is named.]
+**21.** [The four tiles return under the equation, playing.]
+> Here's what those four were.
+
+**21a.** [Absorption's tile brightens; the others dim a little while it is named.]
 > Absorption: the photon hits a particle and is swallowed. Its energy doesn't vanish, it becomes a little heat.
 
 **21b.** [Out-scattering.]
