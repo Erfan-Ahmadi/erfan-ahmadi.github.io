@@ -4493,7 +4493,7 @@ const GOALXY = [130, 560];   // the goals, under the aside on the left
 const GOALS = ['you could have derived it yourself', 'the beautiful math and physics behind it'];
 // me now and me later, side by side in the middle along the bottom while the goals are up
 // (feet at 960 keeps them and their labels clear of the bottom of a YouTube frame)
-const MIDFIG = 1170, FUT = { x: 1610, y: 960 };
+const MIDFIG = 1020, FUT = { x: 1460, y: 925 };
 // Beat 16's caption, and beats 17–20: the fields that use the same equation, each a card with its picture in a 2 × 2
 // grid; the last, the cloud, grows over the other three.
 const PCAP = String.raw`\text{light, travelling some distance, through some }\textcolor{${COL.yellow}}{\text{stuff}}\text{.}`;
@@ -4614,7 +4614,7 @@ async function presGoals() {
   await ptw('goalsA', 1, 0.8, { delay: 0.8 });
 }
 async function presGoal(i) {
-  if (i === 0) { ptw('fut', 1, 2); ptw('futW', 1, 1.1, { ease: linear, delay: 2 }); }
+  if (i === 0) { ptw('fut', 1, 2); ptw('futW', 1, 1.3, { ease: linear, delay: 2.1 }); }
   await ptwi(PS.goals, i, 1, 1.2, { ease: linear });
 }
 // Beat 16: the aside, the goals and me later go; the equation comes back, small at the top, and the caption writes
@@ -4800,8 +4800,17 @@ function drawSpectrum(ctx, st) {
   drawPointer(ctx, st.ptrX + sway, y + 16, ga * smooth(clamp(st.ptrA, 0, 1)), 0);
   ctx.restore();
 }
-// Beat 15e: a copy of me walks out to the right along a growing arrow and, once there, understands it. "Now" under
-// me, "Then" under the copy.
+// Beat 15e: a copy of me, "?" and all, walks out to the right along a growing arrow; once there its readout grows and
+// the "?" reshapes into "I understand it now", the way manim transforms one formula into another. "Now" under me,
+// "Then" under the copy.
+const RO_Q = { dx: 110, dy: -330, w: 150, h: 90 }, RO_U = { dx: 40, dy: -345, w: 360, h: 90 };
+let roPlan = null;
+function readoutPlan() {   // the "?" over the copy once it has arrived, into the sentence, in place
+  if (roPlan) return roPlan;
+  const q = place(tex(String.raw`\text{?}`), { x: FUT.x + RO_Q.dx, y: FUT.y + RO_Q.dy + 2, size: 40 });
+  const u = place(tex(String.raw`\text{I understand it now}`), { x: FUT.x + RO_U.dx, y: FUT.y + RO_U.dy + 2, size: 25 });
+  return (roPlan = { q, plan: reshapePlan(q, u) });
+}
 function drawFuture(ctx, st) {
   const ga = smooth(clamp(st.p15, 0, 1)) * smooth(clamp(st.fut * 4, 0, 1)); if (ga <= 0.003) return;
   const g = smooth(clamp(st.fut, 0, 1)), fx = lerp(MIDFIG, FUT.x, g), x0 = MIDFIG + 82, x1 = fx - 92, y = FUT.y - 125;
@@ -4810,7 +4819,10 @@ function drawFuture(ctx, st) {
     ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1 - 18, y); ctx.stroke(); arrowTip(ctx, x1, y, 1, 0, 26, 12); ctx.restore();
   }
   drawFigure(ctx, fx, FUT.y, 1, ga);
-  drawThought(ctx, fx + 40, FUT.y - 345, 360, 90, 'I understand it now', st.futW, ga * smooth(clamp((st.fut - 0.9) / 0.1, 0, 1)), figHead(fx, FUT.y, 1));
+  const w = clamp(st.futW, 0, 1), u = smooth(w), R = readoutPlan();
+  drawThought(ctx, fx + lerp(RO_Q.dx, RO_U.dx, u), FUT.y + lerp(RO_Q.dy, RO_U.dy, u), lerp(RO_Q.w, RO_U.w, u), lerp(RO_Q.h, RO_U.h, u), '', 1, ga, figHead(fx, FUT.y, 1));
+  if (w <= 0.001) { ctx.save(); ctx.translate(fx - FUT.x, 0); drawSprites(ctx, R.q, { alpha: ga }); ctx.restore(); }
+  else drawReshape(ctx, R.plan, w, ga);
   drawTex(ctx, String.raw`\text{Now}`, MIDFIG - 10, FUT.y + 30, 32, { color: COL.greyA, alpha: ga });
   drawTex(ctx, String.raw`\text{Then}`, FUT.x - 10, FUT.y + 30, 32, { color: COL.greyA, alpha: ga * smooth(clamp((st.fut - 0.8) / 0.2, 0, 1)) });
 }
