@@ -185,16 +185,10 @@ vec3 shadeBox(vec3 n, vec3 lp, vec3 h, float ew) {
   vec3 c = uBodyCol * (0.55 + 0.45 * max(dot(n, normalize(vec3(0.3, 0.8, 0.5))), 0.0));
   return mix(c, uEdgeCol, smoothstep(ew, ew * 0.4, mid));
 }
-float sat(float x) { return clamp(x, 0.0, 1.0); }
-void main() {
-  float fr = uFrame;
-  vec2 jit = uBlend < 1.0 ? vec2(fract(fr * 0.754877669), fract(fr * 0.569840291)) - 0.5 : vec2(0.0);
-  vec2 ndc = ((gl_FragCoord.xy - uOff + jit) / uRes) * 2.0 - 1.0;
-  vec3 ro = uCam, rd = normalize(uFwd + ndc.x * uTan.x * uRight + ndc.y * uTan.y * uUp);
-  float pix = 2.0 * uTan.y / uRes.y;   // radians per pixel
-
-  // ---- props: the laser, its nozzle, the sensor ----
-  float tP = 1e9; vec3 pc = vec3(0.0), n, lp;
+// The props: the laser, its bezel and nozzle, the sensor's plate, and the eye. The nearest hit along rd, its colour
+// in pc; 1e9 when the ray misses them all.
+float props(vec3 ro, vec3 rd, out vec3 pc) {
+  float tP = 1e9; pc = vec3(0.0); vec3 n, lp;
   if (uLaserOn > 0.0) {
     // the laser: a cylinder along the beam, a bezel ring, and a narrower nozzle the beam leaves from
     float ax, ed;
@@ -231,6 +225,32 @@ void main() {
         pc = mix(col * uEyeOn, pc, 0.0);
       }
     }
+  }
+
+  return tP;
+}
+float sat(float x) { return clamp(x, 0.0, 1.0); }
+void main() {
+  float fr = uFrame;
+  vec2 jit = uBlend < 1.0 ? vec2(fract(fr * 0.754877669), fract(fr * 0.569840291)) - 0.5 : vec2(0.0);
+  vec2 ndc = ((gl_FragCoord.xy - uOff + jit) / uRes) * 2.0 - 1.0;
+  vec3 ro = uCam, rd = normalize(uFwd + ndc.x * uTan.x * uRight + ndc.y * uTan.y * uUp);
+  float pix = 2.0 * uTan.y / uRes.y;   // radians per pixel
+
+  // ---- props: the laser, its nozzle, the sensor ----
+  // Their edges are hard, so four rays in a rotated grid inside the pixel decide how much of it they cover; the
+  // cloud, soft everywhere, is marched once, along the centre ray.
+  float tP = 1e9, cov = 0.0; vec3 pc = vec3(0.0);
+  if (uLaserOn > 0.0 || uEyeOn > 0.0) {
+    vec2 offs[4] = vec2[4](vec2(-0.375, -0.125), vec2(0.125, -0.375), vec2(0.375, 0.125), vec2(-0.125, 0.375));
+    vec3 acc = vec3(0.0); int hits = 0;
+    for (int i = 0; i < 4; i++) {
+      vec2 nd = ((gl_FragCoord.xy - uOff + jit + offs[i]) / uRes) * 2.0 - 1.0;
+      vec3 rdi = normalize(uFwd + nd.x * uTan.x * uRight + nd.y * uTan.y * uUp), c;
+      float t = props(ro, rdi, c);
+      if (t < 1e8) { acc += c; hits++; tP = min(tP, t); }
+    }
+    if (hits > 0) { pc = acc / float(hits); cov = float(hits) / 4.0; }
   }
 
   // ---- the march through the cloud ----
@@ -293,7 +313,7 @@ void main() {
     }
   }
 
-  vec3 back = tP < 1e8 ? pc : background(rd);
+  vec3 back = mix(background(rd), pc, cov);
   vec3 col = L + T * back;
   if (uDirect > 0.5) {
     vec3 k = vec3(0.6), x = max(col - k, 0.0);

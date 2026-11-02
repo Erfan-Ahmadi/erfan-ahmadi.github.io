@@ -2885,16 +2885,10 @@ vec3 shadeBox(vec3 n, vec3 lp, vec3 h, float ew) {
   vec3 c = uBodyCol * (0.55 + 0.45 * max(dot(n, normalize(vec3(0.3, 0.8, 0.5))), 0.0));
   return mix(c, uEdgeCol, smoothstep(ew, ew * 0.4, mid));
 }
-float sat(float x) { return clamp(x, 0.0, 1.0); }
-void main() {
-  float fr = uFrame;
-  vec2 jit = uBlend < 1.0 ? vec2(fract(fr * 0.754877669), fract(fr * 0.569840291)) - 0.5 : vec2(0.0);
-  vec2 ndc = ((gl_FragCoord.xy - uOff + jit) / uRes) * 2.0 - 1.0;
-  vec3 ro = uCam, rd = normalize(uFwd + ndc.x * uTan.x * uRight + ndc.y * uTan.y * uUp);
-  float pix = 2.0 * uTan.y / uRes.y;   // radians per pixel
-
-  // ---- props: the laser, its nozzle, the sensor ----
-  float tP = 1e9; vec3 pc = vec3(0.0), n, lp;
+// The props: the laser, its bezel and nozzle, the sensor's plate, and the eye. The nearest hit along rd, its colour
+// in pc; 1e9 when the ray misses them all.
+float props(vec3 ro, vec3 rd, out vec3 pc) {
+  float tP = 1e9; pc = vec3(0.0); vec3 n, lp;
   if (uLaserOn > 0.0) {
     // the laser: a cylinder along the beam, a bezel ring, and a narrower nozzle the beam leaves from
     float ax, ed;
@@ -2931,6 +2925,32 @@ void main() {
         pc = mix(col * uEyeOn, pc, 0.0);
       }
     }
+  }
+
+  return tP;
+}
+float sat(float x) { return clamp(x, 0.0, 1.0); }
+void main() {
+  float fr = uFrame;
+  vec2 jit = uBlend < 1.0 ? vec2(fract(fr * 0.754877669), fract(fr * 0.569840291)) - 0.5 : vec2(0.0);
+  vec2 ndc = ((gl_FragCoord.xy - uOff + jit) / uRes) * 2.0 - 1.0;
+  vec3 ro = uCam, rd = normalize(uFwd + ndc.x * uTan.x * uRight + ndc.y * uTan.y * uUp);
+  float pix = 2.0 * uTan.y / uRes.y;   // radians per pixel
+
+  // ---- props: the laser, its nozzle, the sensor ----
+  // Their edges are hard, so four rays in a rotated grid inside the pixel decide how much of it they cover; the
+  // cloud, soft everywhere, is marched once, along the centre ray.
+  float tP = 1e9, cov = 0.0; vec3 pc = vec3(0.0);
+  if (uLaserOn > 0.0 || uEyeOn > 0.0) {
+    vec2 offs[4] = vec2[4](vec2(-0.375, -0.125), vec2(0.125, -0.375), vec2(0.375, 0.125), vec2(-0.125, 0.375));
+    vec3 acc = vec3(0.0); int hits = 0;
+    for (int i = 0; i < 4; i++) {
+      vec2 nd = ((gl_FragCoord.xy - uOff + jit + offs[i]) / uRes) * 2.0 - 1.0;
+      vec3 rdi = normalize(uFwd + nd.x * uTan.x * uRight + nd.y * uTan.y * uUp), c;
+      float t = props(ro, rdi, c);
+      if (t < 1e8) { acc += c; hits++; tP = min(tP, t); }
+    }
+    if (hits > 0) { pc = acc / float(hits); cov = float(hits) / 4.0; }
   }
 
   // ---- the march through the cloud ----
@@ -2993,7 +3013,7 @@ void main() {
     }
   }
 
-  vec3 back = tP < 1e8 ? pc : background(rd);
+  vec3 back = mix(background(rd), pc, cov);
   vec3 col = L + T * back;
   if (uDirect > 0.5) {
     vec3 k = vec3(0.6), x = max(col - k, 0.0);
@@ -4550,7 +4570,6 @@ const BEATS = [
   { n: '15g', name: 'gradually', run: () => presGoal(2) },
   { n: '16', name: 'some stuff', run: presDefine },
   ...USES.map((u, i) => ({ n: String(17 + i), name: u.name, run: () => presUse(i) })),
-  { n: '20b', name: 'four things', run: presFxBack },
   ...PFX.map((p, i) => ({ n: i ? `21${'bcd'[i - 1]}` : '21', name: p[1], run: () => presFxName(i) })),
   { n: '21e', name: 'two take light away', run: () => presFxPair(true) },
   { n: '21f', name: 'two add it', run: () => presFxPair(false) },
@@ -4639,17 +4658,13 @@ async function presUse(i) {
   await ptwi(PS.uses, i, 1, 0.9);
   if (i === 3) await ptw('grow', 1, 1.8, { delay: 0.6 });
 }
-// Beat 20b, "whatever the stuff is, there are only four things it can do": the cards and the caption go, and the
-// four effects come back, playing, filling the stage.
-async function presFxBack() {
-  ptw('usesOut', 1, 0.8); ptw('capOut', 1, 0.6);
-  PS.fx.t0 = TIME + 0.7;   // one after another, each fading in as it did the first time
-  await Promise.all([0, 1, 2, 3].map((i) => ptwi(PS.fx.show, i, 1, 1.1, { delay: 0.7 + 0.45 * i })));
-}
-// 21–21d: one named at a time: its tile lights up. (Its term also takes its colour, for when the equation returns.)
+// 21–21d: one effect per press, as in the hook. The first press also clears the cards and the caption. Each tile fades
+// in, lit, as its effect is named, and keeps playing. (Its term also takes its colour, for when the equation returns.)
 async function presFxName(i) {
+  if (i === 0) { ptw('usesOut', 1, 0.8); ptw('capOut', 1, 0.6); PS.fx.t0 = TIME + 0.6; }
   for (let j = 0; j < 4; j++) ptwi(PS.fx.focus, j, j === i ? 1 : 0, 0.5);
-  await ptwi(PS.hi, PFX[i][0], 1, 0.6);
+  ptwi(PS.hi, PFX[i][0], 1, 0.6);
+  await ptwi(PS.fx.show, i, 1, 1.1, { delay: i === 0 ? 0.6 : 0 });
 }
 // 21e: the two that take light away; 21f: the two that add it.
 function presFxPair(away) {
@@ -4928,7 +4943,7 @@ function drawFx(ctx, st) {
     let r = i === 0 ? lerpRect(FXCELLS[0], FXBIG, big) : FXCELLS[i];
     if (f > 0.003) { const k = 1 + 0.035 * f, cx = r[0] + r[2] / 2, cy = r[1] + r[3] / 2; r = [cx - (r[2] * k) / 2, cy - (r[3] * k) / 2, r[2] * k, r[3] * k]; }
     const col = mixRgb(hexRgb(PFX[i][2]), hexRgb(COL.greyC), g), sc = r[2] / 700, ca = a * lerp(1, 0.5, g);
-    const u = reduced ? -1 : (((TIME - F.t0 - i * 0.45) % SI.loopT) + SI.loopT) % SI.loopT;
+    const u = reduced ? -1 : (((TIME - F.t0) % SI.loopT) + SI.loopT) % SI.loopT;
     ctx.save(); ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip();
     ctx.translate(r[0], r[1] + (r[3] - 330 * sc) / 2); ctx.scale(sc, sc);
     if (g > 0.003) ctx.filter = `grayscale(${g.toFixed(3)})`;
