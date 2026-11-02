@@ -21,9 +21,7 @@ The working script below has light edits; the original drafts, word for word, ar
 > But more likely, it was because the first thing I ran into was a formula that looked like this. And it made me feel… not smart.
 
 **8.–11.** [One press per effect: a brace grows from the left under its term and its cell fades into its place in a 2 × 2 grid under the equation, its name in its corner, the photon and the particle playing in it. Every cell shows the paths in a neutral grey with arrows, the beam's line through the particle toward an eye at the right, all on the centre line. Absorption and out-scattering in red, emission and in-scattering in green. Nothing already on screen changes.]
-> So this time I tried once more, and it made a little more sense. Each term is a different way light and the medium interact. [absorption] Some take light away. [out-scattering] [emission] Some add light. [in-scattering]
-
-→ *Some terms take light away, some add it. Don't worry about which is which yet, we'll come back to all four in a minute.*
+> So this time I tried once more, and it made a little more sense. Each term is a different way light and the medium interact. [absorption] Some take light away. [out-scattering] [emission] Some add light. [in-scattering] Don't worry about which is which yet, we'll come back to all four in a minute.
 
 **12.** [The braces and the grid fade. A box goes around the integral in the exponent, and everything outside it greys out. Under the equation: "why an integral in the exponent?" The question drops into a card that stays.]
 > But nobody explained to me why there is an integral inside an exponent…
@@ -32,24 +30,18 @@ The working script below has light edits; the original drafts, word for word, ar
 > …inside another integral.
 
 **14.** [The box moves to the $e$. A third card: "most importantly: why $e$?" The three cards sit in a row under the equation: the video's map.]
-> And most importantly: why $e$? Why exponentials at all?
-
-→ *And honestly, the answers turned out to be simpler, and more interesting, than I expected.*
+> And most importantly: why $e$? Why exponentials at all? And honestly, the answers turned out to be simpler, and more interesting, than I expected.
 
 ## Part 2: what this is, and what we keep
 
 **15.** [The equation and the three cards stay. The figure's thought cloud: "?" becomes "!".]
-> This video isn't a physics lecture, and it isn't a shader tutorial. It's the part in between. By the end, I want this equation to feel less like something handed to you, and more like something you could have derived yourself. Including the assumptions it quietly makes, and where they break.
-
-→ *So let's start with what it actually describes, in plain words.*
+> This video isn't a physics lecture, and it isn't a shader tutorial. It's the part in between. By the end, I want this equation to feel less like something handed to you, and more like something you could have derived yourself. Including the assumptions it quietly makes, and where they break. So let's start with what it actually describes, in plain words.
 
 **16.** [The equation shrinks to the top. Under it, the caption: "light, travelling some distance, through some stuff."]
 > It describes what happens to light as it travels some distance through some stuff.
 
 **17.–20.** [One press per field: a card with a picture placeholder. Astronomy, climate, medical imaging, then the cloud with the laser, which grows to take the space of the other three.]
-> In astronomy, the stuff is the dust between the stars, and the light is starlight on its way to a telescope. In climate science, the stuff is our own atmosphere. In medical imaging, the stuff is your body, and the light is an X-ray. And for me, the stuff is a cloud, and the light is a laser.
-
-→ *Four fields, one equation. We met it in the cloud with a laser, so that's where we'll stay.*
+> In astronomy, the stuff is the dust between the stars, and the light is starlight on its way to a telescope. In climate science, the stuff is our own atmosphere. In medical imaging, the stuff is your body, and the light is an X-ray. And for me, the stuff is a cloud, and the light is a laser. Four fields, one equation. We met it in the cloud with a laser, so that's where we'll stay.
 
 **21.** [The four tiles return under the equation, playing.]
 > Here's what those four were.
@@ -67,9 +59,7 @@ The working script below has light edits; the original drafts, word for word, ar
 > In-scattering: light from somewhere else bounces off a particle, right into our line of sight.
 
 **21e.** [Out-scattering, emission and in-scattering grey out and stop. Absorption keeps playing and grows.]
-> Two take light away. Two add it. And for the rest of this video I'm going to be slightly dishonest: our stuff doesn't scatter, and it doesn't emit. It only absorbs. The other three I'll come back for in the next videos.
-
-→ *So let's see what absorption alone does to our light.*
+> Two take light away. Two add it. And for the rest of this video I'm going to be slightly dishonest: our stuff doesn't scatter, and it doesn't emit. It only absorbs. The other three I'll come back for in the next videos. So let's see what absorption alone does to our light.
 
 ## Part 3: the quiz (the body starts here)
 
@@ -83,9 +73,7 @@ The working script below has light edits; the original drafts, word for word, ar
 > It's tempting to say zero. One cloud takes half the light, so two should take all of it.
 
 **25.** [Every "− 50%" becomes "× ½". The sensor settles on 25%. A third slab: 12.5%.]
-> But that's not what happens. It reads 25%. A third: 12.5%. Each cloud halves whatever reaches it.
-
-→ *Why half of what's left, and not the same amount again? That question is the whole video.*
+> But that's not what happens. It reads 25%. A third: 12.5%. Each cloud halves whatever reaches it. Why half of what's left, and not the same amount again? That question is the whole video.
 
 (Beats 15–25 are narration only so far; their visuals are not built yet.)
 
