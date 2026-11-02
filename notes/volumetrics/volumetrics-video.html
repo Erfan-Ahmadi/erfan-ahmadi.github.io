@@ -4490,7 +4490,7 @@ const QCRECT = [[380, 470, 480, 540], [890, 470, 480, 540], [1400, 470, 480, 540
 // bullet points (their wording is a placeholder). src is the part of the stage the aside shows.
 const SPEC = { L: [302, 330, 235, 188], R: [1383, 330, 235, 188], y: 560, src: [270, 270, 1380, 400], card: [380, 50, 1160, 400] };
 const GOALXY = [130, 560];   // the goals, under the aside on the left
-const GOALS = ['you could have derived it yourself', 'the beautiful math and physics behind it'];
+const GOALS = ['derive the formula yourself', 'the beautiful math and physics behind it', 'gradually, nothing on faith'];
 // me now and me later, side by side in the middle along the bottom while the goals are up
 // (feet at 960 keeps them and their labels clear of the bottom of a YouTube frame)
 const MIDFIG = 800, FUT = { x: 1460, y: 925 };
@@ -4508,8 +4508,8 @@ const PS_DEFAULTS = () => ({
   orbit: 1, mag: 0, aside: 0, fig: 0, think: '', writeP: 1, eq: 0, eqP: 0, corner: 0, braces: [], hi: {}, dim: 0,
   cells: [0, 0, 0, 0], cellT: [0, 0, 0, 0], grid: 1,
   qc: QCARDS.map(() => ({ box: 0, m: 0, title: 0, todo: 0 })), qcA: 1,
-  eqA: 1, eqTop: 0, spec: [0, 0], chalk: 0, code: 0, specT: 0, ptrX: 0, ptrA: 0, lineP: 0, wig: 0, wigT: 0, side: 0, morph: 0, eqAside: 0,
-  goalsA: 0, figMid: 0, fut: 0, futW: 0, goals: [0, 0], p15: 1, cap: 0,
+  eqA: 1, eqTop: 0, spec: [0, 0], chalk: 0, code: 0, specT: 0, ptrX: 0, ptrA: 0, lineP: 0, wig: 0, wigT: 0, side: 0,
+  goalsA: 0, figMid: 0, fut: 0, futW: 0, goals: [0, 0, 0], p15: 1, cap: 0,
   uses: [0, 0, 0, 0], grow: 0, usesOut: 0, capOut: 0,
   fx: { show: 0, t0: 0, focus: [0, 0, 0, 0], grey: [0, 0, 0, 0], big: 0 },
 });
@@ -4521,9 +4521,9 @@ Object.assign(TERM_COL, { 't-pabs': hexRgb(COL.red), 't-pout': hexRgb(COL.red), 
 for (const q of QCARDS) TERM_COL[q.term] = mixRgb(WHITE_RGB, hexRgb(q.col), 0.5);
 const PEQ = { x: 960, y: 300, size: 76, fit: 1760 };
 // Where the equation sits: big under the hook, small at the top from beat 16 on (it is away during beat 15).
-// From beat 15d it sits in the aside, then moves up from there in beat 16.
-const EQPOSE = { home: [960, 300, 1], aside: [960, 250, 0.6], top: [960, 118, 0.6] };
-const eqXf = (st) => { const a = clamp(st.eqAside, 0, 1), b = smooth(clamp(st.eqTop, 0, 1)); return [0, 1, 2].map((j) => lerp(lerp(EQPOSE.home[j], EQPOSE.aside[j], a), EQPOSE.top[j], b)); };
+// It is away during beat 15 and comes back small at the top in beat 16.
+const EQPOSE = { home: [960, 300, 1], top: [960, 118, 0.6] };
+const eqXf = (st) => { const b = smooth(clamp(st.eqTop, 0, 1)); return [0, 1, 2].map((j) => lerp(EQPOSE.home[j], EQPOSE.top[j], b)); };
 let peqSprites = null;
 const peq = () => peqSprites || (peqSprites = place(tex(PRTE), { ...PEQ, size: Math.min(PEQ.size, PEQ.fit / Math.max(tex(PRTE).w, 0.01)) }));
 const ptw = (key, to, dur, o = {}) => tween(PS, key, to, dur, { tag: 'pres', ...o });
@@ -4545,9 +4545,9 @@ const BEATS = [
   { n: '15b', name: 'not a shader tutorial', run: presSpecShader },
   { n: '15c', name: 'the part in between', run: presSpecMiddle },
   { n: '15d', name: 'by the end', run: presAside },
-  { n: '15e', name: 'this equation', run: presMorph },
-  { n: '15f', name: 'derived yourself', run: () => presGoal(0) },
-  { n: '15g', name: 'along the way', run: () => presGoal(1) },
+  { n: '15e', name: 'derived yourself', run: () => presGoal(0) },
+  { n: '15f', name: 'along the way', run: () => presGoal(1) },
+  { n: '15g', name: 'gradually', run: () => presGoal(2) },
   { n: '16', name: 'some stuff', run: presDefine },
   ...USES.map((u, i) => ({ n: String(17 + i), name: u.name, run: () => presUse(i) })),
   { n: '20b', name: 'four things', run: presFxBack },
@@ -4616,28 +4616,23 @@ async function presSpecMiddle() {
   await ptw('ptrX', 960, 1.3);
   PS.wigT = TIME; await ptw('wig', 1, 0.6);
 }
-// Beat 15d: all of it moves into an aside at the top, the arrow still swaying; under it "Goals:" comes in on the left,
-// and I walk over to the right. 15e: the spectrum reshapes into the equation, there in the aside. 15f: the first goal,
-// while a copy of me walks out along a growing arrow, its "?" turning into "I understand it now" on the way. 15g:
-// the second goal.
+// Beat 15d: all of it moves into an aside at the top, the arrow still swaying there for the rest of the section (the
+// equation stays away: this part is about the goals, not the formula); under it "Goals:" comes in on the left, and I
+// walk over to the right. 15e: the first goal, while a copy of me walks out along a growing arrow, its "?" turning
+// into "I understand it now" on the way. 15f, 15g: the other goals.
 async function presAside() {
   ptw('side', 1, 1.5); ptw('figMid', 1, 1.4);
   await ptw('goalsA', 1, 0.8, { delay: 0.9 });
-}
-async function presMorph() {
-  PS.eqAside = 1; PS.eqA = 1;   // the equation itself shows once the morph has landed
-  await ptw('morph', 1, 2.4, { ease: linear });
 }
 async function presGoal(i) {
   if (i === 0) { ptw('fut', 1, 2.2); ptw('futW', 1, 1.7, { ease: linear, delay: 0.35 }); }
   await ptwi(PS.goals, i, 1, 1.2, { ease: linear });
 }
-// Beat 16: the aside, the goals and me later go; the equation comes back, small at the top, and the caption writes
-// under it.
+// Beat 16: the aside, the goals and me later go, and the caption writes in, large at the top. No formula from here on:
+// this part is about the physics, and the formula comes back only once it has been earned.
 async function presDefine() {
   ptw('p15', 0, 0.6); ptw('figMid', 0, 1.2);
-  await ptw('eqTop', 1, 1.3);
-  await ptw('cap', 1, 1.5, { ease: linear });
+  await ptw('cap', 1, 1.5, { ease: linear, delay: 0.5 });
 }
 // Beats 17–20: a field's card fades into its place; the cloud's then grows over the other three.
 async function presUse(i) {
@@ -4645,13 +4640,13 @@ async function presUse(i) {
   if (i === 3) await ptw('grow', 1, 1.8, { delay: 0.6 });
 }
 // Beat 20b, "whatever the stuff is, there are only four things it can do": the cards and the caption go, and the
-// four effects come back under the equation, playing.
+// four effects come back, playing, filling the stage.
 async function presFxBack() {
   ptw('usesOut', 1, 0.8); ptw('capOut', 1, 0.6);
   PS.fx.t0 = TIME + 0.5;
   await ptwi(PS.fx, 'show', 1, 1, { delay: 0.5 });
 }
-// 21–21d: one named at a time: its tile lights up and its term in the equation takes its colour, for good.
+// 21–21d: one named at a time: its tile lights up. (Its term also takes its colour, for when the equation returns.)
 async function presFxName(i) {
   for (let j = 0; j < 4; j++) ptwi(PS.fx.focus, j, j === i ? 1 : 0, 0.5);
   await ptwi(PS.hi, PFX[i][0], 1, 0.6);
@@ -4660,7 +4655,7 @@ async function presFxName(i) {
 function presFxPair(away) {
   return Promise.all([0, 1, 2, 3].map((j) => ptwi(PS.fx.focus, j, (j < 2) === away ? 1 : 0, 0.5)));
 }
-// 21g: our stuff doesn't scatter: out- and in-scattering grey out and stop, tiles and terms; 21h: nor does it emit.
+// 21g: our stuff doesn't scatter: out- and in-scattering grey out and stop; 21h: nor does it emit.
 function presFxGrey(list) {
   for (let j = 0; j < 4; j++) ptwi(PS.fx.focus, j, 0, 0.4);
   return Promise.all(list.map((j) => ptwi(PS.fx.grey, j, 1, 0.9)));
@@ -4818,7 +4813,7 @@ function drawAsideCard(ctx, st) {
   }
 }
 function drawSpectrum(ctx, st) {
-  const ga = smooth(clamp(st.p15, 0, 1)) * (1 - smooth(clamp(st.morph / 0.18, 0, 1))); if (ga <= 0.003) return;
+  const ga = smooth(clamp(st.p15, 0, 1)); if (ga <= 0.003) return;
   const [l, r] = st.spec.map((v) => smooth(clamp(v, 0, 1))), side = smooth(clamp(st.side, 0, 1));
   const [ox, oy, s] = specXf(st), y = SPEC.y, L = SPEC.L, R = SPEC.R, xa = L[0] + L[2] / 2, xb = R[0] + R[2] / 2;
   ctx.save(); ctx.translate(ox, oy); ctx.scale(s, s);
@@ -4887,10 +4882,10 @@ function wrapText(text, maxW, size) {   // lines of \text no wider than maxW; tw
 }
 function drawGoals(ctx, st) {
   const ga = smooth(clamp(st.p15, 0, 1)) * smooth(clamp(st.goalsA, 0, 1)); if (ga <= 0.003) return;
-  const [x, y0] = GOALXY, size = 42, lh = 56, gap = 40;
+  const [x, y0] = GOALXY, size = 38, lh = 50, gap = 28;
   drawTex(ctx, String.raw`\text{Goals:}`, x, y0, 48, { ax: 0, color: COL.greyA, alpha: ga });
-  const blocks = GOALS.map((g) => wrapText(g, 700, size));
-  let y = y0 + 100;
+  const blocks = GOALS.map((g) => wrapText(g, 640, size));
+  let y = y0 + 92;
   blocks.forEach((lines, i) => {
     const p = st.goals[i];
     if (p > 0.003) {
@@ -4919,35 +4914,10 @@ function drawUses(ctx, dt, st) {
     drawTex(ctx, String.raw`\text{${u.label}}`, r[0] + 22, r[1] + 18, 30, { ax: 0, ay: 0, color: COL.greyA, alpha: a });
   }
 }
-// Beat 15e: the spectrum reshapes into the equation, in the aside, the way manim transforms one picture into another:
-// its pieces (the names, the two pictures as shapes, the line, its ends and the arrow) split and flow into the
-// equation's glyphs, those on the physics side into its left, those on the shader side into its right.
-let specMorph = null;
-function specMorphPlan() {
-  if (specMorph) return specMorph;
-  const [ox, oy, s] = specXf({ side: 1 }), X = (x) => ox + x * s, Y = (y) => oy + y * s, L = SPEC.L, R = SPEC.R, y = SPEC.y;
-  const xa = L[0] + L[2] / 2, xb = R[0] + R[2] / 2;
-  const piece = (pts, color) => ({ a: { k: 'p', terms: [] }, contours: [pts], color: hexRgb(color), alpha: 1 });
-  const rect = (x, yy, w, h, color) => piece([[X(x), Y(yy)], [X(x), Y(yy + h)], [X(x + w), Y(yy + h)], [X(x + w), Y(yy)]], color);
-  const disc = (cx, cy, r, color) => piece(Array.from({ length: 40 }, (_, i) => [X(cx) + r * s * Math.cos((i / 40) * 2 * Math.PI), Y(cy) - r * s * Math.sin((i / 40) * 2 * Math.PI)]), color);
-  const label = (src, x, yy, color) => place(tex(src), { x: X(x), y: Y(yy), size: 28 * s }).map((sp) => ({ ...sp, color: hexRgb(color) }));
-  const A = [
-    ...label(String.raw`\text{physics lecture}`, xa, L[1] - 28, COL.gold), rect(L[0], L[1], L[2], L[3], '#5A4632'),
-    ...label(String.raw`\text{shader tutorial}`, xb, R[1] - 28, COL.blue), rect(R[0], R[1], R[2], R[3] * 0.52, COL.greyD), rect(R[0], R[1] + R[3] * 0.56, R[2], R[3] * 0.44, COL.greyD),
-    rect(xa, y - 2, xb - xa, 4, COL.greyB), disc(xa, y, 7, COL.gold), disc(xb, y, 7, COL.blue),
-    piece([[X(960), Y(y + 16)], [X(945), Y(y + 44)], [X(975), Y(y + 44)]], COL.yellow), rect(957, y + 40, 6, 42, COL.yellow),
-  ];
-  const B = place(tex(PRTE), { x: EQPOSE.aside[0], y: EQPOSE.aside[1], size: peq()[0].size * EQPOSE.aside[2] });
-  return (specMorph = reshapePlan(A, B));
-}
-function drawSpecMorph(ctx, st) {
-  const m = clamp(st.morph, 0, 1); if (m <= 0 || m >= 1) return;
-  drawReshape(ctx, specMorphPlan(), clamp((m - 0.18) / 0.82, 0, 1), smooth(clamp(m / 0.18, 0, 1)) * smooth(clamp(st.p15, 0, 1)));
-}
-// Beats 20b–21i: the four effects again, under the equation. Each is named in turn (its tile lit, its term in its
-// colour); the two that take light away, then the two that add it; then the scatterings grey out and stop, then
-// emission, and absorption, still playing, grows over the rest.
-const FXCELLS = [[370, 250, 590, 278], [990, 250, 590, 278], [370, 560, 590, 278], [990, 560, 590, 278]], FXBIG = [370, 250, 1210, 588];
+// Beats 20b–21i: the four effects again, filling the stage (clear of the figure in the corner). Each is named in turn
+// (its tile lit); the two that take light away, then the two that add it; then the scatterings grey out and stop,
+// then emission, and absorption, still playing, grows over the rest.
+const FXCELLS = [[400, 120, 690, 340], [1190, 120, 690, 340], [400, 540, 690, 340], [1190, 540, 690, 340]], FXBIG = [400, 120, 1480, 760];
 const hexOf = (c) => '#' + c.map((v) => Math.round(clamp(v, 0, 255)).toString(16).padStart(2, '0')).join('');
 function drawFx(ctx, st) {
   const F = st.fx, show = smooth(clamp(F.show, 0, 1)); if (show <= 0.003) return;
@@ -5003,7 +4973,7 @@ function drawPresent(ctx, dt) {
   if (st.eq) {
     const [ex, ey, ek] = eqXf(st);
     ctx.save(); ctx.translate(ex, ey); ctx.scale(ek, ek); ctx.translate(-PEQ.x, -PEQ.y);
-    drawSprites(ctx, peq(), { p: st.eqP, alpha: st.eqA * (st.eqAside && st.morph < 1 ? 0 : 1), hi: st.hi, dim: st.dim });
+    drawSprites(ctx, peq(), { p: st.eqP, alpha: st.eqA, hi: st.hi, dim: st.dim });
     for (const b of st.braces) {
       const ba = b.a * st.eqA; if (ba <= 0.003) continue;
       drawBrace(ctx, b.x0 + ((b.x1 - b.x0) * b.g) / 2, b.top, (b.x1 - b.x0) * b.g, b.h, b.th, b.color, Math.min(1, b.g * 4) * ba);
@@ -5023,9 +4993,8 @@ function drawPresent(ctx, dt) {
     drawQCards(ctx, st);
   }
   drawSpectrum(ctx, st);
-  drawSpecMorph(ctx, st);
   drawGoals(ctx, st);
-  if (st.cap > 0.003) drawTex(ctx, PCAP, 960, 250, 46, { p: st.cap, alpha: 1 - smooth(clamp(st.capOut, 0, 1)) });
+  if (st.cap > 0.003) drawTex(ctx, PCAP, 960, 190, 52, { p: st.cap, alpha: 1 - smooth(clamp(st.capOut, 0, 1)) });
   drawUses(ctx, dt, st);
   drawFx(ctx, st);
   // a small counter after each press, and a pause mark while paused

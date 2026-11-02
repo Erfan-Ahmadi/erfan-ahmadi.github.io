@@ -16,6 +16,14 @@ This time I started yet again, it made a little bit of sense this time, like how
 but nobody explained to me, Why does e and exponentials show up? Why is there an integral inside an exponent, inside another integral? (each one navigatble and highlighted with rect and outside greyed out)
 ```
 
+## The goals (added later, word for word)
+
+```text
+By the end of this series I want the physics and math to feel so natural that you can derive the formula yourself and see behind these intimidating looking formulas
+We'll build it up gradually and I'll never ask you to just take a formula on pure faith as law of nature
+Different stuff, same story.
+```
+
 ## Notes from the flow discussions
 
 ```text
