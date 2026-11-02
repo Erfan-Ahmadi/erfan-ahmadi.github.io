@@ -85,7 +85,6 @@ const BEATS = [
   { n: '15g', name: 'gradually', run: () => presGoal(2) },
   { n: '16', name: 'some stuff', run: presDefine },
   ...USES.map((u, i) => ({ n: String(17 + i), name: u.name, run: () => presUse(i) })),
-  { n: '20b', name: 'four things', run: presFxBack },
   ...PFX.map((p, i) => ({ n: i ? `21${'bcd'[i - 1]}` : '21', name: p[1], run: () => presFxName(i) })),
   { n: '21e', name: 'two take light away', run: () => presFxPair(true) },
   { n: '21f', name: 'two add it', run: () => presFxPair(false) },
@@ -174,17 +173,13 @@ async function presUse(i) {
   await ptwi(PS.uses, i, 1, 0.9);
   if (i === 3) await ptw('grow', 1, 1.8, { delay: 0.6 });
 }
-// Beat 20b, "whatever the stuff is, there are only four things it can do": the cards and the caption go, and the
-// four effects come back, playing, filling the stage.
-async function presFxBack() {
-  ptw('usesOut', 1, 0.8); ptw('capOut', 1, 0.6);
-  PS.fx.t0 = TIME + 0.7;   // one after another, each fading in as it did the first time
-  await Promise.all([0, 1, 2, 3].map((i) => ptwi(PS.fx.show, i, 1, 1.1, { delay: 0.7 + 0.45 * i })));
-}
-// 21–21d: one named at a time: its tile lights up. (Its term also takes its colour, for when the equation returns.)
+// 21–21d: one effect per press, as in the hook. The first press also clears the cards and the caption. Each tile fades
+// in, lit, as its effect is named, and keeps playing. (Its term also takes its colour, for when the equation returns.)
 async function presFxName(i) {
+  if (i === 0) { ptw('usesOut', 1, 0.8); ptw('capOut', 1, 0.6); PS.fx.t0 = TIME + 0.6; }
   for (let j = 0; j < 4; j++) ptwi(PS.fx.focus, j, j === i ? 1 : 0, 0.5);
-  await ptwi(PS.hi, PFX[i][0], 1, 0.6);
+  ptwi(PS.hi, PFX[i][0], 1, 0.6);
+  await ptwi(PS.fx.show, i, 1, 1.1, { delay: i === 0 ? 0.6 : 0 });
 }
 // 21e: the two that take light away; 21f: the two that add it.
 function presFxPair(away) {
@@ -463,7 +458,7 @@ function drawFx(ctx, st) {
     let r = i === 0 ? lerpRect(FXCELLS[0], FXBIG, big) : FXCELLS[i];
     if (f > 0.003) { const k = 1 + 0.035 * f, cx = r[0] + r[2] / 2, cy = r[1] + r[3] / 2; r = [cx - (r[2] * k) / 2, cy - (r[3] * k) / 2, r[2] * k, r[3] * k]; }
     const col = mixRgb(hexRgb(PFX[i][2]), hexRgb(COL.greyC), g), sc = r[2] / 700, ca = a * lerp(1, 0.5, g);
-    const u = reduced ? -1 : (((TIME - F.t0 - i * 0.45) % SI.loopT) + SI.loopT) % SI.loopT;
+    const u = reduced ? -1 : (((TIME - F.t0) % SI.loopT) + SI.loopT) % SI.loopT;
     ctx.save(); ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip();
     ctx.translate(r[0], r[1] + (r[3] - 330 * sc) / 2); ctx.scale(sc, sc);
     if (g > 0.003) ctx.filter = `grayscale(${g.toFixed(3)})`;

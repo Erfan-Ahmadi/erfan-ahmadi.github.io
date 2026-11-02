@@ -37,19 +37,19 @@ The working script below has light edits; the original drafts, word for word, ar
 **16.** [The aside, the goals and the future self go. No formula: the caption alone writes in, large at the top: "light, travelling some distance, through some stuff."]
 > In plain words, all of this is about one thing: what happens to light as it travels some distance through some stuff.
 
-**17.–20.** [One press per field, each a playing card in a 2 × 2 grid: astronomy (starlight through dust on its way to a telescope), climate science (sunlight through the atmosphere, the bluer light scattering away), medical imaging (X-rays through the stick figure onto a detector), then computer graphics: the cloud with the laser, which grows to take the space of the other three. One more press, 20b, at "Because whatever the stuff is…": the cards and the caption go, and the four effects fade back in one after another, as they first did, playing and filling the stage: no formula above them.]
+**17.–20.** [One press per field, each a playing card in a 2 × 2 grid: astronomy (starlight through dust on its way to a telescope), climate science (sunlight through the atmosphere, the bluer light scattering away), medical imaging (X-rays through the stick figure onto a detector), then computer graphics: the cloud with the laser, which grows to take the space of the other three.]
 > And "stuff" really can be anything. In astronomy, it's the dust between the stars, and the light is starlight on its way to a telescope. In climate science, it's our own atmosphere. In medical imaging, it's your body, and the light is an X-ray. And for us, here, it's a cloud, and the light is a laser. Different stuff, same story. Because whatever the stuff is, there are only four things it can do to light passing through. We saw them a minute ago.
 
-**21.** [Absorption is named: its tile lights up in its colour. Nothing else changes; every tile keeps playing.]
+**21.** [The cards and the caption go. As in the hook, one effect per press: absorption's tile fades in, lit in its colour, playing. The four tiles fill the stage; no formula above them.]
 > Absorption: the photon hits a particle and is swallowed. Its energy doesn't vanish, it becomes a little heat.
 
-**21b.** [Out-scattering is named the same way; the light moves to it.]
+**21b.** [Out-scattering's tile fades in, lit; absorption's keeps playing.]
 > Out-scattering: it bounces off and leaves in some other direction, so it never reaches the eye.
 
-**21c.** [Emission.]
+**21c.** [Emission's tile fades in.]
 > Emission: the particle gives off light of its own, and some of it heads our way.
 
-**21d.** [In-scattering.]
+**21d.** [In-scattering's tile fades in.]
 > In-scattering: light from somewhere else bounces off a particle, right into our line of sight.
 
 **21e.–21i.** [Five presses. At "Two take light away.", the two red tiles light up together; at "Two add it.", the two green ones. At "our stuff doesn't scatter,", out-scattering and in-scattering grey out and stop; at "and it doesn't emit.", emission does the same. At "It only absorbs.", absorption, still playing, grows over the other three.]
