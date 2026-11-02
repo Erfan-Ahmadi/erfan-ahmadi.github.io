@@ -4478,18 +4478,20 @@ const PFX = [['t-pabs', 'absorption', COL.red], ['t-pout', 'out-scattering', COL
 // The three questions. Each one's highlight leaves the equation and becomes its own card, which keeps a place for the
 // animation that answers it later in the video. They are TODO for now: give a card draw(ctx, rect, alpha) to fill it.
 const QCARDS = [
-  { term: 't-qexp', name: 'why an integral in the exponent?', title: [String.raw`\text{why an integral}`, String.raw`\text{in the exponent?}`], todo: ['variable density'] },
-  { term: 't-qouter', name: 'inside another integral?', title: [String.raw`\text{inside another integral?}`], todo: ['optical depth:', 'an integral inside an integral'] },
-  { term: 't-qe', name: 'most importantly: why e?', title: [String.raw`\text{most importantly:}`, String.raw`\text{why }e\text{?}`], todo: ['the rays: the discrete version', 'on top of the continuous one'] },
+  { term: 't-qexp', col: COL.yellow, name: 'why an integral in the exponent?', title: [String.raw`\text{why an integral}`, String.raw`\text{in the exponent?}`], todo: ['variable density'] },
+  { term: 't-qouter', col: COL.blue, name: 'inside another integral?', title: [String.raw`\text{inside another integral?}`], todo: ['optical depth:', 'an integral inside an integral'] },
+  { term: 't-qe', col: COL.gold, name: 'most importantly: why e?', title: [String.raw`\text{most importantly:}`, String.raw`\text{why }e\text{?}`], todo: ['the rays: the discrete version', 'on top of the continuous one'] },
 ];
-const QCRECT = [[380, 470, 480, 540], [890, 470, 480, 540], [1400, 470, 480, 540]];
+// in the order their parts sit in the equation (the outer integral, e, the exponent), so the dotted links don't cross
+const QCRECT = [[1400, 470, 480, 540], [380, 470, 480, 540], [890, 470, 480, 540]];
 // Beat 15: the spectrum from a physics lecture to a shader tutorial, and the arrow that walks along it. For the goals
 // it shrinks into an aside (card); outside it, me now and me later along the bottom, and the goals on the right as
 // bullet points (their wording is a placeholder). src is the part of the stage the aside shows.
 const SPEC = { L: [302, 330, 235, 188], R: [1383, 330, 235, 188], y: 560, src: [270, 270, 1380, 400], card: [60, 60, 1080, 400] };
 const GCARD = [1190, 60, 670, 400];
-const GOALS = ['you could have derived it yourself', 'the beautiful physics behind it'];
-const FUT = { x: 1060, y: 1030 };
+const GOALS = ['you could have derived it yourself', 'the beautiful math and physics behind it'];
+// me now and me later, side by side in the middle along the bottom while the goals are up
+const MIDFIG = 660, FUT = { x: 1260, y: 1030 };
 // Beat 16's caption, and beats 17–20: the fields that use the same equation, each a card with its picture in a 2 × 2
 // grid; the last, the cloud, grows over the other three.
 const PCAP = String.raw`\text{light, travelling some distance, through some }\textcolor{${COL.yellow}}{\text{stuff}}\text{.}`;
@@ -4503,15 +4505,17 @@ const UCARDS = [[370, 330, 590, 335], [990, 330, 590, 335], [370, 695, 590, 335]
 const PS_DEFAULTS = () => ({
   orbit: 1, mag: 0, aside: 0, fig: 0, think: '', writeP: 1, eq: 0, eqP: 0, corner: 0, braces: [], hi: {}, dim: 0,
   cells: [0, 0, 0, 0], cellT: [0, 0, 0, 0], grid: 1,
-  qc: QCARDS.map(() => ({ box: 0, m: 0, title: 0, todo: 0 })), qcA: 1,
+  qc: QCARDS.map(() => ({ box: 0, link: 0, card: 0, title: 0, todo: 0 })), qcA: 1,
   eqA: 1, eqTop: 0, spec: [0, 0], chalk: 0, code: 0, specT: 0, ptrX: 0, ptrA: 0, lineP: 0, wig: 0, wigT: 0, side: 0,
-  goalsA: 0, fut: 0, futW: 0, goals: [0, 0], p15: 1, cap: 0,
+  goalsA: 0, figMid: 0, fut: 0, futW: 0, goals: [0, 0], p15: 1, cap: 0,
   uses: [0, 0, 0, 0], grow: 0,
 });
 const PS = PS_DEFAULTS();
 // The equation, with its terms named: the four effects for the braces, and the parts the questions point at.
 const PRTE = String.raw`L(p,\omega) = \htmlClass{t-qouter}{\int_0^{d}} \htmlClass{t-qe}{e}^{\htmlClass{t-qexp}{\htmlClass{t-pabs}{-\int_0^{t}\sigma_a(p_s)\,ds}\htmlClass{t-pout}{-\int_0^{t}\sigma_s(p_s)\,ds}}}\left[\htmlClass{t-pem}{\sigma_a(p_t)\,L_e(p_t,\omega)} + \htmlClass{t-pin}{\sigma_s(p_t)\int_{4\pi} f_p(\omega,\omega')\,L(p_t,\omega')\,d\omega'}\right]dt`;
 Object.assign(TERM_COL, { 't-pabs': hexRgb(COL.red), 't-pout': hexRgb(COL.red), 't-pem': hexRgb(COL.green), 't-pin': hexRgb(COL.green), 't-qe': WHITE_RGB, 't-qexp': WHITE_RGB, 't-qouter': WHITE_RGB });
+// the questions' parts keep a light tint of their card's colour
+for (const q of QCARDS) TERM_COL[q.term] = mixRgb(WHITE_RGB, hexRgb(q.col), 0.5);
 const PEQ = { x: 960, y: 300, size: 76, fit: 1760 };
 // Where the equation sits: big under the hook, small at the top from beat 16 on (it is away during beat 15).
 const EQPOSE = { home: [960, 300, 1], top: [960, 118, 0.6] };
@@ -4536,8 +4540,9 @@ const BEATS = [
   { n: '15', name: 'not a physics lecture', run: presSpecPhysics },
   { n: '15b', name: 'not a shader tutorial', run: presSpecShader },
   { n: '15c', name: 'the part in between', run: presSpecMiddle },
-  { n: '15d', name: 'by the end', run: () => presGoal(0) },
-  { n: '15e', name: 'along the way', run: () => presGoal(1) },
+  { n: '15d', name: 'goals', run: presGoals },
+  { n: '15e', name: 'by the end', run: () => presGoal(0) },
+  { n: '15f', name: 'along the way', run: () => presGoal(1) },
   { n: '16', name: 'some stuff', run: presDefine },
   ...USES.map((u, i) => ({ n: String(17 + i), name: u.name, run: () => presUse(i) })),
 ];
@@ -4565,17 +4570,17 @@ function presBrace(term, label, color) {
 // then the box, with a copy of the part, moves down into the question's card, where the question is written.
 async function presQuestion(i) {
   const term = QCARDS[i].term, c = PS.qc[i];
-  for (const k of Object.keys(PS.hi)) if (k !== term) ptwi(PS.hi, k, 0, 0.5);
+  for (const k of Object.keys(PS.hi)) if (k.startsWith('t-p')) ptwi(PS.hi, k, 0, 0.5);   // the effects' colours go; earlier questions keep theirs
   for (const b of PS.braces) ptwi(b, 'a', 0, 0.5);
   ptw('grid', 0, 0.5);
   ptwi(PS.hi, term, 1, 0.6); ptw('dim', 1, 0.7);
   await ptwi(c, 'box', 1, 0.6);
-  await ptwi(c, 'm', 1, 1.3, { delay: 0.3 });
-  ptwi(c, 'todo', 1, 0.7, { delay: 0.3 });
+  await ptwi(c, 'link', 1, 0.8, { delay: 0.2 });
+  ptwi(c, 'card', 1, 0.6); ptwi(c, 'todo', 1, 0.7, { delay: 0.3 });
   await ptwi(c, 'title', 1, 0.9, { ease: linear });
 }
 // Beat 15: the cards and the equation go; the physics lecture comes in, the arrow under it. 15b: the arrow walks to
-// the other end, drawing the line behind it, and the shader comes in. 15c: it walks back to the middle and wiggles
+// the other end, drawing the line behind it, and the shader comes in. 15c: it walks back to the middle and sways back and forth
 // there from then on, in the aside too.
 async function presSpecPhysics() {
   ptw('qcA', 0, 0.6); ptw('dim', 0, 0.6); ptw('eqA', 0, 0.6);
@@ -4594,16 +4599,21 @@ async function presSpecMiddle() {
   await ptw('ptrX', 960, 1.3);
   PS.wigT = TIME; await ptw('wig', 1, 0.6);
 }
-// Beat 15d: all of it goes aside, top left; outside it the goals come in on the right, the first one written, and an
-// arrow grows from me now to me later, who understands it. 15e: the second goal.
+// Beat 15d: all of it goes aside, top left; outside it the goals' card comes in on the right, empty but for its
+// heading, and I walk from the corner to the middle of the bottom. 15e: the first goal, and an arrow grows from me
+// now to me later, who understands it. 15f: the second goal.
+async function presGoals() {
+  ptw('side', 1, 1.4); ptw('figMid', 1, 1.4);
+  await ptw('goalsA', 1, 0.8, { delay: 0.8 });
+}
 async function presGoal(i) {
-  if (i === 0) { ptw('side', 1, 1.4); ptw('goalsA', 1, 0.8, { delay: 0.8 }); ptw('fut', 1, 1.6, { delay: 0.6 }); ptw('futW', 1, 1.1, { ease: linear, delay: 1.9 }); }
-  await ptwi(PS.goals, i, 1, 1.2, { ease: linear, delay: i === 0 ? 1.4 : 0 });
+  if (i === 0) { ptw('fut', 1, 2); ptw('futW', 1, 1.1, { ease: linear, delay: 2 }); }
+  await ptwi(PS.goals, i, 1, 1.2, { ease: linear });
 }
 // Beat 16: the aside, the goals and me later go; the equation comes back, small at the top, and the caption writes
 // under it.
 async function presDefine() {
-  ptw('p15', 0, 0.6);
+  ptw('p15', 0, 0.6); ptw('figMid', 0, 1.2);
   PS.eqTop = 1;
   await ptw('eqA', 1, 0.9, { delay: 0.4 });
   await ptw('cap', 1, 1.5, { ease: linear });
@@ -4655,6 +4665,7 @@ function presKey(e) {
 // with round white strokes. (x, y) is where its feet stand; s scales it (1 is 230 px tall).
 const FIGURE = [[[86,241],[84,238],[82,236],[81,234],[80,232],[79,230],[76,225],[74,223],[73,220],[71,218],[70,216],[68,214],[67,211],[66,208],[65,206],[64,203],[62,200],[61,197],[61,194],[60,191],[59,188],[58,185],[58,182],[57,178],[56,175],[56,172],[55,169],[54,165],[54,163],[53,158],[53,155],[53,152],[52,149],[52,146],[52,142],[52,138],[52,134],[52,130],[52,126],[52,122],[53,118],[53,114],[53,111],[54,109],[55,106],[56,103],[56,100],[58,97],[59,95],[60,93],[61,90],[62,88],[63,86],[66,82],[67,80],[69,77],[70,76],[72,73],[74,71],[76,69],[80,66],[82,65],[84,63],[87,61],[90,59],[92,57],[94,56],[96,55],[99,54],[102,53],[104,52],[107,51],[110,50],[113,50],[116,49],[119,48],[123,47],[126,46],[130,45],[132,45],[135,44],[139,43],[142,43],[145,42],[148,41],[151,40],[154,40],[157,39],[160,39],[163,39],[166,38],[169,38],[172,38],[175,38],[178,39],[180,40],[182,42],[184,44],[186,46],[188,48],[190,50],[192,52],[194,54],[195,56],[198,59],[199,60],[200,63],[201,66],[203,68],[204,70],[205,72],[207,75],[208,77],[209,79],[210,82],[211,85],[212,88],[213,90],[214,93],[215,95],[216,98],[217,101],[218,104],[218,108],[219,111],[220,114],[221,117],[221,120],[222,123],[222,126],[223,129],[223,133],[223,137],[223,141],[223,144],[223,147],[223,151],[223,154],[223,157],[223,161],[222,163],[221,166],[221,169],[220,171],[219,175],[218,178],[217,180],[216,183],[216,186],[214,188],[214,191],[213,193],[211,195],[210,197],[209,200],[207,202],[206,204],[204,206],[202,207],[200,209],[198,210],[196,212],[194,214],[192,215],[189,216],[187,218],[185,218],[182,219],[179,219],[176,220],[173,221],[170,221],[167,222],[164,222],[161,223],[157,224],[154,224],[151,225],[148,226],[145,227],[142,228],[140,228],[137,229],[134,229],[132,230],[129,230],[127,232],[125,232],[121,233],[118,233],[114,233],[111,233],[107,233],[104,233],[101,233],[98,233],[94,233],[91,233],[88,233],[85,234],[82,234],[80,234]],[[135,220],[135,224],[135,228],[135,232],[135,235],[136,238],[136,242],[137,245],[137,249],[138,252],[138,255],[139,258],[139,262],[139,265],[140,268],[140,272],[141,276],[141,280],[142,284],[142,288],[143,292],[144,295],[144,298],[145,303],[145,308],[146,313],[146,318],[147,324],[147,327],[147,330],[147,333],[148,336],[148,339],[149,342],[149,347],[149,350],[149,354],[150,360],[151,363],[151,366],[152,369],[152,375],[152,379],[153,383],[153,387],[153,391],[153,394],[153,398],[153,402],[154,406],[154,410],[154,414],[154,417],[155,420],[155,424],[155,427],[156,431],[156,435],[156,439],[157,443],[157,446],[157,449],[158,452],[158,456],[158,459],[159,463],[159,467],[159,472],[160,476],[160,479],[161,484],[161,487],[161,491],[162,494],[162,497],[163,499],[163,502],[164,505],[164,509],[165,512],[165,515],[166,520],[166,523],[167,528],[167,531],[168,535],[168,538],[169,541],[169,544],[170,547],[170,550],[170,553],[171,556],[171,559],[172,562],[172,564],[173,568],[173,574],[173,579],[174,582],[174,585],[175,590],[175,593],[175,597],[175,600],[175,603],[176,606],[176,609],[177,612],[178,617],[178,620],[178,623],[179,626],[179,630],[179,634],[180,637],[180,642],[181,647],[181,650],[181,656],[182,660],[182,666],[182,670],[183,674],[183,679],[183,683],[183,686],[184,691],[185,695],[185,698],[185,701],[186,703],[186,706],[187,709],[187,712],[187,708],[187,704],[187,700]],[[136,230],[134,231],[131,232],[128,234],[126,236],[123,239],[121,240],[120,242],[118,244],[116,246],[115,248],[113,252],[112,254],[110,258],[108,260],[106,264],[104,267],[102,269],[101,271],[100,273],[98,275],[96,279],[95,282],[93,284],[92,288],[90,290],[89,293],[87,295],[86,298],[84,301],[81,305],[78,309],[77,312],[76,314],[74,318],[71,321],[68,325],[65,328],[63,331],[62,333],[60,336],[59,338],[57,341],[56,343],[55,346],[54,348],[52,350],[50,353],[48,356],[46,359],[45,361],[43,364],[42,367],[40,369],[39,372],[38,374],[36,376],[35,379],[34,382],[33,384],[32,386],[31,388],[30,391],[30,392]],[[139,244],[143,244],[146,245],[150,247],[152,248],[154,250],[156,252],[158,253],[162,255],[165,257],[168,259],[170,261],[172,263],[174,265],[176,266],[178,268],[181,271],[184,273],[186,274],[188,276],[190,278],[192,281],[194,283],[196,286],[199,289],[202,293],[205,296],[208,299],[210,301],[212,304],[215,306],[217,309],[220,311],[222,314],[225,317],[228,320],[230,323],[232,325],[235,328],[237,330],[240,333],[242,335],[245,338],[248,340],[250,343],[252,345],[253,348],[255,350],[257,352],[259,354],[260,356],[262,358],[265,361],[266,362],[269,365],[272,368],[275,371],[277,374],[279,375],[281,377],[282,379],[285,381],[287,383],[288,384],[290,386]],[[184,715],[182,716],[180,717],[177,719],[175,721],[173,722],[172,724],[170,726],[168,727],[166,729],[164,730],[162,732],[159,734],[157,736],[154,738],[151,740],[149,742],[146,744],[144,746],[141,748],[137,751],[136,752],[134,754],[131,756],[129,759],[126,762],[124,764],[123,766],[121,768],[119,770],[118,772],[116,775],[114,777],[112,779],[111,781],[110,782],[108,784],[106,786],[105,788],[104,790],[102,792],[100,794],[98,796],[97,797]],[[185,710],[187,712],[189,714],[191,716],[193,718],[195,720],[198,722],[200,723],[201,725],[203,726],[205,728],[207,730],[209,731],[211,732],[213,734],[214,736],[217,737],[219,739],[221,740],[224,742],[226,744],[228,746],[231,747],[233,749],[236,751],[239,753],[241,755],[243,757],[245,759],[247,760],[249,762],[251,763],[254,765],[257,768],[260,770],[262,772],[264,775],[267,778],[270,780],[272,782],[274,784],[275,786],[277,788],[279,790],[281,792],[282,792]]];
 // The figure's strokes as one path, for a picture to stroke its own way.
+const figHead = (x, y, s) => { const k = (230 / 848) * s; return [x - 36 * k, y - 810 * k]; };
 function traceFigure(ctx, x, y, s) {
   const k = (230 / 848) * s, ox = x - 173 * k, oy = y - 848 * k;
   ctx.beginPath();
@@ -4666,19 +4677,14 @@ function drawFigure(ctx, x, y, s, a) {
   traceFigure(ctx, x, y, s); ctx.stroke();
   ctx.restore();
 }
-function drawThought(ctx, x, y, w, h, text, p, a) {
+// head: where the head's top is, for the dots to lead to.
+function drawThought(ctx, x, y, w, h, text, p, a, head) {
   if (a <= 0.003) return;
   ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = '#2A3138'; ctx.strokeStyle = COL.white; ctx.lineWidth = 3.5;
-  // the cloud: bumps around an ellipse
-  const n = 14, bump = Math.min(26, h * 0.16); ctx.beginPath();
-  for (let i = 0; i < n; i++) {
-    const t0 = (i / n) * Math.PI * 2, t1 = ((i + 1) / n) * Math.PI * 2, tm = (t0 + t1) / 2;
-    const p0 = [x + (w / 2) * Math.cos(t0), y + (h / 2) * Math.sin(t0)], pm = [x + (w / 2 + bump) * Math.cos(tm), y + (h / 2 + bump) * Math.sin(tm)], p1 = [x + (w / 2) * Math.cos(t1), y + (h / 2) * Math.sin(t1)];
-    if (!i) ctx.moveTo(p0[0], p0[1]); ctx.quadraticCurveTo(pm[0] * 2 - (p0[0] + p1[0]) / 2, pm[1] * 2 - (p0[1] + p1[1]) / 2, p1[0], p1[1]);
-  }
-  ctx.closePath(); ctx.fill(); ctx.stroke();
-  const k = Math.min(1, h / 180);
-  for (const [dx, dy, r] of [[-w * 0.3, h * 0.62 + 10 * k, 14 * k], [-w * 0.38, h * 0.62 + 56 * k, 9 * k], [-w * 0.42, h * 0.62 + 90 * k, 5 * k]]) { ctx.beginPath(); ctx.arc(x + dx, y + dy, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+  // the readout: a rounded box, and dots down to the head
+  ctx.beginPath(); ctx.roundRect(x - w / 2, y - h / 2, w, h, Math.min(18, h * 0.22)); ctx.fill(); ctx.stroke();
+  const k = clamp(h / 120, 0.6, 1.1), [hx, hy] = head, sx = clamp(hx, x - w / 2 + 26, x + w / 2 - 26), sy = y + h / 2;
+  for (const [t, r] of [[0.22, 10 * k], [0.52, 7 * k], [0.8, 4.5 * k]]) { ctx.beginPath(); ctx.arc(lerp(sx, hx, t), lerp(sy, hy - 8, t), r, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
   if (text) {
     const shown = text.slice(0, Math.ceil(text.length * clamp(p, 0, 1)));
     ctx.font = cm(Math.min(48, (w * 1.6) / Math.max(1, text.length))); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = COL.white;
@@ -4730,18 +4736,17 @@ function drawQCards(ctx, st) {
     const ss = peq().filter((s) => s.a.terms.includes(q.term)); if (!ss.length) return;
     let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
     for (const s of ss) { const [l, r, t, b] = inkBox(s); x0 = Math.min(x0, l); x1 = Math.max(x1, r); y0 = Math.min(y0, t); y1 = Math.max(y1, b); }
-    const pad = 16, m = smooth(clamp(c.m, 0, 1)), C = QCRECT[i], a = smooth(clamp(c.box, 0, 1)) * ga;
-    const R = lerpRect([x0 - pad, y0 - pad, x1 - x0 + 2 * pad, y1 - y0 + 2 * pad], C, m);
-    ctx.save(); ctx.strokeStyle = hexA(COL.yellow, a * lerp(1, 0.75, m)); ctx.lineWidth = 3.5; ctx.beginPath(); ctx.roundRect(R[0], R[1], R[2], R[3], lerp(10, 16, m)); ctx.stroke(); ctx.restore();
-    if (m > 0.003) {   // the part itself, carried into the card
-      const w0 = x1 - x0, h0 = y1 - y0, k = lerp(1, Math.min((C[2] - 80) / w0, 110 / h0, 2.6), m);
-      const cx = lerp((x0 + x1) / 2, C[0] + C[2] / 2, m), cy = lerp((y0 + y1) / 2, C[1] + 92, m);
-      ctx.save(); ctx.translate(cx, cy); ctx.scale(k, k); ctx.translate(-(x0 + x1) / 2, -(y0 + y1) / 2);
-      for (const s of ss) drawSprite(ctx, s, s.alpha * a, WHITE_RGB);
-      ctx.restore();
-    }
-    if (c.title > 0.003) q.title.forEach((src, j) => drawTex(ctx, src, C[0] + C[2] / 2, C[1] + 196 + j * 44, 32, { p: c.title, color: COL.yellow, alpha: ga }));
-    if (c.todo > 0.003) (q.draw || drawTodo)(ctx, [C[0] + 26, C[1] + 290, C[2] - 52, C[3] - 316], c.todo * ga, q);
+    const pad = 9, C = QCRECT[i], a = smooth(clamp(c.box, 0, 1)) * ga;
+    // the box stays on the equation
+    ctx.save(); ctx.strokeStyle = hexA(q.col, a); ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(x0 - pad, y0 - pad, x1 - x0 + 2 * pad, y1 - y0 + 2 * pad, 8); ctx.stroke(); ctx.restore();
+    // dots from it down to its card
+    const l = clamp(c.link, 0, 1), bx = (x0 + x1) / 2, by = y1 + pad + 8, cx = C[0] + C[2] / 2, cy = C[1] - 8;
+    if (l > 0.003) dotted(ctx, bx, by, lerp(bx, cx, l), lerp(by, cy, l), q.col, 0.8 * ga, 3, 12);
+    const ca = smooth(clamp(c.card, 0, 1)) * ga;
+    if (ca > 0.003) { ctx.save(); ctx.strokeStyle = hexA(q.col, 0.75 * ca); ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(C[0], C[1], C[2], C[3], 16); ctx.stroke(); ctx.restore(); }
+    // only the question on top; most of the card is the place for its animation
+    if (c.title > 0.003) q.title.forEach((src, j) => drawTex(ctx, src, C[0] + C[2] / 2, C[1] + 50 + j * 44, 32, { p: c.title, color: q.col, alpha: ga }));
+    if (c.todo > 0.003) (q.draw || drawTodo)(ctx, [C[0] + 24, C[1] + 136, C[2] - 48, C[3] - 160], c.todo * ga, q);
   });
 }
 function drawTodo(ctx, r, a, q) {
@@ -4751,7 +4756,7 @@ function drawTodo(ctx, r, a, q) {
   q.todo.forEach((line, j) => drawTex(ctx, String.raw`\text{${line}}`, cx, y + 40 + j * 34, 25, { color: COL.grey, alpha: a }));
 }
 // Beat 15: the spectrum. The lecture at one end and the shader at the other, named above them; the line between them,
-// as far as the arrow under it has drawn it; the arrow, wiggling once it is back in the middle. For the goals all of
+// as far as the arrow under it has drawn it; the arrow, swaying back and forth once it is back in the middle. For the goals all of
 // it shrinks into the aside, a card at the top left.
 const specXf = (st) => {
   const a = smooth(clamp(st.side, 0, 1)), [sx, sy, sw, sh] = SPEC.src, [cx, cy, cw, ch] = SPEC.card, pad = 28;
@@ -4786,22 +4791,26 @@ function drawSpectrum(ctx, st) {
   drawRaymarch(ctx, [R[0], R[1], R[2], R[3] * 0.52], r * ga, t);
   drawCodePanel(ctx, [R[0], R[1] + R[3] * 0.56, R[2], R[3] * 0.44], r * ga, st.code, t);
   // the arrow under the line
-  const ang = reduced ? 0 : smooth(clamp(st.wig, 0, 1)) * 0.2 * Math.sin(2 * Math.PI * 1.3 * (TIME - st.wigT));
-  drawPointer(ctx, st.ptrX, y + 16, ga * smooth(clamp(st.ptrA, 0, 1)), ang);
+  const sway = reduced ? 0 : smooth(clamp(st.wig, 0, 1)) * 16 * Math.sin(2 * Math.PI * 0.8 * (TIME - st.wigT));
+  drawPointer(ctx, st.ptrX + sway, y + 16, ga * smooth(clamp(st.ptrA, 0, 1)), 0);
   ctx.restore();
 }
-// Beats 15d–e: an arrow from me now to me later, and what I think then.
+// Beat 15e: a copy of me walks out to the right along a growing arrow and, once there, understands it. "Now" under
+// me, "Then" under the copy.
 function drawFuture(ctx, st) {
-  const ga = smooth(clamp(st.p15, 0, 1)) * smooth(clamp(st.fut / 0.6, 0, 1)); if (ga <= 0.003) return;
-  const g = smooth(clamp(st.fut / 0.7, 0, 1)), x0 = 232, x1 = lerp(x0, FUT.x - 92, g), y = 905;
-  ctx.save(); ctx.globalAlpha = ga; ctx.strokeStyle = COL.greyB; ctx.fillStyle = COL.greyB; ctx.lineWidth = 4; ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1 - 18, y); ctx.stroke(); arrowTip(ctx, x1, y, 1, 0, 26, 12); ctx.restore();
-  const fa = smooth(clamp((st.fut - 0.55) / 0.45, 0, 1)) * smooth(clamp(st.p15, 0, 1));
-  drawFigure(ctx, FUT.x, FUT.y, 1, fa);
-  drawThought(ctx, FUT.x + 150, FUT.y - 365, 380, 110, 'I understand it now', st.futW, fa);
+  const ga = smooth(clamp(st.p15, 0, 1)) * smooth(clamp(st.fut * 4, 0, 1)); if (ga <= 0.003) return;
+  const g = smooth(clamp(st.fut, 0, 1)), fx = lerp(MIDFIG, FUT.x, g), x0 = MIDFIG + 82, x1 = fx - 92, y = 905;
+  if (x1 > x0 + 20) {
+    ctx.save(); ctx.globalAlpha = ga; ctx.strokeStyle = COL.greyB; ctx.fillStyle = COL.greyB; ctx.lineWidth = 4; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1 - 18, y); ctx.stroke(); arrowTip(ctx, x1, y, 1, 0, 26, 12); ctx.restore();
+  }
+  drawFigure(ctx, fx, FUT.y, 1, ga);
+  drawThought(ctx, fx + 150, FUT.y - 345, 360, 90, 'I understand it now', st.futW, ga * smooth(clamp((st.fut - 0.9) / 0.1, 0, 1)), figHead(fx, FUT.y, 1));
+  drawTex(ctx, String.raw`\text{Now}`, MIDFIG - 10, 1056, 32, { color: COL.greyA, alpha: ga });
+  drawTex(ctx, String.raw`\text{Then}`, FUT.x - 10, 1056, 32, { color: COL.greyA, alpha: ga * smooth(clamp((st.fut - 0.8) / 0.2, 0, 1)) });
 }
-// Beats 15d–e: the goals, as bullet points in an aside on the right. Both are laid out from the start, so the first
-// doesn't move when the second comes in.
+// Beats 15d–f: the goals, as bullet points under a heading in an aside on the right, one per press. Both are laid
+// out from the start, so the first doesn't move when the second comes in.
 const wrapCache = new Map();
 function wrapText(text, maxW, size) {   // lines of \text no wider than maxW; two lines are evened out
   const key = `${text}|${maxW}|${size}`; if (wrapCache.has(key)) return wrapCache.get(key);
@@ -4820,8 +4829,9 @@ function drawGoals(ctx, st) {
   const ga = smooth(clamp(st.p15, 0, 1)) * smooth(clamp(st.goalsA, 0, 1)); if (ga <= 0.003) return;
   const [x, y0, w, h] = GCARD, size = 38, lh = 50, gap = 38;
   ctx.save(); ctx.strokeStyle = hexA(COL.greyC, ga); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(x, y0, w, h, 14); ctx.stroke(); ctx.restore();
-  const blocks = GOALS.map((g) => wrapText(g, w - 130, size)), total = blocks.reduce((sum, b) => sum + b.length * lh, 0) + (blocks.length - 1) * gap;
-  let y = y0 + (h - total) / 2 + lh / 2;
+  drawTex(ctx, String.raw`\text{Goals:}`, x + 44, y0 + 62, 42, { ax: 0, color: COL.greyA, alpha: ga });
+  const blocks = GOALS.map((g) => wrapText(g, w - 130, size));
+  let y = y0 + 150;
   blocks.forEach((lines, i) => {
     const p = st.goals[i];
     if (p > 0.003) {
@@ -4868,10 +4878,10 @@ function drawPresent(ctx, dt) {
   }
   // the figure and its thought: beside the card, then small in the corner once the equation takes the stage
   if (st.fig > 0.003) {
-    const c = smooth(clamp(st.corner, 0, 1)), fx = lerp(1500, 150, c), fy = lerp(840, 1030, c), fs = lerp(1.24, 1, c), fa = smooth(clamp(st.fig, 0, 1));
+    const c = smooth(clamp(st.corner, 0, 1)), fx = lerp(lerp(1500, 150, c), MIDFIG, smooth(clamp(st.figMid, 0, 1))), fy = lerp(840, 1030, c), fs = lerp(1.24, 1, c), fa = smooth(clamp(st.fig, 0, 1));
     drawFigure(ctx, fx, fy, fs, fa);
     const tw = lerp(400, 150, c), th = lerp(140, 90, c), tx = fx + lerp(110, 110, c), ty = fy - lerp(410, 330, c);
-    drawThought(ctx, tx, ty, tw, th, st.think, st.writeP, fa);
+    drawThought(ctx, tx, ty, tw, th, st.think, st.writeP, fa, figHead(fx, fy, fs));
   }
   drawFuture(ctx, st);
   // the equation, wherever it is, with its braces; the effects' cells under it; the questions' cards
