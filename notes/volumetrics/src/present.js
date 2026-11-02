@@ -19,16 +19,16 @@ const QCARDS = [
   { term: 't-qouter', col: COL.blue, name: 'inside another integral?', title: [String.raw`\text{inside another integral?}`], todo: ['optical depth:', 'an integral inside an integral'] },
   { term: 't-qe', col: COL.gold, name: 'most importantly: why e?', title: [String.raw`\text{most importantly:}`, String.raw`\text{why }e\text{?}`], todo: ['the rays: the discrete version', 'on top of the continuous one'] },
 ];
-// in the order their parts sit in the equation (the outer integral, e, the exponent), so the dotted links don't cross
-const QCRECT = [[1400, 470, 480, 540], [380, 470, 480, 540], [890, 470, 480, 540]];
+const QCRECT = [[380, 470, 480, 540], [890, 470, 480, 540], [1400, 470, 480, 540]];
 // Beat 15: the spectrum from a physics lecture to a shader tutorial, and the arrow that walks along it. For the goals
 // it shrinks into an aside (card); outside it, me now and me later along the bottom, and the goals on the right as
 // bullet points (their wording is a placeholder). src is the part of the stage the aside shows.
-const SPEC = { L: [302, 330, 235, 188], R: [1383, 330, 235, 188], y: 560, src: [270, 270, 1380, 400], card: [60, 60, 1080, 400] };
-const GCARD = [1190, 60, 670, 400];
+const SPEC = { L: [302, 330, 235, 188], R: [1383, 330, 235, 188], y: 560, src: [270, 270, 1380, 400], card: [380, 50, 1160, 400] };
+const GOALXY = [130, 560];   // the goals, under the aside on the left
 const GOALS = ['you could have derived it yourself', 'the beautiful math and physics behind it'];
 // me now and me later, side by side in the middle along the bottom while the goals are up
-const MIDFIG = 660, FUT = { x: 1260, y: 1030 };
+// (feet at 960 keeps them and their labels clear of the bottom of a YouTube frame)
+const MIDFIG = 1170, FUT = { x: 1610, y: 960 };
 // Beat 16's caption, and beats 17–20: the fields that use the same equation, each a card with its picture in a 2 × 2
 // grid; the last, the cloud, grows over the other three.
 const PCAP = String.raw`\text{light, travelling some distance, through some }\textcolor{${COL.yellow}}{\text{stuff}}\text{.}`;
@@ -42,7 +42,7 @@ const UCARDS = [[370, 330, 590, 335], [990, 330, 590, 335], [370, 695, 590, 335]
 const PS_DEFAULTS = () => ({
   orbit: 1, mag: 0, aside: 0, fig: 0, think: '', writeP: 1, eq: 0, eqP: 0, corner: 0, braces: [], hi: {}, dim: 0,
   cells: [0, 0, 0, 0], cellT: [0, 0, 0, 0], grid: 1,
-  qc: QCARDS.map(() => ({ box: 0, link: 0, card: 0, title: 0, todo: 0 })), qcA: 1,
+  qc: QCARDS.map(() => ({ box: 0, m: 0, title: 0, todo: 0 })), qcA: 1,
   eqA: 1, eqTop: 0, spec: [0, 0], chalk: 0, code: 0, specT: 0, ptrX: 0, ptrA: 0, lineP: 0, wig: 0, wigT: 0, side: 0,
   goalsA: 0, figMid: 0, fut: 0, futW: 0, goals: [0, 0], p15: 1, cap: 0,
   uses: [0, 0, 0, 0], grow: 0,
@@ -73,7 +73,7 @@ const BEATS = [
     await ptw('eqP', 1, 3.2, { ease: linear, delay: 0.5 });
   } },
   ...PFX.map(([term, label, color], i) => ({ n: String(8 + i), name: label, run: () => { PS.cellT[i] = TIME + 0.4; return Promise.all([presBrace(term, label, color), ptwi(PS.cells, i, 1, 1.1)]); } })),
-  ...QCARDS.map((q, i) => ({ n: String(12 + i), name: q.name, run: () => presQuestion(i) })),
+  ...QCARDS.flatMap((q, i) => [{ n: String(12 + i), name: q.name, run: () => presQuestion(i) }, { n: `${12 + i}b`, name: 'into its card', run: () => presToCard(i) }]),
   { n: '15', name: 'not a physics lecture', run: presSpecPhysics },
   { n: '15b', name: 'not a shader tutorial', run: presSpecShader },
   { n: '15c', name: 'the part in between', run: presSpecMiddle },
@@ -107,13 +107,18 @@ function presBrace(term, label, color) {
 // then the box, with a copy of the part, moves down into the question's card, where the question is written.
 async function presQuestion(i) {
   const term = QCARDS[i].term, c = PS.qc[i];
-  for (const k of Object.keys(PS.hi)) if (k.startsWith('t-p')) ptwi(PS.hi, k, 0, 0.5);   // the effects' colours go; earlier questions keep theirs
+  for (const k of Object.keys(PS.hi)) if (k.startsWith('t-p')) ptwi(PS.hi, k, 0, 0.5);   // the effects' colours go; earlier questions keep their tint
   for (const b of PS.braces) ptwi(b, 'a', 0, 0.5);
   ptw('grid', 0, 0.5);
   ptwi(PS.hi, term, 1, 0.6); ptw('dim', 1, 0.7);
   await ptwi(c, 'box', 1, 0.6);
-  await ptwi(c, 'link', 1, 0.8, { delay: 0.2 });
-  ptwi(c, 'card', 1, 0.6); ptwi(c, 'todo', 1, 0.7, { delay: 0.3 });
+}
+// The next press: the box leaves the equation and becomes the question's card, its title written on top and most of
+// it the place for the animation that answers it.
+async function presToCard(i) {
+  const c = PS.qc[i];
+  await ptwi(c, 'm', 1, 1.3);
+  ptwi(c, 'todo', 1, 0.7, { delay: 0.3 });
   await ptwi(c, 'title', 1, 0.9, { ease: linear });
 }
 // Beat 15: the cards and the equation go; the physics lecture comes in, the arrow under it. 15b: the arrow walks to
@@ -123,7 +128,7 @@ async function presSpecPhysics() {
   ptw('qcA', 0, 0.6); ptw('dim', 0, 0.6); ptw('eqA', 0, 0.6);
   for (const k of Object.keys(PS.hi)) ptwi(PS.hi, k, 0, 0.6);
   PS.ptrX = SPEC.L[0] + SPEC.L[2] / 2;
-  ptwi(PS.spec, 0, 1, 0.8, { delay: 0.5 }); ptw('chalk', 1, 1.8, { ease: linear, delay: 0.7 });
+  ptwi(PS.spec, 0, 1, 0.8, { delay: 0.5 }); 
   await ptw('ptrA', 1, 0.6, { delay: 1 });
 }
 async function presSpecShader() {
@@ -273,15 +278,10 @@ function drawQCards(ctx, st) {
     const ss = peq().filter((s) => s.a.terms.includes(q.term)); if (!ss.length) return;
     let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
     for (const s of ss) { const [l, r, t, b] = inkBox(s); x0 = Math.min(x0, l); x1 = Math.max(x1, r); y0 = Math.min(y0, t); y1 = Math.max(y1, b); }
-    const pad = 9, C = QCRECT[i], a = smooth(clamp(c.box, 0, 1)) * ga;
-    // the box stays on the equation
-    ctx.save(); ctx.strokeStyle = hexA(q.col, a); ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(x0 - pad, y0 - pad, x1 - x0 + 2 * pad, y1 - y0 + 2 * pad, 8); ctx.stroke(); ctx.restore();
-    // dots from it down to its card
-    const l = clamp(c.link, 0, 1), bx = (x0 + x1) / 2, by = y1 + pad + 8, cx = C[0] + C[2] / 2, cy = C[1] - 8;
-    if (l > 0.003) dotted(ctx, bx, by, lerp(bx, cx, l), lerp(by, cy, l), q.col, 0.8 * ga, 3, 12);
-    const ca = smooth(clamp(c.card, 0, 1)) * ga;
-    if (ca > 0.003) { ctx.save(); ctx.strokeStyle = hexA(q.col, 0.75 * ca); ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(C[0], C[1], C[2], C[3], 16); ctx.stroke(); ctx.restore(); }
-    // only the question on top; most of the card is the place for its animation
+    // the highlight's box, which then turns into the card
+    const pad = 12, m = smooth(clamp(c.m, 0, 1)), C = QCRECT[i], a = smooth(clamp(c.box, 0, 1)) * ga;
+    const R = lerpRect([x0 - pad, y0 - pad, x1 - x0 + 2 * pad, y1 - y0 + 2 * pad], C, m);
+    ctx.save(); ctx.strokeStyle = hexA(q.col, a * lerp(1, 0.8, m)); ctx.lineWidth = 3.5; ctx.beginPath(); ctx.roundRect(R[0], R[1], R[2], R[3], lerp(10, 16, m)); ctx.stroke(); ctx.restore();
     if (c.title > 0.003) q.title.forEach((src, j) => drawTex(ctx, src, C[0] + C[2] / 2, C[1] + 50 + j * 44, 32, { p: c.title, color: q.col, alpha: ga }));
     if (c.todo > 0.003) (q.draw || drawTodo)(ctx, [C[0] + 24, C[1] + 136, C[2] - 48, C[3] - 160], c.todo * ga, q);
   });
@@ -310,7 +310,10 @@ function drawPointer(ctx, x, y, a, ang) {   // an arrow pointing up, its tip at 
 function drawSpectrum(ctx, st) {
   const ga = smooth(clamp(st.p15, 0, 1)); if (ga <= 0.003) return;
   const [l, r] = st.spec.map((v) => smooth(clamp(v, 0, 1))), side = smooth(clamp(st.side, 0, 1));
-  if (side > 0.003) { const c = SPEC.card; ctx.save(); ctx.strokeStyle = hexA(COL.greyC, side * ga); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(c[0], c[1], c[2], c[3], 14); ctx.stroke(); ctx.restore(); }
+  if (side > 0.003) {   // the aside: a card with a ground of its own
+    const c = SPEC.card; ctx.save(); ctx.globalAlpha = side * ga; ctx.fillStyle = '#26241F'; ctx.strokeStyle = COL.greyC; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.roundRect(c[0], c[1], c[2], c[3], 14); ctx.fill(); ctx.stroke(); ctx.restore();
+  }
   const [ox, oy, s] = specXf(st), y = SPEC.y, L = SPEC.L, R = SPEC.R, xa = L[0] + L[2] / 2, xb = R[0] + R[2] / 2;
   ctx.save(); ctx.translate(ox, oy); ctx.scale(s, s);
   // the line, as far as the arrow has drawn it, and its ends
@@ -323,7 +326,7 @@ function drawSpectrum(ctx, st) {
   // the two ends, small, with their names over them
   if (l > 0.003) drawTex(ctx, String.raw`\text{physics lecture}`, xa, L[1] - 28, 28, { color: COL.gold, alpha: l * ga });
   if (r > 0.003) drawTex(ctx, String.raw`\text{shader tutorial}`, xb, R[1] - 28, 28, { color: COL.blue, alpha: r * ga });
-  drawChalkboard(ctx, L, l * ga, st.chalk);
+  drawChalkboard(ctx, L, l * ga);
   const t = TIME - st.specT;
   drawRaymarch(ctx, [R[0], R[1], R[2], R[3] * 0.52], r * ga, t);
   drawCodePanel(ctx, [R[0], R[1] + R[3] * 0.56, R[2], R[3] * 0.44], r * ga, st.code, t);
@@ -336,15 +339,15 @@ function drawSpectrum(ctx, st) {
 // me, "Then" under the copy.
 function drawFuture(ctx, st) {
   const ga = smooth(clamp(st.p15, 0, 1)) * smooth(clamp(st.fut * 4, 0, 1)); if (ga <= 0.003) return;
-  const g = smooth(clamp(st.fut, 0, 1)), fx = lerp(MIDFIG, FUT.x, g), x0 = MIDFIG + 82, x1 = fx - 92, y = 905;
+  const g = smooth(clamp(st.fut, 0, 1)), fx = lerp(MIDFIG, FUT.x, g), x0 = MIDFIG + 82, x1 = fx - 92, y = FUT.y - 125;
   if (x1 > x0 + 20) {
     ctx.save(); ctx.globalAlpha = ga; ctx.strokeStyle = COL.greyB; ctx.fillStyle = COL.greyB; ctx.lineWidth = 4; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1 - 18, y); ctx.stroke(); arrowTip(ctx, x1, y, 1, 0, 26, 12); ctx.restore();
   }
   drawFigure(ctx, fx, FUT.y, 1, ga);
-  drawThought(ctx, fx + 150, FUT.y - 345, 360, 90, 'I understand it now', st.futW, ga * smooth(clamp((st.fut - 0.9) / 0.1, 0, 1)), figHead(fx, FUT.y, 1));
-  drawTex(ctx, String.raw`\text{Now}`, MIDFIG - 10, 1056, 32, { color: COL.greyA, alpha: ga });
-  drawTex(ctx, String.raw`\text{Then}`, FUT.x - 10, 1056, 32, { color: COL.greyA, alpha: ga * smooth(clamp((st.fut - 0.8) / 0.2, 0, 1)) });
+  drawThought(ctx, fx + 40, FUT.y - 345, 360, 90, 'I understand it now', st.futW, ga * smooth(clamp((st.fut - 0.9) / 0.1, 0, 1)), figHead(fx, FUT.y, 1));
+  drawTex(ctx, String.raw`\text{Now}`, MIDFIG - 10, FUT.y + 30, 32, { color: COL.greyA, alpha: ga });
+  drawTex(ctx, String.raw`\text{Then}`, FUT.x - 10, FUT.y + 30, 32, { color: COL.greyA, alpha: ga * smooth(clamp((st.fut - 0.8) / 0.2, 0, 1)) });
 }
 // Beats 15d–f: the goals, as bullet points under a heading in an aside on the right, one per press. Both are laid
 // out from the start, so the first doesn't move when the second comes in.
@@ -364,16 +367,15 @@ function wrapText(text, maxW, size) {   // lines of \text no wider than maxW; tw
 }
 function drawGoals(ctx, st) {
   const ga = smooth(clamp(st.p15, 0, 1)) * smooth(clamp(st.goalsA, 0, 1)); if (ga <= 0.003) return;
-  const [x, y0, w, h] = GCARD, size = 38, lh = 50, gap = 38;
-  ctx.save(); ctx.strokeStyle = hexA(COL.greyC, ga); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(x, y0, w, h, 14); ctx.stroke(); ctx.restore();
-  drawTex(ctx, String.raw`\text{Goals:}`, x + 44, y0 + 62, 42, { ax: 0, color: COL.greyA, alpha: ga });
-  const blocks = GOALS.map((g) => wrapText(g, w - 130, size));
-  let y = y0 + 150;
+  const [x, y0] = GOALXY, size = 42, lh = 56, gap = 40;
+  drawTex(ctx, String.raw`\text{Goals:}`, x, y0, 48, { ax: 0, color: COL.greyA, alpha: ga });
+  const blocks = GOALS.map((g) => wrapText(g, 700, size));
+  let y = y0 + 100;
   blocks.forEach((lines, i) => {
     const p = st.goals[i];
     if (p > 0.003) {
-      dot(ctx, x + 54, y + 3, 7, COL.yellow, ga * smooth(clamp(p * 4, 0, 1)));
-      lines.forEach((ln, j) => drawTex(ctx, String.raw`\text{${ln}}`, x + 82, y + j * lh, size, { ax: 0, p: clamp(p * lines.length - j, 0, 1), alpha: ga }));
+      dot(ctx, x + 12, y + 3, 7, COL.yellow, ga * smooth(clamp(p * 4, 0, 1)));
+      lines.forEach((ln, j) => drawTex(ctx, String.raw`\text{${ln}}`, x + 42, y + j * lh, size, { ax: 0, p: clamp(p * lines.length - j, 0, 1), alpha: ga }));
     }
     y += lines.length * lh + gap;
   });
@@ -415,7 +417,7 @@ function drawPresent(ctx, dt) {
   }
   // the figure and its thought: beside the card, then small in the corner once the equation takes the stage
   if (st.fig > 0.003) {
-    const c = smooth(clamp(st.corner, 0, 1)), fx = lerp(lerp(1500, 150, c), MIDFIG, smooth(clamp(st.figMid, 0, 1))), fy = lerp(840, 1030, c), fs = lerp(1.24, 1, c), fa = smooth(clamp(st.fig, 0, 1));
+    const c = smooth(clamp(st.corner, 0, 1)), fm = smooth(clamp(st.figMid, 0, 1)), fx = lerp(lerp(1500, 150, c), MIDFIG, fm), fy = lerp(lerp(840, 1000, c), FUT.y, fm), fs = lerp(1.24, 1, c), fa = smooth(clamp(st.fig, 0, 1));
     drawFigure(ctx, fx, fy, fs, fa);
     const tw = lerp(400, 150, c), th = lerp(140, 90, c), tx = fx + lerp(110, 110, c), ty = fy - lerp(410, 330, c);
     drawThought(ctx, tx, ty, tw, th, st.think, st.writeP, fa, figHead(fx, fy, fs));

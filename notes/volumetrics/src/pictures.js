@@ -3,48 +3,50 @@
 // beats 17–19 that use the same equation: starlight through dust, sunlight through the air, X-rays through a body.
 // Each draws into a rectangle in stage units, in its own units inside it, and only multiplies the opacity it is given.
 
-// ---- a physics lecture: a chalkboard full of equations (they don't have to mean much together) ----
+// ---- a physics lecture: a chalkboard of scribbles and sketches, nothing on it meant to be read ----
 const CHALK = '#E4E1D8';
-const BOARD_TEX = [   // [TeX, x, y, size] in the board's units, 470 wide
-  [String.raw`\frac{dL}{ds} = -\sigma_t L + \sigma_a L_e + \sigma_s \int_{4\pi} f_p\, L\, d\omega'`, 26, 54, 25],
-  [String.raw`\nabla \cdot \mathbf{E} = \frac{\rho}{\varepsilon_0}`, 26, 132, 23],
-  [String.raw`\nabla \times \mathbf{B} = \mu_0 \mathbf{J} + \mu_0 \varepsilon_0 \frac{\partial \mathbf{E}}{\partial t}`, 26, 200, 23],
-  [String.raw`f_p(\theta) = \frac{1}{4\pi}\, \frac{1 - g^2}{(1 + g^2 - 2g\cos\theta)^{3/2}}`, 26, 272, 23],
-  [String.raw`\sigma_s = \frac{8\pi}{3}\, k^4 a^6 \left| \frac{m^2 - 1}{m^2 + 2} \right|^2`, 26, 340, 23],
-];
-// p writes the board line by line, then the sketch.
-function drawChalkboard(ctx, r, a, p) {
+// Fake handwriting: loops along a line, in words of different lengths.
+function chalkWriting(ctx, x, y, w, seed) {
+  const rnd = rng32(seed);
+  let t = 0;
+  ctx.beginPath();
+  while (t < w) {
+    const len = lerp(18, 64, rnd()), amp = lerp(4, 7, rnd()), f = lerp(0.7, 1.05, rnd()), ph = rnd() * 6.28;
+    for (let u = 0; u <= len; u += 1.5) {
+      const px = x + t + u + 2.6 * Math.cos(u * f + ph), py = y - amp * Math.abs(Math.sin(u * f * 0.5 + ph)) * (0.7 + 0.3 * Math.sin(u * 0.21));
+      u ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+    }
+    t += len + lerp(10, 18, rnd());
+  }
+  ctx.stroke();
+}
+function drawChalkboard(ctx, r, a) {
   if (a <= 0.003) return;
-  const s = r[2] / 470, h = r[3] / s, n = BOARD_TEX.length;
-  ctx.save(); ctx.translate(r[0], r[1]); ctx.scale(s, s);
-  ctx.save(); ctx.globalAlpha *= a;
+  const s = r[2] / 470, h = r[3] / s;
+  ctx.save(); ctx.translate(r[0], r[1]); ctx.scale(s, s); ctx.globalAlpha *= a;
   ctx.fillStyle = '#4A3828'; ctx.beginPath(); ctx.roundRect(-12, -12, 494, h + 24, 10); ctx.fill();   // the frame
   ctx.fillStyle = '#21302A'; ctx.beginPath(); ctx.roundRect(0, 0, 470, h, 3); ctx.fill();               // the slate
-  ctx.fillStyle = 'rgba(255,255,255,0.035)';                                                           // old eraser swipes
+  ctx.fillStyle = 'rgba(255,255,255,0.04)';                                                             // old eraser swipes
   for (const [x, y, rx, ry, t] of [[150, 96, 130, 24, -0.06], [320, 240, 150, 28, 0.04], [110, 318, 95, 18, 0.08]]) { ctx.beginPath(); ctx.ellipse(x, y, rx, ry, t, 0, Math.PI * 2); ctx.fill(); }
-  ctx.fillStyle = '#3B2C20'; ctx.fillRect(-18, h + 12, 506, 10);                                       // the tray, chalk and a duster on it
+  ctx.fillStyle = '#3B2C20'; ctx.fillRect(-18, h + 12, 506, 10);
   ctx.fillStyle = CHALK; ctx.fillRect(376, h + 5, 34, 7);
-  ctx.fillStyle = '#6B5A48'; ctx.fillRect(296, h + 2, 50, 10); ctx.fillStyle = '#9A9286'; ctx.fillRect(296, h + 9, 50, 3);
-  ctx.restore();
-  // the writing, a little crooked
-  ctx.translate(235, h / 2); ctx.rotate(-0.012); ctx.translate(-235, -h / 2);
-  BOARD_TEX.forEach(([src, x, y, size], i) => {
-    const q = clamp(p * (n + 1) - i, 0, 1); if (q <= 0) return;
-    drawTex(ctx, src, x, y, Math.min(size, 420 / Math.max(tex(src).w, 0.01)), { ax: 0, p: q, color: CHALK, alpha: 0.9 * a });
-  });
-  const q = clamp(p * (n + 1) - n, 0, 1);
-  if (q > 0.003) {
-    // beside the short lines, a sketch: a ray meets a particle and leaves turned by θ
-    const cx = 392, cy = 164, t = -0.62, ux = Math.cos(t), uy = Math.sin(t);
-    ctx.save(); ctx.globalAlpha *= 0.9 * a * q; ctx.strokeStyle = CHALK; ctx.fillStyle = CHALK; ctx.lineWidth = 2.6; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.arc(cx, cy, 13, 0, Math.PI * 2); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx - 92, cy); ctx.lineTo(cx - 18, cy); ctx.stroke(); arrowTip(ctx, cx - 44, cy, 1, 0, 13, 6);
-    ctx.beginPath(); ctx.moveTo(cx + 16 * ux, cy + 16 * uy); ctx.lineTo(cx + 70 * ux, cy + 70 * uy); ctx.stroke(); arrowTip(ctx, cx + 74 * ux, cy + 74 * uy, ux, uy, 13, 6);
-    ctx.setLineDash([4, 7]); ctx.beginPath(); ctx.moveTo(cx + 18, cy); ctx.lineTo(cx + 70, cy); ctx.stroke(); ctx.setLineDash([]);
-    ctx.beginPath(); ctx.arc(cx, cy, 44, t, 0); ctx.stroke();
-    ctx.restore();
-    drawTex(ctx, String.raw`\theta`, cx + 58, cy - 13, 22, { color: CHALK, alpha: 0.9 * a * q });
-  }
+  ctx.strokeStyle = hexA(CHALK, 0.85); ctx.fillStyle = hexA(CHALK, 0.85); ctx.lineWidth = 2.6; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  // lines of "writing", some short beside the sketches
+  [[28, 52, 400], [28, 98, 230], [28, 144, 250], [28, 190, 200], [28, 300, 260], [28, 344, 180]].forEach(([x, y, w], i) => chalkWriting(ctx, x, y, w, 71 + i * 13));
+  // a ray meets a particle and leaves turned
+  const cx = 360, cy = 118, t = -0.62, ux = Math.cos(t), uy = Math.sin(t);
+  ctx.beginPath(); ctx.arc(cx, cy, 13, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx - 80, cy); ctx.lineTo(cx - 18, cy); ctx.stroke(); arrowTip(ctx, cx - 40, cy, 1, 0, 12, 6);
+  ctx.beginPath(); ctx.moveTo(cx + 16 * ux, cy + 16 * uy); ctx.lineTo(cx + 66 * ux, cy + 66 * uy); ctx.stroke(); arrowTip(ctx, cx + 70 * ux, cy + 70 * uy, ux, uy, 12, 6);
+  ctx.beginPath(); ctx.arc(cx, cy, 40, t, 0); ctx.stroke();
+  // a little plot of something falling off
+  const gx = 300, gy = 300, gw = 140, gh = 80;
+  ctx.beginPath(); ctx.moveTo(gx, gy - gh); ctx.lineTo(gx, gy); ctx.lineTo(gx + gw, gy); ctx.stroke();
+  ctx.beginPath(); for (let u = 0; u <= 1.001; u += 0.05) { const px = gx + 6 + u * (gw - 10), py = gy - 6 - (gh - 14) * Math.exp(-3 * u); u ? ctx.lineTo(px, py) : ctx.moveTo(px, py); } ctx.stroke();
+  // a wave, and a boxed scribble, the way a lecturer rings the one that matters
+  ctx.beginPath(); for (let u = 0; u <= 150; u += 2) { const px = 280 + u, py = 214 + 9 * Math.sin(u * 0.13); u ? ctx.lineTo(px, py) : ctx.moveTo(px, py); } ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(22, 236); ctx.lineTo(236, 232); ctx.moveTo(232, 228); ctx.lineTo(236, 272); ctx.moveTo(240, 270); ctx.lineTo(20, 274); ctx.moveTo(24, 278); ctx.lineTo(22, 230); ctx.stroke();
+  chalkWriting(ctx, 34, 260, 180, 211);
   ctx.restore();
 }
 
