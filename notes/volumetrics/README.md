@@ -14,7 +14,7 @@ Edit `src/`, never the built page:
 
 - `src/shell.html` is the markup and the CSS.
 - `src/app.js` is the engine and the 2D scenes.
-- `src/volume.js` is the WebGL2 volume renderer and scene 17; `src/million.js`, `sheets.js`, `bases.js` and `average.js` are scenes 18 to 21. The build inserts them into `app.js`, after its scenes and in that order, so they can use the engine's helpers and keep their numbers.
+- `src/volume.js` is the WebGL2 volume renderer and scene 17; `src/million.js`, `sheets.js`, `bases.js` and `average.js` are scenes 18 to 21. `src/present.js` is presentation mode, and `src/pictures.js` the pictures only it draws (the chalkboard, the raymarcher and its code, the fields' cards). The build inserts them into `app.js`, after its scenes and in that order, so they can use the engine's helpers and keep their numbers.
 - `build.mjs` puts KaTeX's stylesheet (fonts inlined as data URIs), KaTeX's script, the glyph outlines and `app.js` into the shell. KaTeX comes from the blog's `node_modules`, so run `npm install` first.
 - `glyphs.mjs` reads the outlines of KaTeX's fonts, which the morphs and the write animation draw as paths.
 
@@ -31,7 +31,7 @@ Edit `src/`, never the built page:
 | 7 | Slice the slab | $\left(1 - \frac{\tau}{N}\right)^N \to e^{-\tau}$ as the slab is cut into more slices. |
 | 8 | Zoom into a slab | Two fronts meet at a thin slab, then the camera closes in and lands on scene 6. |
 | 9 | Optical depth is an area | Create the medium and its density fills in above it; shine and $T(z) = e^{-\tau(z)}$ is traced below. A draggable marker splits the area into what the light has crossed and what is ahead. Paint $\sigma_a(z)$ on its plot. |
-| 10 | What light can do | One photon and one particle: absorption, out-scattering, emission and in-scattering, then absorption alone. The paths are drawn in grey with arrows, along the beam's line toward an eye at the right; photons are particles that bounce off the surface, or wave packets. |
+| 10 | What light can do | One photon and one particle: absorption, out-scattering, emission and in-scattering, then absorption alone. The paths are drawn in grey with arrows, along the beam's line toward an eye at the right; photons are particles that bounce off the surface, or wave packets. Emission sends light every way at once and only the photon heading for the eye has colour (one photon toward the eye is an option). |
 | 11 | Sparse and dense | Two slabs, a few particles and many, each with its rays and sensor. Particles pop in as their number grows. |
 | 12 | Why e? | The slope triangle of $b^x$: slope over height is $\ln b$ everywhere, and at $b = e$ the slope is the height, $\frac{d}{dx}e^x = e^x$. |
 | 13 | Slice by slice | Identical slices each keep the same fraction: 90%, 81%, 72.9%. Bars of what is left, $e^{-\alpha n}$ through them, and $\frac{dI}{dz} = -\alpha I$. |
@@ -46,7 +46,7 @@ Edit `src/`, never the built page:
 
 Scene 17 needs WebGL2; while the camera is still it keeps averaging frames until the picture settles.
 
-Presentation mode (<kbd>V</kbd> or Present) plays the video's beats from `script.md` on the stage, one key press each: <kbd>→</kbd> next, <kbd>←</kbd> back (a beat the way it ends), <kbd>Space</kbd> pauses every animation, <kbd>R</kbd> replays, <kbd>Esc</kbd> leaves. `#present` opens in it, `#present-7` at beat 7. The beats live in `src/present.js`; the narration in `script.md`, with Erfan's drafts word for word in `script-drafts.md`.
+Presentation mode (<kbd>V</kbd> or Present) plays the video's beats from `script.md` on the stage, one key press each: <kbd>→</kbd> next, <kbd>←</kbd> back (a beat the way it ends), <kbd>Space</kbd> pauses every animation, <kbd>R</kbd> replays, <kbd>Esc</kbd> leaves. The beats carry their numbers from `script.md`, shown in the counter after each press: `#present` opens in it, `#present-15b` at beat 15b. The beats live in `src/present.js`; the narration in `script.md`, with Erfan's drafts word for word in `script-drafts.md`.
 
 Buttons under the stage play each scene's animations. The laser, the beam's look and width, the container and the medium are shared, so a change shows in every scene that uses them. "Fade into scene…" crossfades slowly into another scene, and the speed slider scales every animation.
 

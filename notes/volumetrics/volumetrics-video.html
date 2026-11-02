@@ -1858,7 +1858,8 @@ function pointerArea(type, x, y) {
 // ---------- D. what light can do at a particle ----------
 // The storyboard's first row: one photon meets one particle. Absorption: the photon stops at the particle's
 // surface and is gone, and the particle warms a little. Out-scattering: it bounces off and leaves the beam's
-// direction. Emission: a warm particle sends one out along the beam. In-scattering: one coming from another
+// direction. Emission: a warm particle sends light out every way at once, and only the photon along the beam, the
+// one the eye gets, has colour (the old version, one photon toward the eye, is an option). In-scattering: one coming from another
 // direction bounces off into the beam's. These are the four terms of the transfer equation, coloured as its
 // braces are: blue takes light out of the beam, green puts light in. Then the other three fade, and absorption,
 // the one this video is about, fills the stage. Photons are particles by default (wave packets are an option),
@@ -1943,7 +1944,7 @@ function drawParticle(ctx, x, y, r, warm, alpha) {
 }
 const SI = defScene({
   id: 'interact', tab: 'What light can do', shared: true,
-  defaults: () => ({ show: [1, 1, 1, 1], lab: [1, 1, 1, 1], focus: 0, loopT: 3.2, t0: [0, 0.8, 1.6, 2.4], look: 'dot' }),
+  defaults: () => ({ show: [1, 1, 1, 1], lab: [1, 1, 1, 1], focus: 0, loopT: 3.2, t0: [0, 0.8, 1.6, 2.4], look: 'dot', emit: 'all' }),
   actions: [
     { id: 'play', label: 'Play', primary: true, run: async (st, alive) => {
       for (let i = 0; i < 4; i++) { untween(st.show, i); untween(st.lab, i); st.show[i] = 0; st.lab[i] = 0; }
@@ -1962,6 +1963,7 @@ const SI = defScene({
   ],
   params: [
     { type: 'select', key: 'look', label: 'Photons', options: [['dot', 'Particles'], ['wave', 'Wave packets']] },
+    { type: 'select', key: 'emit', label: 'Emission', options: [['all', 'In every direction'], ['one', 'Toward the eye only']] },
     { type: 'range', key: 'loopT', label: 'Time per photon (s)', min: 1.5, max: 8, step: 0.1, fmt: (v) => v.toFixed(1) },
   ],
   draw: drawInteract,
@@ -1998,14 +2000,30 @@ function drawIACell(ctx, i, u, P, alpha, look) {
     const tc = S.total / v;
     scale = 1 - clamp((u - tc) / 0.18, 0, 1);
     warm = u < tc ? 0 : u < tc + 0.25 ? smooth((u - tc) / 0.25) : Math.exp(-(u - tc - 0.25) / 0.7);
-  } else if (i === 2) {   // the particle warms, then a photon leaves its surface
+  } else if (i === 2) {   // the particle warms, then light leaves its surface
     s = v * (u - 0.5); scale = clamp((u - 0.5) / 0.15, 0, 1);
     warm = u < 0.55 ? smooth(u / 0.55) : Math.exp(-(u - 0.55) / 0.6);
   }
   drawIAPaths(ctx, i, paths, Rc, alpha);
+  // emission goes every way at once; only the photon heading along the beam reaches the eye, so only it has colour
+  if (i === 2 && SI.emit !== 'one') for (const S2 of iaEmitPaths(Rc)) {
+    if (look === 'wave') drawPacket(ctx, S2, s, COL.greyB, 0.4 * alpha, { L: IA.L * 0.8, amp: 8, w: 3 });
+    else drawPhotonDot(ctx, S2, s, COL.greyB, 0.5 * alpha, { r: IA.pr * 0.8, trail: IA.trail * 0.75, scale });
+  }
   drawParticle(ctx, 350, 165, IA.R, warm, alpha);
   if (look === 'wave') drawPacket(ctx, S, s, SH.color, alpha, { L: IA.L });
   else drawPhotonDot(ctx, S, s, SH.color, alpha, { r: IA.pr, trail: IA.trail, scale });
+}
+// The other directions an emitted photon can take, evenly around the particle (the beam's own, 0°, is left out).
+const IA_EMIT = [];
+function iaEmitPaths(Rc) {
+  if (IA_EMIT.Rc === Rc) return IA_EMIT;
+  IA_EMIT.length = 0; IA_EMIT.Rc = Rc;
+  for (let k = 1, n = 12; k < n; k++) {
+    const t = (2 * Math.PI * k) / n, c = Math.cos(t), sn = Math.sin(t);
+    IA_EMIT.push(pathSampler([[350 + Rc * c, 165 + Rc * sn], [350 + 900 * c, 165 + 900 * sn]]));
+  }
+  return IA_EMIT;
 }
 function drawInteract(ctx, dt, st) {
   const f = smooth(clamp(st.focus, 0, 1)), P = st.loopT;
@@ -4119,46 +4137,420 @@ function drawAverage(ctx, dt, st) {
   }
 }
 
+// ---------- pictures for the presentation ----------
+// The two ends of beat 15's spectrum, a physics lecture's chalkboard and a raymarcher with its code, and the fields in
+// beats 17–19 that use the same equation: starlight through dust, sunlight through the air, X-rays through a body.
+// Each draws into a rectangle in stage units, in its own units inside it, and only multiplies the opacity it is given.
+
+// ---- a physics lecture: a chalkboard full of equations (they don't have to mean much together) ----
+const CHALK = '#E4E1D8';
+const BOARD_TEX = [   // [TeX, x, y, size] in the board's units, 470 wide
+  [String.raw`\frac{dL}{ds} = -\sigma_t L + \sigma_a L_e + \sigma_s \int_{4\pi} f_p\, L\, d\omega'`, 26, 54, 25],
+  [String.raw`\nabla \cdot \mathbf{E} = \frac{\rho}{\varepsilon_0}`, 26, 132, 23],
+  [String.raw`\nabla \times \mathbf{B} = \mu_0 \mathbf{J} + \mu_0 \varepsilon_0 \frac{\partial \mathbf{E}}{\partial t}`, 26, 200, 23],
+  [String.raw`f_p(\theta) = \frac{1}{4\pi}\, \frac{1 - g^2}{(1 + g^2 - 2g\cos\theta)^{3/2}}`, 26, 272, 23],
+  [String.raw`\sigma_s = \frac{8\pi}{3}\, k^4 a^6 \left| \frac{m^2 - 1}{m^2 + 2} \right|^2`, 26, 340, 23],
+];
+// p writes the board line by line, then the sketch and the ring around the first line.
+function drawChalkboard(ctx, r, a, p) {
+  if (a <= 0.003) return;
+  const s = r[2] / 470, h = r[3] / s, n = BOARD_TEX.length;
+  ctx.save(); ctx.translate(r[0], r[1]); ctx.scale(s, s);
+  ctx.save(); ctx.globalAlpha *= a;
+  ctx.fillStyle = '#4A3828'; ctx.beginPath(); ctx.roundRect(-12, -12, 494, h + 24, 10); ctx.fill();   // the frame
+  ctx.fillStyle = '#21302A'; ctx.beginPath(); ctx.roundRect(0, 0, 470, h, 3); ctx.fill();               // the slate
+  ctx.fillStyle = 'rgba(255,255,255,0.035)';                                                           // old eraser swipes
+  for (const [x, y, rx, ry, t] of [[150, 96, 130, 24, -0.06], [320, 240, 150, 28, 0.04], [110, 318, 95, 18, 0.08]]) { ctx.beginPath(); ctx.ellipse(x, y, rx, ry, t, 0, Math.PI * 2); ctx.fill(); }
+  ctx.fillStyle = '#3B2C20'; ctx.fillRect(-18, h + 12, 506, 10);                                       // the tray, chalk and a duster on it
+  ctx.fillStyle = CHALK; ctx.fillRect(376, h + 5, 34, 7);
+  ctx.fillStyle = '#6B5A48'; ctx.fillRect(296, h + 2, 50, 10); ctx.fillStyle = '#9A9286'; ctx.fillRect(296, h + 9, 50, 3);
+  ctx.restore();
+  // the writing, a little crooked
+  ctx.translate(235, h / 2); ctx.rotate(-0.012); ctx.translate(-235, -h / 2);
+  let first = null;
+  BOARD_TEX.forEach(([src, x, y, size], i) => {
+    const q = clamp(p * (n + 1) - i, 0, 1); if (q <= 0) return;
+    const sp = drawTex(ctx, src, x, y, Math.min(size, 420 / Math.max(tex(src).w, 0.01)), { ax: 0, p: q, color: CHALK, alpha: 0.9 * a }); if (!i) first = sp;
+  });
+  const q = clamp(p * (n + 1) - n, 0, 1);
+  if (q > 0.003) {
+    // beside the short lines, a sketch: a ray meets a particle and leaves turned by θ
+    const cx = 392, cy = 164, t = -0.62, ux = Math.cos(t), uy = Math.sin(t);
+    ctx.save(); ctx.globalAlpha *= 0.9 * a * q; ctx.strokeStyle = CHALK; ctx.fillStyle = CHALK; ctx.lineWidth = 2.6; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.arc(cx, cy, 13, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx - 92, cy); ctx.lineTo(cx - 18, cy); ctx.stroke(); arrowTip(ctx, cx - 44, cy, 1, 0, 13, 6);
+    ctx.beginPath(); ctx.moveTo(cx + 16 * ux, cy + 16 * uy); ctx.lineTo(cx + 70 * ux, cy + 70 * uy); ctx.stroke(); arrowTip(ctx, cx + 74 * ux, cy + 74 * uy, ux, uy, 13, 6);
+    ctx.setLineDash([4, 7]); ctx.beginPath(); ctx.moveTo(cx + 18, cy); ctx.lineTo(cx + 70, cy); ctx.stroke(); ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(cx, cy, 44, t, 0); ctx.stroke();
+    // and a ring around the first line, the way a lecturer marks the one that matters
+    if (first && first.length) {
+      let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+      for (const sp of first) { const [l, rr, tt, b] = inkBox(sp); x0 = Math.min(x0, l); x1 = Math.max(x1, rr); y0 = Math.min(y0, tt); y1 = Math.max(y1, b); }
+      ctx.beginPath();
+      ctx.moveTo(x0 - 14, y0 - 7); ctx.lineTo(x1 + 11, y0 - 10); ctx.moveTo(x1 + 7, y0 - 15); ctx.lineTo(x1 + 10, y1 + 8);
+      ctx.moveTo(x1 + 14, y1 + 6); ctx.lineTo(x0 - 10, y1 + 10); ctx.moveTo(x0 - 6, y1 + 13); ctx.lineTo(x0 - 9, y0 - 11);
+      ctx.stroke();
+    }
+    ctx.restore();
+    drawTex(ctx, String.raw`\theta`, cx + 58, cy - 13, 22, { color: CHALK, alpha: 0.9 * a * q });
+  }
+  ctx.restore();
+}
+
+// ---- a shader tutorial: a ray marched through a volume, and the loop that does it ----
+// The eye's ray steps through a grid of voxels with a cloud in it; at each step the light that is left (T) is
+// multiplied down, so the ray dims as it goes, and the current sample looks toward the light.
+const RM = { x0: 150, dx: 29, n: 9, period: 0.9 };
+const RM_BLOBS = [[235, 0.5, 46], [292, 0.36, 40], [318, 0.62, 52], [372, 0.45, 38], [262, 0.7, 30]];
+const rmDensity = (x, y, h) => RM_BLOBS.reduce((s, [bx, by, br]) => s + Math.exp(-((x - bx) ** 2 + (y - by * h) ** 2) / (2 * (br * 0.6) ** 2)), 0);
+function drawEyeIcon(ctx, x, y, dir, a) {   // the effect tiles' eye, looking along dir (+1 right, −1 left)
+  ctx.save(); ctx.globalAlpha *= a; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 3; ctx.fillStyle = BG;
+  ctx.beginPath(); ctx.moveTo(x - 37, y); ctx.quadraticCurveTo(x, y - 32, x + 37, y); ctx.quadraticCurveTo(x, y + 32, x - 37, y); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = COL.blue; ctx.beginPath(); ctx.arc(x + 7 * dir, y, 11, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(x + 9 * dir, y, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+function drawRaymarch(ctx, r, a, t) {
+  if (a <= 0.003) return;
+  const s = r[2] / 470, h = r[3] / s, cy = h / 2, { x0, dx, n } = RM, x1 = x0 + dx * n, y0 = 24, y1 = h - 24;
+  ctx.save(); ctx.translate(r[0], r[1]); ctx.scale(s, s); ctx.globalAlpha *= a;
+  ctx.fillStyle = '#141311'; ctx.strokeStyle = COL.greyD; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(0, 0, 470, h, 10); ctx.fill(); ctx.stroke();
+  // the voxels, and the cloud in them
+  ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, x1 - x0, y1 - y0); ctx.clip();
+  for (const [bx, by, br] of RM_BLOBS) {
+    const g = ctx.createRadialGradient(bx, by * h, 0, bx, by * h, br * 1.4);
+    g.addColorStop(0, 'rgba(238,234,226,0.3)'); g.addColorStop(1, 'rgba(238,234,226,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(bx, by * h, br * 1.4, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+  ctx.strokeStyle = hexA(COL.greyC, 0.45); ctx.lineWidth = 1; ctx.beginPath();
+  for (let x = x0; x <= x1 + 0.5; x += dx) { ctx.moveTo(x, y0); ctx.lineTo(x, y1); }
+  for (let k = 0, m = 6; k <= m; k++) { const y = lerp(y0, y1, k / m); ctx.moveTo(x0, y); ctx.lineTo(x1, y); }
+  ctx.stroke();
+  // the light, up and to the right
+  const lx = 446, ly = 30, sg = ctx.createRadialGradient(lx, ly, 0, lx, ly, 26);
+  sg.addColorStop(0, hexA(COL.yellow, 0.5)); sg.addColorStop(1, hexA(COL.yellow, 0));
+  ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(lx, ly, 26, 0, Math.PI * 2); ctx.fill(); dot(ctx, lx, ly, 8, COL.yellow);
+  // the ray, as bright as the light left along it
+  const T = [1]; for (let i = 0; i < n; i++) T.push(T[i] * Math.exp(-0.5 * rmDensity(x0 + dx * (i + 0.5), cy, h)));
+  const cur = reduced ? n - 1 : Math.floor(Math.max(0, t) / RM.period) % (n + 2);   // two beats of rest after the last sample
+  ctx.lineCap = 'round'; ctx.lineWidth = 3;
+  ctx.strokeStyle = hexA(COL.greyA, 0.9); ctx.beginPath(); ctx.moveTo(92, cy); ctx.lineTo(x0, cy); ctx.stroke();
+  for (let i = 0; i < n; i++) { ctx.strokeStyle = hexA(COL.greyA, 0.9 * T[i + 1] + 0.08); ctx.beginPath(); ctx.moveTo(x0 + dx * i, cy); ctx.lineTo(x0 + dx * (i + 1), cy); ctx.stroke(); }
+  ctx.fillStyle = hexA(COL.greyA, 0.9 * T[n] + 0.08); arrowTip(ctx, x1 + 22, cy, 1, 0, 14, 6);
+  // the samples: done ones filled, the current one lit and looking toward the light
+  for (let i = 0; i < n; i++) {
+    const x = x0 + dx * (i + 0.5);
+    if (i === cur) {
+      ctx.save(); ctx.strokeStyle = hexA(COL.yellow, 0.7); ctx.lineWidth = 2; ctx.setLineDash([4, 6]); ctx.beginPath(); ctx.moveTo(x, cy); ctx.lineTo(lx, ly); ctx.stroke(); ctx.restore();
+      dot(ctx, x, cy, 7, COL.yellow);
+    } else if (i < cur) dot(ctx, x, cy, 4.5, COL.greyB);
+    else { ctx.strokeStyle = hexA(COL.greyB, 0.7); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, cy, 4.5, 0, Math.PI * 2); ctx.stroke(); }
+  }
+  drawEyeIcon(ctx, 52, cy, 1, 1);
+  ctx.restore();
+}
+// The loop, typed in as p goes 0 → 1, then with its body's lines lit one after another, in step with the samples.
+const RM_CODE = ['float T = 1.0;', 'for (int i = 0; i < N; i++) {', '    vec3 p = ro + t * rd;', '    T *= exp(-sigma(p) * dt);', '    t += dt;', '}'];
+const RM_TOK = /(\s+)|(\b(?:float|int|vec3|for)\b)|(\b(?:exp|sigma)\b)|(\b\d+(?:\.\d+)?\b)|([A-Za-z_]\w*)|(.)/g;
+function drawCodePanel(ctx, r, a, p, t) {
+  if (a <= 0.003) return;
+  const s = r[2] / 470, h = r[3] / s;
+  ctx.save(); ctx.translate(r[0], r[1]); ctx.scale(s, s); ctx.globalAlpha *= a;
+  ctx.fillStyle = '#141311'; ctx.strokeStyle = COL.greyD; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(0, 0, 470, h, 10); ctx.fill(); ctx.stroke();
+  [COL.red, COL.yellow, COL.green].forEach((c, i) => dot(ctx, 22 + 18 * i, 20, 5, c, 0.7));
+  const lh = 22.5, top = 46, left = 20, total = RM_CODE.reduce((s2, l) => s2 + l.length, 0);
+  let left2 = Math.floor(clamp(p, 0, 1) * total + 1e-6);
+  // the line being run
+  const k = Math.floor(Math.max(0, t) / RM.period) % (RM.n + 2);
+  if (p >= 1 && !reduced && k < RM.n) {
+    const line = 2 + Math.min(2, Math.floor(((Math.max(0, t) % RM.period) / RM.period) * 3));
+    ctx.fillStyle = hexA(COL.yellow, 0.13); ctx.fillRect(8, top + lh * line - lh * 0.72, 454, lh);
+  }
+  ctx.font = '500 18px "JetBrains Mono", ui-monospace, monospace'; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+  const cw = ctx.measureText('m').width;
+  RM_CODE.forEach((line, i) => {
+    if (left2 <= 0) return;
+    const shown = line.slice(0, left2); left2 -= line.length;
+    let x = left, m;
+    RM_TOK.lastIndex = 0;
+    while ((m = RM_TOK.exec(shown))) {
+      const c = m[1] ? null : m[2] ? COL.lavender : m[3] ? COL.blue : m[4] ? COL.gold : m[5] ? COL.greyA : COL.grey;
+      if (c) { ctx.fillStyle = c; ctx.fillText(m[0], x, top + lh * i); }
+      x += cw * m[0].length;
+    }
+  });
+  ctx.restore();
+}
+
+// ---- the fields: photons crossing some stuff ----
+// A handful of photons, each on a straight leg. In a step through the stuff one may be absorbed (it fades where it
+// is) or scattered (it turns to a random direction and carries on); one that reaches a receiver stops there.
+const newSpecks = (seed) => ({ list: [], acc: 0, rnd: rng32(seed) });
+function stepSpecks(P, dt, o) {
+  if (dt <= 0) return;
+  P.acc += dt * o.rate;
+  while (P.acc >= 1) { P.acc -= 1; const q = o.spawn(P.rnd); P.list.push(Object.assign({ s: 0, die: -1, scat: 0 }, q)); }
+  for (const q of P.list) {
+    if (q.die >= 0) { q.die += dt; continue; }
+    const step = o.speed * dt, n = Math.max(1, Math.ceil(step / 3)), ds = step / n;
+    for (let k = 0; k < n; k++) {
+      q.x += q.dx * ds; q.y += q.dy * ds; q.s += ds;
+      if (o.hit && o.hit(q)) { q.die = 0; q.hit = 1; if (o.onHit) o.onHit(q); break; }
+      const [sa, ss] = o.ext(q.x, q.y, q);
+      if (sa > 0 && P.rnd() < sa * ds) { q.die = 0; break; }
+      if (ss > 0 && P.rnd() < ss * ds) { const t = P.rnd() * Math.PI * 2; q.dx = Math.cos(t); q.dy = Math.sin(t); q.s = 0; q.scat++; }
+    }
+  }
+  const [x0, y0, x1, y1] = o.bounds;
+  P.list = P.list.filter((q) => (q.die < 0 ? q.x > x0 && q.x < x1 && q.y > y0 && q.y < y1 : q.die < 0.45));
+}
+function drawSpecks(ctx, P, { r = 4, trail = 28 } = {}) {
+  ctx.save(); ctx.lineCap = 'round';
+  for (const q of P.list) {
+    const f = q.die < 0 ? 1 : 1 - q.die / 0.45; if (f <= 0) continue;
+    const L = Math.min(trail, q.s);
+    if (L > 1 && q.die < 0) { ctx.strokeStyle = hexA(q.c, 0.32); ctx.lineWidth = r * 1.2; ctx.beginPath(); ctx.moveTo(q.x - q.dx * L, q.y - q.dy * L); ctx.lineTo(q.x, q.y); ctx.stroke(); }
+    dot(ctx, q.x, q.y, r * (q.die < 0 ? 1 : 1 + 0.9 * (1 - f)), q.c, q.die < 0 ? 1 : 0.85 * f);
+  }
+  ctx.restore();
+}
+// The first frame a card shows, its photons are already on their way.
+function warmSpecks(P, o, fresh) { if (fresh && !reduced) { P.list.length = 0; for (let k = 0; k < 40; k++) stepSpecks(P, 0.08, o); } }
+
+// ---- astronomy: starlight through interstellar dust, to a telescope ----
+const STARFIELD = (() => { const r = rng32(4242), out = []; for (let i = 0; i < 90; i++) out.push([r() * 700, r(), lerp(0.6, 1.9, r() ** 2), lerp(0.25, 0.85, r()), r() * 6.283]); return out; })();
+const DUST = [[330, 0.48, 95, 0.9], [395, 0.36, 70, 0.7], [290, 0.64, 70, 0.6], [420, 0.62, 85, 0.75], [352, 0.27, 55, 0.5], [255, 0.4, 50, 0.45]];
+const dustAt = (x, y, h) => DUST.reduce((s, [bx, by, br, w]) => s + w * Math.exp(-((x - bx) ** 2 + (y - by * h) ** 2) / (2 * (br * 0.55) ** 2)), 0);
+const SPK_STARS = newSpecks(11);
+function drawTelescope(ctx, x, y) {   // its aperture at (x, y), looking left
+  ctx.save(); ctx.fillStyle = BODY; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 2.5; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x + 56, y + 14); ctx.lineTo(x + 30, y + 96); ctx.moveTo(x + 56, y + 14); ctx.lineTo(x + 58, y + 100); ctx.moveTo(x + 56, y + 14); ctx.lineTo(x + 86, y + 96); ctx.stroke();
+  ctx.beginPath(); ctx.roundRect(x + 10, y - 14, 92, 28, 4); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.roundRect(x, y - 19, 18, 38, 3); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.roundRect(x + 102, y - 6, 16, 12, 2); ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+function drawUseStars(ctx, dt, h, fresh) {
+  const cy = h / 2, sx = 72, tx = 560;
+  ctx.fillStyle = '#0F1015'; ctx.fillRect(0, 0, 700, h);
+  for (const [x, y, rr, b, ph] of STARFIELD) dot(ctx, x, y * h, rr, '#DCE3EE', b * (reduced ? 0.85 : 0.72 + 0.28 * Math.sin(TIME * 1.6 + ph)));
+  // the dust
+  for (const [bx, by, br, w] of DUST) {
+    const g = ctx.createRadialGradient(bx, by * h, 0, bx, by * h, br);
+    g.addColorStop(0, `rgba(156,102,66,${0.62 * w})`); g.addColorStop(0.6, `rgba(124,80,54,${0.28 * w})`); g.addColorStop(1, 'rgba(124,80,54,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(bx, by * h, br, 0, Math.PI * 2); ctx.fill();
+  }
+  // the line of sight, dimmer past the dust
+  ctx.save(); ctx.lineWidth = 2; ctx.lineCap = 'round';
+  let tau = 0; const N = 60;
+  for (let i = 0; i < N; i++) {
+    const xa = lerp(sx + 14, tx, i / N), xb = lerp(sx + 14, tx, (i + 1) / N);
+    tau += 0.0044 * dustAt((xa + xb) / 2, cy, h) * (xb - xa);
+    ctx.strokeStyle = `rgba(255,241,208,${0.3 * Math.exp(-tau)})`; ctx.beginPath(); ctx.moveTo(xa, cy); ctx.lineTo(xb, cy); ctx.stroke();
+  }
+  ctx.restore();
+  // the star
+  const sg = ctx.createRadialGradient(sx, cy, 0, sx, cy, 70);
+  sg.addColorStop(0, 'rgba(255,246,223,0.6)'); sg.addColorStop(1, 'rgba(255,246,223,0)');
+  ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(sx, cy, 70, 0, Math.PI * 2); ctx.fill();
+  ctx.save(); ctx.strokeStyle = 'rgba(255,246,223,0.55)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sx - 38, cy); ctx.lineTo(sx + 38, cy); ctx.moveTo(sx, cy - 38); ctx.lineTo(sx, cy + 38); ctx.stroke(); ctx.restore();
+  dot(ctx, sx, cy, 10, '#FFF6DF');
+  // its light on the way
+  const o = {
+    rate: 7, speed: 210, bounds: [-20, -20, 720, h + 20],
+    spawn: (rnd) => { const t = (rnd() - 0.5) * 0.05; return { x: sx + 14, y: cy + (rnd() - 0.5) * 8, dx: Math.cos(t), dy: Math.sin(t), c: '#FFF1D0' }; },
+    ext: (x, y) => { const d = dustAt(x, y, h); return [0.002 * d, 0.0024 * d]; },
+    hit: (q) => q.x >= tx && Math.abs(q.y - cy) <= 19,
+  };
+  warmSpecks(SPK_STARS, o, fresh); stepSpecks(SPK_STARS, dt, o);
+  if (!reduced) drawSpecks(ctx, SPK_STARS, { r: 3.6, trail: 24 });
+  drawTelescope(ctx, tx, cy);
+}
+
+// ---- climate science: sunlight through our atmosphere ----
+// Bluer light scatters more in the air, so most of what turns away is blue; the rest reaches the ground.
+const SPK_SKY = newSpecks(12);
+function drawUseSky(ctx, dt, h, fresh) {
+  const ex = 1000, ey = h * 0.6, R = 520, A = 64, sx = 66, sy = h * 0.6;
+  ctx.fillStyle = '#0F1116'; ctx.fillRect(0, 0, 700, h);
+  // the air: thickest at the ground, gone a little way up
+  const g = ctx.createRadialGradient(ex, ey, R, ex, ey, R + A);
+  g.addColorStop(0, 'rgba(116,166,234,0.5)'); g.addColorStop(0.45, 'rgba(116,166,234,0.17)'); g.addColorStop(1, 'rgba(116,166,234,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(ex, ey, R + A, 0, Math.PI * 2); ctx.fill();
+  // the ground, lit from the sun's side
+  const gg = ctx.createLinearGradient(ex - R, 0, 700, 0); gg.addColorStop(0, '#2C5677'); gg.addColorStop(1, '#14202B');
+  ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(ex, ey, R, 0, Math.PI * 2); ctx.fill();
+  ctx.save(); ctx.strokeStyle = 'rgba(170,205,240,0.55)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(ex, ey, R, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+  // the sun
+  const sg = ctx.createRadialGradient(sx, sy, 0, sx, sy, 130);
+  sg.addColorStop(0, hexA(COL.yellow, 0.45)); sg.addColorStop(1, hexA(COL.yellow, 0));
+  ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(sx, sy, 130, 0, Math.PI * 2); ctx.fill();
+  dot(ctx, sx, sy, 38, '#FFD98A');
+  // sunlight on the way: one photon in three bluish
+  const dist = (q) => Math.hypot(q.x - ex, q.y - ey);
+  const o = {
+    rate: 10, speed: 230, bounds: [-20, -20, 720, h + 20],
+    spawn: (rnd) => {
+      const ty = lerp(0.12, 0.96, rnd()) * h, tx2 = ex - Math.sqrt(Math.max(0, (R + 20) ** 2 - (ty - ey) ** 2));
+      const dx = tx2 - sx, dy = ty - sy, L = Math.hypot(dx, dy), blue = rnd() < 0.34;
+      return { x: sx + (dx / L) * 44, y: sy + (dy / L) * 44, dx: dx / L, dy: dy / L, c: blue ? '#9EC3F2' : '#FFE7B0', blue };
+    },
+    ext: (x, y, q) => { const d = Math.hypot(x - ex, y - ey) - R; if (d > A || d < 0) return [0, 0]; const rho = Math.exp(-d / 22); return [0.0015 * rho, (q.blue ? 0.034 : 0.006) * rho]; },
+    hit: (q) => dist(q) < R,
+  };
+  warmSpecks(SPK_SKY, o, fresh); stepSpecks(SPK_SKY, dt, o);
+  if (!reduced) drawSpecks(ctx, SPK_SKY, { r: 3.6, trail: 24 });
+}
+
+// ---- medical imaging: X-rays through a body, onto a detector ----
+// A slice through a chest: soft tissue, two lungs (mostly air), the spine and the breastbone. The detector shows how
+// much of each ray gets through, the line integral along it; photons that arrive flash where they land.
+const XR = { fx: 98, dx0: 604, half: 165, n: 66 };
+function xrayDensity(x, y, h) {
+  const cx = 350, cy = h / 2;
+  if (((x - cx) / 128) ** 2 + ((y - cy) / 102) ** 2 > 1) return 0;
+  if ((x - cx) ** 2 + (y - (cy + 64)) ** 2 <= 18 * 18) return 0.045;
+  if (Math.abs(x - cx) <= 9 && Math.abs(y - (cy - 86)) <= 9) return 0.035;
+  for (const sx of [-1, 1]) if (((x - (cx + 52 * sx)) / 40) ** 2 + ((y - (cy - 12)) / 56) ** 2 <= 1) return 0.0012;
+  return 0.0048;
+}
+const XR_CACHE = { h: 0, T: null };
+function xrayProfile(h) {
+  if (XR_CACHE.h === h) return XR_CACHE.T;
+  const cy = h / 2, T = new Float64Array(XR.n);
+  for (let b = 0; b < XR.n; b++) {
+    const y = cy - XR.half + ((b + 0.5) / XR.n) * 2 * XR.half, L = Math.hypot(XR.dx0 - XR.fx, y - cy), m = 400;
+    let tau = 0; for (let k = 0; k < m; k++) { const u = (k + 0.5) / m; tau += xrayDensity(lerp(XR.fx, XR.dx0, u), lerp(cy, y, u), h) * (L / m); }
+    T[b] = Math.exp(-tau);
+  }
+  return Object.assign(XR_CACHE, { h, T }).T;
+}
+const SPK_XRAY = newSpecks(13), XR_FLASH = [];
+function drawUseXray(ctx, dt, h, fresh) {
+  const cy = h / 2, cx = 350, { fx, dx0, half } = XR, tissue = 'rgba(214,170,150,';
+  ctx.fillStyle = '#111317'; ctx.fillRect(0, 0, 700, h);
+  // the fan of rays
+  ctx.save(); ctx.fillStyle = 'rgba(170,200,255,0.05)'; ctx.beginPath(); ctx.moveTo(fx, cy); ctx.lineTo(dx0, cy - half); ctx.lineTo(dx0, cy + half); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(170,200,255,0.25)'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 8]); ctx.beginPath(); ctx.moveTo(fx, cy); ctx.lineTo(dx0, cy - half); ctx.moveTo(fx, cy); ctx.lineTo(dx0, cy + half); ctx.stroke(); ctx.restore();
+  // the body
+  ctx.save(); ctx.fillStyle = tissue + '0.2)'; ctx.strokeStyle = tissue + '0.6)'; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.ellipse(cx, cy, 128, 102, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = 'rgba(12,14,18,0.6)'; ctx.strokeStyle = tissue + '0.3)'; ctx.lineWidth = 2;
+  for (const s2 of [-1, 1]) { ctx.beginPath(); ctx.ellipse(cx + 52 * s2, cy - 12, 40, 56, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+  ctx.fillStyle = '#E6DFD0'; ctx.beginPath(); ctx.arc(cx, cy + 64, 18, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#3A3530'; ctx.beginPath(); ctx.arc(cx, cy + 60, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#E6DFD0'; ctx.beginPath(); ctx.roundRect(cx - 9, cy - 95, 18, 18, 4); ctx.fill();
+  ctx.restore();
+  // the tube
+  ctx.save(); ctx.fillStyle = BODY; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.roundRect(24, cy - 38, 70, 76, 8); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = NOZZLE; ctx.beginPath(); ctx.roundRect(88, cy - 12, 12, 24, 3); ctx.fill(); ctx.stroke(); ctx.restore();
+  // the X-rays on the way
+  const o = {
+    rate: 18, speed: 280, bounds: [-20, -20, 720, h + 20],
+    spawn: (rnd) => { const t = (rnd() * 2 - 1) * Math.atan(half / (dx0 - fx)) * 0.98; return { x: fx + 4, y: cy, dx: Math.cos(t), dy: Math.sin(t), c: '#C4DAFF' }; },
+    ext: (x, y) => [xrayDensity(x, y, h), 0],
+    hit: (q) => q.x >= dx0,
+    onHit: (q) => { if (!fresh) XR_FLASH.push([q.y, 0]); },
+  };
+  warmSpecks(SPK_XRAY, o, fresh); stepSpecks(SPK_XRAY, dt, o);
+  if (!reduced) drawSpecks(ctx, SPK_XRAY, { r: 3.2, trail: 22 });
+  // the detector: how much of each ray gets through
+  const T = xrayProfile(h), bh = (2 * half) / XR.n;
+  ctx.save(); ctx.fillStyle = BODY; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(dx0, cy - half - 8, 34, 2 * half + 16, 4); ctx.fill(); ctx.stroke();
+  for (let b = 0; b < XR.n; b++) { ctx.fillStyle = `rgba(225,236,255,${0.04 + 0.92 * T[b] ** 0.8})`; ctx.fillRect(dx0 + 4, cy - half + b * bh, 22, bh + 0.5); }
+  for (let i = XR_FLASH.length - 1; i >= 0; i--) {
+    const f = XR_FLASH[i]; f[1] += dt;
+    if (f[1] > 0.5) { XR_FLASH.splice(i, 1); continue; }
+    dot(ctx, dx0 + 15, f[0], 5 + 6 * f[1], '#E8F0FF', 0.8 * (1 - f[1] / 0.5));
+  }
+  ctx.restore();
+}
+
 // ---------- presentation mode: the video, one key press per beat ----------
 // V (or the Present button) hides the controls and plays the script's beats on the stage: → or Enter for the next
 // beat, ← for the one before, Space pauses every animation, R replays the beat, Home and End jump, Esc leaves.
-// Going to a beat rebuilds the ones before it instantly, so stepping back shows a beat the way it ends. The state
-// of a presentation lives in PS; the scenes it borrows (the cloud) keep their own.
+// Going to a beat rebuilds the ones before it instantly, so stepping back shows a beat the way it ends. Each beat
+// has its number from script.md (#present-15b opens that one). The state of a presentation lives in PS; the scenes it
+// borrows (the cloud) keep their own.
 const PRES = { on: false, paused: false, beat: 0, toast: -99, epoch: 0, saved: null };
 // The cloud as the hook shows it: a thin cloud the beam gets a quarter of the way through, no reading, the camera
 // low behind the laser. It drifts to the right the whole time (PRES_DRIFT rad/s; negative drifts the other way).
 const PRES_CLOUD = { readout: 0, dens: 0.04, sigA: 20, sigS: 10, beamY: 0, beamZ: -0.005, aim: 0, aimUp: 0, yaw: -1.2, pitch: 0.22, dist: 3.8, zoom: 0, eye: 0 };
 const PRES_DRIFT = 0.03;
-const PS_DEFAULTS = () => ({ orbit: 1, mag: 0, aside: 0, fig: 0, thoughts: 0, think: '', writeP: 1, eq: 0, eqP: 0, corner: 0, braces: [], hiTerm: null, hi: {}, dim: 0, box: 0, cap: '', capP: 0, cells: [0, 0, 0, 0], cellT: [0, 0, 0, 0], grid: 1 });
 // The four effects' cells under the equation, in the order of the terms: absorption, out-scattering, emission, in-scattering.
 const PCELLS = [[370, 480, 590, 278], [990, 480, 590, 278], [370, 790, 590, 278], [990, 790, 590, 278]];
 const PFX = [['t-pabs', 'absorption', COL.red], ['t-pout', 'out-scattering', COL.red], ['t-pem', 'emission', COL.green], ['t-pin', 'in-scattering', COL.green]];
+// The three questions. Each one's highlight leaves the equation and becomes its own card, which keeps a place for the
+// animation that answers it later in the video. They are TODO for now: give a card draw(ctx, rect, alpha) to fill it.
+const QCARDS = [
+  { term: 't-qexp', name: 'why an integral in the exponent?', title: [String.raw`\text{why an integral}`, String.raw`\text{in the exponent?}`], todo: ['variable density'] },
+  { term: 't-qouter', name: 'inside another integral?', title: [String.raw`\text{inside another integral?}`], todo: ['optical depth:', 'an integral inside an integral'] },
+  { term: 't-qe', name: 'most importantly: why e?', title: [String.raw`\text{most importantly:}`, String.raw`\text{why }e\text{?}`], todo: ['the rays: the discrete version', 'on top of the continuous one'] },
+];
+const QCRECT = [[380, 470, 480, 540], [890, 470, 480, 540], [1400, 470, 480, 540]];
+// Beat 15: the spectrum from a physics lecture to a shader tutorial, the equation in between; under it, me now and
+// me later, and the goals (placeholders, like the thoughts were).
+const SPEC = { L: [50, 110, 470, 375], R: [1400, 110, 470, 375], y: 530, mid: [700, 1220] };
+const GOALS = [['by the end', 'you could have derived it yourself'], ['along the way', 'the beautiful physics behind it']];
+const FUT = { x: 640, y: 1030 };
+// Beat 16's caption, and beats 17–20: the fields that use the same equation, each a card with its picture in a 2 × 2
+// grid; the last, the cloud, grows over the other three.
+const PCAP = String.raw`\text{light, travelling some distance, through some }\textcolor{${COL.yellow}}{\text{stuff}}\text{.}`;
+const USES = [
+  { name: 'astronomy', label: 'astronomy', draw: drawUseStars },
+  { name: 'climate science', label: 'climate science', draw: drawUseSky },
+  { name: 'medical imaging', label: 'medical imaging', draw: drawUseXray },
+  { name: 'a cloud', label: 'computer graphics', draw: null },
+];
+const UCARDS = [[370, 330, 590, 335], [990, 330, 590, 335], [370, 695, 590, 335], [990, 695, 590, 335]], UGROW = [370, 330, 1210, 700];
+const PS_DEFAULTS = () => ({
+  orbit: 1, mag: 0, aside: 0, fig: 0, think: '', writeP: 1, eq: 0, eqP: 0, corner: 0, braces: [], hi: {}, dim: 0,
+  cells: [0, 0, 0, 0], cellT: [0, 0, 0, 0], grid: 1,
+  qc: QCARDS.map(() => ({ box: 0, m: 0, title: 0, todo: 0 })), qcA: 1,
+  eqMid: 0, eqTop: 0, spec: [0, 0, 0], chalk: 0, code: 0, specT: 0, fut: 0, futW: 0, goals: [0, 0], p15: 1, cap: 0,
+  uses: [0, 0, 0, 0], grow: 0,
+});
 const PS = PS_DEFAULTS();
-// Placeholders for what the figure thinks while the narration is about me; replace them with the real thoughts.
-const THOUGHTS = ['clouds… from physics?!', 'one day', 'later. definitely later.'];
 // The equation, with its terms named: the four effects for the braces, and the parts the questions point at.
 const PRTE = String.raw`L(p,\omega) = \htmlClass{t-qouter}{\int_0^{d}} \htmlClass{t-qe}{e}^{\htmlClass{t-qexp}{\htmlClass{t-pabs}{-\int_0^{t}\sigma_a(p_s)\,ds}\htmlClass{t-pout}{-\int_0^{t}\sigma_s(p_s)\,ds}}}\left[\htmlClass{t-pem}{\sigma_a(p_t)\,L_e(p_t,\omega)} + \htmlClass{t-pin}{\sigma_s(p_t)\int_{4\pi} f_p(\omega,\omega')\,L(p_t,\omega')\,d\omega'}\right]dt`;
 Object.assign(TERM_COL, { 't-pabs': hexRgb(COL.red), 't-pout': hexRgb(COL.red), 't-pem': hexRgb(COL.green), 't-pin': hexRgb(COL.green), 't-qe': WHITE_RGB, 't-qexp': WHITE_RGB, 't-qouter': WHITE_RGB });
 const PEQ = { x: 960, y: 300, size: 76, fit: 1760 };
-let peqSprites = null;
+// Where the equation sits: big under the hook, small in the middle of the spectrum (beat 15), at the top (beat 16 on).
+const EQPOSE = { home: [960, 300, 1], mid: [960, 300, 0.45], top: [960, 118, 0.6] };
+const eqXf = (st) => { const a = smooth(clamp(st.eqMid, 0, 1)), b = smooth(clamp(st.eqTop, 0, 1)); return [0, 1, 2].map((j) => lerp(lerp(EQPOSE.home[j], EQPOSE.mid[j], a), EQPOSE.top[j], b)); };
+let peqSprites = null, peqB = null;
 const peq = () => peqSprites || (peqSprites = place(tex(PRTE), { ...PEQ, size: Math.min(PEQ.size, PEQ.fit / Math.max(tex(PRTE).w, 0.01)) }));
+// the equation's ink, [left, right, top, bottom], where it sits under the hook
+const peqBox = () => peqB || (peqB = peq().reduce((b, s) => { const [l, r, t, bb] = inkBox(s); return [Math.min(b[0], l), Math.max(b[1], r), Math.min(b[2], t), Math.max(b[3], bb)]; }, [Infinity, -Infinity, Infinity, -Infinity]));
 const ptw = (key, to, dur, o = {}) => tween(PS, key, to, dur, { tag: 'pres', ...o });
-// The beats: a name and what happens when it is reached. Each returns when its animation is done.
+const ptwi = (obj, key, to, dur, o = {}) => tween(obj, key, to, dur, { tag: 'pres', ...o });
+// The beats: their number in script.md, a name, and what happens when one is reached. Each returns when its
+// animation is done.
 const BEATS = [
-  { name: 'the cloud', run: () => { Object.assign(PS, PS_DEFAULTS()); SK.zoom = 0; SK.eye = 0; SK.laser = 1; untween(SK, 'front'); SK.front = 1; } },
-  { name: 'the magnifier', run: () => ptw('mag', 1, 1.6) },
-  { name: 'aside: me', run: async () => { ptw('fig', 1, 1.2, { delay: 0.9 }); await ptw('aside', 1, 1.6); } },
-  ...THOUGHTS.map((t, i) => ({ name: `thought ${i + 1}`, run: () => { PS.thoughts = i + 1; PS.think = t; PS.writeP = 0; return ptw('writeP', 1, 0.9, { ease: linear }); } })),
-  { name: 'the equation', run: async () => {
+  { n: '1', name: 'the cloud', run: () => { Object.assign(PS, PS_DEFAULTS()); SK.zoom = 0; SK.eye = 0; SK.laser = 1; untween(SK, 'front'); SK.front = 1; } },
+  { n: '2', name: 'the magnifier', run: () => ptw('mag', 1, 1.6) },
+  { n: '3', name: 'aside: me', run: async () => { ptw('fig', 1, 1.2, { delay: 0.9 }); await ptw('aside', 1, 1.6); } },
+  { n: '7', name: 'the equation', run: async () => {
     PS.think = '?'; PS.writeP = 1; PS.eq = 1; PS.eqP = 0;
     ptw('corner', 1, 1.4); ptw('aside', 2, 1.4);
     await ptw('eqP', 1, 3.2, { ease: linear, delay: 0.5 });
   } },
-  ...PFX.map(([term, label, color], i) => ({ name: label, run: () => { PS.cellT[i] = TIME + 0.4; return Promise.all([presBrace(term, label, color), tween(PS.cells, i, 1, 1.1, { tag: 'pres' })]); } })),
-  { name: 'why an integral in the exponent?', run: () => presQuestion('t-qexp', String.raw`\text{why an integral in the exponent?}`) },
-  { name: 'inside another integral?', run: () => presQuestion('t-qouter', String.raw`\text{inside another integral?}`) },
-  { name: 'most importantly: why e?', run: () => presQuestion('t-qe', String.raw`\text{most importantly: why } e\text{?}`) },
+  ...PFX.map(([term, label, color], i) => ({ n: String(8 + i), name: label, run: () => { PS.cellT[i] = TIME + 0.4; return Promise.all([presBrace(term, label, color), ptwi(PS.cells, i, 1, 1.1)]); } })),
+  ...QCARDS.map((q, i) => ({ n: String(12 + i), name: q.name, run: () => presQuestion(i) })),
+  { n: '15', name: 'the part in between', run: presSpectrum },
+  { n: '15b', name: 'by the end', run: () => presGoal(0) },
+  { n: '15c', name: 'along the way', run: () => presGoal(1) },
+  { n: '16', name: 'some stuff', run: presDefine },
+  ...USES.map((u, i) => ({ n: String(17 + i), name: u.name, run: () => presUse(i) })),
 ];
+// A beat by its number in the script; a number between two beats opens the next one.
+function presIndex(label) {
+  const i = BEATS.findIndex((b) => b.n === String(label).toLowerCase()); if (i >= 0) return i;
+  const v = parseFloat(label), j = BEATS.findIndex((b) => parseFloat(b.n) >= v);
+  return !Number.isFinite(v) ? 0 : j >= 0 ? j : BEATS.length - 1;
+}
 // A brace under a term of the equation, in the equation scene's style.
 function presBrace(term, label, color) {
   const ss = peq().filter((s) => s.a.terms.includes(term)); if (!ss.length) return Promise.resolve();
@@ -4170,18 +4562,48 @@ function presBrace(term, label, color) {
   for (let guard = 0; guard < 6 && PS.braces.some((o) => Math.abs(o.ly - ly) < lh * 0.9 && !(cx + lw / 2 + 24 < o.lx0 || cx - lw / 2 - 24 > o.lx1)); guard++) ly += lh * 1.05;
   Object.assign(b, { ly, lx0: cx - lw / 2, lx1: cx + lw / 2, lab: place(LT, { x: cx, y: ly, size: lsize }) });
   PS.braces.push(b);
-  tween(PS.hi, term, 1, 0.5, { tag: 'pres' });
-  return Promise.all([tween(b, 'g', 1, 0.75, { tag: 'pres' }), tween(b, 'l', 1, 0.5, { delay: 0.4, tag: 'pres' })]);
+  ptwi(PS.hi, term, 1, 0.5);
+  return Promise.all([ptwi(b, 'g', 1, 0.75), ptwi(b, 'l', 1, 0.5, { delay: 0.4 })]);
 }
-// A question: the braces go, the named part keeps its colour inside a box, the rest greys out, a caption under it.
-async function presQuestion(term, caption) {
-  for (const k of Object.keys(PS.hi)) if (k !== term) tween(PS.hi, k, 0, 0.5, { tag: 'pres' });
-  for (const b of PS.braces) tween(b, 'a', 0, 0.5, { tag: 'pres' });
+// A question: the braces and the cells go, the named part keeps its colour and gets a box while the rest greys out;
+// then the box, with a copy of the part, moves down into the question's card, where the question is written.
+async function presQuestion(i) {
+  const term = QCARDS[i].term, c = PS.qc[i];
+  for (const k of Object.keys(PS.hi)) if (k !== term) ptwi(PS.hi, k, 0, 0.5);
+  for (const b of PS.braces) ptwi(b, 'a', 0, 0.5);
   ptw('grid', 0, 0.5);
-  tween(PS.hi, term, 1, 0.6, { tag: 'pres' }); ptw('dim', 1, 0.7);
-  PS.hiTerm = term; PS.cap = caption; PS.capP = 0;
-  if (PS.box < 1) ptw('box', 1, 0.6); else { PS.box = 0; ptw('box', 1, 0.6); }
-  await ptw('capP', 1, 0.8, { ease: linear, delay: 0.3 });
+  ptwi(PS.hi, term, 1, 0.6); ptw('dim', 1, 0.7);
+  await ptwi(c, 'box', 1, 0.6);
+  await ptwi(c, 'm', 1, 1.3, { delay: 0.3 });
+  ptwi(c, 'todo', 1, 0.7, { delay: 0.3 });
+  await ptwi(c, 'title', 1, 0.9, { ease: linear });
+}
+// Beat 15: the cards go and the equation shrinks into the middle; the lecture comes in on one side, the shader on
+// the other, then the line between them, its middle marked.
+async function presSpectrum() {
+  ptw('qcA', 0, 0.6); ptw('dim', 0, 0.6);
+  for (const k of Object.keys(PS.hi)) ptwi(PS.hi, k, 0, 0.6);
+  ptw('eqMid', 1, 1.3, { delay: 0.2 });
+  PS.specT = TIME + 1.6;
+  ptwi(PS.spec, 0, 1, 0.8, { delay: 0.5 }); ptw('chalk', 1, 2.4, { ease: linear, delay: 0.7 });
+  ptwi(PS.spec, 1, 1, 0.8, { delay: 1.4 }); ptw('code', 1, 1.4, { ease: linear, delay: 1.6 });
+  await ptwi(PS.spec, 2, 1, 1.1, { delay: 2.3 });
+}
+// Beat 15b: an arrow from me now to me later, who understands it, and the first goal; 15c: the second goal.
+async function presGoal(i) {
+  if (i === 0) { ptw('fut', 1, 1.6); ptw('futW', 1, 1.1, { ease: linear, delay: 1.3 }); }
+  await ptwi(PS.goals, i, 1, 1.3, { ease: linear, delay: i === 0 ? 0.7 : 0 });
+}
+// Beat 16: the spectrum, the future and the goals go; the equation moves to the top and the caption writes under it.
+async function presDefine() {
+  ptw('p15', 0, 0.6);
+  await ptw('eqTop', 1, 1.3, { delay: 0.2 });
+  await ptw('cap', 1, 1.5, { ease: linear });
+}
+// Beats 17–20: a field's card fades into its place; the cloud's then grows over the other three.
+async function presUse(i) {
+  await ptwi(PS.uses, i, 1, 0.9);
+  if (i === 3) await ptw('grow', 1, 1.8, { delay: 0.6 });
 }
 async function presGo(k, play) {
   k = clamp(k, 0, BEATS.length - 1);
@@ -4202,6 +4624,7 @@ function setPresent(on, beat = 0) {
     PRES.saved = {}; for (const k of Object.keys(PRES_CLOUD)) PRES.saved[k] = SK[k];
     Object.assign(SK, PRES_CLOUD);
     if (SK.quality !== 'high') { PRES.saved.quality = SK.quality; SK.quality = 'high'; }   // the camera moves, so the frames can't average: render finer instead
+    try { document.fonts.load('500 18px "JetBrains Mono"'); } catch (e) { /* the code falls back to any monospace */ }
     PRES.beat = -1; presGo(beat, true);
   } else { stopTweens('pres'); if (PRES.saved) { Object.assign(SK, PRES.saved); PRES.saved = null; } }
 }
@@ -4277,6 +4700,112 @@ function drawMagnifier(ctx, cam, B, m) {
   ctx.restore();
 }
 const presCv = document.createElement('canvas'), presCtx = presCv.getContext('2d');
+// The cloud drawn offscreen, the whole stage, for a card to show part of.
+function presCloudOffscreen(dt, withMag) {
+  if (presCv.width !== cv.width || presCv.height !== cv.height) { presCv.width = cv.width; presCv.height = cv.height; }
+  const c = presCtx; c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; c.fillStyle = BG; c.fillRect(0, 0, presCv.width, presCv.height);
+  c.setTransform(K, 0, 0, K, 0, 0); c.textAlign = 'left'; c.textBaseline = 'alphabetic'; c.lineCap = 'butt'; c.setLineDash([]);
+  drawCloud3D(c, dt, SK);
+  if (withMag && PS.mag > 0.003) drawMagnifier(c, v3cam(SK), v3beam(SK), PS.mag);
+}
+// A question's card: the box around its part of the equation grows into the card, the part carried along to its top,
+// then the question under it and a place for its animation.
+function drawQCards(ctx, st) {
+  const ga = st.qcA; if (ga <= 0.003) return;
+  QCARDS.forEach((q, i) => {
+    const c = st.qc[i]; if (c.box <= 0.003) return;
+    const ss = peq().filter((s) => s.a.terms.includes(q.term)); if (!ss.length) return;
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (const s of ss) { const [l, r, t, b] = inkBox(s); x0 = Math.min(x0, l); x1 = Math.max(x1, r); y0 = Math.min(y0, t); y1 = Math.max(y1, b); }
+    const pad = 16, m = smooth(clamp(c.m, 0, 1)), C = QCRECT[i], a = smooth(clamp(c.box, 0, 1)) * ga;
+    const R = lerpRect([x0 - pad, y0 - pad, x1 - x0 + 2 * pad, y1 - y0 + 2 * pad], C, m);
+    ctx.save(); ctx.strokeStyle = hexA(COL.yellow, a * lerp(1, 0.75, m)); ctx.lineWidth = 3.5; ctx.beginPath(); ctx.roundRect(R[0], R[1], R[2], R[3], lerp(10, 16, m)); ctx.stroke(); ctx.restore();
+    if (m > 0.003) {   // the part itself, carried into the card
+      const w0 = x1 - x0, h0 = y1 - y0, k = lerp(1, Math.min((C[2] - 80) / w0, 110 / h0, 2.6), m);
+      const cx = lerp((x0 + x1) / 2, C[0] + C[2] / 2, m), cy = lerp((y0 + y1) / 2, C[1] + 92, m);
+      ctx.save(); ctx.translate(cx, cy); ctx.scale(k, k); ctx.translate(-(x0 + x1) / 2, -(y0 + y1) / 2);
+      for (const s of ss) drawSprite(ctx, s, s.alpha * a, WHITE_RGB);
+      ctx.restore();
+    }
+    if (c.title > 0.003) q.title.forEach((src, j) => drawTex(ctx, src, C[0] + C[2] / 2, C[1] + 196 + j * 44, 32, { p: c.title, color: COL.yellow, alpha: ga }));
+    if (c.todo > 0.003) (q.draw || drawTodo)(ctx, [C[0] + 26, C[1] + 290, C[2] - 52, C[3] - 316], c.todo * ga, q);
+  });
+}
+function drawTodo(ctx, r, a, q) {
+  ctx.save(); ctx.strokeStyle = hexA(COL.greyD, a); ctx.lineWidth = 2; ctx.setLineDash([9, 9]); ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 10); ctx.stroke(); ctx.restore();
+  const cx = r[0] + r[2] / 2, n = q.todo.length, y = r[1] + r[3] / 2 - (n * 34) / 2;
+  drawTex(ctx, String.raw`\text{TODO}`, cx, y - 8, 30, { color: COL.grey, alpha: a });
+  q.todo.forEach((line, j) => drawTex(ctx, String.raw`\text{${line}}`, cx, y + 40 + j * 34, 25, { color: COL.grey, alpha: a }));
+}
+// Beat 15: the chalkboard and the raymarcher at the two ends, the line between them, its middle marked.
+function drawSpectrum(ctx, st) {
+  const ga = smooth(clamp(st.p15, 0, 1)); if (ga <= 0.003) return;
+  const [l, r, m] = st.spec.map((v) => smooth(clamp(v, 0, 1))), y = SPEC.y, xa = SPEC.L[0] + SPEC.L[2] / 2, xb = SPEC.R[0] + SPEC.R[2] / 2;
+  if (m > 0.003) {
+    // the line, drawn in from both ends toward the middle
+    const g = ctx.createLinearGradient(xa, 0, xb, 0); g.addColorStop(0, COL.gold); g.addColorStop(1, COL.blue);
+    ctx.save(); ctx.globalAlpha = ga; ctx.strokeStyle = g; ctx.lineWidth = 4; ctx.lineCap = 'round';
+    const reach = (960 - xa) * m;
+    ctx.beginPath(); ctx.moveTo(xa, y); ctx.lineTo(xa + reach, y); ctx.moveTo(xb, y); ctx.lineTo(xb - reach, y); ctx.stroke();
+    ctx.fillStyle = g; for (const x of [xa, xb]) { ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI * 2); ctx.fill(); }
+    // the part in between
+    const k = smooth(clamp((st.spec[2] - 0.55) / 0.45, 0, 1)), [m0, m1] = SPEC.mid, half = ((m1 - m0) / 2) * k;
+    if (k > 0.003) {
+      ctx.strokeStyle = hexA(COL.yellow, 1); ctx.lineWidth = 9; ctx.beginPath(); ctx.moveTo(960 - half, y); ctx.lineTo(960 + half, y); ctx.stroke();
+      ctx.lineWidth = 3.5; ctx.beginPath(); for (const x of [960 - half, 960 + half]) { ctx.moveTo(x, y - 20); ctx.lineTo(x, y + 20); } ctx.stroke();
+      // up to the equation, wherever it is: this is the part the video is about
+      const [ex, ey, ek] = eqXf(st), B = peqBox(), X = (v) => ex + (v - PEQ.x) * ek, Y = (v) => ey + (v - PEQ.y) * ek;
+      ctx.strokeStyle = hexA(COL.yellow, 0.55 * k); ctx.lineWidth = 2; ctx.setLineDash([6, 9]); ctx.beginPath();
+      ctx.moveTo(960 - half, y - 26); ctx.lineTo(X(B[0]), Y(B[3]) + 22); ctx.moveTo(960 + half, y - 26); ctx.lineTo(X(B[1]), Y(B[3]) + 22); ctx.stroke(); ctx.setLineDash([]);
+    }
+    ctx.restore();
+  }
+  if (l > 0.003) drawTex(ctx, String.raw`\text{physics lecture}`, xa, y + 46, 32, { color: COL.gold, alpha: l * ga });
+  if (r > 0.003) drawTex(ctx, String.raw`\text{shader tutorial}`, xb, y + 46, 32, { color: COL.blue, alpha: r * ga });
+  drawChalkboard(ctx, SPEC.L, l * ga, st.chalk);
+  const R = SPEC.R, t = TIME - st.specT;
+  drawRaymarch(ctx, [R[0], R[1], R[2], 190], r * ga, t);
+  drawCodePanel(ctx, [R[0], R[1] + 200, R[2], R[3] - 200], r * ga, st.code, t);
+}
+// Beat 15b: an arrow from me now to me later, and what I think then.
+function drawFuture(ctx, st) {
+  const ga = smooth(clamp(st.p15, 0, 1)) * smooth(clamp(st.fut / 0.6, 0, 1)); if (ga <= 0.003) return;
+  const g = smooth(clamp(st.fut / 0.7, 0, 1)), x0 = 232, x1 = lerp(x0, 548, g), y = 905;
+  ctx.save(); ctx.globalAlpha = ga; ctx.strokeStyle = COL.greyB; ctx.fillStyle = COL.greyB; ctx.lineWidth = 4; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1 - 18, y); ctx.stroke(); arrowTip(ctx, x1, y, 1, 0, 26, 12); ctx.restore();
+  const fa = smooth(clamp((st.fut - 0.55) / 0.45, 0, 1)) * smooth(clamp(st.p15, 0, 1));
+  drawFigure(ctx, FUT.x, FUT.y, 1, fa);
+  drawThought(ctx, FUT.x + 150, FUT.y - 365, 380, 110, 'I understand it now', st.futW, fa);
+}
+// Beats 15b–c: the goals, beside the figures.
+function drawGoals(ctx, st) {
+  const ga = smooth(clamp(st.p15, 0, 1)); if (ga <= 0.003) return;
+  GOALS.forEach(([tag, text], i) => {
+    const p = st.goals[i]; if (p <= 0.003) return;
+    const y = 700 + i * 160, T = tex(String.raw`\text{${text}}`), size = Math.min(46, 790 / Math.max(T.w, 0.01));
+    drawTex(ctx, String.raw`\text{${tag}}`, 1070, y, 32, { ax: 0, color: COL.grey, alpha: ga * smooth(clamp(p * 3, 0, 1)) });
+    drawTex(ctx, String.raw`\text{${text}}`, 1070, y + 56, size, { ax: 0, p, alpha: ga });
+  });
+}
+// Beats 17–20: the fields' cards. The cloud's shows the cloud itself, cropped to fill the card.
+function drawUses(ctx, dt, st) {
+  const grow = smooth(clamp(st.grow, 0, 1));
+  for (let i = 0; i < 4; i++) {
+    const u = USES[i], a = smooth(clamp(st.uses[i], 0, 1)) * (i < 3 ? 1 - grow : 1);
+    if (a <= 0.003) { u.seen = false; continue; }
+    const r = i === 3 ? lerpRect(UCARDS[3], UGROW, grow) : UCARDS[i], fresh = !u.seen; u.seen = true;
+    ctx.save(); ctx.globalAlpha = a; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip();
+    if (u.draw) { const s = r[2] / 700; ctx.translate(r[0], r[1]); ctx.scale(s, s); u.draw(ctx, dt, r[3] / s, fresh); }
+    else {
+      presCloudOffscreen(dt, false);
+      const ar = r[2] / r[3], sw = Math.min(W, H * ar), sh = Math.min(H, W / ar);
+      ctx.drawImage(presCv, ((W - sw) / 2) * K, ((H - sh) / 2) * K, sw * K, sh * K, r[0], r[1], r[2], r[3]);
+    }
+    ctx.restore();
+    ctx.save(); ctx.strokeStyle = hexA(COL.greyC, a); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.stroke(); ctx.restore();
+    drawTex(ctx, String.raw`\text{${u.label}}`, r[0] + 22, r[1] + 18, 30, { ax: 0, ay: 0, color: COL.greyA, alpha: a });
+  }
+}
 function drawPresent(ctx, dt) {
   const st = PS;
   // the cloud, with the laser on and turning slowly; while it is the whole picture it draws straight onto the stage,
@@ -4284,13 +4813,9 @@ function drawPresent(ctx, dt) {
   if (st.orbit && !reduced) SK.yaw += dt * PRES_DRIFT;
   const asideIn = smooth(clamp(st.aside, 0, 1)), asideOut = smooth(clamp(st.aside - 1, 0, 1)), cloudA = 1 - asideOut;
   if (cloudA > 0.003) {
-    const cloud = (c) => { drawCloud3D(c, dt, SK); if (st.mag > 0.003) drawMagnifier(c, v3cam(SK), v3beam(SK), st.mag); };
-    if (asideIn <= 0.003) cloud(ctx);
+    if (asideIn <= 0.003) { drawCloud3D(ctx, dt, SK); if (st.mag > 0.003) drawMagnifier(ctx, v3cam(SK), v3beam(SK), st.mag); }
     else {
-      if (presCv.width !== cv.width || presCv.height !== cv.height) { presCv.width = cv.width; presCv.height = cv.height; }
-      const c = presCtx; c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; c.fillStyle = BG; c.fillRect(0, 0, presCv.width, presCv.height);
-      c.setTransform(K, 0, 0, K, 0, 0); c.textAlign = 'left'; c.textBaseline = 'alphabetic'; c.lineCap = 'butt'; c.setLineDash([]);
-      cloud(c);
+      presCloudOffscreen(dt, true);
       const card = lerpRect([0, 0, W, H], [60, 110, 1120, 630], asideIn);
       ctx.save(); ctx.globalAlpha = cloudA; ctx.beginPath(); ctx.roundRect(card[0], card[1], card[2], card[3], 14 * asideIn); ctx.clip();
       ctx.drawImage(presCv, card[0], card[1], card[2], card[3]); ctx.restore();
@@ -4304,15 +4829,18 @@ function drawPresent(ctx, dt) {
     const tw = lerp(400, 150, c), th = lerp(140, 90, c), tx = fx + lerp(110, 110, c), ty = fy - lerp(410, 330, c);
     drawThought(ctx, tx, ty, tw, th, st.think, st.writeP, fa);
   }
-  // the equation, its braces, and the question's box and caption
+  drawFuture(ctx, st);
+  // the equation, wherever it is, with its braces; the effects' cells under it; the questions' cards
   if (st.eq) {
-    const sp = peq(), a = 1;
-    drawSprites(ctx, sp, { p: st.eqP, alpha: a, hi: st.hi, dim: st.dim });
+    const [ex, ey, ek] = eqXf(st);
+    ctx.save(); ctx.translate(ex, ey); ctx.scale(ek, ek); ctx.translate(-PEQ.x, -PEQ.y);
+    drawSprites(ctx, peq(), { p: st.eqP, hi: st.hi, dim: st.dim });
     for (const b of st.braces) {
       if (b.a <= 0.003) continue;
       drawBrace(ctx, b.x0 + ((b.x1 - b.x0) * b.g) / 2, b.top, (b.x1 - b.x0) * b.g, b.h, b.th, b.color, Math.min(1, b.g * 4) * b.a);
       if (b.l > 0.003) for (const s of b.lab) drawSprite(ctx, shifted(s, 0, (1 - b.l) * 14), s.alpha * b.l * b.a, b.color);
     }
+    ctx.restore();
     const ga = smooth(clamp(st.grid, 0, 1));
     if (ga > 0.003) for (let i = 0; i < 4; i++) {
       const show = st.cells[i]; if (show <= 0.003) continue;
@@ -4323,20 +4851,18 @@ function drawPresent(ctx, dt) {
       ctx.save(); ctx.strokeStyle = hexA(PFX[i][2], 0.9 * a); ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.stroke(); ctx.restore();
       drawTex(ctx, String.raw`\text{${PFX[i][1]}}`, r[0] + 22, r[1] + 18, 34, { ax: 0, ay: 0, color: PFX[i][2], alpha: a });
     }
-    if (st.hiTerm && st.box > 0.003) {
-      const ss = sp.filter((s) => s.a.terms.includes(st.hiTerm));
-      let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
-      for (const s of ss) { const [l, r, t, b] = inkBox(s); x0 = Math.min(x0, l); x1 = Math.max(x1, r); y0 = Math.min(y0, t); y1 = Math.max(y1, b); }
-      const pad = 16, bx = smooth(st.box);
-      ctx.save(); ctx.strokeStyle = hexA(COL.yellow, bx); ctx.lineWidth = 3.5; ctx.beginPath(); ctx.roundRect(x0 - pad, y0 - pad, x1 - x0 + 2 * pad, y1 - y0 + 2 * pad, 10); ctx.stroke(); ctx.restore();
-      if (st.cap) drawTex(ctx, st.cap, 960, 640, 58, { p: st.capP, color: COL.yellow });
-    }
+    drawQCards(ctx, st);
   }
+  drawSpectrum(ctx, st);
+  drawGoals(ctx, st);
+  if (st.cap > 0.003) drawTex(ctx, PCAP, 960, 250, 46, { p: st.cap });
+  drawUses(ctx, dt, st);
   // a small counter after each press, and a pause mark while paused
   const ta = PRES.paused ? 1 : clamp(1.8 - (TIME - PRES.toast), 0, 1);
   if (ta > 0.003) {
+    const b = BEATS[PRES.beat];
     ctx.save(); ctx.globalAlpha = ta; ctx.font = '500 22px ' + 'Inter, system-ui, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = COL.grey;
-    ctx.fillText(`${PRES.beat + 1} / ${BEATS.length} · ${BEATS[PRES.beat].name}${PRES.paused ? ' · paused' : ''}`, 28, H - 26); ctx.restore();
+    ctx.fillText(`${b.n} · ${b.name}${PRES.paused ? ' · paused' : ''}   (${PRES.beat + 1} / ${BEATS.length})`, 28, H - 26); ctx.restore();
   }
 }
 
@@ -4539,9 +5065,9 @@ async function boot() {
   for (const id of ORDER) if (scenes[id].init) await scenes[id].init();
   await eqGo(0, false);
   buildTabs();
-  const h = location.hash.slice(1), pm = h.match(/^present(?:-(\d+))?$/);
+  const h = location.hash.slice(1), pm = h.match(/^present(?:-([0-9a-z]+))?$/i);
   setScene(pm ? 'cloud' : h);
-  if (pm) setPresent(true, pm[1] ? +pm[1] - 1 : 0);
+  if (pm) setPresent(true, pm[1] ? presIndex(pm[1]) : 0);
   last = performance.now(); raf = requestAnimationFrame(frame);
 }
 if (document.readyState === 'complete') boot(); else addEventListener('load', boot);

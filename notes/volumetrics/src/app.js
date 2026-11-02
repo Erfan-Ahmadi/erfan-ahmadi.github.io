@@ -1715,7 +1715,8 @@ function pointerArea(type, x, y) {
 // ---------- D. what light can do at a particle ----------
 // The storyboard's first row: one photon meets one particle. Absorption: the photon stops at the particle's
 // surface and is gone, and the particle warms a little. Out-scattering: it bounces off and leaves the beam's
-// direction. Emission: a warm particle sends one out along the beam. In-scattering: one coming from another
+// direction. Emission: a warm particle sends light out every way at once, and only the photon along the beam, the
+// one the eye gets, has colour (the old version, one photon toward the eye, is an option). In-scattering: one coming from another
 // direction bounces off into the beam's. These are the four terms of the transfer equation, coloured as its
 // braces are: blue takes light out of the beam, green puts light in. Then the other three fade, and absorption,
 // the one this video is about, fills the stage. Photons are particles by default (wave packets are an option),
@@ -1800,7 +1801,7 @@ function drawParticle(ctx, x, y, r, warm, alpha) {
 }
 const SI = defScene({
   id: 'interact', tab: 'What light can do', shared: true,
-  defaults: () => ({ show: [1, 1, 1, 1], lab: [1, 1, 1, 1], focus: 0, loopT: 3.2, t0: [0, 0.8, 1.6, 2.4], look: 'dot' }),
+  defaults: () => ({ show: [1, 1, 1, 1], lab: [1, 1, 1, 1], focus: 0, loopT: 3.2, t0: [0, 0.8, 1.6, 2.4], look: 'dot', emit: 'all' }),
   actions: [
     { id: 'play', label: 'Play', primary: true, run: async (st, alive) => {
       for (let i = 0; i < 4; i++) { untween(st.show, i); untween(st.lab, i); st.show[i] = 0; st.lab[i] = 0; }
@@ -1819,6 +1820,7 @@ const SI = defScene({
   ],
   params: [
     { type: 'select', key: 'look', label: 'Photons', options: [['dot', 'Particles'], ['wave', 'Wave packets']] },
+    { type: 'select', key: 'emit', label: 'Emission', options: [['all', 'In every direction'], ['one', 'Toward the eye only']] },
     { type: 'range', key: 'loopT', label: 'Time per photon (s)', min: 1.5, max: 8, step: 0.1, fmt: (v) => v.toFixed(1) },
   ],
   draw: drawInteract,
@@ -1855,14 +1857,30 @@ function drawIACell(ctx, i, u, P, alpha, look) {
     const tc = S.total / v;
     scale = 1 - clamp((u - tc) / 0.18, 0, 1);
     warm = u < tc ? 0 : u < tc + 0.25 ? smooth((u - tc) / 0.25) : Math.exp(-(u - tc - 0.25) / 0.7);
-  } else if (i === 2) {   // the particle warms, then a photon leaves its surface
+  } else if (i === 2) {   // the particle warms, then light leaves its surface
     s = v * (u - 0.5); scale = clamp((u - 0.5) / 0.15, 0, 1);
     warm = u < 0.55 ? smooth(u / 0.55) : Math.exp(-(u - 0.55) / 0.6);
   }
   drawIAPaths(ctx, i, paths, Rc, alpha);
+  // emission goes every way at once; only the photon heading along the beam reaches the eye, so only it has colour
+  if (i === 2 && SI.emit !== 'one') for (const S2 of iaEmitPaths(Rc)) {
+    if (look === 'wave') drawPacket(ctx, S2, s, COL.greyB, 0.4 * alpha, { L: IA.L * 0.8, amp: 8, w: 3 });
+    else drawPhotonDot(ctx, S2, s, COL.greyB, 0.5 * alpha, { r: IA.pr * 0.8, trail: IA.trail * 0.75, scale });
+  }
   drawParticle(ctx, 350, 165, IA.R, warm, alpha);
   if (look === 'wave') drawPacket(ctx, S, s, SH.color, alpha, { L: IA.L });
   else drawPhotonDot(ctx, S, s, SH.color, alpha, { r: IA.pr, trail: IA.trail, scale });
+}
+// The other directions an emitted photon can take, evenly around the particle (the beam's own, 0°, is left out).
+const IA_EMIT = [];
+function iaEmitPaths(Rc) {
+  if (IA_EMIT.Rc === Rc) return IA_EMIT;
+  IA_EMIT.length = 0; IA_EMIT.Rc = Rc;
+  for (let k = 1, n = 12; k < n; k++) {
+    const t = (2 * Math.PI * k) / n, c = Math.cos(t), sn = Math.sin(t);
+    IA_EMIT.push(pathSampler([[350 + Rc * c, 165 + Rc * sn], [350 + 900 * c, 165 + 900 * sn]]));
+  }
+  return IA_EMIT;
 }
 function drawInteract(ctx, dt, st) {
   const f = smooth(clamp(st.focus, 0, 1)), P = st.loopT;
@@ -2736,9 +2754,9 @@ async function boot() {
   for (const id of ORDER) if (scenes[id].init) await scenes[id].init();
   await eqGo(0, false);
   buildTabs();
-  const h = location.hash.slice(1), pm = h.match(/^present(?:-(\d+))?$/);
+  const h = location.hash.slice(1), pm = h.match(/^present(?:-([0-9a-z]+))?$/i);
   setScene(pm ? 'cloud' : h);
-  if (pm) setPresent(true, pm[1] ? +pm[1] - 1 : 0);
+  if (pm) setPresent(true, pm[1] ? presIndex(pm[1]) : 0);
   last = performance.now(); raf = requestAnimationFrame(frame);
 }
 if (document.readyState === 'complete') boot(); else addEventListener('load', boot);

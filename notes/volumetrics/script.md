@@ -17,27 +17,27 @@ The working script below has light edits; the original drafts, word for word, ar
 **7.** [The card goes. The figure shrinks into the bottom-left corner and stays there. The equation writes in, large; the thought cloud becomes "?".]
 > Mainly because the first thing I ran into was a formula that looked like this. And it made me feel… not smart.
 
-**8.–11.** [One press per effect: a brace grows from the left under its term and its cell fades into its place in a 2 × 2 grid under the equation, its name in its corner, the photon and the particle playing in it. Every cell shows the paths in a neutral grey with arrows, the beam's line through the particle toward an eye at the right, all on the centre line. Absorption and out-scattering in red, emission and in-scattering in green. Nothing already on screen changes.]
+**8.–11.** [One press per effect: a brace grows from the left under its term and its cell fades into its place in a 2 × 2 grid under the equation, its name in its corner, the photon and the particle playing in it. Every cell shows the paths in a neutral grey with arrows, the beam's line through the particle toward an eye at the right, all on the centre line. Absorption and out-scattering in red, emission and in-scattering in green. In emission, light leaves the particle every way at once, and only the photon heading for the eye has colour. Nothing already on screen changes.]
 > So this time I tried once more, and it made a little more sense. Each term is a different way light and the medium interact. [absorption] Some take light away. [out-scattering] [emission] Some add light. [in-scattering] Don't worry about which is which yet, we'll come back to all four in a minute.
 
-**12.** [The braces and the grid fade. A box goes around the integral in the exponent, and everything outside it greys out. Under the equation: "why an integral in the exponent?" The question drops into a card that stays.]
+**12.** [The braces and the grid fade. A box goes around the integral in the exponent, and everything outside it greys out. Then the box, carrying what it holds, moves down and opens into a card that stays: the question under it, "why an integral in the exponent?", and a place for the animation that answers it later (TODO: variable density).]
 > But nobody explained to me why there is an integral inside an exponent…
 
-**13.** [The box moves to the outer integral sign, from 0 to $d$. A second card.]
+**13.** [A box goes around the outer integral sign, from 0 to $d$, and becomes the second card: "inside another integral?" (TODO: optical depth, an integral inside an integral).]
 > …inside another integral.
 
-**14.** [The box moves to the $e$. A third card: "most importantly: why $e$?" The three cards sit in a row under the equation: the video's map.]
+**14.** [A box goes around the $e$ and becomes the third card: "most importantly: why $e$?" (TODO: the rays, the discrete version on top of the continuous one). The three cards sit in a row under the equation: the video's map.]
 > And most importantly: why $e$? Why exponentials at all? And honestly, the answers turned out to be simpler, and more interesting, than I expected.
 
 ## Part 2: what this is, and what we keep
 
-**15.** [The equation and the three cards stay. The figure's thought cloud: "?" becomes "!".]
+**15.–15c.** [Three presses, at "This video isn't…", "By the end…" and "And along the way…". The cards go and the equation shrinks into the middle of a spectrum: a physics lecture's chalkboard at one end, a raymarcher and its shader code at the other, then the line between them with its middle marked. Next, an arrow grows from the figure, still "?", to its future self, who thinks "I understand it now", and the first goal writes in beside them: "by the end: you could have derived it yourself". Last, the second: "along the way: the beautiful physics behind it". The goals' wording is a placeholder.]
 > This video isn't a physics lecture, and it isn't a shader tutorial. It's the part in between. By the end, I want this equation to feel less like something handed to you, and more like something you could have derived yourself. And along the way, we'll run into some surprisingly beautiful physics hiding behind a formula most of us skim over, or just copy and paste into code. So, forget the symbols for a minute.
 
-**16.** [The equation shrinks to the top. Under it, the caption: "light, travelling some distance, through some stuff."]
+**16.** [The spectrum, the future self and the goals go. The equation moves to the top, and under it the caption writes in: "light, travelling some distance, through some stuff."]
 > In plain words, this equation describes one thing: what happens to light as it travels some distance through some stuff.
 
-**17.–20.** [One press per field: a card with a picture placeholder. Astronomy, climate, medical imaging, then the cloud with the laser, which grows to take the space of the other three.]
+**17.–20.** [One press per field, each a playing card in a 2 × 2 grid: astronomy (starlight through dust on its way to a telescope), climate science (sunlight through the atmosphere, the bluer light scattering away), medical imaging (X-rays through a chest onto a detector), then computer graphics: the cloud with the laser, which grows to take the space of the other three.]
 > And "stuff" really can be anything. In astronomy, it's the dust between the stars, and the light is starlight on its way to a telescope. In climate science, it's our own atmosphere. In medical imaging, it's your body, and the light is an X-ray. And for me, it's a cloud, and the light is a laser. Different stuff, same equation. Because whatever the stuff is, there are only four things it can do to light passing through. We saw them a minute ago.
 
 **21.** [The four tiles return under the equation, playing. Absorption's tile brightens; the others dim a little while it is named.]
@@ -69,7 +69,7 @@ The working script below has light edits; the original drafts, word for word, ar
 **25.** [Every "− 50%" becomes "× ½". The sensor settles on 25%. A third slab: 12.5%.]
 > But that's not what happens. It reads 25%. A third: 12.5%. Each cloud halves whatever reaches it. Why half of what's left, and not the same amount again? That question is the whole video.
 
-(Beats 15–25 are narration only so far; their visuals are not built yet.)
+(Beats 21–25 are narration only so far; their visuals are not built yet.)
 
 ## Why this order
 
@@ -77,6 +77,6 @@ Confusion → goal → definition: each block answers the question the one befor
 
 ## Open
 
-- The three thoughts in beats 4–6 are placeholders.
-- Whether the question captions in beats 12–14 stay as cards (as written), or the spoken question is enough.
-- Beats 15–25: visuals to build: the cards that stay, the four field cards with picture placeholders, the three cells greying out, the slabs quiz.
+- The cards in beats 12–14 hold TODO placeholders for the animations that answer them.
+- The two goals written on screen in beat 15 are placeholders.
+- Beats 21–25: visuals to build: the four tiles named one by one, three of them greying out, the slabs quiz.

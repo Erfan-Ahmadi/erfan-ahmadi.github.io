@@ -1,43 +1,86 @@
 // ---------- presentation mode: the video, one key press per beat ----------
 // V (or the Present button) hides the controls and plays the script's beats on the stage: → or Enter for the next
 // beat, ← for the one before, Space pauses every animation, R replays the beat, Home and End jump, Esc leaves.
-// Going to a beat rebuilds the ones before it instantly, so stepping back shows a beat the way it ends. The state
-// of a presentation lives in PS; the scenes it borrows (the cloud) keep their own.
+// Going to a beat rebuilds the ones before it instantly, so stepping back shows a beat the way it ends. Each beat
+// has its number from script.md (#present-15b opens that one). The state of a presentation lives in PS; the scenes it
+// borrows (the cloud) keep their own.
 const PRES = { on: false, paused: false, beat: 0, toast: -99, epoch: 0, saved: null };
 // The cloud as the hook shows it: a thin cloud the beam gets a quarter of the way through, no reading, the camera
 // low behind the laser. It drifts to the right the whole time (PRES_DRIFT rad/s; negative drifts the other way).
 const PRES_CLOUD = { readout: 0, dens: 0.04, sigA: 20, sigS: 10, beamY: 0, beamZ: -0.005, aim: 0, aimUp: 0, yaw: -1.2, pitch: 0.22, dist: 3.8, zoom: 0, eye: 0 };
 const PRES_DRIFT = 0.03;
-const PS_DEFAULTS = () => ({ orbit: 1, mag: 0, aside: 0, fig: 0, thoughts: 0, think: '', writeP: 1, eq: 0, eqP: 0, corner: 0, braces: [], hiTerm: null, hi: {}, dim: 0, box: 0, cap: '', capP: 0, cells: [0, 0, 0, 0], cellT: [0, 0, 0, 0], grid: 1 });
 // The four effects' cells under the equation, in the order of the terms: absorption, out-scattering, emission, in-scattering.
 const PCELLS = [[370, 480, 590, 278], [990, 480, 590, 278], [370, 790, 590, 278], [990, 790, 590, 278]];
 const PFX = [['t-pabs', 'absorption', COL.red], ['t-pout', 'out-scattering', COL.red], ['t-pem', 'emission', COL.green], ['t-pin', 'in-scattering', COL.green]];
+// The three questions. Each one's highlight leaves the equation and becomes its own card, which keeps a place for the
+// animation that answers it later in the video. They are TODO for now: give a card draw(ctx, rect, alpha) to fill it.
+const QCARDS = [
+  { term: 't-qexp', name: 'why an integral in the exponent?', title: [String.raw`\text{why an integral}`, String.raw`\text{in the exponent?}`], todo: ['variable density'] },
+  { term: 't-qouter', name: 'inside another integral?', title: [String.raw`\text{inside another integral?}`], todo: ['optical depth:', 'an integral inside an integral'] },
+  { term: 't-qe', name: 'most importantly: why e?', title: [String.raw`\text{most importantly:}`, String.raw`\text{why }e\text{?}`], todo: ['the rays: the discrete version', 'on top of the continuous one'] },
+];
+const QCRECT = [[380, 470, 480, 540], [890, 470, 480, 540], [1400, 470, 480, 540]];
+// Beat 15: the spectrum from a physics lecture to a shader tutorial, the equation in between; under it, me now and
+// me later, and the goals (placeholders, like the thoughts were).
+const SPEC = { L: [50, 110, 470, 375], R: [1400, 110, 470, 375], y: 530, mid: [700, 1220] };
+const GOALS = [['by the end', 'you could have derived it yourself'], ['along the way', 'the beautiful physics behind it']];
+const FUT = { x: 640, y: 1030 };
+// Beat 16's caption, and beats 17–20: the fields that use the same equation, each a card with its picture in a 2 × 2
+// grid; the last, the cloud, grows over the other three.
+const PCAP = String.raw`\text{light, travelling some distance, through some }\textcolor{${COL.yellow}}{\text{stuff}}\text{.}`;
+const USES = [
+  { name: 'astronomy', label: 'astronomy', draw: drawUseStars },
+  { name: 'climate science', label: 'climate science', draw: drawUseSky },
+  { name: 'medical imaging', label: 'medical imaging', draw: drawUseXray },
+  { name: 'a cloud', label: 'computer graphics', draw: null },
+];
+const UCARDS = [[370, 330, 590, 335], [990, 330, 590, 335], [370, 695, 590, 335], [990, 695, 590, 335]], UGROW = [370, 330, 1210, 700];
+const PS_DEFAULTS = () => ({
+  orbit: 1, mag: 0, aside: 0, fig: 0, think: '', writeP: 1, eq: 0, eqP: 0, corner: 0, braces: [], hi: {}, dim: 0,
+  cells: [0, 0, 0, 0], cellT: [0, 0, 0, 0], grid: 1,
+  qc: QCARDS.map(() => ({ box: 0, m: 0, title: 0, todo: 0 })), qcA: 1,
+  eqMid: 0, eqTop: 0, spec: [0, 0, 0], chalk: 0, code: 0, specT: 0, fut: 0, futW: 0, goals: [0, 0], p15: 1, cap: 0,
+  uses: [0, 0, 0, 0], grow: 0,
+});
 const PS = PS_DEFAULTS();
-// Placeholders for what the figure thinks while the narration is about me; replace them with the real thoughts.
-const THOUGHTS = ['clouds… from physics?!', 'one day', 'later. definitely later.'];
 // The equation, with its terms named: the four effects for the braces, and the parts the questions point at.
 const PRTE = String.raw`L(p,\omega) = \htmlClass{t-qouter}{\int_0^{d}} \htmlClass{t-qe}{e}^{\htmlClass{t-qexp}{\htmlClass{t-pabs}{-\int_0^{t}\sigma_a(p_s)\,ds}\htmlClass{t-pout}{-\int_0^{t}\sigma_s(p_s)\,ds}}}\left[\htmlClass{t-pem}{\sigma_a(p_t)\,L_e(p_t,\omega)} + \htmlClass{t-pin}{\sigma_s(p_t)\int_{4\pi} f_p(\omega,\omega')\,L(p_t,\omega')\,d\omega'}\right]dt`;
 Object.assign(TERM_COL, { 't-pabs': hexRgb(COL.red), 't-pout': hexRgb(COL.red), 't-pem': hexRgb(COL.green), 't-pin': hexRgb(COL.green), 't-qe': WHITE_RGB, 't-qexp': WHITE_RGB, 't-qouter': WHITE_RGB });
 const PEQ = { x: 960, y: 300, size: 76, fit: 1760 };
-let peqSprites = null;
+// Where the equation sits: big under the hook, small in the middle of the spectrum (beat 15), at the top (beat 16 on).
+const EQPOSE = { home: [960, 300, 1], mid: [960, 300, 0.45], top: [960, 118, 0.6] };
+const eqXf = (st) => { const a = smooth(clamp(st.eqMid, 0, 1)), b = smooth(clamp(st.eqTop, 0, 1)); return [0, 1, 2].map((j) => lerp(lerp(EQPOSE.home[j], EQPOSE.mid[j], a), EQPOSE.top[j], b)); };
+let peqSprites = null, peqB = null;
 const peq = () => peqSprites || (peqSprites = place(tex(PRTE), { ...PEQ, size: Math.min(PEQ.size, PEQ.fit / Math.max(tex(PRTE).w, 0.01)) }));
+// the equation's ink, [left, right, top, bottom], where it sits under the hook
+const peqBox = () => peqB || (peqB = peq().reduce((b, s) => { const [l, r, t, bb] = inkBox(s); return [Math.min(b[0], l), Math.max(b[1], r), Math.min(b[2], t), Math.max(b[3], bb)]; }, [Infinity, -Infinity, Infinity, -Infinity]));
 const ptw = (key, to, dur, o = {}) => tween(PS, key, to, dur, { tag: 'pres', ...o });
-// The beats: a name and what happens when it is reached. Each returns when its animation is done.
+const ptwi = (obj, key, to, dur, o = {}) => tween(obj, key, to, dur, { tag: 'pres', ...o });
+// The beats: their number in script.md, a name, and what happens when one is reached. Each returns when its
+// animation is done.
 const BEATS = [
-  { name: 'the cloud', run: () => { Object.assign(PS, PS_DEFAULTS()); SK.zoom = 0; SK.eye = 0; SK.laser = 1; untween(SK, 'front'); SK.front = 1; } },
-  { name: 'the magnifier', run: () => ptw('mag', 1, 1.6) },
-  { name: 'aside: me', run: async () => { ptw('fig', 1, 1.2, { delay: 0.9 }); await ptw('aside', 1, 1.6); } },
-  ...THOUGHTS.map((t, i) => ({ name: `thought ${i + 1}`, run: () => { PS.thoughts = i + 1; PS.think = t; PS.writeP = 0; return ptw('writeP', 1, 0.9, { ease: linear }); } })),
-  { name: 'the equation', run: async () => {
+  { n: '1', name: 'the cloud', run: () => { Object.assign(PS, PS_DEFAULTS()); SK.zoom = 0; SK.eye = 0; SK.laser = 1; untween(SK, 'front'); SK.front = 1; } },
+  { n: '2', name: 'the magnifier', run: () => ptw('mag', 1, 1.6) },
+  { n: '3', name: 'aside: me', run: async () => { ptw('fig', 1, 1.2, { delay: 0.9 }); await ptw('aside', 1, 1.6); } },
+  { n: '7', name: 'the equation', run: async () => {
     PS.think = '?'; PS.writeP = 1; PS.eq = 1; PS.eqP = 0;
     ptw('corner', 1, 1.4); ptw('aside', 2, 1.4);
     await ptw('eqP', 1, 3.2, { ease: linear, delay: 0.5 });
   } },
-  ...PFX.map(([term, label, color], i) => ({ name: label, run: () => { PS.cellT[i] = TIME + 0.4; return Promise.all([presBrace(term, label, color), tween(PS.cells, i, 1, 1.1, { tag: 'pres' })]); } })),
-  { name: 'why an integral in the exponent?', run: () => presQuestion('t-qexp', String.raw`\text{why an integral in the exponent?}`) },
-  { name: 'inside another integral?', run: () => presQuestion('t-qouter', String.raw`\text{inside another integral?}`) },
-  { name: 'most importantly: why e?', run: () => presQuestion('t-qe', String.raw`\text{most importantly: why } e\text{?}`) },
+  ...PFX.map(([term, label, color], i) => ({ n: String(8 + i), name: label, run: () => { PS.cellT[i] = TIME + 0.4; return Promise.all([presBrace(term, label, color), ptwi(PS.cells, i, 1, 1.1)]); } })),
+  ...QCARDS.map((q, i) => ({ n: String(12 + i), name: q.name, run: () => presQuestion(i) })),
+  { n: '15', name: 'the part in between', run: presSpectrum },
+  { n: '15b', name: 'by the end', run: () => presGoal(0) },
+  { n: '15c', name: 'along the way', run: () => presGoal(1) },
+  { n: '16', name: 'some stuff', run: presDefine },
+  ...USES.map((u, i) => ({ n: String(17 + i), name: u.name, run: () => presUse(i) })),
 ];
+// A beat by its number in the script; a number between two beats opens the next one.
+function presIndex(label) {
+  const i = BEATS.findIndex((b) => b.n === String(label).toLowerCase()); if (i >= 0) return i;
+  const v = parseFloat(label), j = BEATS.findIndex((b) => parseFloat(b.n) >= v);
+  return !Number.isFinite(v) ? 0 : j >= 0 ? j : BEATS.length - 1;
+}
 // A brace under a term of the equation, in the equation scene's style.
 function presBrace(term, label, color) {
   const ss = peq().filter((s) => s.a.terms.includes(term)); if (!ss.length) return Promise.resolve();
@@ -49,18 +92,48 @@ function presBrace(term, label, color) {
   for (let guard = 0; guard < 6 && PS.braces.some((o) => Math.abs(o.ly - ly) < lh * 0.9 && !(cx + lw / 2 + 24 < o.lx0 || cx - lw / 2 - 24 > o.lx1)); guard++) ly += lh * 1.05;
   Object.assign(b, { ly, lx0: cx - lw / 2, lx1: cx + lw / 2, lab: place(LT, { x: cx, y: ly, size: lsize }) });
   PS.braces.push(b);
-  tween(PS.hi, term, 1, 0.5, { tag: 'pres' });
-  return Promise.all([tween(b, 'g', 1, 0.75, { tag: 'pres' }), tween(b, 'l', 1, 0.5, { delay: 0.4, tag: 'pres' })]);
+  ptwi(PS.hi, term, 1, 0.5);
+  return Promise.all([ptwi(b, 'g', 1, 0.75), ptwi(b, 'l', 1, 0.5, { delay: 0.4 })]);
 }
-// A question: the braces go, the named part keeps its colour inside a box, the rest greys out, a caption under it.
-async function presQuestion(term, caption) {
-  for (const k of Object.keys(PS.hi)) if (k !== term) tween(PS.hi, k, 0, 0.5, { tag: 'pres' });
-  for (const b of PS.braces) tween(b, 'a', 0, 0.5, { tag: 'pres' });
+// A question: the braces and the cells go, the named part keeps its colour and gets a box while the rest greys out;
+// then the box, with a copy of the part, moves down into the question's card, where the question is written.
+async function presQuestion(i) {
+  const term = QCARDS[i].term, c = PS.qc[i];
+  for (const k of Object.keys(PS.hi)) if (k !== term) ptwi(PS.hi, k, 0, 0.5);
+  for (const b of PS.braces) ptwi(b, 'a', 0, 0.5);
   ptw('grid', 0, 0.5);
-  tween(PS.hi, term, 1, 0.6, { tag: 'pres' }); ptw('dim', 1, 0.7);
-  PS.hiTerm = term; PS.cap = caption; PS.capP = 0;
-  if (PS.box < 1) ptw('box', 1, 0.6); else { PS.box = 0; ptw('box', 1, 0.6); }
-  await ptw('capP', 1, 0.8, { ease: linear, delay: 0.3 });
+  ptwi(PS.hi, term, 1, 0.6); ptw('dim', 1, 0.7);
+  await ptwi(c, 'box', 1, 0.6);
+  await ptwi(c, 'm', 1, 1.3, { delay: 0.3 });
+  ptwi(c, 'todo', 1, 0.7, { delay: 0.3 });
+  await ptwi(c, 'title', 1, 0.9, { ease: linear });
+}
+// Beat 15: the cards go and the equation shrinks into the middle; the lecture comes in on one side, the shader on
+// the other, then the line between them, its middle marked.
+async function presSpectrum() {
+  ptw('qcA', 0, 0.6); ptw('dim', 0, 0.6);
+  for (const k of Object.keys(PS.hi)) ptwi(PS.hi, k, 0, 0.6);
+  ptw('eqMid', 1, 1.3, { delay: 0.2 });
+  PS.specT = TIME + 1.6;
+  ptwi(PS.spec, 0, 1, 0.8, { delay: 0.5 }); ptw('chalk', 1, 2.4, { ease: linear, delay: 0.7 });
+  ptwi(PS.spec, 1, 1, 0.8, { delay: 1.4 }); ptw('code', 1, 1.4, { ease: linear, delay: 1.6 });
+  await ptwi(PS.spec, 2, 1, 1.1, { delay: 2.3 });
+}
+// Beat 15b: an arrow from me now to me later, who understands it, and the first goal; 15c: the second goal.
+async function presGoal(i) {
+  if (i === 0) { ptw('fut', 1, 1.6); ptw('futW', 1, 1.1, { ease: linear, delay: 1.3 }); }
+  await ptwi(PS.goals, i, 1, 1.3, { ease: linear, delay: i === 0 ? 0.7 : 0 });
+}
+// Beat 16: the spectrum, the future and the goals go; the equation moves to the top and the caption writes under it.
+async function presDefine() {
+  ptw('p15', 0, 0.6);
+  await ptw('eqTop', 1, 1.3, { delay: 0.2 });
+  await ptw('cap', 1, 1.5, { ease: linear });
+}
+// Beats 17–20: a field's card fades into its place; the cloud's then grows over the other three.
+async function presUse(i) {
+  await ptwi(PS.uses, i, 1, 0.9);
+  if (i === 3) await ptw('grow', 1, 1.8, { delay: 0.6 });
 }
 async function presGo(k, play) {
   k = clamp(k, 0, BEATS.length - 1);
@@ -81,6 +154,7 @@ function setPresent(on, beat = 0) {
     PRES.saved = {}; for (const k of Object.keys(PRES_CLOUD)) PRES.saved[k] = SK[k];
     Object.assign(SK, PRES_CLOUD);
     if (SK.quality !== 'high') { PRES.saved.quality = SK.quality; SK.quality = 'high'; }   // the camera moves, so the frames can't average: render finer instead
+    try { document.fonts.load('500 18px "JetBrains Mono"'); } catch (e) { /* the code falls back to any monospace */ }
     PRES.beat = -1; presGo(beat, true);
   } else { stopTweens('pres'); if (PRES.saved) { Object.assign(SK, PRES.saved); PRES.saved = null; } }
 }
@@ -156,6 +230,112 @@ function drawMagnifier(ctx, cam, B, m) {
   ctx.restore();
 }
 const presCv = document.createElement('canvas'), presCtx = presCv.getContext('2d');
+// The cloud drawn offscreen, the whole stage, for a card to show part of.
+function presCloudOffscreen(dt, withMag) {
+  if (presCv.width !== cv.width || presCv.height !== cv.height) { presCv.width = cv.width; presCv.height = cv.height; }
+  const c = presCtx; c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; c.fillStyle = BG; c.fillRect(0, 0, presCv.width, presCv.height);
+  c.setTransform(K, 0, 0, K, 0, 0); c.textAlign = 'left'; c.textBaseline = 'alphabetic'; c.lineCap = 'butt'; c.setLineDash([]);
+  drawCloud3D(c, dt, SK);
+  if (withMag && PS.mag > 0.003) drawMagnifier(c, v3cam(SK), v3beam(SK), PS.mag);
+}
+// A question's card: the box around its part of the equation grows into the card, the part carried along to its top,
+// then the question under it and a place for its animation.
+function drawQCards(ctx, st) {
+  const ga = st.qcA; if (ga <= 0.003) return;
+  QCARDS.forEach((q, i) => {
+    const c = st.qc[i]; if (c.box <= 0.003) return;
+    const ss = peq().filter((s) => s.a.terms.includes(q.term)); if (!ss.length) return;
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (const s of ss) { const [l, r, t, b] = inkBox(s); x0 = Math.min(x0, l); x1 = Math.max(x1, r); y0 = Math.min(y0, t); y1 = Math.max(y1, b); }
+    const pad = 16, m = smooth(clamp(c.m, 0, 1)), C = QCRECT[i], a = smooth(clamp(c.box, 0, 1)) * ga;
+    const R = lerpRect([x0 - pad, y0 - pad, x1 - x0 + 2 * pad, y1 - y0 + 2 * pad], C, m);
+    ctx.save(); ctx.strokeStyle = hexA(COL.yellow, a * lerp(1, 0.75, m)); ctx.lineWidth = 3.5; ctx.beginPath(); ctx.roundRect(R[0], R[1], R[2], R[3], lerp(10, 16, m)); ctx.stroke(); ctx.restore();
+    if (m > 0.003) {   // the part itself, carried into the card
+      const w0 = x1 - x0, h0 = y1 - y0, k = lerp(1, Math.min((C[2] - 80) / w0, 110 / h0, 2.6), m);
+      const cx = lerp((x0 + x1) / 2, C[0] + C[2] / 2, m), cy = lerp((y0 + y1) / 2, C[1] + 92, m);
+      ctx.save(); ctx.translate(cx, cy); ctx.scale(k, k); ctx.translate(-(x0 + x1) / 2, -(y0 + y1) / 2);
+      for (const s of ss) drawSprite(ctx, s, s.alpha * a, WHITE_RGB);
+      ctx.restore();
+    }
+    if (c.title > 0.003) q.title.forEach((src, j) => drawTex(ctx, src, C[0] + C[2] / 2, C[1] + 196 + j * 44, 32, { p: c.title, color: COL.yellow, alpha: ga }));
+    if (c.todo > 0.003) (q.draw || drawTodo)(ctx, [C[0] + 26, C[1] + 290, C[2] - 52, C[3] - 316], c.todo * ga, q);
+  });
+}
+function drawTodo(ctx, r, a, q) {
+  ctx.save(); ctx.strokeStyle = hexA(COL.greyD, a); ctx.lineWidth = 2; ctx.setLineDash([9, 9]); ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 10); ctx.stroke(); ctx.restore();
+  const cx = r[0] + r[2] / 2, n = q.todo.length, y = r[1] + r[3] / 2 - (n * 34) / 2;
+  drawTex(ctx, String.raw`\text{TODO}`, cx, y - 8, 30, { color: COL.grey, alpha: a });
+  q.todo.forEach((line, j) => drawTex(ctx, String.raw`\text{${line}}`, cx, y + 40 + j * 34, 25, { color: COL.grey, alpha: a }));
+}
+// Beat 15: the chalkboard and the raymarcher at the two ends, the line between them, its middle marked.
+function drawSpectrum(ctx, st) {
+  const ga = smooth(clamp(st.p15, 0, 1)); if (ga <= 0.003) return;
+  const [l, r, m] = st.spec.map((v) => smooth(clamp(v, 0, 1))), y = SPEC.y, xa = SPEC.L[0] + SPEC.L[2] / 2, xb = SPEC.R[0] + SPEC.R[2] / 2;
+  if (m > 0.003) {
+    // the line, drawn in from both ends toward the middle
+    const g = ctx.createLinearGradient(xa, 0, xb, 0); g.addColorStop(0, COL.gold); g.addColorStop(1, COL.blue);
+    ctx.save(); ctx.globalAlpha = ga; ctx.strokeStyle = g; ctx.lineWidth = 4; ctx.lineCap = 'round';
+    const reach = (960 - xa) * m;
+    ctx.beginPath(); ctx.moveTo(xa, y); ctx.lineTo(xa + reach, y); ctx.moveTo(xb, y); ctx.lineTo(xb - reach, y); ctx.stroke();
+    ctx.fillStyle = g; for (const x of [xa, xb]) { ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI * 2); ctx.fill(); }
+    // the part in between
+    const k = smooth(clamp((st.spec[2] - 0.55) / 0.45, 0, 1)), [m0, m1] = SPEC.mid, half = ((m1 - m0) / 2) * k;
+    if (k > 0.003) {
+      ctx.strokeStyle = hexA(COL.yellow, 1); ctx.lineWidth = 9; ctx.beginPath(); ctx.moveTo(960 - half, y); ctx.lineTo(960 + half, y); ctx.stroke();
+      ctx.lineWidth = 3.5; ctx.beginPath(); for (const x of [960 - half, 960 + half]) { ctx.moveTo(x, y - 20); ctx.lineTo(x, y + 20); } ctx.stroke();
+      // up to the equation, wherever it is: this is the part the video is about
+      const [ex, ey, ek] = eqXf(st), B = peqBox(), X = (v) => ex + (v - PEQ.x) * ek, Y = (v) => ey + (v - PEQ.y) * ek;
+      ctx.strokeStyle = hexA(COL.yellow, 0.55 * k); ctx.lineWidth = 2; ctx.setLineDash([6, 9]); ctx.beginPath();
+      ctx.moveTo(960 - half, y - 26); ctx.lineTo(X(B[0]), Y(B[3]) + 22); ctx.moveTo(960 + half, y - 26); ctx.lineTo(X(B[1]), Y(B[3]) + 22); ctx.stroke(); ctx.setLineDash([]);
+    }
+    ctx.restore();
+  }
+  if (l > 0.003) drawTex(ctx, String.raw`\text{physics lecture}`, xa, y + 46, 32, { color: COL.gold, alpha: l * ga });
+  if (r > 0.003) drawTex(ctx, String.raw`\text{shader tutorial}`, xb, y + 46, 32, { color: COL.blue, alpha: r * ga });
+  drawChalkboard(ctx, SPEC.L, l * ga, st.chalk);
+  const R = SPEC.R, t = TIME - st.specT;
+  drawRaymarch(ctx, [R[0], R[1], R[2], 190], r * ga, t);
+  drawCodePanel(ctx, [R[0], R[1] + 200, R[2], R[3] - 200], r * ga, st.code, t);
+}
+// Beat 15b: an arrow from me now to me later, and what I think then.
+function drawFuture(ctx, st) {
+  const ga = smooth(clamp(st.p15, 0, 1)) * smooth(clamp(st.fut / 0.6, 0, 1)); if (ga <= 0.003) return;
+  const g = smooth(clamp(st.fut / 0.7, 0, 1)), x0 = 232, x1 = lerp(x0, 548, g), y = 905;
+  ctx.save(); ctx.globalAlpha = ga; ctx.strokeStyle = COL.greyB; ctx.fillStyle = COL.greyB; ctx.lineWidth = 4; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1 - 18, y); ctx.stroke(); arrowTip(ctx, x1, y, 1, 0, 26, 12); ctx.restore();
+  const fa = smooth(clamp((st.fut - 0.55) / 0.45, 0, 1)) * smooth(clamp(st.p15, 0, 1));
+  drawFigure(ctx, FUT.x, FUT.y, 1, fa);
+  drawThought(ctx, FUT.x + 150, FUT.y - 365, 380, 110, 'I understand it now', st.futW, fa);
+}
+// Beats 15b–c: the goals, beside the figures.
+function drawGoals(ctx, st) {
+  const ga = smooth(clamp(st.p15, 0, 1)); if (ga <= 0.003) return;
+  GOALS.forEach(([tag, text], i) => {
+    const p = st.goals[i]; if (p <= 0.003) return;
+    const y = 700 + i * 160, T = tex(String.raw`\text{${text}}`), size = Math.min(46, 790 / Math.max(T.w, 0.01));
+    drawTex(ctx, String.raw`\text{${tag}}`, 1070, y, 32, { ax: 0, color: COL.grey, alpha: ga * smooth(clamp(p * 3, 0, 1)) });
+    drawTex(ctx, String.raw`\text{${text}}`, 1070, y + 56, size, { ax: 0, p, alpha: ga });
+  });
+}
+// Beats 17–20: the fields' cards. The cloud's shows the cloud itself, cropped to fill the card.
+function drawUses(ctx, dt, st) {
+  const grow = smooth(clamp(st.grow, 0, 1));
+  for (let i = 0; i < 4; i++) {
+    const u = USES[i], a = smooth(clamp(st.uses[i], 0, 1)) * (i < 3 ? 1 - grow : 1);
+    if (a <= 0.003) { u.seen = false; continue; }
+    const r = i === 3 ? lerpRect(UCARDS[3], UGROW, grow) : UCARDS[i], fresh = !u.seen; u.seen = true;
+    ctx.save(); ctx.globalAlpha = a; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip();
+    if (u.draw) { const s = r[2] / 700; ctx.translate(r[0], r[1]); ctx.scale(s, s); u.draw(ctx, dt, r[3] / s, fresh); }
+    else {
+      presCloudOffscreen(dt, false);
+      const ar = r[2] / r[3], sw = Math.min(W, H * ar), sh = Math.min(H, W / ar);
+      ctx.drawImage(presCv, ((W - sw) / 2) * K, ((H - sh) / 2) * K, sw * K, sh * K, r[0], r[1], r[2], r[3]);
+    }
+    ctx.restore();
+    ctx.save(); ctx.strokeStyle = hexA(COL.greyC, a); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.stroke(); ctx.restore();
+    drawTex(ctx, String.raw`\text{${u.label}}`, r[0] + 22, r[1] + 18, 30, { ax: 0, ay: 0, color: COL.greyA, alpha: a });
+  }
+}
 function drawPresent(ctx, dt) {
   const st = PS;
   // the cloud, with the laser on and turning slowly; while it is the whole picture it draws straight onto the stage,
@@ -163,13 +343,9 @@ function drawPresent(ctx, dt) {
   if (st.orbit && !reduced) SK.yaw += dt * PRES_DRIFT;
   const asideIn = smooth(clamp(st.aside, 0, 1)), asideOut = smooth(clamp(st.aside - 1, 0, 1)), cloudA = 1 - asideOut;
   if (cloudA > 0.003) {
-    const cloud = (c) => { drawCloud3D(c, dt, SK); if (st.mag > 0.003) drawMagnifier(c, v3cam(SK), v3beam(SK), st.mag); };
-    if (asideIn <= 0.003) cloud(ctx);
+    if (asideIn <= 0.003) { drawCloud3D(ctx, dt, SK); if (st.mag > 0.003) drawMagnifier(ctx, v3cam(SK), v3beam(SK), st.mag); }
     else {
-      if (presCv.width !== cv.width || presCv.height !== cv.height) { presCv.width = cv.width; presCv.height = cv.height; }
-      const c = presCtx; c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; c.fillStyle = BG; c.fillRect(0, 0, presCv.width, presCv.height);
-      c.setTransform(K, 0, 0, K, 0, 0); c.textAlign = 'left'; c.textBaseline = 'alphabetic'; c.lineCap = 'butt'; c.setLineDash([]);
-      cloud(c);
+      presCloudOffscreen(dt, true);
       const card = lerpRect([0, 0, W, H], [60, 110, 1120, 630], asideIn);
       ctx.save(); ctx.globalAlpha = cloudA; ctx.beginPath(); ctx.roundRect(card[0], card[1], card[2], card[3], 14 * asideIn); ctx.clip();
       ctx.drawImage(presCv, card[0], card[1], card[2], card[3]); ctx.restore();
@@ -183,15 +359,18 @@ function drawPresent(ctx, dt) {
     const tw = lerp(400, 150, c), th = lerp(140, 90, c), tx = fx + lerp(110, 110, c), ty = fy - lerp(410, 330, c);
     drawThought(ctx, tx, ty, tw, th, st.think, st.writeP, fa);
   }
-  // the equation, its braces, and the question's box and caption
+  drawFuture(ctx, st);
+  // the equation, wherever it is, with its braces; the effects' cells under it; the questions' cards
   if (st.eq) {
-    const sp = peq(), a = 1;
-    drawSprites(ctx, sp, { p: st.eqP, alpha: a, hi: st.hi, dim: st.dim });
+    const [ex, ey, ek] = eqXf(st);
+    ctx.save(); ctx.translate(ex, ey); ctx.scale(ek, ek); ctx.translate(-PEQ.x, -PEQ.y);
+    drawSprites(ctx, peq(), { p: st.eqP, hi: st.hi, dim: st.dim });
     for (const b of st.braces) {
       if (b.a <= 0.003) continue;
       drawBrace(ctx, b.x0 + ((b.x1 - b.x0) * b.g) / 2, b.top, (b.x1 - b.x0) * b.g, b.h, b.th, b.color, Math.min(1, b.g * 4) * b.a);
       if (b.l > 0.003) for (const s of b.lab) drawSprite(ctx, shifted(s, 0, (1 - b.l) * 14), s.alpha * b.l * b.a, b.color);
     }
+    ctx.restore();
     const ga = smooth(clamp(st.grid, 0, 1));
     if (ga > 0.003) for (let i = 0; i < 4; i++) {
       const show = st.cells[i]; if (show <= 0.003) continue;
@@ -202,19 +381,17 @@ function drawPresent(ctx, dt) {
       ctx.save(); ctx.strokeStyle = hexA(PFX[i][2], 0.9 * a); ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.stroke(); ctx.restore();
       drawTex(ctx, String.raw`\text{${PFX[i][1]}}`, r[0] + 22, r[1] + 18, 34, { ax: 0, ay: 0, color: PFX[i][2], alpha: a });
     }
-    if (st.hiTerm && st.box > 0.003) {
-      const ss = sp.filter((s) => s.a.terms.includes(st.hiTerm));
-      let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
-      for (const s of ss) { const [l, r, t, b] = inkBox(s); x0 = Math.min(x0, l); x1 = Math.max(x1, r); y0 = Math.min(y0, t); y1 = Math.max(y1, b); }
-      const pad = 16, bx = smooth(st.box);
-      ctx.save(); ctx.strokeStyle = hexA(COL.yellow, bx); ctx.lineWidth = 3.5; ctx.beginPath(); ctx.roundRect(x0 - pad, y0 - pad, x1 - x0 + 2 * pad, y1 - y0 + 2 * pad, 10); ctx.stroke(); ctx.restore();
-      if (st.cap) drawTex(ctx, st.cap, 960, 640, 58, { p: st.capP, color: COL.yellow });
-    }
+    drawQCards(ctx, st);
   }
+  drawSpectrum(ctx, st);
+  drawGoals(ctx, st);
+  if (st.cap > 0.003) drawTex(ctx, PCAP, 960, 250, 46, { p: st.cap });
+  drawUses(ctx, dt, st);
   // a small counter after each press, and a pause mark while paused
   const ta = PRES.paused ? 1 : clamp(1.8 - (TIME - PRES.toast), 0, 1);
   if (ta > 0.003) {
+    const b = BEATS[PRES.beat];
     ctx.save(); ctx.globalAlpha = ta; ctx.font = '500 22px ' + 'Inter, system-ui, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = COL.grey;
-    ctx.fillText(`${PRES.beat + 1} / ${BEATS.length} · ${BEATS[PRES.beat].name}${PRES.paused ? ' · paused' : ''}`, 28, H - 26); ctx.restore();
+    ctx.fillText(`${b.n} · ${b.name}${PRES.paused ? ' · paused' : ''}   (${PRES.beat + 1} / ${BEATS.length})`, 28, H - 26); ctx.restore();
   }
 }
