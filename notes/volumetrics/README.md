@@ -14,7 +14,7 @@ Edit `src/`, never the built page:
 
 - `src/shell.html` is the markup and the CSS.
 - `src/app.js` is the engine and the 2D scenes.
-- `src/volume.js` is the WebGL2 volume renderer and scene 17; `src/million.js`, `sheets.js`, `bases.js` and `average.js` are scenes 18 to 21. `src/present.js` is presentation mode, and `src/pictures.js` the pictures only it draws (the chalkboard, the raymarcher and its code, the fields' cards). The build inserts them into `app.js`, after its scenes and in that order, so they can use the engine's helpers and keep their numbers.
+- `src/volume.js` is the WebGL2 volume renderer and scene 17; `src/million.js`, `sheets.js`, `bases.js` and `average.js` are scenes 18 to 21. `src/present.js` is presentation mode, and `src/pictures.js` the pictures only it draws (the chalkboard, the raymarcher and its code, the fields' cards, and this video's laser and box of stuff, drawn with the laser-and-tank scene's pieces). The build inserts them into `app.js`, after its scenes and in that order, so they can use the engine's helpers and keep their numbers.
 - `build.mjs` puts KaTeX's stylesheet (fonts inlined as data URIs), KaTeX's script, the glyph outlines and `app.js` into the shell. KaTeX comes from the blog's `node_modules`, so run `npm install` first.
 - `glyphs.mjs` reads the outlines of KaTeX's fonts, which the morphs and the write animation draw as paths.
 
