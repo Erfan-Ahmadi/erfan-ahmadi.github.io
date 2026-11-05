@@ -279,16 +279,16 @@ function traceFigure(ctx, x, y, s) {
   ctx.beginPath();
   for (const stroke of FIGURE) stroke.forEach(([px, py], i) => (i ? ctx.lineTo(ox + px * k, oy + py * k) : ctx.moveTo(ox + px * k, oy + py * k)));
 }
-function drawFigure(ctx, x, y, s, a) {
+function drawFigure(ctx, x, y, s, a, ink = COL.white) {
   if (a <= 0.003) return;
-  ctx.save(); ctx.globalAlpha *= a; ctx.strokeStyle = COL.white; ctx.lineWidth = Math.max(1.5, 14 * (230 / 848) * s * 0.8); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.save(); ctx.globalAlpha *= a; ctx.strokeStyle = ink; ctx.lineWidth = Math.max(1.5, 14 * (230 / 848) * s * 0.8); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   traceFigure(ctx, x, y, s); ctx.stroke();
   ctx.restore();
 }
 // head: where the head's top is, for the dots to lead to.
-function drawThought(ctx, x, y, w, h, text, p, a, head) {
+function drawThought(ctx, x, y, w, h, text, p, a, head, ink = COL.white) {
   if (a <= 0.003) return;
-  ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = '#2A3138'; ctx.strokeStyle = COL.white; ctx.lineWidth = 3.5;
+  ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = '#2A3138'; ctx.strokeStyle = ink; ctx.lineWidth = 3.5;
   // the readout: a rounded box, and dots down to the head
   ctx.beginPath(); ctx.roundRect(x - w / 2, y - h / 2, w, h, Math.min(18, h * 0.22)); ctx.fill(); ctx.stroke();
   const k = clamp(h / 120, 0.6, 1.1), [hx, hy] = head, sx = clamp(hx, x - w / 2 + 26, x + w / 2 - 26), sy = y + h / 2;
@@ -313,13 +313,13 @@ function thinkSp(text) {
 }
 function thinkPlan(a, b) { const k = a + '|' + b; if (!thinkPlans.has(k)) thinkPlans.set(k, reshapePlan(thinkSp(a).sp, thinkSp(b).sp)); return thinkPlans.get(k); }
 // (x, y) is the readout's centre, s its scale and h its height; from reshapes into to as m runs 0..1; p writes to in.
-function drawThinking(ctx, x, y, s, h, from, to, m, p, a, head) {
+function drawThinking(ctx, x, y, s, h, from, to, m, p, a, head, ink = null) {
   if (a <= 0.003 || !to) return;
   const u = from ? smooth(clamp(m, 0, 1)) : 1, w = (lerp(from ? thinkSp(from).w : thinkSp(to).w, thinkSp(to).w, u) + 2 * THINK.pad) * s;
-  drawThought(ctx, x, y, w, h, '', 1, a, head);
+  drawThought(ctx, x, y, w, h, '', 1, a, head, ink ? hexOf(ink) : COL.white);
   ctx.save(); ctx.translate(x, y + 3 * s); ctx.scale(s, s);
   if (from && m < 0.999) { if (m <= 0.001) drawSprites(ctx, thinkSp(from).sp, { alpha: a }); else drawReshape(ctx, thinkPlan(from, to), m, a); }
-  else drawSprites(ctx, thinkSp(to).sp, { p, alpha: a });
+  else drawSprites(ctx, thinkSp(to).sp, { p, alpha: a, color: ink });
   ctx.restore();
 }
 // The zoom panel over the beam: a ring on the beam marks the section, and a panel beside it shows that section the
@@ -431,6 +431,8 @@ function drawSpectrum(ctx, st) {
 // and the "WTF?!" reshapes into "I understand it now", the way manim transforms one formula into another. "Now" under
 // me, "Then" under the copy.
 const RO_Q = { dx: 110, dy: -330, s: 0.8, h: 84 }, RO_U = { dx: 40, dy: -345, s: 0.66, h: 90 };
+// how far me now has faded into the past: from just after the copy sets off, until the aside goes in beat 16
+const pastOf = (st) => smooth(clamp((st.fut - 0.1) / 0.6, 0, 1)) * smooth(clamp(st.p15, 0, 1));
 function drawFuture(ctx, st) {
   const ga = smooth(clamp(st.p15, 0, 1)) * smooth(clamp(st.fut * 4, 0, 1)); if (ga <= 0.003) return;
   const g = smooth(clamp(st.fut, 0, 1)), fx = lerp(MIDFIG, FUT.x, g), x0 = MIDFIG + 82, x1 = fx - 92, y = FUT.y - 125;
@@ -442,7 +444,7 @@ function drawFuture(ctx, st) {
   // the readout grows and its "WTF?!" reshapes into the sentence while the copy walks
   const w = clamp(st.futW, 0, 1), u = smooth(w);
   drawThinking(ctx, fx + lerp(RO_Q.dx, RO_U.dx, u), FUT.y + lerp(RO_Q.dy, RO_U.dy, u), lerp(RO_Q.s, RO_U.s, u), lerp(RO_Q.h, RO_U.h, u), THOUGHTS[2], THOUGHTS[3], w, 1, ga, figHead(fx, FUT.y, 1));
-  drawTex(ctx, String.raw`\text{Now}`, MIDFIG - 10, FUT.y + 30, 32, { color: COL.greyA, alpha: ga });
+  drawTex(ctx, String.raw`\text{Now}`, MIDFIG - 10, FUT.y + 30, 32, { color: COL.greyA, alpha: ga * lerp(1, 0.6, pastOf(st)) });
   drawTex(ctx, String.raw`\text{Then}`, FUT.x - 10, FUT.y + 30, 32, { color: COL.greyA, alpha: ga * smooth(clamp((st.fut - 0.8) / 0.2, 0, 1)) });
 }
 // Beats 15d–f: the goals, as bullet points under a heading in an aside on the right, one per press. Both are laid
@@ -568,8 +570,10 @@ function drawPresent(ctx, dt) {
   // the figure and its thought: beside the card, then small in the corner once the equation takes the stage
   if (st.fig > 0.003) {
     const c = smooth(clamp(st.corner, 0, 1)), fm = smooth(clamp(st.figMid, 0, 1)), fx = lerp(lerp(1500, 150, c), MIDFIG, fm), fy = lerp(lerp(840, 1000, c), FUT.y, fm), fs = lerp(1.24, 1, c), fa = smooth(clamp(st.fig, 0, 1));
-    drawFigure(ctx, fx, fy, fs, fa);
-    drawThinking(ctx, fx + 110, fy - lerp(410, 330, c), lerp(1, 0.8, c), lerp(100, 84, c), st.thinkFrom, st.think, st.thinkM, st.writeP, fa, figHead(fx, fy, fs));
+    // once a copy of me sets off for later (beat 15f), this one fades into the past: greyer, fainter
+    const past = pastOf(st), ink = mixRgb(hexRgb(COL.white), hexRgb(COL.greyC), 0.75 * past);
+    drawFigure(ctx, fx, fy, fs, fa * lerp(1, 0.7, past), hexOf(ink));
+    drawThinking(ctx, fx + 110, fy - lerp(410, 330, c), lerp(1, 0.8, c), lerp(100, 84, c), st.thinkFrom, st.think, st.thinkM, st.writeP, fa * lerp(1, 0.65, past), figHead(fx, fy, fs), past > 0.003 ? ink : null);
   }
   drawFuture(ctx, st);
   drawAsideCard(ctx, st);
