@@ -4680,7 +4680,7 @@ const GOALXY = [130, 560];   // the goals, under the aside on the left
 const GOALS = ['the physics and math behind the intimidating look', 'derive it yourself', 'a model, not a law: its assumptions and limits'];
 // me now and me later, side by side in the middle along the bottom while the goals are up
 // (feet at 960 keeps them and their labels clear of the bottom of a YouTube frame)
-const MIDFIG = 800, FUT = { x: 1460, y: 925 };
+const MIDFIG = 870, FUT = { x: 1460, y: 925 };   // me now sits one arm span clear of the goals' text
 // Beat 16's caption, and beats 17–20: the fields that use the same equation, each a card with its picture, in a row of
 // three, each fading in at its own place. The last, this video's laser and box of stuff, opens on the left and pushes
 // the other three into a column on the right, where they grey out and stop. (A card with draw: null shows the 3D cloud
@@ -4692,9 +4692,9 @@ const USES = [
   { name: 'medical imaging', label: 'medical imaging', draw: drawUseXray },
   { name: 'a box of stuff', label: 'this video', draw: drawUseBox },
 ];
-const UROW = { x: 1130, y: 430, w: 470, h: 300, gap: 45 };   // centred on the stage right of the figure in the corner
+const UROW = { x: 960, y: 430, w: 470, h: 300, gap: 45 };   // centred on the stage (the figure has gone by now)
 const rowX = (i, n) => UROW.x - (n * UROW.w + (n - 1) * UROW.gap) / 2 + i * (UROW.w + UROW.gap);
-const UCOL = [[1500, 330, 380, 216], [1500, 572, 380, 216], [1500, 814, 380, 216]], UBIG = [380, 330, 1090, 700];
+const UCOL = [[1330, 330, 380, 216], [1330, 572, 380, 216], [1330, 814, 380, 216]], UBIG = [210, 330, 1090, 700];
 // Beat 20's push: the three first spread up and down into their places in the column (shrinking), then everything
 // moves across, this video's card opening behind them so it never runs into them.
 const pushXY = (g) => [smooth(clamp((g - 0.2) / 0.8, 0, 1)), smooth(clamp(g / 0.6, 0, 1))];
@@ -4842,10 +4842,10 @@ function presThink(text, dur, delay = 0) {
   PS.thinkFrom = PS.think; PS.think = text; PS.thinkM = 0;
   return ptw('thinkM', 1, dur, { delay, ease: linear });
 }
-// Beat 16: the aside, the goals and me later go, and the caption writes in, large at the top. No formula from here on:
+// Beat 16: the aside, the goals and both of me go, and the caption writes in, large at the top. No formula from here on:
 // this part is about the physics, and the formula comes back only once it has been earned.
 async function presDefine() {
-  ptw('p15', 0, 0.6); ptw('figMid', 0, 1.2);
+  ptw('p15', 0, 0.6); ptw('fig', 0, 0.8);   // the goals and I go: from here on it is about the physics
   await ptw('cap', 1, 1.5, { ease: linear, delay: 0.5 });
 }
 // Beats 17–19: a card fades in at its place in the row. 20: this video's card opens on the left at once and pushes
@@ -5167,10 +5167,10 @@ function drawCaption(ctx, st) {
   drawTex2(ctx, PCAP, 960, 190, 52, { p: st.cap, alpha: 1 - smooth(clamp(st.capOut, 0, 1)), hi: { 't-clight': smooth(clamp(st.lines, 0, 1)) } });
 }
 function drawTex2(ctx, src, x, y, size, { p = 1, alpha = 1, hi = null } = {}) { drawSprites(ctx, place(tex(src), { x, y, size }), { p, alpha, hi }); }
-// Beats 21–21h: the four effects again, filling the stage (clear of the figure in the corner), in neutral frames and
+// Beats 21–21h: the four effects again, filling the stage, in neutral frames and
 // labels. Each is named in turn, the ones before it paused and out of focus; then all four play; then the scatterings
 // grey out and stop, then emission, and absorption, still playing, grows over the rest.
-const FXCELLS = [[400, 120, 690, 340], [1190, 120, 690, 340], [400, 540, 690, 340], [1190, 540, 690, 340]], FXBIG = [400, 120, 1480, 760];
+const FXCELLS = [[220, 120, 690, 340], [1010, 120, 690, 340], [220, 540, 690, 340], [1010, 540, 690, 340]], FXBIG = [220, 120, 1480, 760];
 const hexOf = (c) => '#' + c.map((v) => Math.round(clamp(v, 0, 255)).toString(16).padStart(2, '0')).join('');
 function drawFx(ctx, dt, st) {
   const F = st.fx; if (Math.max(...F.show) <= 0.003) return;
