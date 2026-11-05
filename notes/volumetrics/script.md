@@ -6,7 +6,7 @@ The working script below has light edits; the original drafts, word for word, ar
 ## Part 1: the hook
 
 **1.** [The cloud in 3D, lit by the sun, the camera still. The laser is already shining through it onto the sensor; no reading is shown.]
-> Not long after I started making things with computers, I found out that people could simulate the look of clouds with actual physics. I got very excited about that. specially seeing them in my favourite games and animations.
+> Not long after I started making things with computers, I found out that people could simulate the look of clouds with actual physics. I got very excited about that, especially when I saw them in my favourite games and animations.
 
 **2.** [A panel opens from a section of the beam inside the cloud: the discrete version. The cloud is particles, wobbling, the rays stop at them, and under them the step plot of how many rays are left: bare axes, no formula, no smooth curve yet.]
 > Rendering clouds became one of the biggest goals of my career. It's a big part of why I kept going in computer graphics.
@@ -15,13 +15,13 @@ The working script below has light edits; the original drafts, word for word, ar
 > But, for years, I delayed learning how it actually works.
 
 **7.** [The card goes. The figure shrinks into the bottom-left corner and stays there. The equation writes in, large; the thought cloud becomes "?".]
-> Mainly because the first thing I ran into was a formula that looked like this. And that was intimidating. every resource out there told me I should just accept it.
+> Mainly because the first thing I ran into was a formula that looked like this. And that was intimidating, and every resource I found just handed it to me and said: accept it.
 
 **8.–11.** [One press per effect: a brace grows from the left under its term and its cell fades into its place in a 2 × 2 grid under the equation, its name in its corner, the photon and the particle playing in it. Every cell shows the paths in a neutral grey with arrows, the beam's line through the particle toward an eye at the right, all on the centre line. Absorption and out-scattering in red, emission and in-scattering in green. In emission, light leaves the particle every way at once, and only the photon heading for the eye has colour. Nothing already on screen changes.]
-> While it made sense a little bit, like how each term is a different way light and the medium interact,
+> Parts of it made sense: each term is a different way light and the stuff interact.
 
 **12.–12b.** [The braces and the grid fade. A yellow box goes around the integral in the exponent, and everything outside it greys out; the part keeps a light yellow tint. Next press: the box leaves the equation and turns into a card that stays, the question as its title, "why an integral in the exponent?", and most of the card a place for the animation that answers it later (TODO: variable density).]
-> nobody explained to me why there is an integral inside an exponent…
+> But nobody explained to me why there's an integral inside an exponent…
 
 **13.–13b.** [A blue box goes around the outer integral sign, from 0 to $d$; next press, it turns into the second card: "inside another integral?" (TODO: optical depth, an integral inside an integral).]
 > …inside another integral.
@@ -32,7 +32,7 @@ The working script below has light edits; the original drafts, word for word, ar
 ## Part 2: what this is, and what we keep
 
 **15.–15g.** [Seven presses, at "This video isn't a physics lecture", "and it isn't a shader tutorial", "It's the part in between", "By the end of this series", "that you could derive", "And along the way" and "We'll build it up gradually". The cards and the equation go, and the equation stays away from here until it has been earned, late in the series. A small physics lecture's chalkboard, scribbles and sketches with nothing readable, fades in, an arrow under it. The arrow walks to the right, drawing a line behind it, and a small raymarcher with its shader code comes in at that end. The arrow walks back to the middle and sways back and forth there from then on. Then the whole spectrum moves into an aside at the top, still swaying; under it, "Goals:" comes in on the left, and the figure walks over to the right. Then one bullet per press: "derive the formula yourself", while a copy of the figure, "?" and all, walks out to the right along a growing arrow, its readout widening and the "?" reshaping into "I understand it now" on the way, "Now" under the first, "Then" under the copy; "the beautiful math and physics behind it"; "gradually, nothing on faith".]
-> This video isn't a physics lecture, and it isn't a shader tutorial. It's the part in between. By the end of this series, I want the physics and the math to feel so intuitive that you can derive it yourself, and most importantly understand that this not a law of a nature you should blindly accept, but a simplified model of what happens in the real-world with it's own limitations and assumptions.
+> This video isn't a physics lecture, and it isn't a shader tutorial. It's the part in between. By the end of this series, I want the physics and the math to feel so intuitive that you could derive it yourself. And most importantly, I want you to see that this isn't a law of nature to accept blindly. It's a simplified model of the real world, with its own assumptions and limits. So, forget the symbols for a minute.
 
 **16.** [The aside, the goals and the future self go. No formula: the caption alone writes in, large at the top: "light, travelling some distance, through some stuff."]
 > In plain words, all of this is about one thing: what happens to light as it travels some distance through some stuff.
