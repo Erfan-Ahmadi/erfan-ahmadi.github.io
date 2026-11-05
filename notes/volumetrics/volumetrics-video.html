@@ -4504,13 +4504,16 @@ const QCARDS = [
   { term: 't-qouter', col: COL.blue, name: 'inside another integral?', title: [String.raw`\text{inside another integral?}`], todo: ['optical depth:', 'an integral inside an integral'] },
   { term: 't-qe', col: COL.gold, name: 'why e? why exponentials?', title: [String.raw`\text{Why }e\text{?}`, String.raw`\text{Why exponentials?}`], todo: ['the rays: the discrete version', 'on top of the continuous one'] },
 ];
-const QCRECT = [[380, 470, 480, 540], [890, 470, 480, 540], [1400, 470, 480, 540]];
+// The first two cards come in side by side; at 14b they shrink and step aside, and "Why e?", the one that matters most,
+// comes in between them, half as big again.
+const QCRECT = [[380, 470, 480, 540], [890, 470, 480, 540]], QFINAL = [[380, 520, 400, 395], [1480, 520, 400, 395], [830, 420, 600, 590]];
+const qRect = (i, st) => (i < 2 ? lerpRect(QCRECT[i], QFINAL[i], smooth(clamp(st.qSide, 0, 1))) : QFINAL[i]);
 // Beat 15: the spectrum from a physics lecture to a shader tutorial, and the arrow that walks along it. For the goals
 // it shrinks into an aside (card); outside it, me now and me later along the bottom, and the goals on the right as
 // bullet points (their wording is a placeholder). src is the part of the stage the aside shows.
 const SPEC = { L: [302, 330, 235, 188], R: [1383, 330, 235, 188], y: 560, src: [270, 270, 1380, 400], card: [380, 50, 1160, 400] };
 const GOALXY = [130, 560];   // the goals, under the aside on the left
-const GOALS = ['derive the formula yourself', 'the beautiful math and physics behind it', 'gradually, nothing on faith'];
+const GOALS = ['the physics and math behind the intimidating look', 'derive it yourself', 'a model, not a law: its assumptions and limits'];
 // me now and me later, side by side in the middle along the bottom while the goals are up
 // (feet at 960 keeps them and their labels clear of the bottom of a YouTube frame)
 const MIDFIG = 800, FUT = { x: 1460, y: 925 };
@@ -4525,9 +4528,9 @@ const USES = [
 ];
 const UCARDS = [[370, 330, 590, 335], [990, 330, 590, 335], [370, 695, 590, 335], [990, 695, 590, 335]], UGROW = [370, 330, 1210, 700];
 const PS_DEFAULTS = () => ({
-  orbit: 1, mag: 0, aside: 0, fig: 0, think: '', writeP: 1, eq: 0, eqP: 0, corner: 0, braces: [], hi: {}, dim: 0,
+  orbit: 1, mag: 0, aside: 0, fig: 0, think: '', thinkFrom: '', thinkM: 1, writeP: 1, eq: 0, eqP: 0, corner: 0, braces: [], hi: {}, dim: 0,
   cells: [0, 0, 0, 0], cellT: [0, 0, 0, 0], grid: 1,
-  qc: QCARDS.map(() => ({ box: 0, m: 0, title: 0, todo: 0 })), qcA: 1,
+  qc: QCARDS.map(() => ({ box: 0, m: 0, title: 0, todo: 0 })), qcA: 1, qSide: 0,
   eqA: 1, eqTop: 0, spec: [0, 0], chalk: 0, code: 0, specT: 0, ptrX: 0, ptrA: 0, lineP: 0, wig: 0, wigT: 0, side: 0,
   goalsA: 0, figMid: 0, fut: 0, futW: 0, goals: [0, 0, 0], p15: 1, cap: 0,
   uses: [0, 0, 0, 0], grow: 0, usesOut: 0, capOut: 0,
@@ -4551,23 +4554,32 @@ const ptwi = (obj, key, to, dur, o = {}) => tween(obj, key, to, dur, { tag: 'pre
 // The beats: their number in script.md, a name, and what happens when one is reached. Each returns when its
 // animation is done.
 const BEATS = [
-  { n: '1', name: 'the cloud', run: () => { Object.assign(PS, PS_DEFAULTS()); SK.zoom = 0; SK.eye = 0; SK.laser = 1; untween(SK, 'front'); SK.front = 1; } },
-  { n: '2', name: 'the magnifier', run: () => ptw('mag', 1, 1.6) },
-  { n: '3', name: 'aside: me', run: async () => { ptw('fig', 1, 1.2, { delay: 0.9 }); await ptw('aside', 1, 1.6); } },
-  { n: '7', name: 'the equation', run: async () => {
-    PS.think = '?'; PS.writeP = 1; PS.eq = 1; PS.eqP = 0;
-    ptw('corner', 1, 1.4); ptw('aside', 2, 1.4);
-    await ptw('eqP', 1, 3.2, { ease: linear, delay: 0.5 });
+  // the cloud and, already open, the panel on the section of the beam
+  { n: '1', name: 'the cloud', run: () => { Object.assign(PS, PS_DEFAULTS()); PS.mag = 1; SK.zoom = 0; SK.eye = 0; SK.laser = 1; untween(SK, 'front'); SK.front = 1; } },
+  { n: '2', name: 'aside: me', run: async () => {
+    PS.think = THOUGHTS[0]; PS.thinkFrom = ''; PS.thinkM = 1; PS.writeP = 0;
+    ptw('fig', 1, 1.2, { delay: 0.9 }); ptw('writeP', 1, 1.1, { ease: linear, delay: 1.7 });
+    await ptw('aside', 1, 1.6);
   } },
-  ...PFX.map(([term, label, color], i) => ({ n: String(8 + i), name: label, run: () => { PS.cellT[i] = TIME + 0.4; return Promise.all([presBrace(term, label, color), ptwi(PS.cells, i, 1, 1.1)]); } })),
+  { n: '3', name: 'my goal now', run: () => presThink(THOUGHTS[1], 1.2) },
+  { n: '7', name: 'the equation', run: async () => {
+    PS.eq = 1; PS.eqP = 0;
+    ptw('corner', 1, 1.4); ptw('aside', 2, 1.4);
+    presThink(THOUGHTS[2], 0.9, 2.1);   // once the formula is mostly written
+    await ptw('eqP', 1, 2, { ease: linear, delay: 0.5 });
+  } },
+  // all four effects in one press: the braces and the cells come in together, a little apart
+  { n: '8', name: 'the four effects', run: () => Promise.all(PFX.map(([term, label, color], i) => {
+    PS.cellT[i] = TIME + 0.4; return Promise.all([presBrace(term, label, color, 0.15 * i), ptwi(PS.cells, i, 1, 1.1, { delay: 0.15 * i })]);
+  })) },
   ...QCARDS.flatMap((q, i) => [{ n: String(12 + i), name: q.name, run: () => presQuestion(i) }, { n: `${12 + i}b`, name: 'into its card', run: () => presToCard(i) }]),
   { n: '15', name: 'not a physics lecture', run: presSpecPhysics },
   { n: '15b', name: 'not a shader tutorial', run: presSpecShader },
   { n: '15c', name: 'the part in between', run: presSpecMiddle },
   { n: '15d', name: 'by the end', run: presAside },
-  { n: '15e', name: 'derived yourself', run: () => presGoal(0) },
-  { n: '15f', name: 'along the way', run: () => presGoal(1) },
-  { n: '15g', name: 'gradually', run: () => presGoal(2) },
+  { n: '15e', name: 'the physics and the math', run: () => presGoal(0) },
+  { n: '15f', name: 'derive it yourself', run: () => presGoal(1) },
+  { n: '15g', name: 'most importantly', run: () => presGoal(2) },
   { n: '16', name: 'some stuff', run: presDefine },
   ...USES.map((u, i) => ({ n: String(17 + i), name: u.name, run: () => presUse(i) })),
   ...PFX.map((p, i) => ({ n: i ? `21${'bcd'[i - 1]}` : '21', name: p[1], run: () => presFxName(i) })),
@@ -4584,7 +4596,7 @@ function presIndex(label) {
   return !Number.isFinite(v) ? 0 : j >= 0 ? j : BEATS.length - 1;
 }
 // A brace under a term of the equation, in the equation scene's style.
-function presBrace(term, label, color) {
+function presBrace(term, label, color, delay = 0) {
   const ss = peq().filter((s) => s.a.terms.includes(term)); if (!ss.length) return Promise.resolve();
   let x0 = Infinity, x1 = -Infinity, yb = -Infinity;
   for (const s of ss) { const [l, r, , b] = inkBox(s); x0 = Math.min(x0, l); x1 = Math.max(x1, r); yb = Math.max(yb, b); }
@@ -4594,8 +4606,8 @@ function presBrace(term, label, color) {
   for (let guard = 0; guard < 6 && PS.braces.some((o) => Math.abs(o.ly - ly) < lh * 0.9 && !(cx + lw / 2 + 24 < o.lx0 || cx - lw / 2 - 24 > o.lx1)); guard++) ly += lh * 1.05;
   Object.assign(b, { ly, lx0: cx - lw / 2, lx1: cx + lw / 2, lab: place(LT, { x: cx, y: ly, size: lsize }) });
   PS.braces.push(b);
-  ptwi(PS.hi, term, 1, 0.5);
-  return Promise.all([ptwi(b, 'g', 1, 0.75), ptwi(b, 'l', 1, 0.5, { delay: 0.4 })]);
+  ptwi(PS.hi, term, 1, 0.5, { delay });
+  return Promise.all([ptwi(b, 'g', 1, 0.75, { delay }), ptwi(b, 'l', 1, 0.5, { delay: 0.4 + delay })]);
 }
 // A question: the braces and the cells go, the named part keeps its colour and gets a box while the rest greys out;
 // then the box, with a copy of the part, moves down into the question's card, where the question is written.
@@ -4611,6 +4623,7 @@ async function presQuestion(i) {
 // it the place for the animation that answers it.
 async function presToCard(i) {
   const c = PS.qc[i];
+  if (i === 2) ptw('qSide', 1, 1.3);
   await ptwi(c, 'm', 1, 1.3);
   ptwi(c, 'todo', 1, 0.7, { delay: 0.3 });
   await ptwi(c, 'title', 1, 0.9, { ease: linear });
@@ -4637,15 +4650,20 @@ async function presSpecMiddle() {
 }
 // Beat 15d: all of it moves into an aside at the top, the arrow still swaying there for the rest of the section (the
 // equation stays away: this part is about the goals, not the formula); under it "Goals:" comes in on the left, and I
-// walk over to the right. 15e: the first goal, while a copy of me walks out along a growing arrow, its "?" turning
-// into "I understand it now" on the way. 15f, 15g: the other goals.
+// walk over to the right. 15e: the first goal. 15f: the second, while a copy of me walks out along a growing arrow,
+// its "WTF?!" turning into "I understand it now" on the way. 15g: the third.
 async function presAside() {
   ptw('side', 1, 1.5); ptw('figMid', 1, 1.4);
   await ptw('goalsA', 1, 0.8, { delay: 0.9 });
 }
 async function presGoal(i) {
-  if (i === 0) { ptw('fut', 1, 2.2); ptw('futW', 1, 1.7, { ease: linear, delay: 0.35 }); }
+  if (i === 1) { ptw('fut', 1, 2.2); ptw('futW', 1, 1.7, { ease: linear, delay: 0.35 }); }
   await ptwi(PS.goals, i, 1, 1.2, { ease: linear });
+}
+// The figure's thought reshapes into the next one, after delay.
+function presThink(text, dur, delay = 0) {
+  PS.thinkFrom = PS.think; PS.think = text; PS.thinkM = 0;
+  return ptw('thinkM', 1, dur, { delay, ease: linear });
 }
 // Beat 16: the aside, the goals and me later go, and the caption writes in, large at the top. No formula from here on:
 // this part is about the physics, and the formula comes back only once it has been earned.
@@ -4746,6 +4764,28 @@ function drawThought(ctx, x, y, w, h, text, p, a, head) {
   }
   ctx.restore();
 }
+// What the figure thinks, as sprites around (0, 0), so the readout can move and shrink with the figure and one thought
+// can reshape into the next (manim's Transform) instead of being written over.
+const THOUGHTS = ['Woah, this is cool AF', 'This is my goal now', 'WTF?!', 'I understand it now'];
+const THINK = { size: 40, pad: 30 };
+const thinkCache = new Map(), thinkPlans = new Map();
+function thinkSp(text) {
+  let v = thinkCache.get(text); if (v) return v;
+  const sp = place(tex(String.raw`\text{${text}}`), { x: 0, y: 0, size: THINK.size });
+  let x0 = Infinity, x1 = -Infinity; for (const s of sp) { const [l, r] = inkBox(s); x0 = Math.min(x0, l); x1 = Math.max(x1, r); }
+  v = { sp, w: x1 - x0 }; thinkCache.set(text, v); return v;
+}
+function thinkPlan(a, b) { const k = a + '|' + b; if (!thinkPlans.has(k)) thinkPlans.set(k, reshapePlan(thinkSp(a).sp, thinkSp(b).sp)); return thinkPlans.get(k); }
+// (x, y) is the readout's centre, s its scale and h its height; from reshapes into to as m runs 0..1; p writes to in.
+function drawThinking(ctx, x, y, s, h, from, to, m, p, a, head) {
+  if (a <= 0.003 || !to) return;
+  const u = from ? smooth(clamp(m, 0, 1)) : 1, w = (lerp(from ? thinkSp(from).w : thinkSp(to).w, thinkSp(to).w, u) + 2 * THINK.pad) * s;
+  drawThought(ctx, x, y, w, h, '', 1, a, head);
+  ctx.save(); ctx.translate(x, y + 3 * s); ctx.scale(s, s);
+  if (from && m < 0.999) { if (m <= 0.001) drawSprites(ctx, thinkSp(from).sp, { alpha: a }); else drawReshape(ctx, thinkPlan(from, to), m, a); }
+  else drawSprites(ctx, thinkSp(to).sp, { p, alpha: a });
+  ctx.restore();
+}
 // The zoom panel over the beam: a ring on the beam marks the section, and a panel beside it shows that section the
 // way the shadows scene draws it, particles wobbling and rays stopping at them, with its step plot of the rays left
 // under them against e^{−nσz}: the discrete version of what the cloud does.
@@ -4791,18 +4831,18 @@ function drawQCards(ctx, st) {
     let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
     for (const s of ss) { const [l, r, t, b] = inkBox(s); x0 = Math.min(x0, l); x1 = Math.max(x1, r); y0 = Math.min(y0, t); y1 = Math.max(y1, b); }
     // the highlight's box, which then turns into the card
-    const pad = 12, m = smooth(clamp(c.m, 0, 1)), C = QCRECT[i], a = smooth(clamp(c.box, 0, 1)) * ga;
+    const pad = 12, m = smooth(clamp(c.m, 0, 1)), C = qRect(i, st), k = C[2] / 480, a = smooth(clamp(c.box, 0, 1)) * ga;
     const R = lerpRect([x0 - pad, y0 - pad, x1 - x0 + 2 * pad, y1 - y0 + 2 * pad], C, m);
     ctx.save(); ctx.strokeStyle = hexA(q.col, a * lerp(1, 0.8, m)); ctx.lineWidth = 3.5; ctx.beginPath(); ctx.roundRect(R[0], R[1], R[2], R[3], lerp(10, 16, m)); ctx.stroke(); ctx.restore();
-    if (c.title > 0.003) q.title.forEach((src, j) => drawTex(ctx, src, C[0] + C[2] / 2, C[1] + 50 + j * 44, 32, { p: c.title, color: q.col, alpha: ga }));
-    if (c.todo > 0.003) (q.draw || drawTodo)(ctx, [C[0] + 24, C[1] + 136, C[2] - 48, C[3] - 160], c.todo * ga, q);
+    if (c.title > 0.003) q.title.forEach((src, j) => drawTex(ctx, src, C[0] + C[2] / 2, C[1] + (50 + j * 44) * k, 32 * k, { p: c.title, color: q.col, alpha: ga }));
+    if (c.todo > 0.003) (q.draw || drawTodo)(ctx, [C[0] + 24 * k, C[1] + 136 * k, C[2] - 48 * k, C[3] - 160 * k], c.todo * ga, q, k);
   });
 }
-function drawTodo(ctx, r, a, q) {
-  ctx.save(); ctx.strokeStyle = hexA(COL.greyD, a); ctx.lineWidth = 2; ctx.setLineDash([9, 9]); ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 10); ctx.stroke(); ctx.restore();
-  const cx = r[0] + r[2] / 2, n = q.todo.length, y = r[1] + r[3] / 2 - (n * 34) / 2;
-  drawTex(ctx, String.raw`\text{TODO}`, cx, y - 8, 30, { color: COL.grey, alpha: a });
-  q.todo.forEach((line, j) => drawTex(ctx, String.raw`\text{${line}}`, cx, y + 40 + j * 34, 25, { color: COL.grey, alpha: a }));
+function drawTodo(ctx, r, a, q, k = 1) {
+  ctx.save(); ctx.strokeStyle = hexA(COL.greyD, a); ctx.lineWidth = 2; ctx.setLineDash([9 * k, 9 * k]); ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 10 * k); ctx.stroke(); ctx.restore();
+  const cx = r[0] + r[2] / 2, n = q.todo.length, y = r[1] + r[3] / 2 - (n * 34 * k) / 2;
+  drawTex(ctx, String.raw`\text{TODO}`, cx, y - 8 * k, 30 * k, { color: COL.grey, alpha: a });
+  q.todo.forEach((line, j) => drawTex(ctx, String.raw`\text{${line}}`, cx, y + (40 + j * 34) * k, 25 * k, { color: COL.grey, alpha: a }));
 }
 // Beat 15: the spectrum. The lecture at one end and the shader at the other, named above them; the line between them,
 // as far as the arrow under it has drawn it; the arrow, swaying back and forth once it is back in the middle. For the goals all of
@@ -4851,17 +4891,10 @@ function drawSpectrum(ctx, st) {
   drawPointer(ctx, st.ptrX + sway, y + 16, ga * smooth(clamp(st.ptrA, 0, 1)), 0);
   ctx.restore();
 }
-// Beat 15e: a copy of me, "?" and all, walks out to the right along a growing arrow; once there its readout grows and
-// the "?" reshapes into "I understand it now", the way manim transforms one formula into another. "Now" under me,
-// "Then" under the copy.
-const RO_Q = { dx: 110, dy: -330, w: 150, h: 90 }, RO_U = { dx: 40, dy: -345, w: 360, h: 90 };
-let roPlan = null;
-function readoutPlan() {   // the "?" over the copy once it has arrived, into the sentence, in place
-  if (roPlan) return roPlan;
-  const q = place(tex(String.raw`\text{?}`), { x: FUT.x + RO_Q.dx, y: FUT.y + RO_Q.dy + 2, size: 40 });
-  const u = place(tex(String.raw`\text{I understand it now}`), { x: FUT.x + RO_U.dx, y: FUT.y + RO_U.dy + 2, size: 25 });
-  return (roPlan = { q, plan: reshapePlan(q, u) });
-}
+// Beat 15f: a copy of me, "WTF?!" and all, walks out to the right along a growing arrow; on the way its readout grows
+// and the "WTF?!" reshapes into "I understand it now", the way manim transforms one formula into another. "Now" under
+// me, "Then" under the copy.
+const RO_Q = { dx: 110, dy: -330, s: 0.8, h: 84 }, RO_U = { dx: 40, dy: -345, s: 0.66, h: 90 };
 function drawFuture(ctx, st) {
   const ga = smooth(clamp(st.p15, 0, 1)) * smooth(clamp(st.fut * 4, 0, 1)); if (ga <= 0.003) return;
   const g = smooth(clamp(st.fut, 0, 1)), fx = lerp(MIDFIG, FUT.x, g), x0 = MIDFIG + 82, x1 = fx - 92, y = FUT.y - 125;
@@ -4870,12 +4903,9 @@ function drawFuture(ctx, st) {
     ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1 - 18, y); ctx.stroke(); arrowTip(ctx, x1, y, 1, 0, 26, 12); ctx.restore();
   }
   drawFigure(ctx, fx, FUT.y, 1, ga);
-  // the readout grows and its "?" reshapes into the sentence while the copy walks
-  const w = clamp(st.futW, 0, 1), u = smooth(w), R = readoutPlan();
-  drawThought(ctx, fx + lerp(RO_Q.dx, RO_U.dx, u), FUT.y + lerp(RO_Q.dy, RO_U.dy, u), lerp(RO_Q.w, RO_U.w, u), lerp(RO_Q.h, RO_U.h, u), '', 1, ga, figHead(fx, FUT.y, 1));
-  ctx.save(); ctx.translate(fx - FUT.x, 0);
-  if (w <= 0.001) drawSprites(ctx, R.q, { alpha: ga }); else drawReshape(ctx, R.plan, w, ga);
-  ctx.restore();
+  // the readout grows and its "WTF?!" reshapes into the sentence while the copy walks
+  const w = clamp(st.futW, 0, 1), u = smooth(w);
+  drawThinking(ctx, fx + lerp(RO_Q.dx, RO_U.dx, u), FUT.y + lerp(RO_Q.dy, RO_U.dy, u), lerp(RO_Q.s, RO_U.s, u), lerp(RO_Q.h, RO_U.h, u), THOUGHTS[2], THOUGHTS[3], w, 1, ga, figHead(fx, FUT.y, 1));
   drawTex(ctx, String.raw`\text{Now}`, MIDFIG - 10, FUT.y + 30, 32, { color: COL.greyA, alpha: ga });
   drawTex(ctx, String.raw`\text{Then}`, FUT.x - 10, FUT.y + 30, 32, { color: COL.greyA, alpha: ga * smooth(clamp((st.fut - 0.8) / 0.2, 0, 1)) });
 }
@@ -4979,8 +5009,7 @@ function drawPresent(ctx, dt) {
   if (st.fig > 0.003) {
     const c = smooth(clamp(st.corner, 0, 1)), fm = smooth(clamp(st.figMid, 0, 1)), fx = lerp(lerp(1500, 150, c), MIDFIG, fm), fy = lerp(lerp(840, 1000, c), FUT.y, fm), fs = lerp(1.24, 1, c), fa = smooth(clamp(st.fig, 0, 1));
     drawFigure(ctx, fx, fy, fs, fa);
-    const tw = lerp(400, 150, c), th = lerp(140, 90, c), tx = fx + lerp(110, 110, c), ty = fy - lerp(410, 330, c);
-    drawThought(ctx, tx, ty, tw, th, st.think, st.writeP, fa, figHead(fx, fy, fs));
+    drawThinking(ctx, fx + 110, fy - lerp(410, 330, c), lerp(1, 0.8, c), lerp(100, 84, c), st.thinkFrom, st.think, st.thinkM, st.writeP, fa, figHead(fx, fy, fs));
   }
   drawFuture(ctx, st);
   drawAsideCard(ctx, st);
