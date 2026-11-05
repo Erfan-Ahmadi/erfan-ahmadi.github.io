@@ -325,11 +325,13 @@ function drawUseXray(ctx, dt, h, fresh) {
 }
 
 // ---- this video: a laser, a box of stuff and a sensor, the bench's laser and tank with the box closed ----
-// What is in the box: PS.boxQ runs through BOXSTUFF in beat 20b (fog, a cloud, smoke, beer) and back to plain stuff.
-// The beam dims across the box by however much its contents take.
+// What is in the box: PS.boxQ runs through BOXSTUFF, one press each in beats 20b–20g (fog, a cloud, smoke, coffee,
+// beer) and back to plain stuff. The beam dims across the box by however much its contents take. The box is tinted
+// glass, with light catching its front pane.
 const BOXG = { x0: 180, x1: 760, top: -200, bot: 200, xs: 980, cx: 470 };
-const BOXSTUFF = ['stuff', 'fog', 'cloud', 'smoke', 'beer', 'stuff'];
-const BOXSIG = { stuff: 0.0019, fog: 0.0024, cloud: 0.006, smoke: 0.0036, beer: 0.0016 };
+const BOXSTUFF = ['stuff', 'fog', 'cloud', 'smoke', 'coffee', 'beer', 'stuff'];
+const BOXSIG = { stuff: 0.0019, fog: 0.0024, cloud: 0.006, smoke: 0.003, coffee: 0.005, beer: 0.0016 };
+const BOXFILL = { coffee: 0.6, beer: 0.8 };
 const BOXPUFFS = PUFFS.map(([dx, dy, r]) => [BOXG.cx + dx * 470, -10 + dy * 400, r * 430]);
 const BOXSPECKS = Array.from({ length: 64 }, (_, i) => [(0.5 + i * 0.7548777) % 1, (0.5 + i * 0.5698403) % 1, (i * 2.399) % (2 * Math.PI)]);   // spread evenly (the R2 sequence)
 const boxTank = { x0: BOXG.x0, x1: BOXG.x1, top: BOXG.top, bot: BOXG.bot, th: BOXG.bot - BOXG.top };
@@ -339,52 +341,108 @@ function boxFit(h) {
   const s = Math.min(640 / (x1 - x0), (h - top - 24) / (y1 - y0));
   return [350 - ((x0 + x1) / 2) * s, top + (h - top) / 2 - ((y0 + y1) / 2) * s, s];
 }
-function boxWeights(q) { const w = { stuff: 0, fog: 0, cloud: 0, smoke: 0, beer: 0 }; BOXSTUFF.forEach((k, i) => { w[k] += clamp(1 - Math.abs(q - i), 0, 1); }); return w; }
+function boxWeights(q) { const w = { stuff: 0, fog: 0, cloud: 0, smoke: 0, coffee: 0, beer: 0 }; BOXSTUFF.forEach((k, i) => { w[k] += clamp(1 - Math.abs(q - i), 0, 1); }); return w; }
 let boxCloudCum = null;
 function boxT(w) {   // transmittance from the laser to x
   if (!boxCloudCum) {   // the cloud's optical depth along the beam, 4 px at a time
     const n = Math.ceil((BOXG.x1 - BOXG.x0) / 4) + 1; boxCloudCum = new Float32Array(n);
     for (let i = 1; i < n; i++) boxCloudCum[i] = boxCloudCum[i - 1] + BOXSIG.cloud * 4 * cloudDensity(BOXG.x0 + i * 4, 0, BOXPUFFS, { cloud: 1 });
   }
-  const flat = w.stuff * BOXSIG.stuff + w.fog * BOXSIG.fog + w.smoke * BOXSIG.smoke + w.beer * BOXSIG.beer;
+  const flat = w.stuff * BOXSIG.stuff + w.fog * BOXSIG.fog + w.smoke * BOXSIG.smoke + w.coffee * BOXSIG.coffee + w.beer * BOXSIG.beer;
   return (x) => {
     const d = clamp(x - BOXG.x0, 0, BOXG.x1 - BOXG.x0);
     return Math.exp(-(flat * d + w.cloud * boxCloudCum[Math.min(boxCloudCum.length - 1, Math.round(d / 4))]));
   };
 }
+// Soft ribbons rising from y0 to y1, for smoke and steam: each starts thin and nearly straight, then sways and curls
+// more as it rises, widening and fading, the curls travelling up it. Each is a filled shape drawn three times, a wide
+// faint halo to a narrow core, with its fade running up it. n of them across [xa, xb]; sway scales the curls, wide
+// the width.
+function drawWisps(ctx, xa, xb, y0, y1, n, rgb, alpha, sway, seed, wide = 1) {
+  const H = y0 - y1, T = reduced ? 0 : TIME, N = 40, col = (a) => `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a.toFixed(3)})`;
+  for (let w = 0; w < n; w++) {
+    const ph = seed + w * 2.13, x0 = xa + ((w + 0.5) / n) * (xb - xa), C = [];
+    for (let k = 0; k <= N; k++) {
+      const t = k / N, amp = sway * (2 + 46 * t * t);
+      C.push([x0 + amp * Math.sin(2 * Math.PI * (1.25 * t - 0.3 * T) + ph) + 0.45 * amp * Math.sin(2 * Math.PI * (2.6 * t - 0.5 * T) + 1.7 * ph) + sway * 22 * t * Math.sin(0.35 * T + ph), y0 - t * H]);
+    }
+    for (const [k, a] of [[3.4, 0.07], [1.7, 0.12], [0.55, 0.3]]) {
+      const L = [], R = [];
+      for (let q = 0; q <= N; q++) {
+        const t = q / N, A = C[Math.max(0, q - 1)], B = C[Math.min(N, q + 1)], dx = B[0] - A[0], dy = B[1] - A[1], d = Math.hypot(dx, dy) || 1;
+        const hw = wide * k * (1.2 + 15 * Math.pow(t, 1.4)), nx = -dy / d, ny = dx / d;
+        L.push([C[q][0] + nx * hw, C[q][1] + ny * hw]); R.push([C[q][0] - nx * hw, C[q][1] - ny * hw]);
+      }
+      const g = ctx.createLinearGradient(0, y0, 0, y1);
+      for (const t of [0, 0.08, 0.25, 0.5, 0.75, 1]) g.addColorStop(t, col(a * alpha * clamp(t / 0.08, 0, 1) * Math.pow(1 - t, 1.2)));
+      ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(L[0][0], L[0][1]);
+      for (const P of L) ctx.lineTo(P[0], P[1]);
+      for (let q = N; q >= 0; q--) ctx.lineTo(R[q][0], R[q][1]);
+      ctx.closePath(); ctx.fill();
+    }
+  }
+}
 const BOXDRAW = {
-  stuff: (ctx, B) => {   // plain stuff: a haze, and specks of it drifting
-    const g = ctx.createLinearGradient(0, B.top, 0, B.bot); g.addColorStop(0, 'rgba(170,164,152,0.12)'); g.addColorStop(1, 'rgba(170,164,152,0.2)');
+  stuff: (ctx, B) => {   // plain stuff: a haze, and specks of it drifting, in the yellow of the word "stuff"
+    const g = ctx.createLinearGradient(0, B.top, 0, B.bot); g.addColorStop(0, 'rgba(170,164,152,0.09)'); g.addColorStop(1, 'rgba(170,164,152,0.15)');
     ctx.fillStyle = g; ctx.fillRect(B.x0, B.top, B.x1 - B.x0, B.bot - B.top);
     for (const [u, v, ph] of BOXSPECKS) {
       const x = B.x0 + 16 + u * (B.x1 - B.x0 - 32) + (reduced ? 0 : 6 * Math.sin(TIME * 0.9 + ph)), y = B.top + 16 + v * (B.bot - B.top - 32) + (reduced ? 0 : 6 * Math.cos(TIME * 0.7 + 1.3 * ph));
-      dot(ctx, x, y, 3.4, COL.greyB, 0.5);
+      dot(ctx, x, y, 3.6, COL.yellow, 0.62);
     }
   },
   fog: (ctx) => drawLiquid(ctx, boxTank, { fill: 1, look: 'fog' }),
   cloud: (ctx) => { drawCloud(ctx, BOXPUFFS, { cloud: 1 }); drawCloud(ctx, BOXPUFFS, { cloud: 0.8 }); },
-  smoke: (ctx, B) => {   // a dark haze, thicker low down, and puffs rising through it
-    const g = ctx.createLinearGradient(0, B.top, 0, B.bot); g.addColorStop(0, 'rgba(120,112,102,0.16)'); g.addColorStop(1, 'rgba(96,90,82,0.34)');
+  smoke: (ctx, B) => {   // cigarette smoke: bluish ribbons curling up, and what has risen gathering under the lid
+    const g = ctx.createLinearGradient(0, B.top, 0, B.bot); g.addColorStop(0, 'rgba(176,188,204,0.16)'); g.addColorStop(0.6, 'rgba(176,188,204,0.05)'); g.addColorStop(1, 'rgba(176,188,204,0.02)');
     ctx.fillStyle = g; ctx.fillRect(B.x0, B.top, B.x1 - B.x0, B.bot - B.top);
-    for (let i = 0; i < 14; i++) {
-      const ph = (i * 0.618) % 1, t = reduced ? ph : (TIME * (0.06 + 0.025 * (i % 3)) + ph) % 1;
-      const x = B.x0 + (0.08 + 0.84 * ((i * 0.377 + 0.13) % 1)) * (B.x1 - B.x0) + Math.sin(TIME * 0.8 + i * 1.7) * 30 * t;
-      const y = B.bot - t * (B.bot - B.top) * 1.05, R = 46 + 74 * t, al = 0.34 * Math.sin(Math.PI * t);
-      const rg = ctx.createRadialGradient(x, y, 0, x, y, R); rg.addColorStop(0, `rgba(168,160,148,${al})`); rg.addColorStop(1, 'rgba(168,160,148,0)');
-      ctx.fillStyle = rg; ctx.fillRect(x - R, y - R, 2 * R, 2 * R);
+    const w = B.x1 - B.x0;   // two thin streams, each two ribbons twisting round each other
+    drawWisps(ctx, B.x0 + 0.33 * w - 8, B.x0 + 0.33 * w + 8, B.bot + 10, B.top + 14, 2, [200, 210, 224], 1, 0.9, 0.7);
+    drawWisps(ctx, B.x0 + 0.66 * w - 8, B.x0 + 0.66 * w + 8, B.bot + 10, B.top + 14, 2, [200, 210, 224], 1, 0.75, 3.9);
+  },
+  coffee: (ctx, B) => {   // dark coffee, its crema on top, and steam rising off it: it is hot
+    const lv = B.bot - BOXFILL.coffee * (B.bot - B.top);
+    const g = ctx.createLinearGradient(0, lv, 0, B.bot); g.addColorStop(0, 'rgba(96,58,32,0.95)'); g.addColorStop(1, 'rgba(44,25,13,0.97)');
+    ctx.fillStyle = g; ctx.fillRect(B.x0, lv, B.x1 - B.x0, B.bot - lv);
+    const c = ctx.createLinearGradient(0, lv - 2, 0, lv + 18); c.addColorStop(0, 'rgba(214,166,112,0.9)'); c.addColorStop(1, 'rgba(150,100,60,0)');
+    ctx.fillStyle = c; ctx.fillRect(B.x0, lv - 2, B.x1 - B.x0, 20);
+    drawWisps(ctx, B.x0 + 90, B.x1 - 90, lv - 4, B.top + 8, 3, [240, 238, 232], 1, 0.5, 2.2, 0.55);
+  },
+  beer: (ctx, B) => {   // beer, and its head of foam
+    drawLiquid(ctx, boxTank, { fill: BOXFILL.beer, look: 'beer' });
+    const lv = B.bot - BOXFILL.beer * (B.bot - B.top);
+    ctx.fillStyle = 'rgba(246,236,214,0.92)'; ctx.fillRect(B.x0, lv - 12, B.x1 - B.x0, 18);
+    for (let x = B.x0 + 6, k = 0; x < B.x1; k++) {   // its top, a row of bubbles
+      const r = 7 + 4 * Math.abs(Math.sin(k * 2.3)); ctx.beginPath(); ctx.arc(x + r * 0.6, lv - 12, r, 0, Math.PI * 2); ctx.fill(); x += r * 1.35;
     }
   },
-  beer: (ctx) => drawLiquid(ctx, boxTank, { fill: 0.82, look: 'beer' }),
 };
+// The front pane catching the light: two slanted bands, and a highlight down the inside of the left wall.
+function drawGlassShine(ctx, B) {
+  const w = B.x1 - B.x0, h = B.bot - B.top;
+  ctx.save(); ctx.beginPath(); ctx.roundRect(B.x0, B.top, w, h, 16); ctx.clip();
+  ctx.save(); ctx.translate(B.x0 + 0.3 * w, B.top + h / 2); ctx.rotate(0.38);
+  for (const [x, wid, a] of [[-150, 120, 0.11], [-8, 30, 0.09], [300, 70, 0.05]]) {
+    const g = ctx.createLinearGradient(x, 0, x + wid, 0); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.5, `rgba(255,255,255,${a})`); g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g; ctx.fillRect(x, -h, wid, 2 * h);
+  }
+  ctx.restore();
+  const e = ctx.createLinearGradient(0, B.top, 0, B.bot); e.addColorStop(0, 'rgba(255,255,255,0.28)'); e.addColorStop(0.5, 'rgba(255,255,255,0.05)'); e.addColorStop(1, 'rgba(255,255,255,0.18)');
+  ctx.strokeStyle = e; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(B.x0 + 11, B.top + 22); ctx.lineTo(B.x0 + 11, B.bot - 22); ctx.stroke();
+  ctx.restore();
+}
 function drawUseBox(ctx, dt, h) {
   const [ox, oy, s] = boxFit(h), B = BOXG, w = boxWeights(PS.boxQ), ga = ctx.globalAlpha;
   ctx.save(); ctx.translate(ox, oy); ctx.scale(s, s);
   ctx.save(); ctx.beginPath(); ctx.roundRect(B.x0, B.top, B.x1 - B.x0, B.bot - B.top, 16); ctx.clip();
-  for (const k of ['stuff', 'fog', 'cloud', 'smoke', 'beer']) { if (w[k] <= 0.003) continue; ctx.globalAlpha = ga * w[k]; BOXDRAW[k](ctx, B); }
+  ctx.fillStyle = 'rgba(140,200,206,0.06)'; ctx.fillRect(B.x0, B.top, B.x1 - B.x0, B.bot - B.top);   // the glass's tint
+  for (const k of ['stuff', 'fog', 'cloud', 'smoke', 'coffee', 'beer']) { if (w[k] <= 0.003) continue; ctx.globalAlpha = ga * w[k]; BOXDRAW[k](ctx, B); }
   ctx.restore(); ctx.globalAlpha = ga;
   const T = boxT(w);
   drawBeam(ctx, 0, B.xs - 18, 0, SH.color, SH.I0, T, [B.x0, B.x1]);
-  ctx.save(); ctx.strokeStyle = COL.greyA; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(B.x0, B.top, B.x1 - B.x0, B.bot - B.top, 16); ctx.stroke(); ctx.restore();
+  drawGlassShine(ctx, B);
+  ctx.save(); ctx.strokeStyle = 'rgba(200,228,231,0.92)'; ctx.lineWidth = 5; ctx.beginPath(); ctx.roundRect(B.x0, B.top, B.x1 - B.x0, B.bot - B.top, 16); ctx.stroke();
+  ctx.strokeStyle = 'rgba(200,228,231,0.22)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(B.x0 + 8, B.top + 8, B.x1 - B.x0 - 16, B.bot - B.top - 16, 10); ctx.stroke(); ctx.restore();
   drawLaser(ctx, 0, 0, SH.color, 1);
   drawSensor(ctx, B.xs, 0, SH.color, T(B.xs - 18) * SH.I0);
   ctx.restore();

@@ -17,7 +17,7 @@ The working script below has light edits; the original drafts, word for word, ar
 **7.** [The card goes. The figure shrinks into the bottom-left corner and stays there; as soon as it starts moving, its readout reshapes into "WTF?!". The equation writes in, large, in about two seconds.]
 > Mainly because the first thing I ran into was a formula that looked like this. And that was intimidating, and every resource I found just handed it to me and said: accept it.
 
-**8.** [One press for all four effects: the four braces grow under their terms together, a moment apart, and the four cells fade into a 2 × 2 grid under the equation, each with its name in its corner, the photon and the particle playing in it. Every cell shows the paths in a neutral grey with arrows, the beam's line through the particle toward an eye at the right, all on the centre line. Absorption and out-scattering in red, emission and in-scattering in green. In emission, light leaves the particle every way at once, and only the photon heading for the eye has colour. Nothing already on screen changes.]
+**8.** [One press for all four effects: the four braces grow under their terms together, a moment apart, and the four cells fade into a 2 × 2 grid under the equation, each with its name in its corner, the particle and photons playing in it, back to back, one every half second. Every cell shows the paths in a neutral grey with arrows, the beam's line through the particle toward an eye at the right, all on the centre line. Absorption and out-scattering in red, emission and in-scattering in green. In emission, light leaves the particle every way at once, and only the photon heading for the eye has colour. Nothing already on screen changes.]
 > Parts of it made sense: each term is a different way light and the stuff interact.
 
 **12.–12b.** [The braces and the grid fade. A yellow box goes around the integral in the exponent, and everything outside it greys out; the part keeps a light yellow tint. Next press: the box leaves the equation and turns into a card that stays, the question as its title, "why an integral in the exponent?", and most of the card a place for the animation that answers it later (TODO: variable density).]
@@ -37,14 +37,11 @@ The working script below has light edits; the original drafts, word for word, ar
 **16.** [The aside, the goals and the future self go. No formula: the caption alone writes in, large at the top: "light, travelling some distance, through some stuff."]
 > In plain words, all of this is about one thing: what happens to light as it travels some distance through some stuff.
 
-**17.–20.** [One press per field, each a playing card fading in at its own place in a row of three: astronomy (starlight through dust on its way to a telescope), climate science (sunlight through the atmosphere, the bluer light scattering away), medical imaging (X-rays through the stick figure onto a detector). Then this video, at once: a laser, a closed box of plain stuff (a haze with specks drifting in it) and a sensor, the beam dimmer past the box, drawn like the bench's laser and tank. It opens on the left and pushes the other three into a column on the right, where they lose their colour and slow to a stop: the focus has moved.]
+**17.–20.** [One press per field, each a playing card fading in at its own place in a row of three: astronomy (starlight through dust on its way to a telescope), climate science (sunlight through the atmosphere, the bluer light scattering away), medical imaging (X-rays through the stick figure onto a detector). Then this video, at once: a laser, a closed box of tinted glass catching the light, plain stuff in it (a haze with specks drifting in it, in the yellow of the caption's "stuff"), and a sensor, the beam dimmer past the box, drawn like the bench's laser and tank. It opens on the left and pushes the other three into a column on the right, where they lose their colour and slow to a stop: the focus has moved. The caption's "light" takes the laser's red.]
 > And "stuff" really can be anything. In astronomy, it's the dust between the stars, and the light is starlight on its way to a telescope. In climate science, it's our own atmosphere. In medical imaging, it's your body, and the light is an X-ray. And for us, here, it's a laser, and a box of… stuff.
 
-**20b.–20f.** [One press per thing the box holds, the beam dimming more or less across it: fog, a cloud, smoke, beer, and back to plain stuff.]
-> Fog, [20c] a cloud, [20d] smoke, [20e] a glass of beer. [20f] It doesn't matter yet.
-
-**20g.** [The caption's "light" takes the laser's colour.]
-> Different stuff, same story. Because whatever the stuff is, there are only four things it can do to light passing through. We saw them a minute ago.
+**20b.–20g.** [One press per thing the box holds, the beam dimming more or less across it: fog; a cloud; smoke, thin streams curling up like a cigarette's and gathering under the lid; coffee, steam rising off it; beer, with a head of foam; then, at "It doesn't matter yet", plain stuff again. The narration doesn't name the coffee yet (see Open).]
+> Fog, [20c] a cloud, [20d] smoke, [20f] a glass of beer. [20g] It doesn't matter yet. Different stuff, same story. Because whatever the stuff is, there are only four things it can do to light passing through. We saw them a minute ago.
 
 **21.** [The cards and the caption go. As in the hook, one effect per press: absorption's tile fades in, lit in its colour, playing. The four tiles fill the stage; no formula above them.]
 > Absorption: the photon hits a particle and is swallowed. Its energy doesn't vanish, it becomes a little heat.
@@ -85,4 +82,5 @@ Confusion → goal → definition: each block answers the question the one befor
 
 - The cards in beats 12–14 hold TODO placeholders for the animations that answer them.
 - What the box holds once the body starts, the example the rest of the video keeps, is open. For now it goes back to plain stuff.
+- Beat 20e shows coffee, which the narration doesn't name. Suggested: "Fog, a cloud, smoke, a cup of coffee, a glass of beer."
 - Beats 22–25: visuals to build: the slabs quiz.

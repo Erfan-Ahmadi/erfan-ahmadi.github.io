@@ -1801,7 +1801,7 @@ function drawParticle(ctx, x, y, r, warm, alpha) {
 }
 const SI = defScene({
   id: 'interact', tab: 'What light can do', shared: true,
-  defaults: () => ({ show: [1, 1, 1, 1], lab: [1, 1, 1, 1], focus: 0, loopT: 3.2, t0: [0, 0.8, 1.6, 2.4], look: 'dot', emit: 'all' }),
+  defaults: () => ({ show: [1, 1, 1, 1], lab: [1, 1, 1, 1], focus: 0, loopT: 3.2, t0: [0, 0.8, 1.6, 2.4], look: 'dot', emit: 'all', stream: 'stream' }),
   actions: [
     { id: 'play', label: 'Play', primary: true, run: async (st, alive) => {
       for (let i = 0; i < 4; i++) { untween(st.show, i); untween(st.lab, i); st.show[i] = 0; st.lab[i] = 0; }
@@ -1821,7 +1821,8 @@ const SI = defScene({
   params: [
     { type: 'select', key: 'look', label: 'Photons', options: [['dot', 'Particles'], ['wave', 'Wave packets']] },
     { type: 'select', key: 'emit', label: 'Emission', options: [['all', 'In every direction'], ['one', 'Toward the eye only']] },
-    { type: 'range', key: 'loopT', label: 'Time per photon (s)', min: 1.5, max: 8, step: 0.1, fmt: (v) => v.toFixed(1) },
+    { type: 'select', key: 'stream', label: 'Timing', options: [['stream', 'Back to back'], ['one', 'One at a time']] },
+    { type: 'range', key: 'loopT', label: 'Time per photon (s)', min: 1.5, max: 8, step: 0.1, fmt: (v) => v.toFixed(1), visible: () => SI.stream === 'one' },
   ],
   draw: drawInteract,
 });
@@ -1848,10 +1849,13 @@ function drawIAPaths(ctx, i, paths, Rc, alpha) {
   ctx.fillStyle = COL.blue; ctx.beginPath(); ctx.arc(648, cy, 11, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(646, cy, 5, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
 }
-// One cell's picture, in the cell's own units; u is the time into this cell's loop (u < 0: a still, for reduced motion).
+// One cell's picture, in the cell's own units; u is the time since the cell started (u < 0: a still, for reduced
+// motion). Back to back (the default), a photon leaves every P / 5 seconds; one at a time, one per loop of P seconds.
 function drawIACell(ctx, i, u, P, alpha, look) {
+  if (u >= 0 && SI.stream !== 'one') return drawIAStream(ctx, i, u, P, alpha, look);
   const paths = iaPaths(look), S = pathSampler(paths[i]), v = 1080 / (0.85 * P), Rc = IA.R + (look === 'wave' ? 3 : IA.pr);
   if (u < 0) u = [(S.total - 50) / v, (S.cum[1] + 130) / v, 0.5 + 160 / v, (S.cum[1] + 140) / v][i];
+  else u %= P;
   let s = v * u, warm = 0, scale = 1;
   if (i === 0) {   // stops at the surface and is taken in; the particle warms
     const tc = S.total / v;
@@ -1870,6 +1874,33 @@ function drawIACell(ctx, i, u, P, alpha, look) {
   drawParticle(ctx, 350, 165, IA.R, warm, alpha);
   if (look === 'wave') drawPacket(ctx, S, s, SH.color, alpha, { L: IA.L });
   else drawPhotonDot(ctx, S, s, SH.color, alpha, { r: IA.pr, trail: IA.trail, scale });
+}
+// Back to back: photons one after another, P / 5 apart and faster than one at a time, each at its own age a since
+// it set off (only those sent since the cell started). The particle stays warm while it keeps taking light in, or
+// keeps sending it out.
+function drawIAStream(ctx, i, u, P, alpha, look) {
+  const paths = iaPaths(look), S = pathSampler(paths[i]), Rc = IA.R + (look === 'wave' ? 3 : IA.pr);
+  const D = P / 5, v = 1540 / P, lead = i === 2 ? 0.5 : 0, tc = S.total / v, life = lead + (S.total + IA.trail * 1.5) / v;
+  const ages = []; for (let a = u % D; a <= u && a < life + 2.5; a += D) ages.push(a);
+  let warm = 0;
+  for (const a of ages) {
+    if (i === 0 && a > tc) { const x = a - tc; warm = Math.max(warm, x < 0.25 ? smooth(x / 0.25) : Math.exp(-(x - 0.25) / 0.7)); }
+    if (i === 2) warm = Math.max(warm, a < 0.55 ? smooth(a / 0.55) : Math.exp(-(a - 0.55) / 0.6));
+  }
+  drawIAPaths(ctx, i, paths, Rc, alpha);
+  const photon = (Sx, sh, col, al, small, scale) => (look === 'wave'
+    ? drawPacket(ctx, Sx, sh, col, al, small ? { L: IA.L * 0.8, amp: 8, w: 3 } : { L: IA.L })
+    : drawPhotonDot(ctx, Sx, sh, col, al, small ? { r: IA.pr * 0.8, trail: IA.trail * 0.75, scale } : { r: IA.pr, trail: IA.trail, scale }));
+  if (i === 2 && SI.emit !== 'one') for (const a of ages) {
+    if (a < lead || a > life) continue;
+    for (const S2 of iaEmitPaths(Rc)) photon(S2, v * (a - lead), COL.greyB, (look === 'wave' ? 0.4 : 0.5) * alpha, true, clamp((a - lead) / 0.15, 0, 1));
+  }
+  drawParticle(ctx, 350, 165, IA.R, warm, alpha);
+  for (const a of ages) {
+    if (a > life) continue;
+    const scale = i === 0 ? 1 - clamp((a - tc) / 0.18, 0, 1) : i === 2 ? clamp((a - lead) / 0.15, 0, 1) : 1;
+    if (scale > 0.003 && a >= lead) photon(S, v * (a - lead), SH.color, alpha, false, scale);
+  }
 }
 // The other directions an emitted photon can take, evenly around the particle (the beam's own, 0°, is left out).
 const IA_EMIT = [];
@@ -1892,7 +1923,7 @@ function drawInteract(ctx, dt, st) {
     if (ca > 0.003) {
       ctx.save(); ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip();
       ctx.translate(r[0], r[1]); ctx.scale(s, s);
-      drawIACell(ctx, i, reduced ? -1 : (((TIME - st.t0[i]) % P) + P) % P, P, ca, st.look);
+      drawIACell(ctx, i, reduced ? -1 : Math.max(0, TIME - st.t0[i] + (st.stream === 'one' ? P * 64 : 0)), P, ca, st.look);
       ctx.restore();
     }
     // the frame, drawn in as manim's Create draws a rectangle

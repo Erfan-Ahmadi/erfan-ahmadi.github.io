@@ -12,6 +12,10 @@ const PRES_DRIFT = 0.03;
 // The four effects' cells under the equation, in the order of the terms: absorption, out-scattering, emission, in-scattering.
 const PCELLS = [[370, 480, 590, 278], [990, 480, 590, 278], [370, 790, 590, 278], [990, 790, 590, 278]];
 const PFX = [['t-pabs', 'absorption', COL.red], ['t-pout', 'out-scattering', COL.red], ['t-pem', 'emission', COL.green], ['t-pin', 'in-scattering', COL.green]];
+// their cells play photons back to back, one every PFX_P / 5 seconds (the bench's "Photons" setting can make it one at
+// a time again, a loop of PFX_P seconds)
+const PFX_P = 2.4;
+const fxAge = (t0) => (reduced ? -1 : Math.max(0, TIME - t0 + (SI.stream === 'one' ? PFX_P * 64 : 0)));
 // The three questions. Each one's highlight leaves the equation and becomes its own card, which keeps a place for the
 // animation that answers it later in the video. They are TODO for now: give a card draw(ctx, rect, alpha) to fill it.
 const QCARDS = [
@@ -109,9 +113,8 @@ const BEATS = [
   { n: '15g', name: 'most importantly', run: () => presGoal(2) },
   { n: '16', name: 'some stuff', run: presDefine },
   ...USES.map((u, i) => ({ n: String(17 + i), name: u.name, run: () => presUse(i) })),
-  // 20b–20f: one press per thing the box can hold, then back to plain stuff; 20g: the caption's "light" turns red
-  ...['fog', 'a cloud', 'smoke', 'a glass of beer', "it doesn't matter yet"].map((name, k) => ({ n: `20${'bcdef'[k]}`, name, run: () => ptw('boxQ', k + 1, 0.5) })),
-  { n: '20g', name: 'different stuff, same story', run: () => ptw('lines', 1, 0.8) },
+  // 20b–20g: one press per thing the box can hold, then back to plain stuff
+  ...['fog', 'a cloud', 'smoke', 'coffee', 'a glass of beer', "it doesn't matter yet"].map((name, k) => ({ n: `20${'bcdefg'[k]}`, name, run: () => ptw('boxQ', k + 1, 0.5) })),
   ...PFX.map((p, i) => ({ n: i ? `21${'bcd'[i - 1]}` : '21', name: p[1], run: () => presFxName(i) })),
   { n: '21e', name: 'two take light away', run: () => presFxPair(true) },
   { n: '21f', name: 'two add it', run: () => presFxPair(false) },
@@ -204,7 +207,7 @@ async function presDefine() {
 // Beats 17–19: a card fades in at its place in the row. 20: this video's card opens on the left at once and pushes
 // the other three into the column.
 function presUse(i) {
-  if (i === 3) { ptwi(PS.uses, 3, 1, 0.5); return ptw('grow', 1, 1.6); }
+  if (i === 3) { ptwi(PS.uses, 3, 1, 0.5); ptw('lines', 1, 0.8, { delay: 0.6 }); return ptw('grow', 1, 1.6); }
   if (i === 0) PS.useT = TIME;
   PS.useX[i] = rowX(i, 3);
   return ptwi(PS.uses, i, 1, 0.9);
@@ -509,7 +512,7 @@ function greyOut(ctx, r, g, dim = 0) {
   if (dim > 0) { ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = dim * g; ctx.fillStyle = BG; ctx.fillRect(r[0], r[1], r[2], r[3]); }
   ctx.restore();
 }
-// Beat 16's caption, large at the top. 20g: its "light" takes the laser's colour.
+// Beat 16's caption, large at the top. Its "light" takes the laser's colour as the laser comes in (beat 20).
 function drawCaption(ctx, st) {
   if (st.cap <= 0.003) return;
   TERM_COL['t-clight'] = hexRgb(SH.color);
@@ -530,12 +533,12 @@ function drawFx(ctx, st) {
     let r = i === 0 ? lerpRect(FXCELLS[0], FXBIG, big) : FXCELLS[i];
     if (f > 0.003) { const k = 1 + 0.035 * f, cx = r[0] + r[2] / 2, cy = r[1] + r[3] / 2; r = [cx - (r[2] * k) / 2, cy - (r[3] * k) / 2, r[2] * k, r[3] * k]; }
     const col = mixRgb(hexRgb(PFX[i][2]), hexRgb(COL.greyC), g), sc = r[2] / 700, ca = a * lerp(1, 0.5, g);
-    const u = reduced ? -1 : (((TIME - F.t0) % SI.loopT) + SI.loopT) % SI.loopT;
+    const u = fxAge(F.t0);
     ctx.save(); ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip();
     ctx.translate(r[0], r[1] + (r[3] - 330 * sc) / 2); ctx.scale(sc, sc);
     // greying out, it settles into its still and stops
-    if (g < 0.997) drawIACell(ctx, i, u, SI.loopT, ca * (1 - g), SI.look);
-    if (g > 0.003) drawIACell(ctx, i, -1, SI.loopT, ca * g, SI.look);
+    if (g < 0.997) drawIACell(ctx, i, u, PFX_P, ca * (1 - g), SI.look);
+    if (g > 0.003) drawIACell(ctx, i, -1, PFX_P, ca * g, SI.look);
     ctx.restore();
     greyOut(ctx, r, g);
     ctx.save(); if (f > 0.003) { ctx.shadowColor = rgba(col, 0.8 * f); ctx.shadowBlur = 26 * f; }
@@ -586,7 +589,7 @@ function drawPresent(ctx, dt) {
       const show = st.cells[i]; if (show <= 0.003) continue;
       const r = PCELLS[i], sc = r[2] / 700, a = smooth(clamp(show, 0, 1)) * ga;
       ctx.save(); ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip(); ctx.translate(r[0], r[1]); ctx.scale(sc, r[3] / 330);
-      drawIACell(ctx, i, reduced ? -1 : (((TIME - st.cellT[i]) % SI.loopT) + SI.loopT) % SI.loopT, SI.loopT, a, SI.look);
+      drawIACell(ctx, i, fxAge(st.cellT[i]), PFX_P, a, SI.look);
       ctx.restore();
       ctx.save(); ctx.strokeStyle = hexA(PFX[i][2], 0.9 * a); ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.stroke(); ctx.restore();
       drawTex(ctx, String.raw`\text{${PFX[i][1]}}`, r[0] + 22, r[1] + 18, 34, { ax: 0, ay: 0, color: PFX[i][2], alpha: a });
