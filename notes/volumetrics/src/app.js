@@ -1875,17 +1875,18 @@ function drawIACell(ctx, i, u, P, alpha, look) {
   if (look === 'wave') drawPacket(ctx, S, s, SH.color, alpha, { L: IA.L });
   else drawPhotonDot(ctx, S, s, SH.color, alpha, { r: IA.pr, trail: IA.trail, scale });
 }
-// Back to back: photons one after another, P / 5 apart and faster than one at a time, each at its own age a since
-// it set off (only those sent since the cell started). The particle stays warm while it keeps taking light in, or
-// keeps sending it out.
+// Back to back: photons one after another, P / 5 apart, each at its own age a since it set off (only those sent
+// since the cell started). The particle stays warm while it keeps taking light in, or keeps sending it out. Every
+// time in it is tuned at P = 2.4 s and stretches with P, so a longer P is the same picture played slower.
+const IA_STREAM_P = 8;   // 0.3 times the speed it was tuned at
 function drawIAStream(ctx, i, u, P, alpha, look) {
-  const paths = iaPaths(look), S = pathSampler(paths[i]), Rc = IA.R + (look === 'wave' ? 3 : IA.pr);
-  const D = P / 5, v = 1540 / P, lead = i === 2 ? 0.5 : 0, tc = S.total / v, life = lead + (S.total + IA.trail * 1.5) / v;
-  const ages = []; for (let a = u % D; a <= u && a < life + 2.5; a += D) ages.push(a);
+  const paths = iaPaths(look), S = pathSampler(paths[i]), Rc = IA.R + (look === 'wave' ? 3 : IA.pr), k = P / 2.4;
+  const D = P / 5, v = 1540 / P, lead = i === 2 ? 0.5 * k : 0, tc = S.total / v, life = lead + (S.total + IA.trail * 1.5) / v;
+  const ages = []; for (let a = u % D; a <= u && a < life + 2.5 * k; a += D) ages.push(a);
   let warm = 0;
   for (const a of ages) {
-    if (i === 0 && a > tc) { const x = a - tc; warm = Math.max(warm, x < 0.25 ? smooth(x / 0.25) : Math.exp(-(x - 0.25) / 0.7)); }
-    if (i === 2) warm = Math.max(warm, a < 0.55 ? smooth(a / 0.55) : Math.exp(-(a - 0.55) / 0.6));
+    if (i === 0 && a > tc) { const x = a - tc; warm = Math.max(warm, x < 0.25 * k ? smooth(x / (0.25 * k)) : Math.exp(-(x - 0.25 * k) / (0.7 * k))); }
+    if (i === 2) warm = Math.max(warm, a < 0.55 * k ? smooth(a / (0.55 * k)) : Math.exp(-(a - 0.55 * k) / (0.6 * k)));
   }
   drawIAPaths(ctx, i, paths, Rc, alpha);
   const photon = (Sx, sh, col, al, small, scale) => (look === 'wave'
@@ -1893,12 +1894,12 @@ function drawIAStream(ctx, i, u, P, alpha, look) {
     : drawPhotonDot(ctx, Sx, sh, col, al, small ? { r: IA.pr * 0.8, trail: IA.trail * 0.75, scale } : { r: IA.pr, trail: IA.trail, scale }));
   if (i === 2 && SI.emit !== 'one') for (const a of ages) {
     if (a < lead || a > life) continue;
-    for (const S2 of iaEmitPaths(Rc)) photon(S2, v * (a - lead), COL.greyB, (look === 'wave' ? 0.4 : 0.5) * alpha, true, clamp((a - lead) / 0.15, 0, 1));
+    for (const S2 of iaEmitPaths(Rc)) photon(S2, v * (a - lead), COL.greyB, (look === 'wave' ? 0.4 : 0.5) * alpha, true, clamp((a - lead) / (0.15 * k), 0, 1));
   }
   drawParticle(ctx, 350, 165, IA.R, warm, alpha);
   for (const a of ages) {
     if (a > life) continue;
-    const scale = i === 0 ? 1 - clamp((a - tc) / 0.18, 0, 1) : i === 2 ? clamp((a - lead) / 0.15, 0, 1) : 1;
+    const scale = i === 0 ? 1 - clamp((a - tc) / (0.18 * k), 0, 1) : i === 2 ? clamp((a - lead) / (0.15 * k), 0, 1) : 1;
     if (scale > 0.003 && a >= lead) photon(S, v * (a - lead), SH.color, alpha, false, scale);
   }
 }
@@ -1914,7 +1915,7 @@ function iaEmitPaths(Rc) {
   return IA_EMIT;
 }
 function drawInteract(ctx, dt, st) {
-  const f = smooth(clamp(st.focus, 0, 1)), P = st.loopT;
+  const f = smooth(clamp(st.focus, 0, 1)), P = st.stream === 'one' ? st.loopT : IA_STREAM_P;
   for (const i of [1, 2, 3, 0]) {
     const show = st.show[i], a = i === 0 ? 1 : 1 - f;
     if (show <= 0.003 || a <= 0.003) continue;

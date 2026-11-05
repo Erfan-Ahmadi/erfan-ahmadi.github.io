@@ -17,7 +17,7 @@ The working script below has light edits; the original drafts, word for word, ar
 **7.** [The card goes. The figure shrinks into the bottom-left corner and stays there; as soon as it starts moving, its readout reshapes into "WTF?!". The equation writes in, large, in about two seconds.]
 > Mainly because the first thing I ran into was a formula that looked like this. And that was intimidating, and every resource I found just handed it to me and said: accept it.
 
-**8.** [One press for all four effects: the four braces grow under their terms together, a moment apart, and the four cells fade into a 2 × 2 grid under the equation, each with its name in its corner, the particle and photons playing in it, back to back, one every half second. Every cell shows the paths in a neutral grey with arrows, the beam's line through the particle toward an eye at the right, all on the centre line. Absorption and out-scattering in red, emission and in-scattering in green. In emission, light leaves the particle every way at once, and only the photon heading for the eye has colour. Nothing already on screen changes.]
+**8.** [One press for all four effects: the four braces grow under their terms together, a moment apart, and the four cells fade into a 2 × 2 grid under the equation, each with its name in its corner, the particle and photons playing in it, back to back, about one every second and a half. Every cell shows the paths in a neutral grey with arrows, the beam's line through the particle toward an eye at the right, all on the centre line. Absorption and out-scattering in red, emission and in-scattering in green. In emission, light leaves the particle every way at once, and only the photon heading for the eye has colour. Nothing already on screen changes.]
 > Parts of it made sense: each term is a different way light and the stuff interact.
 
 **12.–12b.** [The braces and the grid fade. A yellow box goes around the integral in the exponent, and everything outside it greys out; the part keeps a light yellow tint. Next press: the box leaves the equation and turns into a card that stays, the question as its title, "why an integral in the exponent?", and most of the card a place for the animation that answers it later (TODO: variable density).]
@@ -43,20 +43,20 @@ The working script below has light edits; the original drafts, word for word, ar
 **20b.–20h.** [One press per thing the box holds, the beam dimming more or less across it: fog; a cloud; smoke, thin streams curling up like a cigarette's and gathering under the lid; a block of tinted glass, catching the light; coffee; beer, with a head of foam; then, at "It doesn't matter yet", plain stuff again. The narration doesn't name the tinted glass or the coffee yet (see Open).]
 > Fog, [20c] a cloud, [20d] smoke, [20g] a glass of beer. [20h] It doesn't matter yet. Different stuff, same story. Because whatever the stuff is, there are only four things it can do to light passing through. We saw them a minute ago.
 
-**21.** [The cards and the caption go. As in the hook, one effect per press: absorption's tile fades in, lit in its colour, playing. The four tiles fill the stage; no formula above them.]
+**21.** [The cards and the caption go. One effect per press, in neutral frames and names: absorption's tile fades in, playing. The four tiles fill the stage; no formula above them.]
 > Absorption: the photon hits a particle and is swallowed. Its energy doesn't vanish, it becomes a little heat.
 
-**21b.** [Out-scattering's tile fades in, lit; absorption's keeps playing.]
+**21b.** [Out-scattering's tile fades in, playing; absorption's pauses where it is and goes a little out of focus: less colour, dimmer.]
 > Out-scattering: it bounces off and leaves in some other direction, so it never reaches the eye.
 
-**21c.** [Emission's tile fades in.]
+**21c.** [Emission's tile fades in; out-scattering's pauses and goes out of focus the same way.]
 > Emission: the particle gives off light of its own, and some of it heads our way.
 
-**21d.** [In-scattering's tile fades in.]
+**21d.** [In-scattering's tile fades in; emission's pauses and goes out of focus.]
 > In-scattering: light from somewhere else bounces off a particle, right into our line of sight.
 
-**21e.–21i.** [Five presses. At "Two take light away.", the two red tiles light up together; at "Two add it.", the two green ones. At "our stuff doesn't scatter,", out-scattering and in-scattering grey out and stop; at "and it doesn't emit.", emission does the same. At "It only absorbs.", absorption, still playing, grows over the other three.]
-> Two take light away. Two add it. And for the rest of this video I'm going to be slightly dishonest: our stuff doesn't scatter, and it doesn't emit. It only absorbs. The other three build on top of absorption, and I'll come back to them in a separate video. So let's see what absorption alone does to our light.
+**21e.–21h.** [Four presses. At "And for the rest of this video", all four come back into focus and play. At "our stuff doesn't scatter,", out-scattering and in-scattering grey out and stop; at "and it doesn't emit.", emission does the same. At "It only absorbs.", absorption, still playing, grows over the other three.]
+> And for the rest of this video I'm going to be slightly dishonest: our stuff doesn't scatter, and it doesn't emit. It only absorbs. The other three build on top of absorption, and I'll come back to them in a separate video. So let's see what absorption alone does to our light.
 
 ## Part 3: the quiz (the body starts here)
 

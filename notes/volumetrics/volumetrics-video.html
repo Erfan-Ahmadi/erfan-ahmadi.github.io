@@ -2018,17 +2018,18 @@ function drawIACell(ctx, i, u, P, alpha, look) {
   if (look === 'wave') drawPacket(ctx, S, s, SH.color, alpha, { L: IA.L });
   else drawPhotonDot(ctx, S, s, SH.color, alpha, { r: IA.pr, trail: IA.trail, scale });
 }
-// Back to back: photons one after another, P / 5 apart and faster than one at a time, each at its own age a since
-// it set off (only those sent since the cell started). The particle stays warm while it keeps taking light in, or
-// keeps sending it out.
+// Back to back: photons one after another, P / 5 apart, each at its own age a since it set off (only those sent
+// since the cell started). The particle stays warm while it keeps taking light in, or keeps sending it out. Every
+// time in it is tuned at P = 2.4 s and stretches with P, so a longer P is the same picture played slower.
+const IA_STREAM_P = 8;   // 0.3 times the speed it was tuned at
 function drawIAStream(ctx, i, u, P, alpha, look) {
-  const paths = iaPaths(look), S = pathSampler(paths[i]), Rc = IA.R + (look === 'wave' ? 3 : IA.pr);
-  const D = P / 5, v = 1540 / P, lead = i === 2 ? 0.5 : 0, tc = S.total / v, life = lead + (S.total + IA.trail * 1.5) / v;
-  const ages = []; for (let a = u % D; a <= u && a < life + 2.5; a += D) ages.push(a);
+  const paths = iaPaths(look), S = pathSampler(paths[i]), Rc = IA.R + (look === 'wave' ? 3 : IA.pr), k = P / 2.4;
+  const D = P / 5, v = 1540 / P, lead = i === 2 ? 0.5 * k : 0, tc = S.total / v, life = lead + (S.total + IA.trail * 1.5) / v;
+  const ages = []; for (let a = u % D; a <= u && a < life + 2.5 * k; a += D) ages.push(a);
   let warm = 0;
   for (const a of ages) {
-    if (i === 0 && a > tc) { const x = a - tc; warm = Math.max(warm, x < 0.25 ? smooth(x / 0.25) : Math.exp(-(x - 0.25) / 0.7)); }
-    if (i === 2) warm = Math.max(warm, a < 0.55 ? smooth(a / 0.55) : Math.exp(-(a - 0.55) / 0.6));
+    if (i === 0 && a > tc) { const x = a - tc; warm = Math.max(warm, x < 0.25 * k ? smooth(x / (0.25 * k)) : Math.exp(-(x - 0.25 * k) / (0.7 * k))); }
+    if (i === 2) warm = Math.max(warm, a < 0.55 * k ? smooth(a / (0.55 * k)) : Math.exp(-(a - 0.55 * k) / (0.6 * k)));
   }
   drawIAPaths(ctx, i, paths, Rc, alpha);
   const photon = (Sx, sh, col, al, small, scale) => (look === 'wave'
@@ -2036,12 +2037,12 @@ function drawIAStream(ctx, i, u, P, alpha, look) {
     : drawPhotonDot(ctx, Sx, sh, col, al, small ? { r: IA.pr * 0.8, trail: IA.trail * 0.75, scale } : { r: IA.pr, trail: IA.trail, scale }));
   if (i === 2 && SI.emit !== 'one') for (const a of ages) {
     if (a < lead || a > life) continue;
-    for (const S2 of iaEmitPaths(Rc)) photon(S2, v * (a - lead), COL.greyB, (look === 'wave' ? 0.4 : 0.5) * alpha, true, clamp((a - lead) / 0.15, 0, 1));
+    for (const S2 of iaEmitPaths(Rc)) photon(S2, v * (a - lead), COL.greyB, (look === 'wave' ? 0.4 : 0.5) * alpha, true, clamp((a - lead) / (0.15 * k), 0, 1));
   }
   drawParticle(ctx, 350, 165, IA.R, warm, alpha);
   for (const a of ages) {
     if (a > life) continue;
-    const scale = i === 0 ? 1 - clamp((a - tc) / 0.18, 0, 1) : i === 2 ? clamp((a - lead) / 0.15, 0, 1) : 1;
+    const scale = i === 0 ? 1 - clamp((a - tc) / (0.18 * k), 0, 1) : i === 2 ? clamp((a - lead) / (0.15 * k), 0, 1) : 1;
     if (scale > 0.003 && a >= lead) photon(S, v * (a - lead), SH.color, alpha, false, scale);
   }
 }
@@ -2057,7 +2058,7 @@ function iaEmitPaths(Rc) {
   return IA_EMIT;
 }
 function drawInteract(ctx, dt, st) {
-  const f = smooth(clamp(st.focus, 0, 1)), P = st.loopT;
+  const f = smooth(clamp(st.focus, 0, 1)), P = st.stream === 'one' ? st.loopT : IA_STREAM_P;
   for (const i of [1, 2, 3, 0]) {
     const show = st.show[i], a = i === 0 ? 1 : 1 - f;
     if (show <= 0.003 || a <= 0.003) continue;
@@ -4654,10 +4655,9 @@ const PRES_DRIFT = 0.03;
 // The four effects' cells under the equation, in the order of the terms: absorption, out-scattering, emission, in-scattering.
 const PCELLS = [[370, 480, 590, 278], [990, 480, 590, 278], [370, 790, 590, 278], [990, 790, 590, 278]];
 const PFX = [['t-pabs', 'absorption', COL.red], ['t-pout', 'out-scattering', COL.red], ['t-pem', 'emission', COL.green], ['t-pin', 'in-scattering', COL.green]];
-// their cells play photons back to back, one every PFX_P / 5 seconds (the bench's "Photons" setting can make it one at
-// a time again, a loop of PFX_P seconds)
-const PFX_P = 2.4;
-const fxAge = (t0) => (reduced ? -1 : Math.max(0, TIME - t0 + (SI.stream === 'one' ? PFX_P * 64 : 0)));
+// their cells play photons back to back (the bench's "Timing" setting can make it one at a time again)
+const fxP = () => (SI.stream === 'one' ? SI.loopT : IA_STREAM_P);
+const fxAge = (t0) => (reduced ? -1 : Math.max(0, TIME - t0 + (SI.stream === 'one' ? fxP() * 64 : 0)));
 // The three questions. Each one's highlight leaves the equation and becomes its own card, which keeps a place for the
 // animation that answers it later in the video. They are TODO for now: give a card draw(ctx, rect, alpha) to fill it.
 const QCARDS = [
@@ -4707,7 +4707,7 @@ const PS_DEFAULTS = () => ({
   eqA: 1, eqTop: 0, spec: [0, 0], chalk: 0, code: 0, specT: 0, ptrX: 0, ptrA: 0, lineP: 0, wig: 0, wigT: 0, side: 0,
   goalsA: 0, figMid: 0, fut: 0, futW: 0, goals: [0, 0, 0], p15: 1, cap: 0,
   uses: [0, 0, 0, 0], useX: [0, 0, 0], useT: 0, grow: 0, usesOut: 0, capOut: 0, boxQ: 0, lines: 0,
-  fx: { show: [0, 0, 0, 0], t0: 0, focus: [0, 0, 0, 0], grey: [0, 0, 0, 0], big: 0 },
+  fx: { show: [0, 0, 0, 0], clock: [0, 0, 0, 0], run: [0, 0, 0, 0], dim: [0, 0, 0, 0], grey: [0, 0, 0, 0], big: 0 },
 });
 const PS = PS_DEFAULTS();
 // The equation, with its terms named: the four effects for the braces, and the parts the questions point at.
@@ -4758,11 +4758,10 @@ const BEATS = [
   // 20b–20h: one press per thing the box can hold, then back to plain stuff
   ...['fog', 'a cloud', 'smoke', 'tinted glass', 'coffee', 'a glass of beer', "it doesn't matter yet"].map((name, k) => ({ n: `20${'bcdefgh'[k]}`, name, run: () => ptw('boxQ', k + 1, 0.5) })),
   ...PFX.map((p, i) => ({ n: i ? `21${'bcd'[i - 1]}` : '21', name: p[1], run: () => presFxName(i) })),
-  { n: '21e', name: 'two take light away', run: () => presFxPair(true) },
-  { n: '21f', name: 'two add it', run: () => presFxPair(false) },
-  { n: '21g', name: "doesn't scatter", run: () => presFxGrey([1, 3]) },
-  { n: '21h', name: "doesn't emit", run: () => presFxGrey([2]) },
-  { n: '21i', name: 'it only absorbs', run: presFxOnly },
+  { n: '21e', name: 'all four, playing', run: presFxAll },
+  { n: '21f', name: "doesn't scatter", run: () => presFxGrey([1, 3]) },
+  { n: '21g', name: "doesn't emit", run: () => presFxGrey([2]) },
+  { n: '21h', name: 'it only absorbs', run: presFxOnly },
 ];
 // A beat by its number in the script; a number between two beats opens the next one.
 function presIndex(label) {
@@ -4854,24 +4853,25 @@ function presUse(i) {
   PS.useX[i] = rowX(i, 3);
   return ptwi(PS.uses, i, 1, 0.9);
 }
-// 21–21d: one effect per press, as in the hook. The first press also clears the cards and the caption. Each tile fades
-// in, lit, as its effect is named, and keeps playing. (Its term also takes its colour, for when the equation returns.)
+// 21–21d: one effect per press. The first press also clears the cards and the caption. Each tile fades in playing, on
+// its own clock, while the one before it pauses where it is and goes a little out of focus: less colour, dimmer.
+// (Its term also takes its colour, for when the equation returns.)
+const FX_STILL = 6.5;   // a tile paused before it has played (a step back) shows this moment, photons on their way
 async function presFxName(i) {
-  if (i === 0) { ptw('usesOut', 1, 0.8); ptw('capOut', 1, 0.6); PS.fx.t0 = TIME + 0.6; }
-  for (let j = 0; j < 4; j++) ptwi(PS.fx.focus, j, j === i ? 1 : 0, 0.5);
+  const F = PS.fx;
+  if (i === 0) { ptw('usesOut', 1, 0.8); ptw('capOut', 1, 0.6); }
+  for (let j = 0; j < i; j++) { F.clock[j] = Math.max(F.clock[j], FX_STILL); ptwi(F.run, j, 0, 0.35); ptwi(F.dim, j, 1, 0.6); }
+  F.clock[i] = i === 0 ? -0.6 : 0; F.run[i] = 1; F.dim[i] = 0;
   ptwi(PS.hi, PFX[i][0], 1, 0.6);
-  await ptwi(PS.fx.show, i, 1, 1.1, { delay: i === 0 ? 0.6 : 0 });
+  await ptwi(F.show, i, 1, 1.1, { delay: i === 0 ? 0.6 : 0 });
 }
-// 21e: the two that take light away; 21f: the two that add it.
-function presFxPair(away) {
-  return Promise.all([0, 1, 2, 3].map((j) => ptwi(PS.fx.focus, j, (j < 2) === away ? 1 : 0, 0.5)));
+// 21e: all four in focus again, all playing.
+function presFxAll() {
+  const F = PS.fx; return Promise.all([0, 1, 2, 3].map((j) => Promise.all([ptwi(F.run, j, 1, 0.4), ptwi(F.dim, j, 0, 0.6)])));
 }
-// 21g: our stuff doesn't scatter: out- and in-scattering grey out and stop; 21h: nor does it emit.
-function presFxGrey(list) {
-  for (let j = 0; j < 4; j++) ptwi(PS.fx.focus, j, 0, 0.4);
-  return Promise.all(list.map((j) => ptwi(PS.fx.grey, j, 1, 0.9)));
-}
-// 21i: it only absorbs: absorption, still playing, grows over the other three.
+// 21f: our stuff doesn't scatter: out- and in-scattering grey out and stop; 21g: nor does it emit.
+function presFxGrey(list) { return Promise.all(list.map((j) => ptwi(PS.fx.grey, j, 1, 0.9))); }
+// 21h: it only absorbs: absorption, still playing, grows over the other three.
 function presFxOnly() { return ptwi(PS.fx, 'big', 1, 1.6); }
 async function presGo(k, play) {
   k = clamp(k, 0, BEATS.length - 1);
@@ -5141,19 +5141,19 @@ function drawUses(ctx, dt, st) {
       ctx.drawImage(presCv, ((W - sw) / 2) * K, ((H - sh) / 2) * K, sw * K, sh * K, r[0], r[1], r[2], r[3]);
     }
     ctx.restore();
-    greyOut(ctx, r, side, 0.3);
+    greyOut(ctx, r, side, 0.3 * side);
     ctx.save(); ctx.strokeStyle = hexA(COL.greyC, a); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.stroke(); ctx.restore();
     drawTex(ctx, String.raw`\text{${u.label}}`, r[0] + 22 * ls, r[1] + 18 * ls, 30 * ls, { ax: 0, ay: 0, color: COL.greyA, alpha: a * clamp(r[2] / 400, 0, 1) });
   }
 }
 // Takes the colour out of what is already drawn in a card (g: 0..1) and dims it by dim: one blended fill, where a
 // canvas filter would redo every stroke and dot inside the card.
-function greyOut(ctx, r, g, dim = 0) {
-  if (g <= 0.003) return;
+function greyOut(ctx, r, g, dim = 0) {   // dim: how much darker, 0..1
+  if (g <= 0.003 && dim <= 0.003) return;
   ctx.save(); ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip();
   // the background's own hue at each pixel's brightness: the stage's warm grey, and the background stays as it is
   ctx.globalCompositeOperation = 'color'; ctx.globalAlpha = 0.92 * g; ctx.fillStyle = BG; ctx.fillRect(r[0], r[1], r[2], r[3]);
-  if (dim > 0) { ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = dim * g; ctx.fillStyle = BG; ctx.fillRect(r[0], r[1], r[2], r[3]); }
+  if (dim > 0.003) { ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = dim; ctx.fillStyle = BG; ctx.fillRect(r[0], r[1], r[2], r[3]); }
   ctx.restore();
 }
 // Beat 16's caption, large at the top. Its "light" takes the laser's colour as the laser comes in (beat 20).
@@ -5163,32 +5163,30 @@ function drawCaption(ctx, st) {
   drawTex2(ctx, PCAP, 960, 190, 52, { p: st.cap, alpha: 1 - smooth(clamp(st.capOut, 0, 1)), hi: { 't-clight': smooth(clamp(st.lines, 0, 1)) } });
 }
 function drawTex2(ctx, src, x, y, size, { p = 1, alpha = 1, hi = null } = {}) { drawSprites(ctx, place(tex(src), { x, y, size }), { p, alpha, hi }); }
-// Beats 20b–21i: the four effects again, filling the stage (clear of the figure in the corner). Each is named in turn
-// (its tile lit); the two that take light away, then the two that add it; then the scatterings grey out and stop,
-// then emission, and absorption, still playing, grows over the rest.
+// Beats 21–21h: the four effects again, filling the stage (clear of the figure in the corner), in neutral frames and
+// labels. Each is named in turn, the ones before it paused and out of focus; then all four play; then the scatterings
+// grey out and stop, then emission, and absorption, still playing, grows over the rest.
 const FXCELLS = [[400, 120, 690, 340], [1190, 120, 690, 340], [400, 540, 690, 340], [1190, 540, 690, 340]], FXBIG = [400, 120, 1480, 760];
 const hexOf = (c) => '#' + c.map((v) => Math.round(clamp(v, 0, 255)).toString(16).padStart(2, '0')).join('');
-function drawFx(ctx, st) {
+function drawFx(ctx, dt, st) {
   const F = st.fx; if (Math.max(...F.show) <= 0.003) return;
-  const big = smooth(clamp(F.big, 0, 1));
+  const big = smooth(clamp(F.big, 0, 1)), P = fxP();
+  for (let i = 0; i < 4; i++) F.clock[i] += dt * clamp(F.run[i], 0, 1);   // each tile's own clock, stopped while it is paused
   for (const i of [1, 2, 3, 0]) {   // absorption last, so it grows over the others
-    const g = smooth(clamp(F.grey[i], 0, 1)), f = smooth(clamp(F.focus[i], 0, 1)), a = smooth(clamp(F.show[i], 0, 1)) * (i === 0 ? 1 : 1 - big);
+    const g = smooth(clamp(F.grey[i], 0, 1)), d = smooth(clamp(F.dim[i], 0, 1)), a = smooth(clamp(F.show[i], 0, 1)) * (i === 0 ? 1 : 1 - big);
     if (a <= 0.003) continue;
-    let r = i === 0 ? lerpRect(FXCELLS[0], FXBIG, big) : FXCELLS[i];
-    if (f > 0.003) { const k = 1 + 0.035 * f, cx = r[0] + r[2] / 2, cy = r[1] + r[3] / 2; r = [cx - (r[2] * k) / 2, cy - (r[3] * k) / 2, r[2] * k, r[3] * k]; }
-    const col = mixRgb(hexRgb(PFX[i][2]), hexRgb(COL.greyC), g), sc = r[2] / 700, ca = a * lerp(1, 0.5, g);
-    const u = fxAge(F.t0);
+    const r = i === 0 ? lerpRect(FXCELLS[0], FXBIG, big) : FXCELLS[i], sc = r[2] / 700, ca = a * lerp(1, 0.5, g);
+    const u = reduced ? -1 : Math.max(0, F.clock[i]);
     ctx.save(); ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip();
     ctx.translate(r[0], r[1] + (r[3] - 330 * sc) / 2); ctx.scale(sc, sc);
     // greying out, it settles into its still and stops
-    if (g < 0.997) drawIACell(ctx, i, u, PFX_P, ca * (1 - g), SI.look);
-    if (g > 0.003) drawIACell(ctx, i, -1, PFX_P, ca * g, SI.look);
+    if (g < 0.997) drawIACell(ctx, i, u, P, ca * (1 - g), SI.look);
+    if (g > 0.003) drawIACell(ctx, i, -1, P, ca * g, SI.look);
     ctx.restore();
-    greyOut(ctx, r, g);
-    ctx.save(); if (f > 0.003) { ctx.shadowColor = rgba(col, 0.8 * f); ctx.shadowBlur = 26 * f; }
-    ctx.strokeStyle = rgba(col, a * (0.9 + 0.1 * f) * lerp(1, 0.6, g)); ctx.lineWidth = 3 + 2.5 * f;
-    ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.stroke(); ctx.restore();
-    drawTex(ctx, String.raw`\text{${PFX[i][1]}}`, r[0] + 22, r[1] + 18, i === 0 ? lerp(34, 44, big) : 34, { ax: 0, ay: 0, color: hexOf(col), alpha: a * lerp(1, 0.6, g) });
+    greyOut(ctx, r, Math.max(g, 0.8 * d), 0.28 * d);   // set aside: grey; out of focus: less colour, a little darker
+    const ink = mixRgb(hexRgb(COL.greyA), hexRgb(COL.greyD), Math.max(0.5 * d, 0.6 * g));   // frames and names stay neutral
+    ctx.save(); ctx.strokeStyle = rgba(ink, a); ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.stroke(); ctx.restore();
+    drawTex(ctx, String.raw`\text{${PFX[i][1]}}`, r[0] + 22, r[1] + 18, i === 0 ? lerp(34, 44, big) : 34, { ax: 0, ay: 0, color: hexOf(ink), alpha: a });
   }
 }
 function drawPresent(ctx, dt) {
@@ -5235,7 +5233,7 @@ function drawPresent(ctx, dt) {
       const show = st.cells[i]; if (show <= 0.003) continue;
       const r = PCELLS[i], sc = r[2] / 700, a = smooth(clamp(show, 0, 1)) * ga;
       ctx.save(); ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip(); ctx.translate(r[0], r[1]); ctx.scale(sc, r[3] / 330);
-      drawIACell(ctx, i, fxAge(st.cellT[i]), PFX_P, a, SI.look);
+      drawIACell(ctx, i, fxAge(st.cellT[i]), fxP(), a, SI.look);
       ctx.restore();
       ctx.save(); ctx.strokeStyle = hexA(PFX[i][2], 0.9 * a); ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.stroke(); ctx.restore();
       drawTex(ctx, String.raw`\text{${PFX[i][1]}}`, r[0] + 22, r[1] + 18, 34, { ax: 0, ay: 0, color: PFX[i][2], alpha: a });
@@ -5246,7 +5244,7 @@ function drawPresent(ctx, dt) {
   drawGoals(ctx, st);
   drawUses(ctx, dt, st);
   drawCaption(ctx, st);
-  drawFx(ctx, st);
+  drawFx(ctx, dt, st);
   // a small counter after each press, and a pause mark while paused
   const ta = PRES.paused ? 1 : clamp(1.8 - (TIME - PRES.toast), 0, 1);
   if (ta > 0.003) {
