@@ -4,7 +4,7 @@
 // Going to a beat rebuilds the ones before it instantly, so stepping back shows a beat the way it ends. Each beat
 // has its number from script.md (#present-15b opens that one). The state of a presentation lives in PS; the scenes it
 // borrows (the cloud) keep their own.
-const PRES = { on: false, paused: false, beat: 0, toast: -99, epoch: 0, reset: 0, saved: null };
+const PRES = { on: false, paused: false, beat: 0, toast: -99, epoch: 0, saved: null };
 // The cloud as the hook shows it: a thin cloud the beam gets a quarter of the way through, no reading, the camera
 // low behind the laser. It drifts to the right the whole time (PRES_DRIFT rad/s; negative drifts the other way).
 const PRES_CLOUD = { readout: 0, dens: 0.04, sigA: 20, sigS: 10, beamY: 0, beamZ: -0.005, aim: 0, aimUp: 0, yaw: -1.2, pitch: 0.22, dist: 3.8, zoom: 0, eye: 0 };
@@ -32,10 +32,10 @@ const GOALS = ['the physics and math behind the intimidating look', 'derive it y
 // me now and me later, side by side in the middle along the bottom while the goals are up
 // (feet at 960 keeps them and their labels clear of the bottom of a YouTube frame)
 const MIDFIG = 800, FUT = { x: 1460, y: 925 };
-// Beat 16's caption, and beats 17–20: the fields that use the same equation, each a card with its picture, in a row
-// that re-centres as each one comes in, so it never looks like it is waiting for another. The last, this video's laser
-// and box of stuff, opens on the left and pushes the other three into a column on the right, where they grey out and
-// stop. (A card with draw: null shows the 3D cloud instead.)
+// Beat 16's caption, and beats 17–20: the fields that use the same equation, each a card with its picture, in a row of
+// three, each fading in at its own place. The last, this video's laser and box of stuff, opens on the left and pushes
+// the other three into a column on the right, where they grey out and stop. (A card with draw: null shows the 3D cloud
+// instead.)
 const PCAP = String.raw`\htmlClass{t-clight}{\text{light}}\text{, travelling some distance, through some }\htmlClass{t-cstuff}{\textcolor{${COL.yellow}}{\text{stuff}}}\text{.}`;
 const USES = [
   { name: 'astronomy', label: 'astronomy', draw: drawUseStars },
@@ -109,8 +109,9 @@ const BEATS = [
   { n: '15g', name: 'most importantly', run: () => presGoal(2) },
   { n: '16', name: 'some stuff', run: presDefine },
   ...USES.map((u, i) => ({ n: String(17 + i), name: u.name, run: () => presUse(i) })),
-  { n: '20b', name: 'fog, a cloud, smoke, beer', run: presBoxCycle },
-  { n: '20c', name: 'different stuff, same story', run: () => ptw('lines', 1, 0.8) },
+  // 20b–20f: one press per thing the box can hold, then back to plain stuff; 20g: the caption's "light" turns red
+  ...['fog', 'a cloud', 'smoke', 'a glass of beer', "it doesn't matter yet"].map((name, k) => ({ n: `20${'bcdef'[k]}`, name, run: () => ptw('boxQ', k + 1, 0.5) })),
+  { n: '20g', name: 'different stuff, same story', run: () => ptw('lines', 1, 0.8) },
   ...PFX.map((p, i) => ({ n: i ? `21${'bcd'[i - 1]}` : '21', name: p[1], run: () => presFxName(i) })),
   { n: '21e', name: 'two take light away', run: () => presFxPair(true) },
   { n: '21f', name: 'two add it', run: () => presFxPair(false) },
@@ -200,23 +201,13 @@ async function presDefine() {
   ptw('p15', 0, 0.6); ptw('figMid', 0, 1.2);
   await ptw('cap', 1, 1.5, { ease: linear, delay: 0.5 });
 }
-// Beats 17–19: the cards so far slide over to keep the row centred, and the new one fades in at its end. 20: this
-// video's card opens on the left at once and pushes the other three into the column.
+// Beats 17–19: a card fades in at its place in the row. 20: this video's card opens on the left at once and pushes
+// the other three into the column.
 function presUse(i) {
   if (i === 3) { ptwi(PS.uses, 3, 1, 0.5); return ptw('grow', 1, 1.6); }
   if (i === 0) PS.useT = TIME;
-  for (let j = 0; j < i; j++) ptwi(PS.useX, j, rowX(j, i + 1), 0.9);
-  PS.useX[i] = rowX(i, i + 1);
-  return ptwi(PS.uses, i, 1, 0.9, { delay: i ? 0.2 : 0 });
-}
-// 20b: "Fog, a cloud, smoke, a glass of beer": the box holds each in turn, then plain stuff again ("It doesn't matter
-// yet"). A step back stops the round where it is.
-async function presBoxCycle() {
-  const r = PRES.reset;
-  for (const [k, dur, hold] of [[1, 0.35, 0], [2, 0.35, 0.45], [3, 0.35, 0.45], [4, 0.35, 0.45], [5, 0.6, 0.9]]) {
-    await ptw('boxQ', k, dur, { delay: hold });
-    if (r !== PRES.reset) return;
-  }
+  PS.useX[i] = rowX(i, 3);
+  return ptwi(PS.uses, i, 1, 0.9);
 }
 // 21–21d: one effect per press, as in the hook. The first press also clears the cards and the caption. Each tile fades
 // in, lit, as its effect is named, and keeps playing. (Its term also takes its colour, for when the equation returns.)
@@ -241,7 +232,7 @@ async function presGo(k, play) {
   k = clamp(k, 0, BEATS.length - 1);
   const e = ++PRES.epoch; PRES.toast = TIME;
   if (play && k === PRES.beat + 1 && PRES.beat >= 0) { PRES.beat = k; Promise.resolve(BEATS[k].run()).catch((err) => { if (e === PRES.epoch) console.error(err); }); return; }
-  stopTweens('pres'); PRES.beat = k; PRES.reset++;
+  stopTweens('pres'); PRES.beat = k;
   Object.assign(PS, PS_DEFAULTS());
   instant++;
   try { for (let i = 0; i < (play ? k : k + 1); i++) await BEATS[i].run(); } catch (err) { console.error(err); } finally { instant--; }
@@ -493,7 +484,6 @@ function drawUses(ctx, dt, st) {
     const r = useRect(i, st), fresh = !u.seen, ls = clamp(r[2] / 590, 0.72, 1); u.seen = true;
     if (r[2] < 4 || r[3] < 4) continue;
     ctx.save(); ctx.globalAlpha = a; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip();
-    if (side > 0.003) ctx.filter = `grayscale(${(0.9 * side).toFixed(3)}) brightness(${(1 - 0.3 * side).toFixed(3)})`;
     if (u.draw && i < 3) {   // on the side cards' own clock
       const s = r[2] / 700, T0 = TIME; ctx.translate(r[0], r[1]); ctx.scale(s, s);
       TIME = st.useT; try { u.draw(ctx, sdt, r[3] / s, fresh); } finally { TIME = T0; }
@@ -504,11 +494,22 @@ function drawUses(ctx, dt, st) {
       ctx.drawImage(presCv, ((W - sw) / 2) * K, ((H - sh) / 2) * K, sw * K, sh * K, r[0], r[1], r[2], r[3]);
     }
     ctx.restore();
+    greyOut(ctx, r, side, 0.3);
     ctx.save(); ctx.strokeStyle = hexA(COL.greyC, a); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.stroke(); ctx.restore();
     drawTex(ctx, String.raw`\text{${u.label}}`, r[0] + 22 * ls, r[1] + 18 * ls, 30 * ls, { ax: 0, ay: 0, color: COL.greyA, alpha: a * clamp(r[2] / 400, 0, 1) });
   }
 }
-// Beat 16's caption, large at the top. 20c: its "light" takes the laser's colour.
+// Takes the colour out of what is already drawn in a card (g: 0..1) and dims it by dim: one blended fill, where a
+// canvas filter would redo every stroke and dot inside the card.
+function greyOut(ctx, r, g, dim = 0) {
+  if (g <= 0.003) return;
+  ctx.save(); ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip();
+  // the background's own hue at each pixel's brightness: the stage's warm grey, and the background stays as it is
+  ctx.globalCompositeOperation = 'color'; ctx.globalAlpha = 0.92 * g; ctx.fillStyle = BG; ctx.fillRect(r[0], r[1], r[2], r[3]);
+  if (dim > 0) { ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = dim * g; ctx.fillStyle = BG; ctx.fillRect(r[0], r[1], r[2], r[3]); }
+  ctx.restore();
+}
+// Beat 16's caption, large at the top. 20g: its "light" takes the laser's colour.
 function drawCaption(ctx, st) {
   if (st.cap <= 0.003) return;
   TERM_COL['t-clight'] = hexRgb(SH.color);
@@ -532,11 +533,11 @@ function drawFx(ctx, st) {
     const u = reduced ? -1 : (((TIME - F.t0) % SI.loopT) + SI.loopT) % SI.loopT;
     ctx.save(); ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip();
     ctx.translate(r[0], r[1] + (r[3] - 330 * sc) / 2); ctx.scale(sc, sc);
-    if (g > 0.003) ctx.filter = `grayscale(${g.toFixed(3)})`;
     // greying out, it settles into its still and stops
     if (g < 0.997) drawIACell(ctx, i, u, SI.loopT, ca * (1 - g), SI.look);
     if (g > 0.003) drawIACell(ctx, i, -1, SI.loopT, ca * g, SI.look);
     ctx.restore();
+    greyOut(ctx, r, g);
     ctx.save(); if (f > 0.003) { ctx.shadowColor = rgba(col, 0.8 * f); ctx.shadowBlur = 26 * f; }
     ctx.strokeStyle = rgba(col, a * (0.9 + 0.1 * f) * lerp(1, 0.6, g)); ctx.lineWidth = 3 + 2.5 * f;
     ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.stroke(); ctx.restore();

@@ -37,13 +37,13 @@ The working script below has light edits; the original drafts, word for word, ar
 **16.** [The aside, the goals and the future self go. No formula: the caption alone writes in, large at the top: "light, travelling some distance, through some stuff."]
 > In plain words, all of this is about one thing: what happens to light as it travels some distance through some stuff.
 
-**17.–20.** [One press per field, each a playing card. The cards sit in a row that re-centres as each new one comes in, so it never looks like it is waiting for another: astronomy (starlight through dust on its way to a telescope), climate science (sunlight through the atmosphere, the bluer light scattering away), medical imaging (X-rays through the stick figure onto a detector). Then this video, at once: a laser, a closed box of plain stuff (a haze with specks drifting in it) and a sensor, the beam dimmer past the box, drawn like the bench's laser and tank. It opens on the left and pushes the other three into a column on the right, where they lose their colour and slow to a stop: the focus has moved.]
+**17.–20.** [One press per field, each a playing card fading in at its own place in a row of three: astronomy (starlight through dust on its way to a telescope), climate science (sunlight through the atmosphere, the bluer light scattering away), medical imaging (X-rays through the stick figure onto a detector). Then this video, at once: a laser, a closed box of plain stuff (a haze with specks drifting in it) and a sensor, the beam dimmer past the box, drawn like the bench's laser and tank. It opens on the left and pushes the other three into a column on the right, where they lose their colour and slow to a stop: the focus has moved.]
 > And "stuff" really can be anything. In astronomy, it's the dust between the stars, and the light is starlight on its way to a telescope. In climate science, it's our own atmosphere. In medical imaging, it's your body, and the light is an X-ray. And for us, here, it's a laser, and a box of… stuff.
 
-**20b.** [The box holds fog, then a cloud, then smoke, then beer, each for a moment, the beam dimming more or less across it, and goes back to plain stuff.]
-> Fog, a cloud, smoke, a glass of beer. It doesn't matter yet.
+**20b.–20f.** [One press per thing the box holds, the beam dimming more or less across it: fog, a cloud, smoke, beer, and back to plain stuff.]
+> Fog, [20c] a cloud, [20d] smoke, [20e] a glass of beer. [20f] It doesn't matter yet.
 
-**20c.** [The caption's "light" takes the laser's colour.]
+**20g.** [The caption's "light" takes the laser's colour.]
 > Different stuff, same story. Because whatever the stuff is, there are only four things it can do to light passing through. We saw them a minute ago.
 
 **21.** [The cards and the caption go. As in the hook, one effect per press: absorption's tile fades in, lit in its colour, playing. The four tiles fill the stage; no formula above them.]
