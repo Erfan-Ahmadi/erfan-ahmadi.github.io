@@ -32,9 +32,10 @@ const GOALS = ['the physics and math behind the intimidating look', 'derive it y
 // me now and me later, side by side in the middle along the bottom while the goals are up
 // (feet at 960 keeps them and their labels clear of the bottom of a YouTube frame)
 const MIDFIG = 800, FUT = { x: 1460, y: 925 };
-// Beat 16's caption, and beats 17–20: the fields that use the same equation, each a card with its picture in a 2 × 2
-// grid; the last, this video's laser and box of stuff, grows to take most of the stage while the other three step
-// into a column on the left, and the caption moves over it. (A card with draw: null shows the 3D cloud instead.)
+// Beat 16's caption, and beats 17–20: the fields that use the same equation, each a card with its picture, in a row
+// that re-centres as each one comes in, so it never looks like it is waiting for another. The last, this video's laser
+// and box of stuff, opens on the left and pushes the other three into a column on the right, where they grey out and
+// stop. (A card with draw: null shows the 3D cloud instead.)
 const PCAP = String.raw`\htmlClass{t-clight}{\text{light}}\text{, travelling some distance, through some }\htmlClass{t-cstuff}{\textcolor{${COL.yellow}}{\text{stuff}}}\text{.}`;
 const USES = [
   { name: 'astronomy', label: 'astronomy', draw: drawUseStars },
@@ -42,15 +43,24 @@ const USES = [
   { name: 'medical imaging', label: 'medical imaging', draw: drawUseXray },
   { name: 'a box of stuff', label: 'this video', draw: drawUseBox },
 ];
-const UCARDS = [[370, 330, 590, 335], [990, 330, 590, 335], [370, 695, 590, 335], [990, 695, 590, 335]];
-const UCOL = [[370, 330, 360, 205], [370, 577, 360, 205], [370, 824, 360, 205]], UBIG = [770, 330, 1110, 700];
+const UROW = { x: 1130, y: 430, w: 470, h: 300, gap: 45 };   // centred on the stage right of the figure in the corner
+const rowX = (i, n) => UROW.x - (n * UROW.w + (n - 1) * UROW.gap) / 2 + i * (UROW.w + UROW.gap);
+const UCOL = [[1500, 330, 380, 216], [1500, 572, 380, 216], [1500, 814, 380, 216]], UBIG = [380, 330, 1090, 700];
+// Beat 20's push: the three first spread up and down into their places in the column (shrinking), then everything
+// moves across, this video's card opening behind them so it never runs into them.
+const pushXY = (g) => [smooth(clamp((g - 0.2) / 0.8, 0, 1)), smooth(clamp(g / 0.6, 0, 1))];
+function useRect(i, st) {
+  const [gx, gy] = pushXY(clamp(st.grow, 0, 1));
+  if (i === 3) return [UBIG[0], lerp(UROW.y, UBIG[1], gy), UBIG[2] * gx, lerp(UROW.h, UBIG[3], gy)];
+  const C = UCOL[i]; return [lerp(st.useX[i], C[0], gx), lerp(UROW.y, C[1], gy), lerp(UROW.w, C[2], gy), lerp(UROW.h, C[3], gy)];
+}
 const PS_DEFAULTS = () => ({
   orbit: 1, mag: 0, aside: 0, fig: 0, think: '', thinkFrom: '', thinkM: 1, writeP: 1, eq: 0, eqP: 0, corner: 0, braces: [], hi: {}, dim: 0,
   cells: [0, 0, 0, 0], cellT: [0, 0, 0, 0], grid: 1,
   qc: QCARDS.map(() => ({ box: 0, m: 0, title: 0, todo: 0 })), qcA: 1, qSide: 0,
   eqA: 1, eqTop: 0, spec: [0, 0], chalk: 0, code: 0, specT: 0, ptrX: 0, ptrA: 0, lineP: 0, wig: 0, wigT: 0, side: 0,
   goalsA: 0, figMid: 0, fut: 0, futW: 0, goals: [0, 0, 0], p15: 1, cap: 0,
-  uses: [0, 0, 0, 0], grow: 0, usesOut: 0, capOut: 0, boxQ: 0, lines: 0,
+  uses: [0, 0, 0, 0], useX: [0, 0, 0], useT: 0, grow: 0, usesOut: 0, capOut: 0, boxQ: 0, lines: 0,
   fx: { show: [0, 0, 0, 0], t0: 0, focus: [0, 0, 0, 0], grey: [0, 0, 0, 0], big: 0 },
 });
 const PS = PS_DEFAULTS();
@@ -100,7 +110,7 @@ const BEATS = [
   { n: '16', name: 'some stuff', run: presDefine },
   ...USES.map((u, i) => ({ n: String(17 + i), name: u.name, run: () => presUse(i) })),
   { n: '20b', name: 'fog, a cloud, smoke, beer', run: presBoxCycle },
-  { n: '20c', name: 'different stuff, same story', run: () => ptw('lines', 1, 1.4, { ease: linear }) },
+  { n: '20c', name: 'different stuff, same story', run: () => ptw('lines', 1, 0.8) },
   ...PFX.map((p, i) => ({ n: i ? `21${'bcd'[i - 1]}` : '21', name: p[1], run: () => presFxName(i) })),
   { n: '21e', name: 'two take light away', run: () => presFxPair(true) },
   { n: '21f', name: 'two add it', run: () => presFxPair(false) },
@@ -190,10 +200,14 @@ async function presDefine() {
   ptw('p15', 0, 0.6); ptw('figMid', 0, 1.2);
   await ptw('cap', 1, 1.5, { ease: linear, delay: 0.5 });
 }
-// Beats 17–20: a field's card fades into its place; this video's then grows, the other three stepping aside.
-async function presUse(i) {
-  await ptwi(PS.uses, i, 1, 0.9);
-  if (i === 3) await ptw('grow', 1, 1.8, { delay: 0.5 });
+// Beats 17–19: the cards so far slide over to keep the row centred, and the new one fades in at its end. 20: this
+// video's card opens on the left at once and pushes the other three into the column.
+function presUse(i) {
+  if (i === 3) { ptwi(PS.uses, 3, 1, 0.5); return ptw('grow', 1, 1.6); }
+  if (i === 0) PS.useT = TIME;
+  for (let j = 0; j < i; j++) ptwi(PS.useX, j, rowX(j, i + 1), 0.9);
+  PS.useX[i] = rowX(i, i + 1);
+  return ptwi(PS.uses, i, 1, 0.9, { delay: i ? 0.2 : 0 });
 }
 // 20b: "Fog, a cloud, smoke, a glass of beer": the box holds each in turn, then plain stuff again ("It doesn't matter
 // yet"). A step back stops the round where it is.
@@ -468,16 +482,22 @@ function drawGoals(ctx, st) {
     y += lines.length * lh + gap;
   });
 }
-// Beats 17–20: the fields' cards. A card with no picture of its own shows the cloud, cropped to fill it.
-const growCol = (g) => smooth(clamp(g / 0.6, 0, 1)), growBig = (g) => smooth(clamp((g - 0.35) / 0.65, 0, 1));   // the column first, then the big card
+// Beats 17–20: the fields' cards. A card with no picture of its own shows the cloud, cropped to fill it. Once this
+// video's card comes in, the other three lose their colour and their own clock slows to a stop: the focus has moved.
 function drawUses(ctx, dt, st) {
-  const gc = growCol(st.grow), gb = growBig(st.grow);
+  const calm = smooth(clamp(st.grow / 0.6, 0, 1)), sdt = dt * (1 - calm);
+  st.useT += sdt;
   for (let i = 0; i < 4; i++) {
-    const u = USES[i], a = smooth(clamp(st.uses[i], 0, 1)) * (1 - smooth(clamp(st.usesOut, 0, 1)));
+    const u = USES[i], side = i < 3 ? calm : 0, a = smooth(clamp(st.uses[i], 0, 1)) * (1 - smooth(clamp(st.usesOut, 0, 1))) * lerp(1, 0.8, side);
     if (a <= 0.003) { u.seen = false; continue; }
-    const r = i === 3 ? lerpRect(UCARDS[3], UBIG, gb) : lerpRect(UCARDS[i], UCOL[i], gc), fresh = !u.seen, ls = i === 3 ? 1 : lerp(1, 0.72, gc); u.seen = true;
+    const r = useRect(i, st), fresh = !u.seen, ls = clamp(r[2] / 590, 0.72, 1); u.seen = true;
+    if (r[2] < 4 || r[3] < 4) continue;
     ctx.save(); ctx.globalAlpha = a; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip();
-    if (u.draw) { const s = r[2] / 700; ctx.translate(r[0], r[1]); ctx.scale(s, s); u.draw(ctx, dt, r[3] / s, fresh); }
+    if (side > 0.003) ctx.filter = `grayscale(${(0.9 * side).toFixed(3)}) brightness(${(1 - 0.3 * side).toFixed(3)})`;
+    if (u.draw && i < 3) {   // on the side cards' own clock
+      const s = r[2] / 700, T0 = TIME; ctx.translate(r[0], r[1]); ctx.scale(s, s);
+      TIME = st.useT; try { u.draw(ctx, sdt, r[3] / s, fresh); } finally { TIME = T0; }
+    } else if (u.draw) { const s = r[2] / 700; ctx.translate(r[0], r[1]); ctx.scale(s, s); u.draw(ctx, dt, r[3] / s, fresh); }
     else {
       presCloudOffscreen(dt, false);
       const ar = r[2] / r[3], sw = Math.min(W, H * ar), sh = Math.min(H, W / ar);
@@ -485,31 +505,16 @@ function drawUses(ctx, dt, st) {
     }
     ctx.restore();
     ctx.save(); ctx.strokeStyle = hexA(COL.greyC, a); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.stroke(); ctx.restore();
-    drawTex(ctx, String.raw`\text{${u.label}}`, r[0] + 22 * ls, r[1] + 18 * ls, 30 * ls, { ax: 0, ay: 0, color: COL.greyA, alpha: a });
+    drawTex(ctx, String.raw`\text{${u.label}}`, r[0] + 22 * ls, r[1] + 18 * ls, 30 * ls, { ax: 0, ay: 0, color: COL.greyA, alpha: a * clamp(r[2] / 400, 0, 1) });
   }
 }
-// Beat 16's caption: large at the top, then over this video's card once it has grown. 20c: dotted lines from its
-// "light" to the beam and from its "stuff" into the box, "light" taking the laser's colour.
+// Beat 16's caption, large at the top. 20c: its "light" takes the laser's colour.
 function drawCaption(ctx, st) {
   if (st.cap <= 0.003) return;
-  const a = 1 - smooth(clamp(st.capOut, 0, 1)), gr = growBig(st.grow), T = tex(PCAP), size = lerp(52, 46, gr);
-  const x = lerp(960, Math.min(UBIG[0] + UBIG[2] / 2, 1880 - (T.w * 46) / 2), gr), sp = place(T, { x, y: 190, size });
-  const L = clamp(st.lines, 0, 1), lp = (d) => smooth(clamp((L - d) / 0.7, 0, 1));
   TERM_COL['t-clight'] = hexRgb(SH.color);
-  drawSprites(ctx, sp, { p: st.cap, alpha: a, hi: { 't-clight': lp(0) } });
-  if (L <= 0.003 || a <= 0.003) return;
-  const r = lerpRect(UCARDS[3], UBIG, gr), k = r[2] / 700, [ox, oy, s] = boxFit(r[3] / k), at = (px, py) => [r[0] + k * (ox + s * px), r[1] + k * (oy + s * py)];
-  const LT = tex(String.raw`\text{${USES[3].label}}`), lab = [r[0] + 22 - 10, r[1] + 18 - 8, LT.w * 30 + 20, LT.h * 30 + 16];
-  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.rect(lab[0], lab[1], lab[2], lab[3]); ctx.clip('evenodd');
-  const under = (term) => { let x0 = Infinity, x1 = -Infinity, y1 = -Infinity; for (const q of sp) if (q.a.terms.includes(term)) { const [l, rr, , b] = inkBox(q); x0 = Math.min(x0, l); x1 = Math.max(x1, rr); y1 = Math.max(y1, b); } return [(x0 + x1) / 2, y1 + 16]; };
-  for (const [term, [tx, ty], col, d] of [['t-clight', at(100, 0), SH.color, 0], ['t-cstuff', at(BOXG.cx, BOXG.top + 60), COL.yellow, 0.3]]) {
-    const p = lp(d); if (p <= 0.003) continue;
-    const [fx, fy] = under(term);
-    dotted(ctx, fx, fy, lerp(fx, tx, p), lerp(fy, ty, p), col, a, 4, 13);
-    if (p > 0.97) dot(ctx, tx, ty, 7, col, a);
-  }
-  ctx.restore();
+  drawTex2(ctx, PCAP, 960, 190, 52, { p: st.cap, alpha: 1 - smooth(clamp(st.capOut, 0, 1)), hi: { 't-clight': smooth(clamp(st.lines, 0, 1)) } });
 }
+function drawTex2(ctx, src, x, y, size, { p = 1, alpha = 1, hi = null } = {}) { drawSprites(ctx, place(tex(src), { x, y, size }), { p, alpha, hi }); }
 // Beats 20b–21i: the four effects again, filling the stage (clear of the figure in the corner). Each is named in turn
 // (its tile lit); the two that take light away, then the two that add it; then the scatterings grey out and stop,
 // then emission, and absorption, still playing, grows over the rest.
