@@ -323,3 +323,69 @@ function drawUseXray(ctx, dt, h, fresh) {
   }
   ctx.restore();
 }
+
+// ---- this video: a laser, a box of stuff and a sensor, the bench's laser and tank with the box closed ----
+// What is in the box: PS.boxQ runs through BOXSTUFF in beat 20b (fog, a cloud, smoke, beer) and back to plain stuff.
+// The beam dims across the box by however much its contents take.
+const BOXG = { x0: 180, x1: 760, top: -200, bot: 200, xs: 980, cx: 470 };
+const BOXSTUFF = ['stuff', 'fog', 'cloud', 'smoke', 'beer', 'stuff'];
+const BOXSIG = { stuff: 0.0019, fog: 0.0024, cloud: 0.006, smoke: 0.0036, beer: 0.0016 };
+const BOXPUFFS = PUFFS.map(([dx, dy, r]) => [BOXG.cx + dx * 470, -10 + dy * 400, r * 430]);
+const BOXSPECKS = Array.from({ length: 64 }, (_, i) => [(0.5 + i * 0.7548777) % 1, (0.5 + i * 0.5698403) % 1, (i * 2.399) % (2 * Math.PI)]);   // spread evenly (the R2 sequence)
+const boxTank = { x0: BOXG.x0, x1: BOXG.x1, top: BOXG.top, bot: BOXG.bot, th: BOXG.bot - BOXG.top };
+// the scene's own units into a card's (700 wide, h tall): [ox, oy, s]
+function boxFit(h) {
+  const x0 = -240, x1 = BOXG.xs + 60, y0 = BOXG.top - 10, y1 = BOXG.bot + 60, top = 64;
+  const s = Math.min(640 / (x1 - x0), (h - top - 24) / (y1 - y0));
+  return [350 - ((x0 + x1) / 2) * s, top + (h - top) / 2 - ((y0 + y1) / 2) * s, s];
+}
+function boxWeights(q) { const w = { stuff: 0, fog: 0, cloud: 0, smoke: 0, beer: 0 }; BOXSTUFF.forEach((k, i) => { w[k] += clamp(1 - Math.abs(q - i), 0, 1); }); return w; }
+let boxCloudCum = null;
+function boxT(w) {   // transmittance from the laser to x
+  if (!boxCloudCum) {   // the cloud's optical depth along the beam, 4 px at a time
+    const n = Math.ceil((BOXG.x1 - BOXG.x0) / 4) + 1; boxCloudCum = new Float32Array(n);
+    for (let i = 1; i < n; i++) boxCloudCum[i] = boxCloudCum[i - 1] + BOXSIG.cloud * 4 * cloudDensity(BOXG.x0 + i * 4, 0, BOXPUFFS, { cloud: 1 });
+  }
+  const flat = w.stuff * BOXSIG.stuff + w.fog * BOXSIG.fog + w.smoke * BOXSIG.smoke + w.beer * BOXSIG.beer;
+  return (x) => {
+    const d = clamp(x - BOXG.x0, 0, BOXG.x1 - BOXG.x0);
+    return Math.exp(-(flat * d + w.cloud * boxCloudCum[Math.min(boxCloudCum.length - 1, Math.round(d / 4))]));
+  };
+}
+const BOXDRAW = {
+  stuff: (ctx, B) => {   // plain stuff: a haze, and specks of it drifting
+    const g = ctx.createLinearGradient(0, B.top, 0, B.bot); g.addColorStop(0, 'rgba(170,164,152,0.12)'); g.addColorStop(1, 'rgba(170,164,152,0.2)');
+    ctx.fillStyle = g; ctx.fillRect(B.x0, B.top, B.x1 - B.x0, B.bot - B.top);
+    for (const [u, v, ph] of BOXSPECKS) {
+      const x = B.x0 + 16 + u * (B.x1 - B.x0 - 32) + (reduced ? 0 : 6 * Math.sin(TIME * 0.9 + ph)), y = B.top + 16 + v * (B.bot - B.top - 32) + (reduced ? 0 : 6 * Math.cos(TIME * 0.7 + 1.3 * ph));
+      dot(ctx, x, y, 3.4, COL.greyB, 0.5);
+    }
+  },
+  fog: (ctx) => drawLiquid(ctx, boxTank, { fill: 1, look: 'fog' }),
+  cloud: (ctx) => { drawCloud(ctx, BOXPUFFS, { cloud: 1 }); drawCloud(ctx, BOXPUFFS, { cloud: 0.8 }); },
+  smoke: (ctx, B) => {   // a dark haze, thicker low down, and puffs rising through it
+    const g = ctx.createLinearGradient(0, B.top, 0, B.bot); g.addColorStop(0, 'rgba(120,112,102,0.16)'); g.addColorStop(1, 'rgba(96,90,82,0.34)');
+    ctx.fillStyle = g; ctx.fillRect(B.x0, B.top, B.x1 - B.x0, B.bot - B.top);
+    for (let i = 0; i < 14; i++) {
+      const ph = (i * 0.618) % 1, t = reduced ? ph : (TIME * (0.06 + 0.025 * (i % 3)) + ph) % 1;
+      const x = B.x0 + (0.08 + 0.84 * ((i * 0.377 + 0.13) % 1)) * (B.x1 - B.x0) + Math.sin(TIME * 0.8 + i * 1.7) * 30 * t;
+      const y = B.bot - t * (B.bot - B.top) * 1.05, R = 46 + 74 * t, al = 0.34 * Math.sin(Math.PI * t);
+      const rg = ctx.createRadialGradient(x, y, 0, x, y, R); rg.addColorStop(0, `rgba(168,160,148,${al})`); rg.addColorStop(1, 'rgba(168,160,148,0)');
+      ctx.fillStyle = rg; ctx.fillRect(x - R, y - R, 2 * R, 2 * R);
+    }
+  },
+  beer: (ctx) => drawLiquid(ctx, boxTank, { fill: 0.82, look: 'beer' }),
+};
+function drawUseBox(ctx, dt, h) {
+  const [ox, oy, s] = boxFit(h), B = BOXG, w = boxWeights(PS.boxQ), ga = ctx.globalAlpha;
+  ctx.save(); ctx.translate(ox, oy); ctx.scale(s, s);
+  ctx.save(); ctx.beginPath(); ctx.roundRect(B.x0, B.top, B.x1 - B.x0, B.bot - B.top, 16); ctx.clip();
+  for (const k of ['stuff', 'fog', 'cloud', 'smoke', 'beer']) { if (w[k] <= 0.003) continue; ctx.globalAlpha = ga * w[k]; BOXDRAW[k](ctx, B); }
+  ctx.restore(); ctx.globalAlpha = ga;
+  const T = boxT(w);
+  drawBeam(ctx, 0, B.xs - 18, 0, SH.color, SH.I0, T, [B.x0, B.x1]);
+  ctx.save(); ctx.strokeStyle = COL.greyA; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(B.x0, B.top, B.x1 - B.x0, B.bot - B.top, 16); ctx.stroke(); ctx.restore();
+  drawLaser(ctx, 0, 0, SH.color, 1);
+  drawSensor(ctx, B.xs, 0, SH.color, T(B.xs - 18) * SH.I0);
+  ctx.restore();
+}
