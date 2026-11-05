@@ -5145,7 +5145,8 @@ function drawUses(ctx, dt, st) {
     }
     ctx.restore();
     greyOut(ctx, r, side, 0.3 * side);
-    ctx.save(); ctx.strokeStyle = hexA(COL.greyC, a); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.stroke(); ctx.restore();
+    // this video's card in a muted amber, the yellow of "stuff" held back: in focus without shouting; the others grey
+    ctx.save(); ctx.strokeStyle = i === 3 ? hexA(COL.yellow, 0.55 * a) : hexA(COL.greyC, a); ctx.lineWidth = i === 3 ? 3 : 2.5; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.stroke(); ctx.restore();
     drawTex(ctx, String.raw`\text{${u.label}}`, r[0] + 22 * ls, r[1] + 18 * ls, 30 * ls, { ax: 0, ay: 0, color: COL.greyA, alpha: a * clamp(r[2] / 400, 0, 1) });
   }
 }
