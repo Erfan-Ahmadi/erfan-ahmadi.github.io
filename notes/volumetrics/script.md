@@ -6,39 +6,39 @@ The working script below has light edits; the original drafts, word for word, ar
 ## Part 1: the hook
 
 **1.** [The cloud in 3D, lit by the sun, the camera still. The laser is already shining through it onto the sensor; no reading is shown.]
-> Not long after I started making things with computers, I found out that people could simulate the look of clouds with actual physics. I got very excited about that. specially seeing them implemented in my favourite games.
+> Not long after I started making things with computers, I found out that people could simulate the look of clouds with actual physics. I got very excited about that. specially seeing them in my favourite games and animations.
 
 **2.** [A panel opens from a section of the beam inside the cloud: the discrete version. The cloud is particles, wobbling, the rays stop at them, and under them the step plot of how many rays are left: bare axes, no formula, no smooth curve yet.]
 > Rendering clouds became one of the biggest goals of my career. It's a big part of why I kept going in computer graphics.
 
 **3.** [The picture shrinks into a card on the left and keeps playing. A stick figure, me, appears on the right with an empty thought cloud.]
-> And then, ironically, I delayed learning how it actually works. For years. Until very recently.
+> But, for years, I delayed learning how it actually works.
 
 **7.** [The card goes. The figure shrinks into the bottom-left corner and stays there. The equation writes in, large; the thought cloud becomes "?".]
-> Mainly because the first thing I ran into was a formula that looked like this. And it made me feel… not smart.
+> Mainly because the first thing I ran into was a formula that looked like this. And that was intimidating. every resource out there told me I should just accept it.
 
 **8.–11.** [One press per effect: a brace grows from the left under its term and its cell fades into its place in a 2 × 2 grid under the equation, its name in its corner, the photon and the particle playing in it. Every cell shows the paths in a neutral grey with arrows, the beam's line through the particle toward an eye at the right, all on the centre line. Absorption and out-scattering in red, emission and in-scattering in green. In emission, light leaves the particle every way at once, and only the photon heading for the eye has colour. Nothing already on screen changes.]
-> So this time I tried once more, and it made a little more sense. Each term is a different way light and the medium interact. [absorption] Some take light away. [out-scattering] [emission] Some add light. [in-scattering] Don't worry about which is which yet, we'll come back to all four in a minute.
+> While it made sense a little bit, like how each term is a different way light and the medium interact,
 
 **12.–12b.** [The braces and the grid fade. A yellow box goes around the integral in the exponent, and everything outside it greys out; the part keeps a light yellow tint. Next press: the box leaves the equation and turns into a card that stays, the question as its title, "why an integral in the exponent?", and most of the card a place for the animation that answers it later (TODO: variable density).]
-> But nobody explained to me why there is an integral inside an exponent…
+> nobody explained to me why there is an integral inside an exponent…
 
 **13.–13b.** [A blue box goes around the outer integral sign, from 0 to $d$; next press, it turns into the second card: "inside another integral?" (TODO: optical depth, an integral inside an integral).]
 > …inside another integral.
 
 **14.–14b.** [An orange box goes around the $e$; next press, it turns into the third card: "Why $e$? Why exponentials?" (TODO: the rays, the discrete version on top of the continuous one). The three parts keep their tints, and the three cards sit in a row under the equation: the video's map.]
-> And most importantly: why $e$? Why exponentials at all? And honestly, the answers turned out to be simpler, and more interesting, than I expected.
+> And most importantly: why $e$? Why exponentials at all? And the answers turned out to be simpler, and more interesting, than I expected.
 
 ## Part 2: what this is, and what we keep
 
 **15.–15g.** [Seven presses, at "This video isn't a physics lecture", "and it isn't a shader tutorial", "It's the part in between", "By the end of this series", "that you could derive", "And along the way" and "We'll build it up gradually". The cards and the equation go, and the equation stays away from here until it has been earned, late in the series. A small physics lecture's chalkboard, scribbles and sketches with nothing readable, fades in, an arrow under it. The arrow walks to the right, drawing a line behind it, and a small raymarcher with its shader code comes in at that end. The arrow walks back to the middle and sways back and forth there from then on. Then the whole spectrum moves into an aside at the top, still swaying; under it, "Goals:" comes in on the left, and the figure walks over to the right. Then one bullet per press: "derive the formula yourself", while a copy of the figure, "?" and all, walks out to the right along a growing arrow, its readout widening and the "?" reshaping into "I understand it now" on the way, "Now" under the first, "Then" under the copy; "the beautiful math and physics behind it"; "gradually, nothing on faith".]
-> This video isn't a physics lecture, and it isn't a shader tutorial. It's the part in between. By the end of this series, I want the physics and the math to feel so natural that you could derive the formula yourself, and see behind these intimidating-looking formulas. And along the way, we'll run into some surprisingly simple and beautiful physics hiding behind something most of us skim over, or just copy and paste into code. We'll build it up gradually, and I'll never ask you to just take a formula on faith as a law of nature. So, forget the symbols for a minute.
+> This video isn't a physics lecture, and it isn't a shader tutorial. It's the part in between. By the end of this series, I want the physics and the math to feel so intuitive that you can derive it yourself, and most importantly understand that this not a law of a nature you should blindly accept, but a simplified model of what happens in the real-world with it's own limitations and assumptions.
 
 **16.** [The aside, the goals and the future self go. No formula: the caption alone writes in, large at the top: "light, travelling some distance, through some stuff."]
 > In plain words, all of this is about one thing: what happens to light as it travels some distance through some stuff.
 
 **17.–20.** [One press per field, each a playing card in a 2 × 2 grid: astronomy (starlight through dust on its way to a telescope), climate science (sunlight through the atmosphere, the bluer light scattering away), medical imaging (X-rays through the stick figure onto a detector), then computer graphics: the cloud with the laser, which grows to take the space of the other three. One more press, 20b, at "Because whatever the stuff is…": the cards and the caption go, and the four effects come back, playing, filling the stage: no formula above them.]
-> And "stuff" really can be anything. In astronomy, it's the dust between the stars, and the light is starlight on its way to a telescope. In climate science, it's our own atmosphere. In medical imaging, it's your body, and the light is an X-ray. And for me, it's a cloud, and the light is a laser. Different stuff, same story. Because whatever the stuff is, there are only four things it can do to light passing through. We saw them a minute ago.
+> And "stuff" really can be anything. In astronomy, it's the dust between the stars, and the light is starlight on its way to a telescope. In climate science, it's our own atmosphere. In medical imaging, it's your body, and the light is an X-ray. And for us, here, it's a cloud, and the light is a laser. Different stuff, same story. Because whatever the stuff is, there are only four things it can do to light passing through. We saw them a minute ago.
 
 **21.** [Absorption is named: its tile lights up in its colour. Nothing else changes; every tile keeps playing.]
 > Absorption: the photon hits a particle and is swallowed. Its energy doesn't vanish, it becomes a little heat.
