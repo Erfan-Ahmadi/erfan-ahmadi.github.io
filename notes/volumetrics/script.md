@@ -37,11 +37,11 @@ The working script below has light edits; the original drafts, word for word, ar
 **16.** [The aside, the goals and the future self go. No formula: the caption alone writes in, large at the top: "light, travelling some distance, through some stuff."]
 > In plain words, all of this is about one thing: what happens to light as it travels some distance through some stuff.
 
-**17.–20.** [One press per field, each a playing card fading in at its own place in a row of three: astronomy (starlight through dust on its way to a telescope), climate science (sunlight through the atmosphere, the bluer light scattering away), medical imaging (X-rays through the stick figure onto a detector). Then this video, at once: a laser, a closed box of tinted glass catching the light, plain stuff in it (a haze with specks drifting in it, in the yellow of the caption's "stuff"), and a sensor, the beam dimmer past the box, drawn like the bench's laser and tank. It opens on the left and pushes the other three into a column on the right, where they lose their colour and slow to a stop: the focus has moved. The caption's "light" takes the laser's red.]
+**17.–20.** [One press per field, each a playing card fading in at its own place in a row of three: astronomy (starlight through dust on its way to a telescope), climate science (sunlight through the atmosphere, the bluer light scattering away), medical imaging (X-rays through the stick figure onto a detector). Then this video, at once: a laser, a closed box with plain stuff in it (a haze with specks drifting in it, in the yellow of the caption's "stuff"), and a sensor, the beam dimmer past the box, drawn like the bench's laser and tank. It opens on the left and pushes the other three into a column on the right, where they lose their colour and slow to a stop: the focus has moved. The caption's "light" takes the laser's red.]
 > And "stuff" really can be anything. In astronomy, it's the dust between the stars, and the light is starlight on its way to a telescope. In climate science, it's our own atmosphere. In medical imaging, it's your body, and the light is an X-ray. And for us, here, it's a laser, and a box of… stuff.
 
-**20b.–20g.** [One press per thing the box holds, the beam dimming more or less across it: fog; a cloud; smoke, thin streams curling up like a cigarette's and gathering under the lid; coffee, steam rising off it; beer, with a head of foam; then, at "It doesn't matter yet", plain stuff again. The narration doesn't name the coffee yet (see Open).]
-> Fog, [20c] a cloud, [20d] smoke, [20f] a glass of beer. [20g] It doesn't matter yet. Different stuff, same story. Because whatever the stuff is, there are only four things it can do to light passing through. We saw them a minute ago.
+**20b.–20h.** [One press per thing the box holds, the beam dimming more or less across it: fog; a cloud; smoke, thin streams curling up like a cigarette's and gathering under the lid; a block of tinted glass, catching the light; coffee; beer, with a head of foam; then, at "It doesn't matter yet", plain stuff again. The narration doesn't name the tinted glass or the coffee yet (see Open).]
+> Fog, [20c] a cloud, [20d] smoke, [20g] a glass of beer. [20h] It doesn't matter yet. Different stuff, same story. Because whatever the stuff is, there are only four things it can do to light passing through. We saw them a minute ago.
 
 **21.** [The cards and the caption go. As in the hook, one effect per press: absorption's tile fades in, lit in its colour, playing. The four tiles fill the stage; no formula above them.]
 > Absorption: the photon hits a particle and is swallowed. Its energy doesn't vanish, it becomes a little heat.
@@ -82,5 +82,5 @@ Confusion → goal → definition: each block answers the question the one befor
 
 - The cards in beats 12–14 hold TODO placeholders for the animations that answer them.
 - What the box holds once the body starts, the example the rest of the video keeps, is open. For now it goes back to plain stuff.
-- Beat 20e shows coffee, which the narration doesn't name. Suggested: "Fog, a cloud, smoke, a cup of coffee, a glass of beer."
+- Beats 20e and 20f show tinted glass and coffee, which the narration doesn't name. Suggested: "Fog, a cloud, smoke, tinted glass, a cup of coffee, a glass of beer."
 - Beats 22–25: visuals to build: the slabs quiz.

@@ -325,12 +325,12 @@ function drawUseXray(ctx, dt, h, fresh) {
 }
 
 // ---- this video: a laser, a box of stuff and a sensor, the bench's laser and tank with the box closed ----
-// What is in the box: PS.boxQ runs through BOXSTUFF, one press each in beats 20b–20g (fog, a cloud, smoke, coffee,
-// beer) and back to plain stuff. The beam dims across the box by however much its contents take. The box is tinted
-// glass, with light catching its front pane.
+// What is in the box: PS.boxQ runs through BOXSTUFF, one press each in beats 20b–20h (fog, a cloud, smoke, a block
+// of tinted glass, coffee, beer) and back to plain stuff. The beam dims across the box by however much its contents
+// take.
 const BOXG = { x0: 180, x1: 760, top: -200, bot: 200, xs: 980, cx: 470 };
-const BOXSTUFF = ['stuff', 'fog', 'cloud', 'smoke', 'coffee', 'beer', 'stuff'];
-const BOXSIG = { stuff: 0.0019, fog: 0.0024, cloud: 0.006, smoke: 0.003, coffee: 0.005, beer: 0.0016 };
+const BOXSTUFF = ['stuff', 'fog', 'cloud', 'smoke', 'glass', 'coffee', 'beer', 'stuff'];
+const BOXSIG = { stuff: 0.0019, fog: 0.0024, cloud: 0.006, smoke: 0.003, glass: 0.0022, coffee: 0.005, beer: 0.0016 };
 const BOXFILL = { coffee: 0.6, beer: 0.8 };
 const BOXPUFFS = PUFFS.map(([dx, dy, r]) => [BOXG.cx + dx * 470, -10 + dy * 400, r * 430]);
 const BOXSPECKS = Array.from({ length: 64 }, (_, i) => [(0.5 + i * 0.7548777) % 1, (0.5 + i * 0.5698403) % 1, (i * 2.399) % (2 * Math.PI)]);   // spread evenly (the R2 sequence)
@@ -341,14 +341,14 @@ function boxFit(h) {
   const s = Math.min(640 / (x1 - x0), (h - top - 24) / (y1 - y0));
   return [350 - ((x0 + x1) / 2) * s, top + (h - top) / 2 - ((y0 + y1) / 2) * s, s];
 }
-function boxWeights(q) { const w = { stuff: 0, fog: 0, cloud: 0, smoke: 0, coffee: 0, beer: 0 }; BOXSTUFF.forEach((k, i) => { w[k] += clamp(1 - Math.abs(q - i), 0, 1); }); return w; }
+function boxWeights(q) { const w = { stuff: 0, fog: 0, cloud: 0, smoke: 0, glass: 0, coffee: 0, beer: 0 }; BOXSTUFF.forEach((k, i) => { w[k] += clamp(1 - Math.abs(q - i), 0, 1); }); return w; }
 let boxCloudCum = null;
 function boxT(w) {   // transmittance from the laser to x
   if (!boxCloudCum) {   // the cloud's optical depth along the beam, 4 px at a time
     const n = Math.ceil((BOXG.x1 - BOXG.x0) / 4) + 1; boxCloudCum = new Float32Array(n);
     for (let i = 1; i < n; i++) boxCloudCum[i] = boxCloudCum[i - 1] + BOXSIG.cloud * 4 * cloudDensity(BOXG.x0 + i * 4, 0, BOXPUFFS, { cloud: 1 });
   }
-  const flat = w.stuff * BOXSIG.stuff + w.fog * BOXSIG.fog + w.smoke * BOXSIG.smoke + w.coffee * BOXSIG.coffee + w.beer * BOXSIG.beer;
+  const flat = w.stuff * BOXSIG.stuff + w.fog * BOXSIG.fog + w.smoke * BOXSIG.smoke + w.glass * BOXSIG.glass + w.coffee * BOXSIG.coffee + w.beer * BOXSIG.beer;
   return (x) => {
     const d = clamp(x - BOXG.x0, 0, BOXG.x1 - BOXG.x0);
     return Math.exp(-(flat * d + w.cloud * boxCloudCum[Math.min(boxCloudCum.length - 1, Math.round(d / 4))]));
@@ -400,13 +400,18 @@ const BOXDRAW = {
     drawWisps(ctx, B.x0 + 0.33 * w - 8, B.x0 + 0.33 * w + 8, B.bot + 10, B.top + 14, 2, [200, 210, 224], 1, 0.9, 0.7);
     drawWisps(ctx, B.x0 + 0.66 * w - 8, B.x0 + 0.66 * w + 8, B.bot + 10, B.top + 14, 2, [200, 210, 224], 1, 0.75, 3.9);
   },
-  coffee: (ctx, B) => {   // dark coffee, its crema on top, and steam rising off it: it is hot
+  glass: (ctx, B) => {   // a block of tinted glass filling the box, catching the light
+    const g = ctx.createLinearGradient(B.x0, B.top, B.x1, B.bot); g.addColorStop(0, 'rgba(96,178,166,0.34)'); g.addColorStop(1, 'rgba(58,128,122,0.46)');
+    ctx.fillStyle = g; ctx.fillRect(B.x0, B.top, B.x1 - B.x0, B.bot - B.top);
+    drawGlassShine(ctx, B);
+    ctx.strokeStyle = 'rgba(190,232,226,0.35)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(B.x0 + 9, B.top + 9, B.x1 - B.x0 - 18, B.bot - B.top - 18, 10); ctx.stroke();
+  },
+  coffee: (ctx, B) => {   // dark coffee, its crema on top
     const lv = B.bot - BOXFILL.coffee * (B.bot - B.top);
     const g = ctx.createLinearGradient(0, lv, 0, B.bot); g.addColorStop(0, 'rgba(96,58,32,0.95)'); g.addColorStop(1, 'rgba(44,25,13,0.97)');
     ctx.fillStyle = g; ctx.fillRect(B.x0, lv, B.x1 - B.x0, B.bot - lv);
     const c = ctx.createLinearGradient(0, lv - 2, 0, lv + 18); c.addColorStop(0, 'rgba(214,166,112,0.9)'); c.addColorStop(1, 'rgba(150,100,60,0)');
     ctx.fillStyle = c; ctx.fillRect(B.x0, lv - 2, B.x1 - B.x0, 20);
-    drawWisps(ctx, B.x0 + 90, B.x1 - 90, lv - 4, B.top + 8, 3, [240, 238, 232], 1, 0.5, 2.2, 0.55);
   },
   beer: (ctx, B) => {   // beer, and its head of foam
     drawLiquid(ctx, boxTank, { fill: BOXFILL.beer, look: 'beer' });
@@ -417,7 +422,7 @@ const BOXDRAW = {
     }
   },
 };
-// The front pane catching the light: two slanted bands, and a highlight down the inside of the left wall.
+// Glass catching the light: slanted bands across it, and a highlight down the inside of its left side.
 function drawGlassShine(ctx, B) {
   const w = B.x1 - B.x0, h = B.bot - B.top;
   ctx.save(); ctx.beginPath(); ctx.roundRect(B.x0, B.top, w, h, 16); ctx.clip();
@@ -435,14 +440,11 @@ function drawUseBox(ctx, dt, h) {
   const [ox, oy, s] = boxFit(h), B = BOXG, w = boxWeights(PS.boxQ), ga = ctx.globalAlpha;
   ctx.save(); ctx.translate(ox, oy); ctx.scale(s, s);
   ctx.save(); ctx.beginPath(); ctx.roundRect(B.x0, B.top, B.x1 - B.x0, B.bot - B.top, 16); ctx.clip();
-  ctx.fillStyle = 'rgba(140,200,206,0.06)'; ctx.fillRect(B.x0, B.top, B.x1 - B.x0, B.bot - B.top);   // the glass's tint
-  for (const k of ['stuff', 'fog', 'cloud', 'smoke', 'coffee', 'beer']) { if (w[k] <= 0.003) continue; ctx.globalAlpha = ga * w[k]; BOXDRAW[k](ctx, B); }
+  for (const k of ['stuff', 'fog', 'cloud', 'smoke', 'glass', 'coffee', 'beer']) { if (w[k] <= 0.003) continue; ctx.globalAlpha = ga * w[k]; BOXDRAW[k](ctx, B); }
   ctx.restore(); ctx.globalAlpha = ga;
   const T = boxT(w);
   drawBeam(ctx, 0, B.xs - 18, 0, SH.color, SH.I0, T, [B.x0, B.x1]);
-  drawGlassShine(ctx, B);
-  ctx.save(); ctx.strokeStyle = 'rgba(200,228,231,0.92)'; ctx.lineWidth = 5; ctx.beginPath(); ctx.roundRect(B.x0, B.top, B.x1 - B.x0, B.bot - B.top, 16); ctx.stroke();
-  ctx.strokeStyle = 'rgba(200,228,231,0.22)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(B.x0 + 8, B.top + 8, B.x1 - B.x0 - 16, B.bot - B.top - 16, 10); ctx.stroke(); ctx.restore();
+  ctx.save(); ctx.strokeStyle = COL.greyA; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(B.x0, B.top, B.x1 - B.x0, B.bot - B.top, 16); ctx.stroke(); ctx.restore();
   drawLaser(ctx, 0, 0, SH.color, 1);
   drawSensor(ctx, B.xs, 0, SH.color, T(B.xs - 18) * SH.I0);
   ctx.restore();

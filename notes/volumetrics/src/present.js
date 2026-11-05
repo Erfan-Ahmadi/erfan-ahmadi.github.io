@@ -113,8 +113,8 @@ const BEATS = [
   { n: '15g', name: 'most importantly', run: () => presGoal(2) },
   { n: '16', name: 'some stuff', run: presDefine },
   ...USES.map((u, i) => ({ n: String(17 + i), name: u.name, run: () => presUse(i) })),
-  // 20b–20g: one press per thing the box can hold, then back to plain stuff
-  ...['fog', 'a cloud', 'smoke', 'coffee', 'a glass of beer', "it doesn't matter yet"].map((name, k) => ({ n: `20${'bcdefg'[k]}`, name, run: () => ptw('boxQ', k + 1, 0.5) })),
+  // 20b–20h: one press per thing the box can hold, then back to plain stuff
+  ...['fog', 'a cloud', 'smoke', 'tinted glass', 'coffee', 'a glass of beer', "it doesn't matter yet"].map((name, k) => ({ n: `20${'bcdefgh'[k]}`, name, run: () => ptw('boxQ', k + 1, 0.5) })),
   ...PFX.map((p, i) => ({ n: i ? `21${'bcd'[i - 1]}` : '21', name: p[1], run: () => presFxName(i) })),
   { n: '21e', name: 'two take light away', run: () => presFxPair(true) },
   { n: '21f', name: 'two add it', run: () => presFxPair(false) },
