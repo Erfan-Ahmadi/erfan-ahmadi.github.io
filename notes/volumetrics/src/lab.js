@@ -249,16 +249,32 @@ function drawLabPlot(ctx, st) {
   if (Fo.c > 0.003 && w > 1) {   // option 1: a brace under the box, d in its blue, stretching with it; while σ changes, σ in the box instead, in its yellow
     const sF = clamp(st.sAct || 0, 0, 1), al = Fo.c * (0.7 + 0.3 * clamp(st.dAct || 0, 0, 1)) * (1 - sF), cx = X0 + w / 2;
     if (al > 0.003) { drawBrace(ctx, cx, LP.bot + 16, w, 24, 6, hexRgb(LDCOL), al); drawTex(ctx, 'd', cx, LP.bot + 84, 60, { alpha: al, color: LDCOL }); }
-    if (Fo.s > 0.003) {   // in the upper half, over the specks, on a little shade so it reads among them
+    if (Fo.s > 0.003 && (st.ind10 || 0) < 0.5) {   // in the upper half, over the specks, on a little shade so it reads among them (option 10 writes its own)
       const sy = LP.top + 46, sg = ctx.createRadialGradient(cx, sy, 0, cx, sy, 42);
       sg.addColorStop(0, `rgba(28,27,24,${(0.8 * Fo.s).toFixed(3)})`); sg.addColorStop(1, 'rgba(28,27,24,0)');
       ctx.fillStyle = sg; ctx.fillRect(cx - 42, sy - 42, 84, 84);
       drawTex(ctx, String.raw`\sigma`, cx, sy, 64, { alpha: Fo.s, color: COL.yellow });
     }
   }
+  const n10 = smooth(clamp(st.ind10 || 0, 0, 1));
+  if (n10 > 0.003 && w > 1) {   // option 10: σ and d with their values, in the box itself, σ above the beam and d below, each on a little shade
+    const sA = clamp(st.sAct || 0, 0, 1), dA = clamp(st.dAct || 0, 0, 1), cx = X0 + w / 2;
+    for (const [src, col, yy, act, other] of [[String.raw`\sigma = ${(Math.max(0, st.sig) * Math.LN2).toFixed(2)}`, COL.yellow, LP.top + 44, sA, dA],
+      [`d = ${d.toFixed(1)}`, rgbHex(mixRgb(WHITE_RGB, hexRgb(LDCOL), Fo.c)), LP.bot - 44, dA, sA]]) {
+      const al = n10 * (0.8 + 0.2 * act) * (1 - 0.5 * other * (1 - act)), tw = tex(src).w * 46;
+      ctx.fillStyle = `rgba(28,27,24,${(0.72 * n10).toFixed(3)})`; ctx.beginPath(); ctx.roundRect(cx - tw / 2 - 12, yy - 28, tw + 24, 56, 10); ctx.fill();
+      drawTex(ctx, src, cx, yy, 46, { alpha: al, color: col });
+    }
+  }
   ctx.save(); ctx.translate(X0 - 26, y); ctx.scale(0.6, 0.6); drawLaser(ctx, 0, 0, SH.color, 1); ctx.restore();
   ctx.save(); ctx.translate(xs, y); ctx.scale(0.6, 0.6); drawSensor(ctx, 0, 0, SH.color, f(d) * SH.I0); ctx.restore();
-  const v = f(d) * 100; drawNumber(ctx, v, xs + 30, y - 44, { size: 44, dec: Math.abs(v - Math.round(v)) < 0.05 ? 0 : 1, suffix: '%', alpha: a * ax });   // 50%, 25%, 12.5%
+  const v = f(d) * 100, rd = smooth(clamp(st.readDim || 0, 0, 1)), dec = Math.abs(v - Math.round(v)) < 0.05 ? 0 : 1;   // 50%, 25%, 12.5%
+  if (rd <= 0.003) drawNumber(ctx, v, xs + 30, y - 44, { size: 44, dec, suffix: '%', alpha: a * ax });
+  else {   // dimmed, greyed and blurred past reading, so the numbers elsewhere are the ones read
+    ctx.save(); ctx.filter = `blur(${(4.5 * K * rd).toFixed(2)}px)`;
+    drawNumber(ctx, v, xs + 30, y - 44, { size: 44, dec, suffix: '%', color: rd > 0.5 ? COL.grey : COL.white, alpha: a * ax * (1 - 0.5 * rd) });
+    ctx.restore();
+  }
   // the dot riding the curve, and a faint line down to the box's end: the same d in both
   if (st.curveTo > 0.003) {
     const px = A.X(d), py = A.Y(f(d));
@@ -277,12 +293,21 @@ function drawLabPlot(ctx, st) {
 // a brace under the box; σ in its yellow, the specks' colour; the one changing lit and a little bigger, the other dimmed.
 // ind2, live values; ind3, the numbers in the formula; ind4, two small sliders; ind5, the numbers by the dot, the formula
 // staying as it is; ind6, σ bends the curve and d slides along it (the curve before the change, or the stretch the dot
-// has travelled); ind7, the exponent as an area, d wide and σ tall; ind8, a box around the one changing. sAct and dAct
-// (0 to 1): how much σ or d is changing right now.
+// has travelled); ind7, the exponent as an area, d wide and σ tall; ind8, a box around the one changing; ind9, the
+// formula itself goes down to the dot, turning into its numbers, rides it while they change, and goes back up as symbols
+// once they settle (mv9: how far along that trip it is); ind10, σ = … and d = … written in the box. readDim: the
+// sensor's readout dimmed, greyed and blurred past reading. sAct and dAct (0 to 1): how much σ or d is changing now.
 const LDCOL = COL.blue;
 const labFocus = (st) => { const c = smooth(clamp(st.ind1 || 0, 0, 1)); return { c, s: c * clamp(st.sAct || 0, 0, 1), d: c * clamp(st.dAct || 0, 0, 1) }; };
 function drawLabFormula(ctx, F, st, a) {
   const hiS = smooth(clamp(st.sigHi, 0, 1)), num = smooth(clamp(st.ind3 || 0, 0, 1)), Fo = labFocus(st), sym = a * (1 - num);
+  const m9 = smooth(clamp(st.ind9 || 0, 0, 1) * clamp(st.mv9 || 0, 0, 1));
+  if (m9 > 0.002 && sym > 0.003 && st.fml >= 1) {   // option 9: on its way to the dot, or riding it, as its numbers (manim's TransformMatchingTex)
+    const A = lpAxes(), d = clamp(st.dotD, 0, LPD), px = A.X(d), py = A.Y(Math.exp(-Math.max(0, st.sig) * Math.LN2 * d));
+    const N = place(tex(labNumSrc(st)), { x: px + 26, y: py - 46, size: 58, ax: 0 }), M = F.main.map((q) => ({ ...q, color: q.a.terms.includes('t-sig') ? mixRgb(WHITE_RGB, hexRgb(COL.yellow), hiS) : q.color }));
+    if (m9 >= 0.998) drawSprites(ctx, N, { alpha: sym }); else drawMorph(ctx, matchPlan(M, N), m9, sym);
+    return;
+  }
   if (sym > 0.003) {
     if (Fo.c <= 0.003 || st.fml < 1) drawSprites(ctx, F.main, { p: st.fml, alpha: sym, hi: { 't-sig': hiS } });
     else for (const s of F.main) {
@@ -534,12 +559,12 @@ function labWhy() {
 }
 
 // ---------- σ or d? (the bench only, not the presentation) ----------
-// Beats 26–29's formula, plot and box, to try the eight ways above of showing which of σ and d is changing, alone or
+// Beats 26–29's formula, plot and box, to try the ten ways above of showing which of σ and d is changing, alone or
 // together. Which one is changing is worked out from how they move, so the buttons and the sliders under the stage
 // both show it.
 const SSD = defScene({
   id: 'sigd', tab: 'σ or d?',
-  defaults: () => ({ fml: 1, axC: 1, curveTo: LPD, dotD: 2, sig: 1, sigHi: 1, eq1: 0, plotOut: 0, ind1: 1, ind2: 0, ind3: 0, ind4: 0, ind5: 0, ind6: 0, ind7: 0, ind8: 0, sigAs: 'rel', slPos: 'tr', sAct: 0, dAct: 0 }),
+  defaults: () => ({ fml: 1, axC: 1, curveTo: LPD, dotD: 2, sig: 1, sigHi: 1, eq1: 0, plotOut: 0, ind1: 1, ind2: 0, ind3: 0, ind4: 0, ind5: 0, ind6: 0, ind7: 0, ind8: 0, ind9: 0, ind10: 0, readDim: 1, sigAs: 'rel', slPos: 'tr', sAct: 0, dAct: 0, mv9: 0 }),
   actions: [
     { id: 'dist', label: 'Change d', primary: true, run: async (st, alive) => {
       await tween(st, 'dotD', 0.4, 1.3); if (!alive()) return; await tween(st, 'dotD', LPD, 2.6); if (!alive()) return; await tween(st, 'dotD', 2, 1.2);
@@ -561,6 +586,9 @@ const SSD = defScene({
     { type: 'check', key: 'ind6', label: '6 · σ bends the curve, d slides along it', set: (v) => tween(SSD, 'ind6', v ? 1 : 0, 0.5) },
     { type: 'check', key: 'ind7', label: '7 · The exponent as an area', set: (v) => tween(SSD, 'ind7', v ? 1 : 0, 0.5) },
     { type: 'check', key: 'ind8', label: '8 · A box around the one changing', set: (v) => tween(SSD, 'ind8', v ? 1 : 0, 0.5) },
+    { type: 'check', key: 'ind9', label: '9 · The formula goes to the dot as numbers, and back', set: (v) => tween(SSD, 'ind9', v ? 1 : 0, 0.5) },
+    { type: 'check', key: 'ind10', label: '10 · σ = … and d = … in the box', set: (v) => tween(SSD, 'ind10', v ? 1 : 0, 0.5) },
+    { type: 'check', key: 'readDim', label: 'Sensor readout dim and unreadable', set: (v) => tween(SSD, 'readDim', v ? 1 : 0, 0.5) },
     { type: 'range', key: 'sig', label: 'σ (× usual)', min: 0, max: 2, step: 0.01, fmt: (v) => v.toFixed(2), set: (v) => { untween(SSD, 'sig'); SSD.sig = v; } },
     { type: 'range', key: 'dotD', label: 'd (boxes)', min: 0.05, max: LPD, step: 0.01, fmt: (v) => v.toFixed(2), set: (v) => { untween(SSD, 'dotD'); SSD.dotD = v; } },
   ],
@@ -577,6 +605,8 @@ const SSD = defScene({
     if (st.restS == null || since(st.tS) > 1.4) st.restS = st.sig;
     if (st.restD == null || since(st.tD) > 1.4) st.restD = st.dotD;
     st.ghS = clamp(1 - (since(st.tS) - 0.9) / 0.5, 0, 1); st.ghD = clamp(1 - (since(st.tD) - 0.9) / 0.5, 0, 1);
+    // for option 9: the formula's trip, out to the dot while either is changing, back once both have settled
+    st.mv9 += ((Math.max(st.sAct, st.dAct) > 0.5 ? 1 : 0) - st.mv9) * (1 - Math.exp(-Math.max(0, dt) / 0.22));
     drawLabPlot(ctx, st);
   },
 });
