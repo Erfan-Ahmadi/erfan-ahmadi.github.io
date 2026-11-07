@@ -50,7 +50,7 @@ The working script below has light edits; the original drafts, word for word, ar
 > For the rest of this video I'm going to be slightly dishonest. [21b] I'll assume our stuff doesn't scatter light,
 
 **21c.** [The scattering stops. Each speck glows red on its own, and the beam dims a little so the glow shows: emission.]
-> and that it doesn't glow, or give off any light of its own. Scattering and emission get their own video.
+> and that it doesn't glow, or give off any light of its own. I'll get to them in the next video.
 
 **21d.** [The glow goes: plain stuff again, the beam dimmer past the box.]
 > For now, our particles only absorb light.
@@ -59,7 +59,7 @@ The working script below has light edits; the original drafts, word for word, ar
 > So they take some of the laser's light, and less of it makes it to the other end. How much less? That's what the sensor is for. Here it reads fifty percent: half the light made it through.
 
 **23.–23b.** [The whole setup is copied, without its readout, and the copy slides down, slowly, to the bottom half of the stage. Next press, in the copy, a second identical box slides in from the right beside the first, the laser and the sensor moving outward to make room, and the light past the first box gives way to a row of "?" drifting through the second box to the sensor, which goes dark: nothing gives the answer away. Then a readout pops up on the copy's sensor: "?". So: above, one box and 50%; below, two boxes and "?".]
-> Now, a question. [23b] What if I put a second, identical box right next to this one? What does the sensor read now? Pause and try to answer, if you want.
+> Now, I've got a question for you. [23b] What if I put a second, identical box right next to this one? What does the sensor read now? Pause and try to answer, if you want.
 
 **24.** [An aside, as every aside with the stick figure goes (as in beat 2): both setups shrink into a card of their own colour, moved over to the left, and the figure comes in on the right, its readout "0%". Over its head, the guess worked out, the same amount off for every box: "1 box: 100% − 50% = 50%", "2 boxes: 100% − 100% = 0%" (the count in blue, what's taken off in lavender, the result in yellow).]
 > It's natural to say zero. One box took half the light, so two should take all of it.
