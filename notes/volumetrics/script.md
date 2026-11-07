@@ -42,46 +42,29 @@ The working script below has light edits; the original drafts, word for word, ar
 
 
 **20b.–20h.** [One press per thing the box holds, the beam dimming more or less across it: fog; a cloud; smoke, thin streams curling up like a cigarette's and gathering under the lid; a block of tinted glass, catching the light; coffee; beer, with a head of foam; then, at "It doesn't matter yet", plain stuff again. The narration doesn't name the tinted glass or the coffee yet (see Open).]
-> Fog, [20c] a cloud, [20d] smoke, [20g] a glass of beer. [20h] It doesn't matter yet. Different stuff, same story. Because whatever the stuff is, there are only four things it can do to light passing through. We saw them a minute ago.
+> Fog, [20c] a cloud, [20d] smoke, [20g] a glass of beer. [20h] It doesn't matter yet. Different stuff, same story. 
 
-**21.** [The cards and the caption go. One effect per press, in neutral frames and names: absorption's tile fades in, playing. The four tiles fill the stage; no formula above them.]
-> Absorption: the photon hits a particle and is swallowed. Its energy doesn't vanish, it becomes a little heat.
+(we get rid of the 3 other examples here)
 
-**21b.** [Out-scattering's tile fades in, playing; absorption's pauses where it is and goes a little out of focus: less colour, dimmer.]
-> Out-scattering: it bounces off and leaves in some other direction, so it never reaches the eye.
+ And for the remainder of this video I'm going be slightly dishonest and assume our "stuff" doesn't scatter light (show the same setup laser hitting those particles in the last "stuff" and scattering in rays and making the volume more reddish) or glow or emit light itself (red glow for each particle, laser light a bit dimmed so the effect of the emission is more visible). I'll come back to emission and scattering in a separate video. for now, our partices only absorb light. 
 
-**21c.** [Emission's tile fades in; out-scattering's pauses and goes out of focus the same way.]
-> Emission: the particle gives off light of its own, and some of it heads our way.
+and here after they absorb the laser light, less of it makes the other end, how much? well that's why have a sensor, here it reads 50%, that means half the light made it through. now let me ask you a question, what if I put a second identical tank right next to this one? (we duplicate the same thing and bring it to the bottom) what would our sensor read now? pause and try to answer it if you want (the sensor reads ? instead of 50%, now you see two setups, above with 1 box and 50, below with 2 and ?)
 
-**21d.** [In-scattering's tile fades in; emission's pauses and goes out of focus.]
-> In-scattering: light from somewhere else bounces off a particle, right into our line of sight.
+It's natural to say 0% (sticky figure with 0% readout, the question one goes away), because 1 box took half the light , so two should take all of it away (slide tank to from the right and move laser and sensor outwards for it to fit). but that's not what happens here. our sensor reads 25%. add a third box, it's 12.5%. each box halfs the light entering it. that's exactly what exponential means. multiplication by a fixed fraction.
 
-**21e.–21h.** [Four presses. At "And for the rest of this video", all four come back into focus and play. At "our stuff doesn't scatter,", out-scattering and in-scattering grey out and stop; at "and it doesn't emit.", emission does the same. At "It only absorbs.", absorption, still playing, grows over the other three.]
-> And for the rest of this video I'm going to be slightly dishonest: our stuff doesn't scatter, and it doesn't emit. It only absorbs. The other three build on top of absorption, and I'll come back to them in a separate video. So let's see what absorption alone does to our light.
+and this behaviour is described by this formula, you might've heard about the beer-lambert formula. let's see it in action (show the plot, while it's growing from left to write with a dot, the volume under it grows as well)
 
-## Part 3: the quiz (the body starts here)
+notice how the more light has to travel through our stuff (a dot and the the box growing and shrinking, ) the less of it makes the other end. and notice how when the stuff becomes more absorbtive it dims light quicker?
 
-**22.** [The laser, the cloud as a slab, the sensor. The beam goes in at full brightness and comes out dimmer. The sensor settles on 50%.]
-> With absorption alone, here's what happens. The light goes in, some of it gets swallowed on the way, and your sensor reads fifty percent. Half made it through.
+this absorbitvity is controlled by [whatever we chose to be in the exponent of e^..*x].  show stationary animamtion increasing and decreasing that value and seeing the stuff change look and the sensor read less
 
-**23.** [A second, identical slab slides in behind the first. The sensor shows "??%".]
-> Now, quick question. I put a second cloud, same as the first, right behind it. What does your sensor read?
+(remember everything on screen should serve a purpose, specially with 2 synced views where viewer can easily get confused)
 
-**24.** [The sum writes at the top: 100% − 50% − 50% = 0%. The sensor shows 0%.]
-> It's tempting to say zero. One cloud takes half the light, so two should take all of it.
+It's easy to see that when that value is 0, we get a constant 1, that means no light is being absorbed. a.k.a there is no stuff, it's a vaccum. 
 
-**25.** [Every "− 50%" becomes "× ½". The sensor settles on 25%. A third slab: 12.5%.]
-> But that's not what happens. It reads 25%. A third: 12.5%. Each cloud halves whatever reaches it. Why half of what's left, and not the same amount again? That question is the whole video.
+For those of you a little bit rusty with calculus and wondering why we have the number e here which is roughly 2 point ..., I'd have to say there is nothing special about it. you can have any base you want, 2^..*x, 3^...*x, .... (shown in a vertical stack) we just rewrite all these different exponential with a base of e (an arrow to the right, all bases change to e). the reason we choose e is that it makes it a little easierworking with integrals and differentual equations but you don't have to worry about them here.
 
-(Beats 22–25 are narration only so far; their visuals are not built yet.)
+Now you might still be asking. Ok, there is nothing special about e, but why do we have exponential behaviour here?
+(aside with sticky figures everytime we play with "you  might be asking")
 
-## Why this order
-
-Confusion → goal → definition: each block answers the question the one before it raises ("this is confusing" → "I'll fix that" → "fix what, exactly?"). After the hook the formula leaves the screen: the goals, the definition, the fields and the four effects are about the physics, and the formula comes back only once it has been earned. Showing it everywhere would keep asking the viewer to read it. The goal lands about 90 seconds in, after the questions, so it sounds like a response, not an announcement. The four effects appear twice, first as "some made sense", then as "we keep only this one", and are only named the second time. "What this video is not" is one sentence inside the goal, not a section. The quiz is the first beat of the body: by then they know what the equation describes, what the goal is and what's been cut, so a question is a change of gear rather than a pop quiz.
-
-## Open
-
-- The cards in beats 12–14 hold TODO placeholders for the animations that answer them.
-- What the box holds once the body starts, the example the rest of the video keeps, is open. For now it goes back to plain stuff.
-- Beats 20e and 20f show tinted glass and coffee, which the narration doesn't name. Suggested: "Fog, a cloud, smoke, tinted glass, a cup of coffee, a glass of beer."
-- Beats 22–25: visuals to build: the slabs quiz.
+.... (I'll write the next parts soon)
