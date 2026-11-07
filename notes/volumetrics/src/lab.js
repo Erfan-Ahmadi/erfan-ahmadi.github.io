@@ -211,15 +211,13 @@ function drawLab(ctx, dt, st) {
 // ---- the beats ----
 // a sequence of steps that stops where it is if the presentation is rebuilt (a step back) in the middle of it
 const labAlive = (g) => g === PRES.gen;
-// 21: the field cards and the caption go, the box grows out of its card to fill the stage, and it scatters
-function labScatter() {
-  ptw('usesOut', 1, 0.6); ptw('capOut', 1, 0.6); PS.labOn = 1;
-  ptw('labX', 1, 1.4, { delay: 0.2 });
-  return ptw('scat', 1, 1.0, { delay: 1.4 });
-}
-// 21b: it stops scattering; every speck glows red, the beam a little dimmer so the glow shows
+// 21: the field cards and the caption go, and the box grows out of its card to fill the stage
+function labZoom() { ptw('usesOut', 1, 0.6); ptw('capOut', 1, 0.6); PS.labOn = 1; return ptw('labX', 1, 1.4, { delay: 0.2 }); }
+// 21b: it scatters
+function labScatter() { return ptw('scat', 1, 1.0); }
+// 21c: it stops scattering; every speck glows red, the beam a little dimmer so the glow shows
 function labGlow() { ptw('scat', 0, 0.6); return ptw('glow', 1, 1.0, { delay: 0.4 }); }
-// 21c: the glow goes: only absorption
+// 21d: the glow goes: only absorption
 function labAbsorb() { return ptw('glow', 0, 0.9); }
 // 22: the sensor's reading, for the first time
 function labRead() { return ptw('read1', 1, 0.8); }

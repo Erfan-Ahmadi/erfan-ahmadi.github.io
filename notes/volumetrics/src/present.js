@@ -119,9 +119,10 @@ const BEATS = [
   // 20b–20h: one press per thing the box can hold, then back to plain stuff
   ...['fog', 'a cloud', 'smoke', 'tinted glass', 'coffee', 'a glass of beer', "it doesn't matter yet"].map((name, k) => ({ n: `20${'bcdefgh'[k]}`, name, run: () => ptw('boxQ', k + 1, 0.5) })),
   // part 3 (lab.js): what we leave out, shown on the box; the sensor; the two-box question; the formula and its plot
-  { n: '21', name: "doesn't scatter", run: () => labScatter() },
-  { n: '21b', name: "doesn't glow", run: () => labGlow() },
-  { n: '21c', name: 'only absorbs', run: () => labAbsorb() },
+  { n: '21', name: 'the box', run: () => labZoom() },
+  { n: '21b', name: "doesn't scatter", run: () => labScatter() },
+  { n: '21c', name: "doesn't glow", run: () => labGlow() },
+  { n: '21d', name: 'only absorbs', run: () => labAbsorb() },
   { n: '22', name: 'the sensor', run: () => labRead() },
   { n: '23', name: 'a second box', run: () => labSecond() },
   { n: '24', name: 'zero?', run: () => labGuess() },
