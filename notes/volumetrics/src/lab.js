@@ -206,14 +206,27 @@ function drawLabBases(ctx, st) {
   const dr = clamp((st.bMorph - 0.75) / 0.25, 0, 1);
   if (dr > 0.003) drawTex(ctx, String.raw`\vdots`, LB.rx, LB.dots, LB.size, { alpha: dr });
 }
-// Beats 24 and 31: me again, in the corner, with a thought.
+// Beats 24 and 31: an aside, the way every aside with me goes (as in beat 2): what is on the stage shrinks into a card
+// of its own colour, moved over to the left, and I come in on the right with a thought.
+const LASIDE = [60, 110, 1120, 630];
 function drawLabFigure(ctx, st) {
   const a = smooth(clamp(st.lfig, 0, 1)); if (a <= 0.003) return;
-  const fx = 150, fy = 965, fs = 0.85;
+  const fx = 1500, fy = 840, fs = 1.24;
   drawFigure(ctx, fx, fy, fs, a);
-  drawThinking(ctx, fx + 110, fy - 300, 0.75, 74, '', st.lthink, 1, st.lthinkP, a, figHead(fx, fy, fs));
+  drawThinking(ctx, fx + 110, fy - 410, 1, 100, '', st.lthink, 1, st.lthinkP, a, figHead(fx, fy, fs));
 }
 function drawLab(ctx, dt, st) {
+  const k = smooth(clamp(st.lside, 0, 1)), C = lerpRect([0, 0, W, H], LASIDE, k);
+  if (k > 0.003) {   // the aside's card: its own ground and a frame, everything on the stage drawn into it
+    ctx.save(); ctx.globalAlpha = k; ctx.fillStyle = '#26241F'; ctx.strokeStyle = COL.greyC; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.roundRect(C[0], C[1], C[2], C[3], 14 * k); ctx.fill(); ctx.stroke(); ctx.restore();
+    ctx.save(); ctx.beginPath(); ctx.roundRect(C[0], C[1], C[2], C[3], 14 * k); ctx.clip(); ctx.translate(C[0], C[1]); ctx.scale(C[2] / W, C[3] / H);
+  }
+  drawLabStage(ctx, dt, st);
+  if (k > 0.003) ctx.restore();
+  drawLabFigure(ctx, st);
+}
+function drawLabStage(ctx, dt, st) {
   if (st.labOn > 0.003) {
     const out = 1 - smooth(clamp(st.rowsOut, 0, 1)), x = smooth(clamp(st.labX, 0, 1)), sp = smooth(clamp(st.split, 0, 1));
     const X1 = mixXf(mixXf(labCardXf(st), LABXF.full, x), LABXF.top, sp);
@@ -222,7 +235,6 @@ function drawLab(ctx, dt, st) {
   }
   drawLabPlot(ctx, st);
   drawLabBases(ctx, st);
-  drawLabFigure(ctx, st);
 }
 
 // ---- the beats ----
@@ -248,12 +260,16 @@ async function labSecond() {
   PS.rev = 0;
   await ptw('read2', 1, 0.45);
 }
-// 24: me, guessing zero
-function labGuess() { PS.lthink = '0\\%'; PS.lthinkP = 0; ptw('lfig', 1, 0.8); return ptw('lthinkP', 1, 0.6, { delay: 0.7, ease: linear }); }
+// 24: an aside: me, guessing zero
+function labGuess() {
+  PS.lthink = '0\\%'; PS.lthinkP = 0; ptw('lside', 1, 1.4); ptw('lfig', 1, 1.0, { delay: 0.8 });
+  return ptw('lthinkP', 1, 0.6, { delay: 1.7, ease: linear });
+}
 // 25: no: twenty-five; 25b: a third box, twelve and a half
-function labReveal() {   // the questions clear, the light carries on from the first box to the sensor, and it reads 25%
-  ptw('lfig', 0, 0.6); ptw('myst', 0, 0.5); ptw('rev', 1, 1.0, { delay: 0.3, ease: linear });
-  return labRead2('25%', 0.9, 1.2);
+function labReveal() {   // back from the aside; the questions clear, the light carries on to the sensor, and it reads 25%
+  ptw('lfig', 0, 0.5); ptw('lside', 0, 1.2, { delay: 0.2 });
+  ptw('myst', 0, 0.5, { delay: 1.3 }); ptw('rev', 1, 1.0, { delay: 1.6, ease: linear });
+  return labRead2('25%', 0.9, 2.5);
 }
 function labThird() { labRead2('12.5%', 1.2); return ptw('c2', 3, 1.4); }   // the reading changes as the box slides in
 // 26: the rows go; e^{−σd} writes in, the plot under it, and the curve draws with its dot, the box growing under it
@@ -277,5 +293,8 @@ function labBases() {
   ptw('bStack', 1, 1.6, { delay: 0.6, ease: linear }); ptw('bArrow', 1, 0.7, { delay: 2.3 });
   return ptw('bMorph', 1, 2.4, { delay: 2.8, ease: linear });
 }
-// 31: me again: but why exponential?
-function labWhy() { PS.lthink = 'but why exponential?'; PS.lthinkP = 0; ptw('lfig', 1, 0.8); return ptw('lthinkP', 1, 1.0, { delay: 0.7, ease: linear }); }
+// 31: an aside: me again: but why exponential?
+function labWhy() {
+  PS.lthink = 'but why exponential?'; PS.lthinkP = 0; ptw('lside', 1, 1.4); ptw('lfig', 1, 1.0, { delay: 0.8 });
+  return ptw('lthinkP', 1, 1.0, { delay: 1.7, ease: linear });
+}

@@ -61,10 +61,10 @@ The working script below has light edits; the original drafts, word for word, ar
 **23.** [The whole setup is copied, without its readout, and the copy slides down to the bottom half of the stage. In the copy, a second identical box slides in from the right beside the first, the laser and the sensor moving outward to make room, and the light past the first box gives way to a row of "?" drifting through the second box to the sensor, which goes dark: nothing gives the answer away. Then a readout pops up on the copy's sensor: "?". So: above, one box and 50%; below, two boxes and "?".]
 > Now, a question. What if I put a second, identical box right next to this one? What does the sensor read now? Pause and try to answer, if you want.
 
-**24.** [The stick figure comes in, its readout "0%".]
+**24.** [An aside, as every aside with the stick figure goes (as in beat 2): both setups shrink into a card of their own colour, moved over to the left, and the figure comes in on the right, its readout "0%".]
 > It's natural to say zero. One box took half the light, so two should take all of it.
 
-**25.–25b.** [The figure and its readout go. The question marks clear, the light carries on from the first box through the second to the sensor, and the copy's reading reshapes from "?" into 25%. Next press, a third box slides in the same way, and as soon as it starts sliding the reading reshapes into 12.5%.]
+**25.–25b.** [The figure and its readout go, and the card grows back to fill the stage. The question marks clear, the light carries on from the first box through the second to the sensor, and the copy's reading reshapes from "?" into 25%. Next press, a third box slides in the same way, and as soon as it starts sliding the reading reshapes into 12.5%.]
 > But that's not what happens. The sensor reads twenty-five percent. [25b] Add a third box: twelve and a half. Each box halves the light that enters it. That's exactly what exponential means: multiplying by a fixed fraction, again and again.
 
 **26.** [The single-box setup goes. The formula writes in, just $e^{-\sigma d}$ (the symbol in the exponent is still to be chosen; the full form with $I_0$ waits for the very end of the video), and under it a plot: the light that gets through, 100% at the top, against the distance $d$, in box lengths up to three, so the curve passes 50%, 25% and 12.5% at one, two and three boxes and ends where the three boxes did, at 12.5%. The curve, in the laser's red, draws from left to right with a dot riding it; under the plot, the box grows along with the dot, its left end at the plot's 0 and its right end under the dot, a faint dashed line joining the two; the laser before it, the sensor after it, reading what the curve says.]
@@ -82,7 +82,7 @@ The working script below has light edits; the original drafts, word for word, ar
 **30.** [The plot, the box and the formula go. A vertical stack writes in: $2^{-\sigma d}$, $3^{-\sigma d}$, $10^{-\sigma d}$, ⋮, with $\sigma$ in its yellow; an arrow to the right, and a copy of each turns into the same thing with base $e$, the change of base a rough number multiplying $\sigma$ (that's $\ln 2$, $\ln 3$, $\ln 10$): $e^{-0.69\,\sigma d}$, $e^{-1.1\,\sigma d}$, $e^{-2.3\,\sigma d}$, ⋮. The $-$, $\sigma$ and $d$ glide across, the base turns into $e$ and the number comes in.]
 > If you're a little rusty on calculus and wondering why the number $e$ is in there, roughly 2.718, I have to say: there's nothing special about it. You could use any base: two, three, ten. We just rewrite them all with base $e$, because $e$ makes integrals and differential equations a little easier to work with. You don't have to worry about that here.
 
-**31.** [An aside, the device for every "you might be asking": the stick figure comes back, its readout "but why exponential?".]
+**31.** [An aside, the device for every "you might be asking": the stack shrinks into a card of its own colour, moved over to the left, and the stick figure comes in on the right, its readout "but why exponential?".]
 > Now, you might still be asking: fine, there's nothing special about $e$. But why do we get exponential behaviour here at all?
 
 (The next parts are still to be written.)
