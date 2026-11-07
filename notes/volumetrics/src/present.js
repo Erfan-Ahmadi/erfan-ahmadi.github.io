@@ -103,8 +103,8 @@ const BEATS = [
     PS.cellT[i] = TIME + 0.4; return Promise.all([presBrace(term, label, color, 0.15 * i), ptwi(PS.cells, i, 1, 1.1, { delay: 0.15 * i })]);
   })) },
   ...QCARDS.flatMap((q, i) => [{ n: String(12 + i), name: q.name, run: () => presQuestion(i) }, { n: `${12 + i}b`, name: 'into its card', run: () => presToCard(i) }]),
-  { n: '15', name: 'not a physics lecture', run: presSpecPhysics },
-  { n: '15b', name: 'not a shader tutorial', run: presSpecShader },
+  { n: '15', name: 'not a shader tutorial', run: presSpecShader },
+  { n: '15b', name: 'not a physics lecture', run: presSpecLecture },
   { n: '15c', name: 'the part in between', run: presSpecMiddle },
   { n: '15d', name: 'by the end', run: presAside },
   { n: '15e', name: 'the physics and the math', run: () => presGoal(0) },
@@ -159,21 +159,19 @@ async function presToCard(i) {
   ptwi(c, 'todo', 1, 0.7, { delay: 0.3 });
   await ptwi(c, 'title', 1, 0.9, { ease: linear });
 }
-// Beat 15: the cards and the equation go; the physics lecture comes in, the arrow under it. 15b: the arrow walks to
-// the other end, drawing the line behind it, and the shader comes in. 15c: it walks back to the middle and sways back and forth
-// there from then on, in the aside too.
-async function presSpecPhysics() {
+// Beat 15: the cards and the equation go; the shader tutorial comes in at the left end, its code typing, the arrow
+// under it. 15b: the arrow walks to the other end, drawing the line behind it, and the physics lecture comes in. 15c: it
+// walks back to the middle and sways back and forth there from then on, in the aside too.
+async function presSpecShader() {
   ptw('qcA', 0, 0.6); ptw('dim', 0, 0.6); ptw('eqA', 0, 0.6);
   for (const k of Object.keys(PS.hi)) ptwi(PS.hi, k, 0, 0.6);
-  PS.ptrX = SPEC.L[0] + SPEC.L[2] / 2;
-  ptwi(PS.spec, 0, 1, 0.8, { delay: 0.5 }); 
-  await ptw('ptrA', 1, 0.6, { delay: 1 });
+  PS.ptrX = SPEC.L[0] + SPEC.L[2] / 2; PS.specT = TIME + 1.3;
+  ptwi(PS.spec, 0, 1, 0.8, { delay: 0.5 }); ptw('ptrA', 1, 0.6, { delay: 1 });
+  await ptw('code', 1, 1.1, { ease: linear, delay: 0.9 });
 }
-async function presSpecShader() {
+async function presSpecLecture() {
   ptw('ptrX', SPEC.R[0] + SPEC.R[2] / 2, 1.6); ptw('lineP', 1, 1.6);
-  PS.specT = TIME + 2.4;
-  ptwi(PS.spec, 1, 1, 0.8, { delay: 1.1 });
-  await ptw('code', 1, 1.1, { ease: linear, delay: 1.3 });
+  await ptwi(PS.spec, 1, 1, 0.8, { delay: 1.1 });
 }
 async function presSpecMiddle() {
   await ptw('ptrX', 960, 1.3);
@@ -408,19 +406,19 @@ function drawSpectrum(ctx, st) {
   const [ox, oy, s] = specXf(st), y = SPEC.y, L = SPEC.L, R = SPEC.R, xa = L[0] + L[2] / 2, xb = R[0] + R[2] / 2;
   ctx.save(); ctx.translate(ox, oy); ctx.scale(s, s);
   // the line, as far as the arrow has drawn it, and its ends
-  const lp = clamp(st.lineP, 0, 1), g = ctx.createLinearGradient(xa, 0, xb, 0); g.addColorStop(0, COL.gold); g.addColorStop(1, COL.blue);
+  const lp = clamp(st.lineP, 0, 1), g = ctx.createLinearGradient(xa, 0, xb, 0); g.addColorStop(0, COL.blue); g.addColorStop(1, COL.gold);
   ctx.save(); ctx.strokeStyle = g; ctx.fillStyle = g; ctx.lineWidth = 4; ctx.lineCap = 'round';
   if (lp > 0.003) { ctx.globalAlpha = ga; ctx.beginPath(); ctx.moveTo(xa, y); ctx.lineTo(lerp(xa, xb, lp), y); ctx.stroke(); }
   if (l > 0.003) { ctx.globalAlpha = ga * l; ctx.beginPath(); ctx.arc(xa, y, 7, 0, Math.PI * 2); ctx.fill(); }
   if (lp > 0.98) { ctx.globalAlpha = ga; ctx.beginPath(); ctx.arc(xb, y, 7, 0, Math.PI * 2); ctx.fill(); }
   ctx.restore();
-  // the two ends, small, with their names over them
-  if (l > 0.003) drawTex(ctx, String.raw`\text{physics lecture}`, xa, L[1] - 28, 28, { color: COL.gold, alpha: l * ga });
-  if (r > 0.003) drawTex(ctx, String.raw`\text{shader tutorial}`, xb, R[1] - 28, 28, { color: COL.blue, alpha: r * ga });
-  drawChalkboard(ctx, L, l * ga);
+  // the two ends, small, with their names over them: the shader tutorial at the left, the physics lecture at the right
+  if (l > 0.003) drawTex(ctx, String.raw`\text{shader tutorial}`, xa, L[1] - 28, 28, { color: COL.blue, alpha: l * ga });
+  if (r > 0.003) drawTex(ctx, String.raw`\text{physics lecture}`, xb, R[1] - 28, 28, { color: COL.gold, alpha: r * ga });
   const t = TIME - st.specT;
-  drawRaymarch(ctx, [R[0], R[1], R[2], R[3] * 0.52], r * ga, t);
-  drawCodePanel(ctx, [R[0], R[1] + R[3] * 0.56, R[2], R[3] * 0.44], r * ga, st.code, t);
+  drawRaymarch(ctx, [L[0], L[1], L[2], L[3] * 0.52], l * ga, t);
+  drawCodePanel(ctx, [L[0], L[1] + L[3] * 0.56, L[2], L[3] * 0.44], l * ga, st.code, t);
+  drawChalkboard(ctx, R, r * ga);
   // the arrow under the line
   const sway = reduced ? 0 : smooth(clamp(st.wig, 0, 1)) * 16 * Math.sin(2 * Math.PI * 0.8 * (TIME - st.wigT));
   drawPointer(ctx, st.ptrX + sway, y + 16, ga * smooth(clamp(st.ptrA, 0, 1)), 0);
