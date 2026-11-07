@@ -46,7 +46,7 @@ The working script below has light edits; the original drafts, word for word, ar
 
 ## Part 3: only absorption, and the first formula
 
-**21.–21b.** [The three field cards and the caption go, and the box grows out of its card until the laser, the box of plain stuff and the sensor fill the stage. Next press, the dishonesty, shown on this very box: each speck the beam passes lights up and sends thin red rays off it, fading as they go, and the stuff around the beam glows a faint red: scattering.]
+**21.–21b.** [The three field cards and the caption go, and the box grows out of its card until the laser, the box of plain stuff and the sensor fill the stage. Next press, the dishonesty, shown on this very box: the few specks right in the beam's path light up where it hits them, and from each, every second or so, a thin red ray of its light leaves in some direction; every speck a ray meets on its way sends it off in a new one, flashing as it's hit, a few bounces, each a little dimmer, until the ray leaves the box; the stuff around the beam glows a faint red: scattering.]
 > For the rest of this video I'm going to be slightly dishonest. [21b] I'll assume our stuff doesn't scatter light,
 
 **21c.** [The scattering stops. Each speck glows red on its own, and the beam dims a little so the glow shows: emission.]

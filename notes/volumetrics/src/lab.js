@@ -43,37 +43,78 @@ function drawLabReadout(ctx, xs, from, to, m, a, pop = false) {
   ctx.save(); ctx.translate(xs, by + bh / 2 + 3); drawMorphText(ctx, from, to, m, a); ctx.restore();
   ctx.restore();
 }
-// Beat 21: what we leave out, shown on the box itself. Scattering: rays break off the specks the beam passes, and the
-// stuff around the beam turns faintly red. Beat 21b: emission: every speck glows red on its own.
+// Beat 21: what we leave out, shown on the box itself. Scattering (21b): the beam hits the specks in its path (pictures.js
+// keeps them on it); from each, a ray of its light leaves in some direction, and every speck it meets on the way sends
+// it off in a new one: a few bounces, each a little dimmer, until it leaves the box. Every second or so another ray
+// leaves each of them, each its own way; the stuff around the beam turns faintly red. Emission (21c): every speck
+// glows red on its own.
 const hash1 = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+const SCAT = { hitR: 16, maxB: 4, speed: 430, trail: 240, keep: 0.65 };   // hitR: how close a ray must pass a speck to hit it; keep: what a bounce keeps
+const SCHIT = [...BEAMSPECK];
+// A ray's path from beam speck h: indices of the specks it bounces off, then the way out. Worked out on the specks'
+// resting places, so it is the same every frame; drawn through where they are now.
+function scatterPath(B, h, seed) {
+  const W = B.x1 - B.x0, H = B.bot - B.top, at = (i) => [B.x0 + 16 + BOXSPECKS[i][0] * (W - 32), B.top + 16 + BOXSPECKS[i][1] * (H - 32)];
+  const side = hash1(seed + 1) < 0.5 ? -1 : 1, pts = [h];
+  let th = side * (0.35 + hash1(seed + 2) * (Math.PI - 0.7)), cur = h, prev = -1, [px, py] = at(h);   // first: anywhere but along the beam
+  for (let k = 0; ; k++) {
+    const dx = Math.cos(th), dy = Math.sin(th);
+    let best = -1, bt = Infinity;
+    if (k < SCAT.maxB) for (let j = 0; j < BOXSPECKS.length; j++) {
+      if (j === cur || j === prev) continue;
+      const [qx, qy] = at(j), rx = qx - px, ry = qy - py, t = rx * dx + ry * dy;
+      if (t > 24 && t < bt && Math.abs(rx * dy - ry * dx) < SCAT.hitR) { best = j; bt = t; }
+    }
+    if (best < 0) {   // nothing more in the way: out through the wall, and a little past it (the box clips it)
+      const tx = dx > 1e-6 ? (B.x1 - px) / dx : dx < -1e-6 ? (B.x0 - px) / dx : Infinity, ty = dy > 1e-6 ? (B.bot - py) / dy : dy < -1e-6 ? (B.top - py) / dy : Infinity;
+      return { pts, dx, dy, out: Math.min(tx, ty) + 40 };
+    }
+    pts.push(best); prev = cur; cur = best; [px, py] = at(best);
+    th = 2 * Math.PI * hash1(seed + 11 + 7 * k);   // off again, any way at all
+  }
+}
+const speckAt = (B, i) => { const [u, v, ph, jy] = BOXSPECKS[i]; return speckXY(B, u, v, ph, jy); };
 function drawScatter(ctx, B, a) {
   if (a <= 0.003) return;
   // the red haze along the beam: light scattered out of it, lighting up the stuff around it
   const g = ctx.createLinearGradient(0, -160, 0, 160);
-  g.addColorStop(0, 'rgba(255,59,48,0)'); g.addColorStop(0.5, `rgba(255,59,48,${(0.16 * a).toFixed(3)})`); g.addColorStop(1, 'rgba(255,59,48,0)');
+  g.addColorStop(0, 'rgba(255,59,48,0)'); g.addColorStop(0.5, `rgba(255,59,48,${(0.1 * a).toFixed(3)})`); g.addColorStop(1, 'rgba(255,59,48,0)');
   ctx.fillStyle = g; ctx.fillRect(B.x0, -160, B.x1 - B.x0, 320);
-  // every speck the beam passes sends rays off it, each fading as it goes and shimmering a little
-  const t = reduced ? 0 : TIME;
+  const t = reduced ? 0 : TIME, red = (al) => `rgba(255,70,58,${clamp(al, 0, 1).toFixed(3)})`;
   ctx.save(); ctx.lineCap = 'round';
-  BOXSPECKS.forEach(([u, v, ph], j) => {
-    const by = B.top + 16 + v * (B.bot - B.top - 32); if (Math.abs(by) > 26) return;   // only the specks the beam really passes
-    const [sx, sy] = speckXY(B, u, v, ph);
-    for (let k = 0; k < 2; k++) {
-      const th = 0.45 + hash1(j * 7 + k) * (2 * Math.PI - 0.9), L = 150 + 90 * hash1(j * 13 + k), ex = sx + L * Math.cos(th), ey = sy + L * Math.sin(th);
-      const al = a * (0.72 + 0.28 * Math.sin(2 * Math.PI * 0.5 * t + 2.3 * k + ph));
-      const rg = ctx.createLinearGradient(sx, sy, ex, ey); rg.addColorStop(0, `rgba(255,70,58,${(0.6 * al).toFixed(3)})`); rg.addColorStop(1, 'rgba(255,70,58,0)');
-      ctx.strokeStyle = rg; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+  SCHIT.forEach((h) => {
+    const [hx, hy] = speckAt(B, h), R = 16, gg = ctx.createRadialGradient(hx, hy, 0, hx, hy, R);   // the speck lit where the beam hits it
+    gg.addColorStop(0, red(0.6 * a)); gg.addColorStop(1, red(0));
+    ctx.fillStyle = gg; ctx.fillRect(hx - R, hy - R, 2 * R, 2 * R);
+    const P = 1.3 + 0.5 * hash1(h * 5 + 1), off = P * hash1(h * 5 + 2);
+    for (const back of reduced ? [0] : [0, 1, 2]) {   // this ray, and the ones before it, which may still be on their way out
+      const c = Math.floor((t + off) / P) - back, path = scatterPath(B, h, h * 7919 + c * 104729);
+      const Q = path.pts.map((i) => speckAt(B, i)), [lx, ly] = Q[Q.length - 1];
+      Q.push([lx + path.dx * path.out, ly + path.dy * path.out]);
+      const S = [0]; for (let k = 1; k < Q.length; k++) S.push(S[k - 1] + Math.hypot(Q[k][0] - Q[k - 1][0], Q[k][1] - Q[k - 1][1]));
+      // how far its front has come, and the stretch behind it that still shows (all of it, and evenly, if motion is reduced)
+      const head = reduced ? S[S.length - 1] : SCAT.speed * (t + off - c * P), trail = reduced ? 1e6 : SCAT.trail, al = (s) => clamp((s - head + trail) / trail, 0, 1);
+      if (head - trail > S[S.length - 1] || head <= 0) continue;
+      for (let k = 0; k + 1 < Q.length; k++) {
+        const lo = Math.max(S[k], head - trail), hi = Math.min(S[k + 1], head), L = S[k + 1] - S[k], b = a * 0.95 * Math.pow(SCAT.keep, k);
+        if (k > 0 && head >= S[k]) {   // the speck it bounced off flashes as it's hit
+          const f = 1 - (head - S[k]) / (0.45 * SCAT.speed), [fx, fy] = Q[k];
+          if (f > 0 && !reduced) { const fg = ctx.createRadialGradient(fx, fy, 0, fx, fy, 14); fg.addColorStop(0, red(0.7 * b * f)); fg.addColorStop(1, red(0)); ctx.fillStyle = fg; ctx.fillRect(fx - 14, fy - 14, 28, 28); }
+        }
+        if (hi <= lo || L <= 0) continue;
+        const [x0, y0] = Q[k], [x1, y1] = Q[k + 1], f0 = (lo - S[k]) / L, f1 = (hi - S[k]) / L;
+        const ax = lerp(x0, x1, f0), ay = lerp(y0, y1, f0), bx = lerp(x0, x1, f1), by = lerp(y0, y1, f1), rg = ctx.createLinearGradient(ax, ay, bx, by);
+        rg.addColorStop(0, red(b * al(lo))); rg.addColorStop(1, red(b * al(hi)));
+        ctx.strokeStyle = rg; ctx.lineWidth = 3.2; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+      }
     }
-    const R = 16, gg = ctx.createRadialGradient(sx, sy, 0, sx, sy, R);   // the speck lit where the beam hits it
-    gg.addColorStop(0, `rgba(255,80,64,${(0.55 * a).toFixed(3)})`); gg.addColorStop(1, 'rgba(255,80,64,0)');
-    ctx.fillStyle = gg; ctx.fillRect(sx - R, sy - R, 2 * R, 2 * R);
   });
   ctx.restore();
 }
 function drawGlow(ctx, B, a) {
   if (a <= 0.003) return;
-  for (const [u, v, ph] of BOXSPECKS) {
-    const [x, y] = speckXY(B, u, v, ph), p = reduced ? 1 : 0.85 + 0.15 * Math.sin(2.2 * TIME + ph * 3), R = 26;
+  for (const [u, v, ph, jy] of BOXSPECKS) {
+    const [x, y] = speckXY(B, u, v, ph, jy), p = reduced ? 1 : 0.85 + 0.15 * Math.sin(2.2 * TIME + ph * 3), R = 26;
     const g = ctx.createRadialGradient(x, y, 0, x, y, R); g.addColorStop(0, `rgba(255,80,64,${(0.6 * a * p).toFixed(3)})`); g.addColorStop(1, 'rgba(255,80,64,0)');
     ctx.fillStyle = g; ctx.fillRect(x - R, y - R, 2 * R, 2 * R);
     dot(ctx, x, y, 4, '#FF5A4A', a * p);

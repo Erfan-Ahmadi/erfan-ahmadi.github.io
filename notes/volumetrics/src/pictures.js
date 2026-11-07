@@ -333,7 +333,14 @@ const BOXSTUFF = ['stuff', 'fog', 'cloud', 'smoke', 'glass', 'coffee', 'beer', '
 const BOXSIG = { stuff: 0.0019, fog: 0.0024, cloud: 0.006, smoke: 0.003, glass: 0.0022, coffee: 0.005, beer: 0.0016 };
 const BOXFILL = { coffee: 0.6, beer: 0.8 };
 const BOXPUFFS = PUFFS.map(([dx, dy, r]) => [BOXG.cx + dx * 470, -10 + dy * 400, r * 430]);
-const BOXSPECKS = Array.from({ length: 64 }, (_, i) => [(0.5 + i * 0.7548777) % 1, (0.5 + i * 0.5698403) % 1, (i * 2.399) % (2 * Math.PI)]);   // spread evenly (the R2 sequence)
+// The box's specks, spread evenly (the R2 sequence): [u, v, phase, how far they drift up and down]. The few in the
+// laser's path (the box's centre line, where the beam crosses it) are pulled onto that line and drift along it rather
+// than off it, so the beam really passes through them: beat 21b's scattered light starts there.
+const BEAMSPECK = new Set([0, 7, 14, 21]);
+const BOXSPECKS = Array.from({ length: 64 }, (_, i) => {
+  const v = (0.5 + i * 0.5698403) % 1, on = BEAMSPECK.has(i);
+  return [(0.5 + i * 0.7548777) % 1, on ? 0.5 + (v - 0.5) * 0.15 : v, (i * 2.399) % (2 * Math.PI), on ? 1.5 : 6];
+});
 const boxTank = { x0: BOXG.x0, x1: BOXG.x1, top: BOXG.top, bot: BOXG.bot, th: BOXG.bot - BOXG.top };
 // the scene's own units into a card's (700 wide, h tall): [ox, oy, s]
 function boxFit(h) {
@@ -383,12 +390,12 @@ function drawWisps(ctx, xa, xb, y0, y1, n, rgb, alpha, sway, seed, wide = 1) {
   }
 }
 // where a speck of plain stuff is in box B now: spread over the box, drifting a little
-const speckXY = (B, u, v, ph) => [B.x0 + 16 + u * (B.x1 - B.x0 - 32) + (reduced ? 0 : 6 * Math.sin(TIME * 0.9 + ph)), B.top + 16 + v * (B.bot - B.top - 32) + (reduced ? 0 : 6 * Math.cos(TIME * 0.7 + 1.3 * ph))];
+const speckXY = (B, u, v, ph, jy = 6) => [B.x0 + 16 + u * (B.x1 - B.x0 - 32) + (reduced ? 0 : 6 * Math.sin(TIME * 0.9 + ph)), B.top + 16 + v * (B.bot - B.top - 32) + (reduced ? 0 : jy * Math.cos(TIME * 0.7 + 1.3 * ph))];
 const BOXDRAW = {
   stuff: (ctx, B) => {   // plain stuff: a haze, and specks of it drifting, in the yellow of the word "stuff"
     const g = ctx.createLinearGradient(0, B.top, 0, B.bot); g.addColorStop(0, 'rgba(170,164,152,0.09)'); g.addColorStop(1, 'rgba(170,164,152,0.15)');
     ctx.fillStyle = g; ctx.fillRect(B.x0, B.top, B.x1 - B.x0, B.bot - B.top);
-    for (const [u, v, ph] of BOXSPECKS) { const [x, y] = speckXY(B, u, v, ph); dot(ctx, x, y, 3.6, COL.yellow, 0.62); }
+    for (const [u, v, ph, jy] of BOXSPECKS) { const [x, y] = speckXY(B, u, v, ph, jy); dot(ctx, x, y, 3.6, COL.yellow, 0.62); }
   },
   fog: (ctx) => drawLiquid(ctx, boxTank, { fill: 1, look: 'fog' }),
   cloud: (ctx) => { drawCloud(ctx, BOXPUFFS, { cloud: 1 }); drawCloud(ctx, BOXPUFFS, { cloud: 0.8 }); },
