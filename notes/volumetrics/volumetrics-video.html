@@ -5532,10 +5532,10 @@ function drawLabPlot(ctx, st) {
   ctx.save(); ctx.globalAlpha = a * ax;
   drawBeam(ctx, X0 - 26, xs - 11, y, SH.color, SH.I0, T, [X0, Xd]);
   if (w > 1) { ctx.strokeStyle = COL.greyA; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(X0, LP.top, w, H, Math.min(12, w / 2)); ctx.stroke(); }
-  if (Fo.c > 0.003 && w > 1) {   // option 1: a brace under the box, d in its blue, stretching with it; while σ changes, σ in the box instead, in its yellow
+  if (Fo.c > 0.003 && w > 1 && (st.ind10 || 0) < 0.5) {   // option 1: a brace under the box, d in its blue, stretching with it; while σ changes, σ in the box instead, in its yellow (option 10 draws its own)
     const sF = clamp(st.sAct || 0, 0, 1), al = Fo.c * (0.7 + 0.3 * clamp(st.dAct || 0, 0, 1)) * (1 - sF), cx = X0 + w / 2;
     if (al > 0.003) { drawBrace(ctx, cx, LP.bot + 16, w, 24, 6, hexRgb(LDCOL), al); drawTex(ctx, 'd', cx, LP.bot + 84, 60, { alpha: al, color: LDCOL }); }
-    if (Fo.s > 0.003 && (st.ind10 || 0) < 0.5) {   // in the upper half, over the specks, on a little shade so it reads among them (option 10 writes its own)
+    if (Fo.s > 0.003) {   // in the upper half, over the specks, on a little shade so it reads among them
       const sy = LP.top + 46, sg = ctx.createRadialGradient(cx, sy, 0, cx, sy, 42);
       sg.addColorStop(0, `rgba(28,27,24,${(0.8 * Fo.s).toFixed(3)})`); sg.addColorStop(1, 'rgba(28,27,24,0)');
       ctx.fillStyle = sg; ctx.fillRect(cx - 42, sy - 42, 84, 84);
@@ -5543,13 +5543,13 @@ function drawLabPlot(ctx, st) {
     }
   }
   const n10 = smooth(clamp(st.ind10 || 0, 0, 1));
-  if (n10 > 0.003 && w > 1) {   // option 10: σ and d with their values, in the box itself, σ above the beam and d below, each on a little shade
-    const sA = clamp(st.sAct || 0, 0, 1), dA = clamp(st.dAct || 0, 0, 1), cx = X0 + w / 2;
-    for (const [src, col, yy, act, other] of [[String.raw`\sigma = ${(Math.max(0, st.sig) * Math.LN2).toFixed(2)}`, COL.yellow, LP.top + 44, sA, dA],
-      [`d = ${d.toFixed(1)}`, rgbHex(mixRgb(WHITE_RGB, hexRgb(LDCOL), Fo.c)), LP.bot - 44, dA, sA]]) {
-      const al = n10 * (0.8 + 0.2 * act) * (1 - 0.5 * other * (1 - act)), tw = tex(src).w * 46;
-      ctx.fillStyle = `rgba(28,27,24,${(0.72 * n10).toFixed(3)})`; ctx.beginPath(); ctx.roundRect(cx - tw / 2 - 12, yy - 28, tw + 24, 56, 10); ctx.fill();
-      drawTex(ctx, src, cx, yy, 46, { alpha: al, color: col });
+  if (n10 > 0.003 && w > 1) {   // option 10, as option 1 shows them but with their values: d = … on the brace under the box, which gives way, while σ changes, to σ = … in the box, on a little shade
+    const cx = X0 + w / 2, as = n10 * clamp(st.sAct || 0, 0, 1), ad = n10 * (0.7 + 0.3 * clamp(st.dAct || 0, 0, 1)) * (1 - clamp(st.sAct || 0, 0, 1)), dcol = mixRgb(WHITE_RGB, hexRgb(LDCOL), Fo.c);
+    if (ad > 0.003) { drawBrace(ctx, cx, LP.bot + 16, w, 24, 6, dcol, ad); drawTex(ctx, `d = ${d.toFixed(1)}`, cx, LP.bot + 84, 56, { alpha: ad, color: dcol }); }
+    if (as > 0.003) {
+      const src = String.raw`\sigma = ${(Math.max(0, st.sig) * Math.LN2).toFixed(2)}`, sy = LP.top + 46, tw = tex(src).w * 50;
+      ctx.fillStyle = `rgba(28,27,24,${(0.72 * as).toFixed(3)})`; ctx.beginPath(); ctx.roundRect(cx - tw / 2 - 12, sy - 30, tw + 24, 60, 10); ctx.fill();
+      drawTex(ctx, src, cx, sy, 50, { alpha: as, color: COL.yellow });
     }
   }
   ctx.save(); ctx.translate(X0 - 26, y); ctx.scale(0.6, 0.6); drawLaser(ctx, 0, 0, SH.color, 1); ctx.restore();
@@ -5581,7 +5581,8 @@ function drawLabPlot(ctx, st) {
 // staying as it is; ind6, σ bends the curve and d slides along it (the curve before the change, or the stretch the dot
 // has travelled); ind7, the exponent as an area, d wide and σ tall; ind8, a box around the one changing; ind9, the
 // formula itself goes down to the dot, turning into its numbers, rides it while they change, and goes back up as symbols
-// once they settle (mv9: how far along that trip it is); ind10, σ = … and d = … written in the box. readDim: the
+// once they settle (mv9: how far along that trip it is); ind10, as option 1 shows them but with their values (in place
+// of its d and σ): d = … on the brace under the box, giving way while σ changes to σ = … in the box. readDim: the
 // sensor's readout dimmed, greyed and blurred past reading. sAct and dAct (0 to 1): how much σ or d is changing now.
 const LDCOL = COL.blue;
 const labFocus = (st) => { const c = smooth(clamp(st.ind1 || 0, 0, 1)); return { c, s: c * clamp(st.sAct || 0, 0, 1), d: c * clamp(st.dAct || 0, 0, 1) }; };
@@ -5873,7 +5874,7 @@ const SSD = defScene({
     { type: 'check', key: 'ind7', label: '7 · The exponent as an area', set: (v) => tween(SSD, 'ind7', v ? 1 : 0, 0.5) },
     { type: 'check', key: 'ind8', label: '8 · A box around the one changing', set: (v) => tween(SSD, 'ind8', v ? 1 : 0, 0.5) },
     { type: 'check', key: 'ind9', label: '9 · The formula goes to the dot as numbers, and back', set: (v) => tween(SSD, 'ind9', v ? 1 : 0, 0.5) },
-    { type: 'check', key: 'ind10', label: '10 · σ = … and d = … in the box', set: (v) => tween(SSD, 'ind10', v ? 1 : 0, 0.5) },
+    { type: 'check', key: 'ind10', label: '10 · d = … on the brace, σ = … in the box', set: (v) => tween(SSD, 'ind10', v ? 1 : 0, 0.5) },
     { type: 'check', key: 'readDim', label: 'Sensor readout dim and unreadable', set: (v) => tween(SSD, 'readDim', v ? 1 : 0, 0.5) },
     { type: 'range', key: 'sig', label: 'σ (× usual)', min: 0, max: 2, step: 0.01, fmt: (v) => v.toFixed(2), set: (v) => { untween(SSD, 'sig'); SSD.sig = v; } },
     { type: 'range', key: 'dotD', label: 'd (boxes)', min: 0.05, max: LPD, step: 0.01, fmt: (v) => v.toFixed(2), set: (v) => { untween(SSD, 'dotD'); SSD.dotD = v; } },
