@@ -269,12 +269,7 @@ function drawLabPlot(ctx, st) {
   ctx.save(); ctx.translate(X0 - 26, y); ctx.scale(0.6, 0.6); drawLaser(ctx, 0, 0, SH.color, 1); ctx.restore();
   ctx.save(); ctx.translate(xs, y); ctx.scale(0.6, 0.6); drawSensor(ctx, 0, 0, SH.color, f(d) * SH.I0); ctx.restore();
   const v = f(d) * 100, rd = smooth(clamp(st.readDim || 0, 0, 1)), dec = Math.abs(v - Math.round(v)) < 0.05 ? 0 : 1;   // 50%, 25%, 12.5%
-  if (rd <= 0.003) drawNumber(ctx, v, xs + 30, y - 44, { size: 44, dec, suffix: '%', alpha: a * ax });
-  else {   // dimmed, greyed and blurred past reading, so the numbers elsewhere are the ones read
-    ctx.save(); ctx.filter = `blur(${(4.5 * K * rd).toFixed(2)}px)`;
-    drawNumber(ctx, v, xs + 30, y - 44, { size: 44, dec, suffix: '%', color: rd > 0.5 ? COL.grey : COL.white, alpha: a * ax * (1 - 0.5 * rd) });
-    ctx.restore();
-  }
+  drawNumber(ctx, v, xs + 30, y - 44, { size: 44, dec, suffix: '%', color: rd > 0.5 ? COL.grey : COL.white, alpha: a * ax * (1 - 0.15 * rd) });   // greyed a little when readDim is on, so the numbers elsewhere stand out
   // the dot riding the curve, and a faint line down to the box's end: the same d in both
   if (st.curveTo > 0.003) {
     const px = A.X(d), py = A.Y(f(d));
@@ -297,7 +292,7 @@ function drawLabPlot(ctx, st) {
 // formula itself goes down to the dot, turning into its numbers, rides it while they change, and goes back up as symbols
 // once they settle (mv9: how far along that trip it is); ind10, as option 1 shows them but with their values (in place
 // of its d and σ): d = … on the brace under the box, giving way while σ changes to σ = … in the box. readDim: the
-// sensor's readout dimmed, greyed and blurred past reading. sAct and dAct (0 to 1): how much σ or d is changing now.
+// sensor's readout greyed a little. sAct and dAct (0 to 1): how much σ or d is changing now.
 const LDCOL = COL.blue;
 const labFocus = (st) => { const c = smooth(clamp(st.ind1 || 0, 0, 1)); return { c, s: c * clamp(st.sAct || 0, 0, 1), d: c * clamp(st.dAct || 0, 0, 1) }; };
 function drawLabFormula(ctx, F, st, a) {
@@ -589,7 +584,7 @@ const SSD = defScene({
     { type: 'check', key: 'ind8', label: '8 · A box around the one changing', set: (v) => tween(SSD, 'ind8', v ? 1 : 0, 0.5) },
     { type: 'check', key: 'ind9', label: '9 · The formula goes to the dot as numbers, and back', set: (v) => tween(SSD, 'ind9', v ? 1 : 0, 0.5) },
     { type: 'check', key: 'ind10', label: '10 · d = … on the brace, σ = … in the box', set: (v) => tween(SSD, 'ind10', v ? 1 : 0, 0.5) },
-    { type: 'check', key: 'readDim', label: 'Sensor readout dim and unreadable', set: (v) => tween(SSD, 'readDim', v ? 1 : 0, 0.5) },
+    { type: 'check', key: 'readDim', label: 'Sensor readout greyed', set: (v) => tween(SSD, 'readDim', v ? 1 : 0, 0.5) },
     { type: 'range', key: 'sig', label: 'σ (× usual)', min: 0, max: 2, step: 0.01, fmt: (v) => v.toFixed(2), set: (v) => { untween(SSD, 'sig'); SSD.sig = v; } },
     { type: 'range', key: 'dotD', label: 'd (boxes)', min: 0.05, max: LPD, step: 0.01, fmt: (v) => v.toFixed(2), set: (v) => { untween(SSD, 'dotD'); SSD.dotD = v; } },
   ],
