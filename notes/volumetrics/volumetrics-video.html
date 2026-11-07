@@ -5381,11 +5381,12 @@ function drawLabRow(ctx, X, o, alpha) {
   ctx.restore();
 }
 // Beats 26–29: e^{−σd} at the top; under it a plot of the light that gets through against the distance d, in box
-// lengths, so the curve passes 50%, 25% and 12.5% at one, two and three boxes; under the plot, the box, its left end
-// at the plot's 0 and its right end under the dot, with the laser before it and the sensor after it.
-const LP = { L: 520, R: 1440, T: 250, B: 560, top: 690, bot: 870, beam: 780, size: 100, y: 140 };
+// lengths up to three, so the curve passes 50%, 25% and 12.5% at one, two and three boxes, ending where the three
+// boxes did; under the plot, the box, its left end at the plot's 0 and its right end under the dot, with the laser
+// before it and the sensor after it.
+const LP = { L: 520, R: 1440, T: 250, B: 560, top: 690, bot: 870, beam: 780, size: 100, y: 140 }, LPD = 3;   // LPD: the plot's length, in boxes
 let LPA = null;
-const lpAxes = () => LPA || (LPA = makeAxes({ L: LP.L, R: LP.R, T: LP.T, B: LP.B, xr: [0, 4, 1], yr: [0, 1, 0.5], ext: 40, xl: 'd', yl: '', labSize: 54, numSize: 28 }));
+const lpAxes = () => LPA || (LPA = makeAxes({ L: LP.L, R: LP.R, T: LP.T, B: LP.B, xr: [0, LPD, 1], yr: [0, 1, 0.5], ext: 40, xl: 'd', yl: '', labSize: 54, numSize: 28 }));
 const PFML = String.raw`e^{-\htmlClass{t-sig}{\sigma}\,d}`, PFML1 = PFML + String.raw`\mathrel{\htmlClass{t-eq1}{=}}\htmlClass{t-eq1}{1}`;
 let lpFml = null;
 function lpFormula() {   // laid out once: e^{−σd} centred, "= 1" after it, so it doesn't move when that comes in
@@ -5393,8 +5394,8 @@ function lpFormula() {   // laid out once: e^{−σd} centred, "= 1" after it, s
   const sp = place(tex(PFML1), { x: 960 - (tex(PFML).w * LP.size) / 2, y: LP.y, size: LP.size, ax: 0 });
   return (lpFml = { main: sp.filter((s) => !s.a.terms.includes('t-eq1')), eq1: sp.filter((s) => s.a.terms.includes('t-eq1')) });
 }
-// the long box's stuff: a jittered grid, 48 across by 4 down, twice over (the second set comes in as σ passes its usual value)
-const LPSPECKS = Array.from({ length: 384 }, (_, i) => { const k = i % 192, c = k % 48, r = Math.floor(k / 48); return [(c + 0.15 + 0.7 * hash1(i * 3 + 1)) / 48, (r + 0.15 + 0.7 * hash1(i * 3 + 2)) / 4, hash1(i * 3 + 3) * 2 * Math.PI]; });
+// the long box's stuff: a jittered grid, 40 across by 4 down, twice over (the second set comes in as σ passes its usual value)
+const LPSPECKS = Array.from({ length: 320 }, (_, i) => { const k = i % 160, c = k % 40, r = Math.floor(k / 40); return [(c + 0.15 + 0.7 * hash1(i * 3 + 1)) / 40, (r + 0.15 + 0.7 * hash1(i * 3 + 2)) / 4, hash1(i * 3 + 3) * 2 * Math.PI]; });
 function drawLabPlot(ctx, st) {
   const a = 1 - smooth(clamp(st.plotOut, 0, 1)); if (a <= 0.003 || st.fml <= 0.003) return;
   const A = lpAxes(), F = lpFormula(), sig = Math.max(0, st.sig) * Math.LN2, f = (x) => Math.exp(-sig * x), ax = smooth(clamp(st.axC, 0, 1));
@@ -5405,8 +5406,8 @@ function drawLabPlot(ctx, st) {
   ctx.save(); ctx.globalAlpha = a;
   drawAxes(ctx, A, { c: ax, nums: 0, lab: ax });
   for (const [v, s] of [[1, '100%'], [0.5, '50%']]) drawTex(ctx, String.raw`\text{${s.replace('%', '\\%')}}`, A.ox - 22, A.Y(v), 28, { ax: 1, alpha: ax });
-  const d = clamp(st.dotD, 0, 4), X0 = A.X(0), Xd = A.X(d), y = LP.beam, H = LP.bot - LP.top;
-  drawCurve(ctx, A, f, { p: clamp(st.curveTo, 0, 4) / 4, from: 0, to: 4, color: SH.color, width: 6 });
+  const d = clamp(st.dotD, 0, LPD), X0 = A.X(0), Xd = A.X(d), y = LP.beam, H = LP.bot - LP.top;
+  drawCurve(ctx, A, f, { p: clamp(st.curveTo, 0, LPD) / LPD, from: 0, to: LPD, color: SH.color, width: 6 });
   // the box, as long as the dot is far; its stuff as dense as σ says, gone when σ is 0
   const ra = clamp(st.sig, 0, 1), rb = clamp(st.sig - 1, 0, 1), w = Xd - X0;
   if (w > 1) {
@@ -5414,8 +5415,8 @@ function drawLabPlot(ctx, st) {
     const g = ctx.createLinearGradient(0, LP.top, 0, LP.bot); g.addColorStop(0, `rgba(170,164,152,${(0.09 * Math.min(2, st.sig)).toFixed(3)})`); g.addColorStop(1, `rgba(170,164,152,${(0.15 * Math.min(2, st.sig)).toFixed(3)})`);
     ctx.fillStyle = g; ctx.fillRect(X0, LP.top, w, H);
     LPSPECKS.forEach(([u, v, ph], i) => {
-      const al = i < 192 ? ra : rb; if (al <= 0.003) return;
-      const x = X0 + 10 + u * (A.X(4) - X0 - 20) + (reduced ? 0 : 4 * Math.sin(TIME * 0.9 + ph)), yy = LP.top + 10 + v * (H - 20) + (reduced ? 0 : 4 * Math.cos(TIME * 0.7 + 1.3 * ph));
+      const al = i < 160 ? ra : rb; if (al <= 0.003) return;
+      const x = X0 + 10 + u * (A.X(LPD) - X0 - 20) + (reduced ? 0 : 4 * Math.sin(TIME * 0.9 + ph)), yy = LP.top + 10 + v * (H - 20) + (reduced ? 0 : 4 * Math.cos(TIME * 0.7 + 1.3 * ph));
       dot(ctx, x, yy, 3, COL.yellow, 0.62 * al);
     });
     ctx.restore();
@@ -5426,7 +5427,7 @@ function drawLabPlot(ctx, st) {
   if (w > 1) { ctx.strokeStyle = COL.greyA; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(X0, LP.top, w, H, Math.min(12, w / 2)); ctx.stroke(); }
   ctx.save(); ctx.translate(X0 - 26, y); ctx.scale(0.6, 0.6); drawLaser(ctx, 0, 0, SH.color, 1); ctx.restore();
   ctx.save(); ctx.translate(xs, y); ctx.scale(0.6, 0.6); drawSensor(ctx, 0, 0, SH.color, f(d) * SH.I0); ctx.restore();
-  const v = f(d) * 100; drawNumber(ctx, v, xs + 30, y - 44, { size: 44, dec: v < 9.95 && v > 0.05 ? 1 : 0, suffix: '%', alpha: a * ax });
+  const v = f(d) * 100; drawNumber(ctx, v, xs + 30, y - 44, { size: 44, dec: Math.abs(v - Math.round(v)) < 0.05 ? 0 : 1, suffix: '%', alpha: a * ax });   // 50%, 25%, 12.5%
   // the dot riding the curve, and a faint line down to the box's end: the same d in both
   if (st.curveTo > 0.003) {
     const px = A.X(d), py = A.Y(f(d));
@@ -5514,12 +5515,12 @@ function labThird() { labRead2('12.5%', 1.2); return ptw('c2', 3, 1.4); }   // t
 async function labFormula() {
   ptw('rowsOut', 1, 0.7); ptw('fml', 1, 1.2, { delay: 0.5, ease: linear }); ptw('axC', 1, 1.0, { delay: 1.2 });
   PS.dotD = 0; PS.curveTo = 0;
-  ptw('curveTo', 4, 3.2, { delay: 2.2 }); await ptw('dotD', 4, 3.2, { delay: 2.2 });
+  ptw('curveTo', LPD, 3.2, { delay: 2.2 }); await ptw('dotD', LPD, 3.2, { delay: 2.2 });
 }
 // 27: the dot runs back and forth along the curve, the box with it; it stops at two boxes
 async function labDistance() {
   const g = PRES.gen;
-  for (const [d, t] of [[0.5, 1.7], [3.4, 1.9], [2, 1.1]]) { await ptw('dotD', d, t); if (!labAlive(g)) return; }
+  for (const [d, t] of [[0.4, 1.7], [LPD, 1.9], [2, 1.1]]) { await ptw('dotD', d, t); if (!labAlive(g)) return; }
 }
 // 28: σ lights up and goes up: denser stuff, a steeper curve; 28b: down; 29: to zero, and "= 1"
 function labSigmaUp() { ptw('sigHi', 1, 0.5); return ptw('sig', 2, 1.6, { delay: 0.5 }); }
