@@ -236,7 +236,7 @@ async function labSecond() {
 function labGuess() { PS.lthink = '0\\%'; PS.lthinkP = 0; ptw('lfig', 1, 0.8); return ptw('lthinkP', 1, 0.6, { delay: 0.7, ease: linear }); }
 // 25: no: twenty-five; 25b: a third box, twelve and a half
 function labReveal() { ptw('lfig', 0, 0.6); return labRead2('25%', 0.9, 0.3); }
-async function labThird() { const g = PRES.gen; await ptw('c2', 3, 1.4); if (labAlive(g)) await labRead2('12.5%', 0.9); }
+function labThird() { labRead2('12.5%', 1.2); return ptw('c2', 3, 1.4); }   // the reading changes as the box slides in
 // 26: the rows go; e^{−σd} writes in, the plot under it, and the curve draws with its dot, the box growing under it
 async function labFormula() {
   ptw('rowsOut', 1, 0.7); ptw('fml', 1, 1.2, { delay: 0.5, ease: linear }); ptw('axC', 1, 1.0, { delay: 1.2 });

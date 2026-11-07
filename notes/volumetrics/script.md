@@ -64,7 +64,7 @@ The working script below has light edits; the original drafts, word for word, ar
 **24.** [The stick figure comes in, its readout "0%".]
 > It's natural to say zero. One box took half the light, so two should take all of it.
 
-**25.–25b.** [The figure and its readout go, and the copy's reading reshapes from "?" into 25%. Next press, a third box slides in the same way, and the reading reshapes into 12.5%.]
+**25.–25b.** [The figure and its readout go, and the copy's reading reshapes from "?" into 25%. Next press, a third box slides in the same way, and as soon as it starts sliding the reading reshapes into 12.5%.]
 > But that's not what happens. The sensor reads twenty-five percent. [25b] Add a third box: twelve and a half. Each box halves the light that enters it. That's exactly what exponential means: multiplying by a fixed fraction, again and again.
 
 **26.** [The single-box setup goes. The formula writes in, just $e^{-\sigma d}$ (the symbol in the exponent is still to be chosen; the full form with $I_0$ waits for the very end of the video), and under it a plot: the light that gets through, 100% at the top, against the distance $d$, in box lengths, so the curve passes 50%, 25% and 12.5% at one, two and three boxes. The curve, in the laser's red, draws from left to right with a dot riding it; under the plot, the box grows along with the dot, its left end at the plot's 0 and its right end under the dot, a faint dashed line joining the two; the laser before it, the sensor after it, reading what the curve says.]
