@@ -10,7 +10,7 @@ const PRES = { on: false, paused: false, beat: 0, toast: -99, epoch: 0, gen: 0, 
 const PRES_CLOUD = { readout: 0, dens: 0.04, sigA: 20, sigS: 10, beamY: 0, beamZ: -0.005, aim: 0, aimUp: 0, yaw: -1.2, pitch: 0.22, dist: 3.8, zoom: 0, eye: 0 };
 const PRES_DRIFT = 0.03;
 // The four effects' cells under the equation, in the order of the terms: absorption, out-scattering, emission, in-scattering.
-const PCELLS = [[370, 480, 590, 278], [990, 480, 590, 278], [370, 790, 590, 278], [990, 790, 590, 278]];
+const PCELLS = [[370, 370, 590, 278], [990, 370, 590, 278], [370, 680, 590, 278], [990, 680, 590, 278]];   // clear of the bottom, where a video player puts its controls and captions
 const PFX = [['t-pabs', 'absorption', COL.red], ['t-pout', 'out-scattering', COL.red], ['t-pem', 'emission', COL.green], ['t-pin', 'in-scattering', COL.green]];
 // their cells play photons back to back (the bench's "Timing" setting can make it one at a time again)
 const fxP = () => (SI.stream === 'one' ? SI.loopT : IA_STREAM_P);
@@ -24,7 +24,7 @@ const QCARDS = [
 ];
 // The first two cards come in side by side; at 14b they shrink and step aside, and "Why e?", the one that matters most,
 // comes in between them, half as big again.
-const QCRECT = [[380, 470, 480, 540], [890, 470, 480, 540]], QFINAL = [[380, 520, 400, 395], [1480, 520, 400, 395], [830, 420, 600, 590]];
+const QCRECT = [[380, 430, 480, 520], [890, 430, 480, 520]], QFINAL = [[380, 480, 400, 395], [1480, 480, 400, 395], [830, 380, 600, 570]];   // all ending by 950, clear of a player's controls
 const qRect = (i, st) => (i < 2 ? lerpRect(QCRECT[i], QFINAL[i], smooth(clamp(st.qSide, 0, 1))) : QFINAL[i]);
 // Beat 15: the spectrum from a physics lecture to a shader tutorial, and the arrow that walks along it. For the goals
 // it shrinks into an aside (card); outside it, me now and me later along the bottom, and the goals on the right as
@@ -48,7 +48,7 @@ const USES = [
 ];
 const UROW = { x: 960, y: 430, w: 470, h: 300, gap: 45 };   // centred on the stage (the figure has gone by now)
 const rowX = (i, n) => UROW.x - (n * UROW.w + (n - 1) * UROW.gap) / 2 + i * (UROW.w + UROW.gap);
-const UCOL = [[1330, 330, 380, 216], [1330, 572, 380, 216], [1330, 814, 380, 216]], UBIG = [210, 330, 1090, 700];
+const UCOL = [[1330, 290, 380, 204], [1330, 518, 380, 204], [1330, 746, 380, 204]], UBIG = [210, 290, 1090, 660];   // ending at 950, clear of a player's controls
 // Beat 20's push: the three first spread up and down into their places in the column (shrinking), then everything
 // moves across, this video's card opening behind them so it never runs into them.
 const pushXY = (g) => [smooth(clamp((g - 0.2) / 0.8, 0, 1)), smooth(clamp(g / 0.6, 0, 1))];
@@ -68,7 +68,7 @@ const PS_DEFAULTS = () => ({
   // part 3, the lab (lab.js): the box on the stage, its scattering and glow, the readings, the second row and its
   // boxes, me guessing; then the formula and its plot; then the bases
   labOn: 0, labX: 0, scat: 0, glow: 0, read1: 0, read2: 0, split: 0, c2: 1, myst: 0, rev: 1, r2: '?', r2From: '', r2M: 1, lfig: 0, lthink: '', lthinkP: 1, lside: 0, wrong: 0, cross: 0, rowFade: 0, loopOn: 0, loopT0: 0,
-  rowsOut: 0, fml: 0, axC: 0, dotD: 0, curveTo: 0, sig: 1, sigHi: 0, eq1: 0, plotOut: 0, bStack: 0, bMorph: 0,
+  rowsOut: 0, fml: 0, axC: 0, dotD: 0, curveTo: 0, sig: 1, sigHi: 0, eq1: 0, plotOut: 0, bStack: 0, bMorph: 0, ind1: 1, ind8: 1, ind10: 1, readDim: 1, sAct: 0, dAct: 0, mv9: 0, dLoop: 0, dLoopT0: 0, sLoop: 0, sLoopT0: 0,
 });
 const PS = PS_DEFAULTS();
 // The equation, with its terms named: the four effects for the braces, and the parts the questions point at.
@@ -79,7 +79,7 @@ for (const q of QCARDS) TERM_COL[q.term] = mixRgb(WHITE_RGB, hexRgb(q.col), 0.5)
 const PEQ = { x: 960, y: 300, size: 76, fit: 1760 };
 // Where the equation sits: big under the hook, small at the top from beat 16 on (it is away during beat 15).
 // It is away during beat 15 and comes back small at the top in beat 16.
-const EQPOSE = { home: [960, 300, 1], top: [960, 118, 0.6] };
+const EQPOSE = { home: [960, 190, 1], top: [960, 118, 0.6] };
 const eqXf = (st) => { const b = smooth(clamp(st.eqTop, 0, 1)); return [0, 1, 2].map((j) => lerp(EQPOSE.home[j], EQPOSE.top[j], b)); };
 let peqSprites = null;
 const peq = () => peqSprites || (peqSprites = place(tex(PRTE), { ...PEQ, size: Math.min(PEQ.size, PEQ.fit / Math.max(tex(PRTE).w, 0.01)) }));
@@ -134,8 +134,7 @@ const BEATS = [
   { n: '25d', name: 'a fixed fraction, again and again', run: () => labLoop() },
   { n: '26', name: 'the formula', run: () => labFormula() },
   { n: '27', name: 'distance', run: () => labDistance() },
-  { n: '28', name: 'more absorbing', run: () => labSigmaUp() },
-  { n: '28b', name: 'less absorbing', run: () => labSigmaDown() },
+  { n: '28', name: 'more or less absorbing', run: () => labSigma() },
   { n: '29', name: 'a vacuum', run: () => labVacuum() },
   { n: '30', name: 'any base', run: () => labBases() },
   { n: '31', name: 'but why exponential?', run: () => labWhy() },
@@ -586,7 +585,7 @@ function drawPresent(ctx, dt) {
   }
   // the figure and its thought: beside the card, then small in the corner once the equation takes the stage
   if (st.fig > 0.003) {
-    const c = smooth(clamp(st.corner, 0, 1)), fm = smooth(clamp(st.figMid, 0, 1)), fx = lerp(lerp(1500, 150, c), MIDFIG, fm), fy = lerp(lerp(840, 1000, c), FUT.y, fm), fs = lerp(1.24, 1, c), fa = smooth(clamp(st.fig, 0, 1));
+    const c = smooth(clamp(st.corner, 0, 1)), fm = smooth(clamp(st.figMid, 0, 1)), fx = lerp(lerp(1500, 150, c), MIDFIG, fm), fy = lerp(lerp(840, 960, c), FUT.y, fm), fs = lerp(1.24, 1, c), fa = smooth(clamp(st.fig, 0, 1));
     // once a copy of me sets off for later (beat 15f), this one fades into the past: greyer, fainter
     const past = pastOf(st), ink = mixRgb(hexRgb(COL.white), hexRgb(COL.greyC), 0.75 * past);
     drawFigure(ctx, fx, fy, fs, fa * lerp(1, 0.7, past), hexOf(ink));
