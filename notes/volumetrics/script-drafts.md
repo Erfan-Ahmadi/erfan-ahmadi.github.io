@@ -24,6 +24,35 @@ We'll build it up gradually and I'll never ask you to just take a formula on pur
 Different stuff, same story.
 ```
 
+## The body, first draft (added later, word for word)
+
+After beat 20h ("Different stuff, same story."):
+
+(we get rid of the 3 other examples here)
+
+ And for the remainder of this video I'm going be slightly dishonest and assume our "stuff" doesn't scatter light (show the same setup laser hitting those particles in the last "stuff" and scattering in rays and making the volume more reddish) or glow or emit light itself (red glow for each particle, laser light a bit dimmed so the effect of the emission is more visible). I'll come back to emission and scattering in a separate video. for now, our partices only absorb light. 
+
+and here after they absorb the laser light, less of it makes the other end, how much? well that's why have a sensor, here it reads 50%, that means half the light made it through. now let me ask you a question, what if I put a second identical tank right next to this one? (we duplicate the same thing and bring it to the bottom) what would our sensor read now? pause and try to answer it if you want (the sensor reads ? instead of 50%, now you see two setups, above with 1 box and 50, below with 2 and ?)
+
+It's natural to say 0% (sticky figure with 0% readout, the question one goes away), because 1 box took half the light , so two should take all of it away (slide tank to from the right and move laser and sensor outwards for it to fit). but that's not what happens here. our sensor reads 25%. add a third box, it's 12.5%. each box halfs the light entering it. that's exactly what exponential means. multiplication by a fixed fraction.
+
+and this behaviour is described by this formula, you might've heard about the beer-lambert formula. let's see it in action (show the plot, while it's growing from left to write with a dot, the volume under it grows as well)
+
+notice how the more light has to travel through our stuff (a dot and the the box growing and shrinking, ) the less of it makes the other end. and notice how when the stuff becomes more absorbtive it dims light quicker?
+
+this absorbitvity is controlled by [whatever we chose to be in the exponent of e^..*x].  show stationary animamtion increasing and decreasing that value and seeing the stuff change look and the sensor read less
+
+(remember everything on screen should serve a purpose, specially with 2 synced views where viewer can easily get confused)
+
+It's easy to see that when that value is 0, we get a constant 1, that means no light is being absorbed. a.k.a there is no stuff, it's a vaccum. 
+
+For those of you a little bit rusty with calculus and wondering why we have the number e here which is roughly 2 point ..., I'd have to say there is nothing special about it. you can have any base you want, 2^..*x, 3^...*x, .... (shown in a vertical stack) we just rewrite all these different exponential with a base of e (an arrow to the right, all bases change to e). the reason we choose e is that it makes it a little easierworking with integrals and differentual equations but you don't have to worry about them here.
+
+Now you might still be asking. Ok, there is nothing special about e, but why do we have exponential behaviour here?
+(aside with sticky figures everytime we play with "you  might be asking")
+
+.... (I'll write the next parts soon)
+
 ## Notes from the flow discussions
 
 ```text
