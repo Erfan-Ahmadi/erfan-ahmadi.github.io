@@ -79,6 +79,10 @@ function drawGlow(ctx, B, a) {
     dot(ctx, x, y, 4, '#FF5A4A', a * p);
   }
 }
+// Over each box of the bottom row, once its light is shown: what it does to what comes in. The ½ is in the lavender of
+// the wrong sum's −50% in beat 24: minus a half becomes times a half.
+const LHALF = String.raw`\textcolor{${COL.lavender}}{\tfrac{1}{2}}`, LRES = (v) => String.raw`\textcolor{${COL.yellow}}{${v}\%}`;
+const LMULT = [['100', '50'], ['50', '25'], ['25', '12.5']].map(([a, b]) => String.raw`${a}\% \times ${LHALF} = ${LRES(b)}`);
 // One row: laser, c boxes, sensor, in the transform X. o: c, the readout (from, to, m, a), the scattering and glow;
 // myst hides what happens past the first box behind a row of "?" (the light past it is the question), and rev is how
 // far the beam has come back past the first box once the answer is shown.
@@ -115,6 +119,10 @@ function drawLabRow(ctx, X, o, alpha) {
   }
   drawLaser(ctx, L.laser, 0, SH.color, 1);
   drawSensor(ctx, L.sensor, 0, SH.color, front >= end - 1 ? T(end) * SH.I0 * past : 0);
+  if (o.mult) L.boxes.forEach((b, k) => {   // what each box does, over it: what comes in, times a half
+    const p = clamp(o.mult[k] || 0, 0, 1); if (p <= 0.003 || b.a <= 0.003) return;
+    drawTex(ctx, LMULT[k], b.x0 + LAB.BW / 2, LAB.top - 46, 50, { p, alpha: b.a });
+  });
   drawLabReadout(ctx, L.sensor, o.from, o.to, o.m, o.read, o.pop);
   ctx.restore();
 }
@@ -209,11 +217,24 @@ function drawLabBases(ctx, st) {
 // Beats 24 and 31: an aside, the way every aside with me goes (as in beat 2): what is on the stage shrinks into a card
 // of its own colour, moved over to the left, and I come in on the right with a thought.
 const LASIDE = [60, 110, 1120, 630];
+// Beat 24's guess, worked out over my head: the same amount off for every box. Beat 25: crossed out in red.
+const LWRONG = [String.raw`\textcolor{${COL.blue}}{1}\text{ box:}\quad 100\% - \textcolor{${COL.lavender}}{50\%} = ${LRES('50')}`,
+  String.raw`\textcolor{${COL.blue}}{2}\text{ boxes:}\quad 100\% - \textcolor{${COL.lavender}}{100\%} = ${LRES('0')}`];
+const LW = { x: 1225, y: [170, 240], size: 40 };
 function drawLabFigure(ctx, st) {
   const a = smooth(clamp(st.lfig, 0, 1)); if (a <= 0.003) return;
   const fx = 1500, fy = 840, fs = 1.24;
   drawFigure(ctx, fx, fy, fs, a);
   drawThinking(ctx, fx + 110, fy - 410, 1, 100, '', st.lthink, 1, st.lthinkP, a, figHead(fx, fy, fs));
+  const w = clamp(st.wrong, 0, 1); if (w <= 0.003) return;
+  let x1 = 0;
+  LWRONG.forEach((src, i) => { const sp = drawTex(ctx, src, LW.x, LW.y[i], LW.size, { ax: 0, p: clamp(w * 2 - i, 0, 1), alpha: a }); for (const q of sp) x1 = Math.max(x1, inkBox(q)[1]); });
+  const c = clamp(st.cross, 0, 1); if (c <= 0.003) return;
+  const X0 = LW.x - 16, X1 = x1 + 16, Y0 = LW.y[0] - 34, Y1 = LW.y[1] + 34, c1 = smooth(clamp(c * 2, 0, 1)), c2 = smooth(clamp(c * 2 - 1, 0, 1));
+  ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = '#FF4B42'; ctx.lineWidth = 8; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(X0, Y0); ctx.lineTo(lerp(X0, X1, c1), lerp(Y0, Y1, c1)); ctx.stroke();
+  if (c2 > 0.003) { ctx.beginPath(); ctx.moveTo(X0, Y1); ctx.lineTo(lerp(X0, X1, c2), lerp(Y1, Y0, c2)); ctx.stroke(); }
+  ctx.restore();
 }
 function drawLab(ctx, dt, st) {
   const k = smooth(clamp(st.lside, 0, 1)), C = lerpRect([0, 0, W, H], LASIDE, k);
@@ -231,7 +252,7 @@ function drawLabStage(ctx, dt, st) {
     const out = 1 - smooth(clamp(st.rowsOut, 0, 1)), x = smooth(clamp(st.labX, 0, 1)), sp = smooth(clamp(st.split, 0, 1));
     const X1 = mixXf(mixXf(labCardXf(st), LABXF.full, x), LABXF.top, sp);
     drawLabRow(ctx, X1, { c: 1, scat: st.scat, glow: st.glow, from: '', to: '50%', m: 1, read: smooth(clamp(st.read1, 0, 1)) }, out);
-    if (sp > 0.003) drawLabRow(ctx, mixXf(LABXF.full, LABXF.bot, sp), { c: st.c2, from: st.r2From, to: st.r2, m: st.r2M, read: smooth(clamp(st.read2, 0, 1)), pop: true, myst: st.myst, rev: st.rev }, out);
+    if (sp > 0.003) drawLabRow(ctx, mixXf(LABXF.full, LABXF.bot, sp), { c: st.c2, from: st.r2From, to: st.r2, m: st.r2M, read: smooth(clamp(st.read2, 0, 1)), pop: true, myst: st.myst, rev: st.rev, mult: st.mult }, out);
   }
   drawLabPlot(ctx, st);
   drawLabBases(ctx, st);
@@ -261,17 +282,23 @@ async function labSecond() {
   await ptw('read2', 1, 0.45);
 }
 // 24: an aside: me, guessing zero
-function labGuess() {
-  PS.lthink = '0\\%'; PS.lthinkP = 0; ptw('lside', 1, 1.4); ptw('lfig', 1, 1.0, { delay: 0.8 });
-  return ptw('lthinkP', 1, 0.6, { delay: 1.7, ease: linear });
+function labGuess() {   // and over my head, how I got there
+  PS.lthink = '0\\%'; PS.lthinkP = 0; PS.wrong = 0; PS.cross = 0; ptw('lside', 1, 1.4); ptw('lfig', 1, 1.0, { delay: 0.8 });
+  ptw('lthinkP', 1, 0.6, { delay: 1.7, ease: linear });
+  return ptw('wrong', 1, 1.6, { delay: 2.4, ease: linear });
 }
-// 25: no: twenty-five; 25b: a third box, twelve and a half
-function labReveal() {   // back from the aside; the questions clear, the light carries on to the sensor, and it reads 25%
-  ptw('lfig', 0, 0.5); ptw('lside', 0, 1.2, { delay: 0.2 });
-  ptw('myst', 0, 0.5, { delay: 1.3 }); ptw('rev', 1, 1.0, { delay: 1.6, ease: linear });
-  return labRead2('25%', 0.9, 2.5);
+// 25: "But that's not what happens": the sum is crossed out. 25b: back from the aside, the light carries on and it reads
+// twenty-five, each box's multiplication over it. 25c: a third box, twelve and a half.
+function labCross() { return ptw('cross', 1, 0.8, { ease: linear }); }
+function labReveal() {
+  ptw('lfig', 0, 0.5); ptw('wrong', 0, 0.5); ptw('cross', 0, 0.5); ptw('lside', 0, 1.2, { delay: 0.2 });
+  PS.mult = [0, 0, 0];
+  ptwi(PS.mult, 0, 1, 0.8, { delay: 1.3, ease: linear });   // the first box, as we know it: 100% × ½ = 50%
+  ptw('myst', 0, 0.5, { delay: 1.3 }); ptw('rev', 1, 1.0, { delay: 2.0, ease: linear });
+  ptwi(PS.mult, 1, 1, 0.8, { delay: 2.5, ease: linear });   // the second, as the light comes through it: 50% × ½ = 25%
+  return labRead2('25%', 0.9, 2.9);
 }
-function labThird() { labRead2('12.5%', 1.2); return ptw('c2', 3, 1.4); }   // the reading changes as the box slides in
+function labThird() { PS.mult[2] = 1; labRead2('12.5%', 1.2); return ptw('c2', 3, 1.4); }   // the box slides in with its sum, the reading changing as it comes
 // 26: the rows go; e^{−σd} writes in, the plot under it, and the curve draws with its dot, the box growing under it
 async function labFormula() {
   ptw('rowsOut', 1, 0.7); ptw('fml', 1, 1.2, { delay: 0.5, ease: linear }); ptw('axC', 1, 1.0, { delay: 1.2 });
