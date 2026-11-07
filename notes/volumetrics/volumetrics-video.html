@@ -5586,7 +5586,7 @@ function drawLabFormula(ctx, F, st, a) {
   const m9 = smooth(clamp(st.ind9 || 0, 0, 1) * clamp(st.mv9 || 0, 0, 1));
   if (m9 > 0.002 && sym > 0.003 && st.fml >= 1) {   // option 9: on its way to the dot, or riding it, as its numbers (manim's TransformMatchingTex)
     const A = lpAxes(), d = clamp(st.dotD, 0, LPD), px = A.X(d), py = A.Y(Math.exp(-Math.max(0, st.sig) * Math.LN2 * d));
-    const N = place(tex(labNumSrc(st)), { x: px + 26, y: py - 46, size: 58, ax: 0 }), M = F.main.map((q) => ({ ...q, color: q.a.terms.includes('t-sig') ? mixRgb(WHITE_RGB, hexRgb(COL.yellow), hiS) : q.color }));
+    const N = place(tex(labNumSrc(st)), { x: px + 26, y: py - 46, size: 58, ax: 0 }), M = F.main.map((q) => ({ ...q, color: q.a.terms.includes('t-sig') ? mixRgb(WHITE_RGB, hexRgb(COL.yellow), Math.max(hiS, Fo.c)) : q.a.terms.includes('t-ld') ? mixRgb(WHITE_RGB, hexRgb(LDCOL), Fo.c) : q.color }));   // in the colours it has at the top, so nothing flashes white
     if (m9 >= 0.998) drawSprites(ctx, N, { alpha: sym }); else drawMorph(ctx, matchPlan(M, N), m9, sym);
     return;
   }
