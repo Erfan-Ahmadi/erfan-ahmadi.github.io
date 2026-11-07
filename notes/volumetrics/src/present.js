@@ -4,7 +4,7 @@
 // Going to a beat rebuilds the ones before it instantly, so stepping back shows a beat the way it ends. Each beat
 // has its number from script.md (#present-15b opens that one). The state of a presentation lives in PS; the scenes it
 // borrows (the cloud) keep their own.
-const PRES = { on: false, paused: false, beat: 0, toast: -99, epoch: 0, saved: null };
+const PRES = { on: false, paused: false, beat: 0, toast: -99, epoch: 0, gen: 0, saved: null };   // gen: bumped on every rebuild
 // The cloud as the hook shows it: a thin cloud the beam gets a quarter of the way through, no reading, the camera
 // low behind the laser. It drifts to the right the whole time (PRES_DRIFT rad/s; negative drifts the other way).
 const PRES_CLOUD = { readout: 0, dens: 0.04, sigA: 20, sigS: 10, beamY: 0, beamZ: -0.005, aim: 0, aimUp: 0, yaw: -1.2, pitch: 0.22, dist: 3.8, zoom: 0, eye: 0 };
@@ -65,6 +65,10 @@ const PS_DEFAULTS = () => ({
   goalsA: 0, figMid: 0, fut: 0, futW: 0, goals: [0, 0, 0], p15: 1, cap: 0,
   uses: [0, 0, 0, 0], useX: [0, 0, 0], useT: 0, grow: 0, usesOut: 0, capOut: 0, boxQ: 0, lines: 0,
   fx: { show: [0, 0, 0, 0], clock: [0, 0, 0, 0], run: [0, 0, 0, 0], dim: [0, 0, 0, 0], grey: [0, 0, 0, 0], big: 0 },
+  // part 3, the lab (lab.js): the box on the stage, its scattering and glow, the readings, the second row and its
+  // boxes, me guessing; then the formula and its plot; then the bases
+  labOn: 0, labX: 0, scat: 0, glow: 0, read1: 0, split: 0, c2: 1, r2: '50%', r2From: '', r2M: 1, lfig: 0, lthink: '', lthinkP: 1,
+  rowsOut: 0, fml: 0, axC: 0, dotD: 0, curveTo: 0, sig: 1, sigHi: 0, eq1: 0, plotOut: 0, bStack: 0, bArrow: 0, bMorph: 0,
 });
 const PS = PS_DEFAULTS();
 // The equation, with its terms named: the four effects for the braces, and the parts the questions point at.
@@ -114,11 +118,22 @@ const BEATS = [
   ...USES.map((u, i) => ({ n: String(17 + i), name: u.name, run: () => presUse(i) })),
   // 20b–20h: one press per thing the box can hold, then back to plain stuff
   ...['fog', 'a cloud', 'smoke', 'tinted glass', 'coffee', 'a glass of beer', "it doesn't matter yet"].map((name, k) => ({ n: `20${'bcdefgh'[k]}`, name, run: () => ptw('boxQ', k + 1, 0.5) })),
-  ...PFX.map((p, i) => ({ n: i ? `21${'bcd'[i - 1]}` : '21', name: p[1], run: () => presFxName(i) })),
-  { n: '21e', name: 'all four, playing', run: presFxAll },
-  { n: '21f', name: "doesn't scatter", run: () => presFxGrey([1, 3]) },
-  { n: '21g', name: "doesn't emit", run: () => presFxGrey([2]) },
-  { n: '21h', name: 'it only absorbs', run: presFxOnly },
+  // part 3 (lab.js): what we leave out, shown on the box; the sensor; the two-box question; the formula and its plot
+  { n: '21', name: "doesn't scatter", run: () => labScatter() },
+  { n: '21b', name: "doesn't glow", run: () => labGlow() },
+  { n: '21c', name: 'only absorbs', run: () => labAbsorb() },
+  { n: '22', name: 'the sensor', run: () => labRead() },
+  { n: '23', name: 'a second box', run: () => labSecond() },
+  { n: '24', name: 'zero?', run: () => labGuess() },
+  { n: '25', name: 'twenty-five', run: () => labReveal() },
+  { n: '25b', name: 'a third box', run: () => labThird() },
+  { n: '26', name: 'the formula', run: () => labFormula() },
+  { n: '27', name: 'distance', run: () => labDistance() },
+  { n: '28', name: 'more absorbing', run: () => labSigmaUp() },
+  { n: '28b', name: 'less absorbing', run: () => labSigmaDown() },
+  { n: '29', name: 'a vacuum', run: () => labVacuum() },
+  { n: '30', name: 'any base', run: () => labBases() },
+  { n: '31', name: 'but why exponential?', run: () => labWhy() },
 ];
 // A beat by its number in the script; a number between two beats opens the next one.
 function presIndex(label) {
@@ -232,7 +247,7 @@ async function presGo(k, play) {
   k = clamp(k, 0, BEATS.length - 1);
   const e = ++PRES.epoch; PRES.toast = TIME;
   if (play && k === PRES.beat + 1 && PRES.beat >= 0) { PRES.beat = k; Promise.resolve(BEATS[k].run()).catch((err) => { if (e === PRES.epoch) console.error(err); }); return; }
-  stopTweens('pres'); PRES.beat = k;
+  stopTweens('pres'); PRES.beat = k; PRES.gen++;
   Object.assign(PS, PS_DEFAULTS());
   instant++;
   try { for (let i = 0; i < (play ? k : k + 1); i++) await BEATS[i].run(); } catch (err) { console.error(err); } finally { instant--; }
@@ -489,7 +504,7 @@ function drawUses(ctx, dt, st) {
     if (u.draw && i < 3) {   // on the side cards' own clock
       const s = r[2] / 700, T0 = TIME; ctx.translate(r[0], r[1]); ctx.scale(s, s);
       TIME = st.useT; try { u.draw(ctx, sdt, r[3] / s, fresh); } finally { TIME = T0; }
-    } else if (u.draw) { const s = r[2] / 700; ctx.translate(r[0], r[1]); ctx.scale(s, s); u.draw(ctx, dt, r[3] / s, fresh); }
+    } else if (u.draw && !(i === 3 && st.labOn > 0.003)) { const s = r[2] / 700; ctx.translate(r[0], r[1]); ctx.scale(s, s); u.draw(ctx, dt, r[3] / s, fresh); }   // (from beat 21 the lab draws this one)
     else {
       presCloudOffscreen(dt, false);
       const ar = r[2] / r[3], sw = Math.min(W, H * ar), sh = Math.min(H, W / ar);
@@ -600,6 +615,7 @@ function drawPresent(ctx, dt) {
   drawGoals(ctx, st);
   drawUses(ctx, dt, st);
   drawCaption(ctx, st);
+  drawLab(ctx, dt, st);
   drawFx(ctx, dt, st);
   // a small counter after each press, and a pause mark while paused
   const ta = PRES.paused ? 1 : clamp(1.8 - (TIME - PRES.toast), 0, 1);

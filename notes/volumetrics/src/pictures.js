@@ -382,14 +382,13 @@ function drawWisps(ctx, xa, xb, y0, y1, n, rgb, alpha, sway, seed, wide = 1) {
     }
   }
 }
+// where a speck of plain stuff is in box B now: spread over the box, drifting a little
+const speckXY = (B, u, v, ph) => [B.x0 + 16 + u * (B.x1 - B.x0 - 32) + (reduced ? 0 : 6 * Math.sin(TIME * 0.9 + ph)), B.top + 16 + v * (B.bot - B.top - 32) + (reduced ? 0 : 6 * Math.cos(TIME * 0.7 + 1.3 * ph))];
 const BOXDRAW = {
   stuff: (ctx, B) => {   // plain stuff: a haze, and specks of it drifting, in the yellow of the word "stuff"
     const g = ctx.createLinearGradient(0, B.top, 0, B.bot); g.addColorStop(0, 'rgba(170,164,152,0.09)'); g.addColorStop(1, 'rgba(170,164,152,0.15)');
     ctx.fillStyle = g; ctx.fillRect(B.x0, B.top, B.x1 - B.x0, B.bot - B.top);
-    for (const [u, v, ph] of BOXSPECKS) {
-      const x = B.x0 + 16 + u * (B.x1 - B.x0 - 32) + (reduced ? 0 : 6 * Math.sin(TIME * 0.9 + ph)), y = B.top + 16 + v * (B.bot - B.top - 32) + (reduced ? 0 : 6 * Math.cos(TIME * 0.7 + 1.3 * ph));
-      dot(ctx, x, y, 3.6, COL.yellow, 0.62);
-    }
+    for (const [u, v, ph] of BOXSPECKS) { const [x, y] = speckXY(B, u, v, ph); dot(ctx, x, y, 3.6, COL.yellow, 0.62); }
   },
   fog: (ctx) => drawLiquid(ctx, boxTank, { fill: 1, look: 'fog' }),
   cloud: (ctx) => { drawCloud(ctx, BOXPUFFS, { cloud: 1 }); drawCloud(ctx, BOXPUFFS, { cloud: 0.8 }); },
