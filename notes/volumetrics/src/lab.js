@@ -201,36 +201,43 @@ function drawLabPlot(ctx, st) {
   ctx.restore();
   ctx.restore();
 }
-// Beat 30: any base will do: 2, 3, 10, …, each rewritten with base e, the change of base a number in the exponent
-// (ln 2, ln 3, ln 10, rounded); σ keeps its yellow from beat 28. The −, σ and d glide over, the base turns into e and
-// the number comes in, as manim's TransformMatchingTex does it.
-const LB = { rows: [330, 480, 630], lx: 680, rx: 1260, size: 84, dots: 770 };
+// Beat 30: any base will do: 2, 3, 10, …, each equal to the same thing with base e, the change of base a number in
+// the exponent (ln 2, ln 3, ln 10, rounded); σ keeps its yellow from beat 28. Each row is set as one formula, so its =
+// sits on the row's baseline with the usual space either side, and the rows line up on their = signs. A copy of the
+// left side glides over and becomes the right side (the −, σ and d move, the base turns into e and the number comes
+// in, as manim's TransformMatchingTex does it); the row's = writes in as the copy lands.
+const LB = { rows: [330, 480, 630], size: 84, dots: 770, cx: 960 };
 const LBS = String.raw`\textcolor{${COL.yellow}}{\sigma}`;
-const LBL = ['2', '3', '10'].map((b) => String.raw`${b}^{-${LBS} d}`), LBR = ['0.69', '1.1', '2.3'].map((k) => String.raw`e^{-${k}\,${LBS} d}`);
+const LBROW = [['2', '0.69'], ['3', '1.1'], ['10', '2.3']].map(([b, k]) =>
+  String.raw`\mathord{\htmlClass{t-bl}{${b}^{-${LBS} d}}}\mathrel{\htmlClass{t-beq}{=}}\mathord{\htmlClass{t-br}{e^{-${k}\,${LBS} d}}}`);
 let lbSp = null;
 function lbSprites() {
   if (lbSp) return lbSp;
-  const L = LBL.map((s, i) => place(tex(s), { x: LB.lx, y: LB.rows[i], size: LB.size })), R = LBR.map((s, i) => place(tex(s), { x: LB.rx, y: LB.rows[i], size: LB.size }));
-  return (lbSp = { L, R, plans: L.map((sp, i) => matchPlan(sp, R[i])) });
+  const at = (xs) => LBROW.map((src, i) => place(tex(src), { x: xs[i], y: LB.rows[i], size: LB.size, ax: 0 }));
+  const part = (sp, t) => sp.filter((s) => s.a.terms.includes(t));
+  const span = (S) => [Math.min(...S.map((s) => s.x)), Math.max(...S.map((s) => s.x + s.w))];
+  const mid = (S) => { const [l, r] = span(S); return (l + r) / 2; };
+  // every row's = on x = 0, then the whole block centred on the stage
+  const r0 = at([0, 0, 0]), eq = r0.map((sp) => mid(part(sp, 't-beq')));
+  const ends = r0.flatMap((sp, i) => span(sp).map((x) => x - eq[i])), dx = LB.cx - (Math.min(...ends) + Math.max(...ends)) / 2;
+  const rows = at(eq.map((e) => dx - e));
+  const L = rows.map((sp) => part(sp, 't-bl')), E = rows.map((sp) => part(sp, 't-beq')), R = rows.map((sp) => part(sp, 't-br'));
+  return (lbSp = { L, E, R, lx: mid(L.flat()), rx: mid(R.flat()), plans: L.map((sp, i) => matchPlan(sp, R[i])) });
 }
 function drawLabBases(ctx, st) {
   if (st.bStack <= 0.003) return;
   const S = lbSprites(), a = 1;
   S.L.forEach((sp, i) => { const p = clamp((st.bStack - i * 0.25) / 0.5, 0, 1); if (p > 0.003) drawSprites(ctx, sp, { p, alpha: a }); });
   const dp = clamp((st.bStack - 0.75) / 0.25, 0, 1);
-  if (dp > 0.003) drawTex(ctx, String.raw`\vdots`, LB.lx, LB.dots, LB.size, { alpha: dp });
-  const ar = smooth(clamp(st.bArrow, 0, 1));
-  if (ar > 0.003) {
-    const x0 = 880, x1 = lerp(x0, 1070, ar), y = LB.rows[1];
-    ctx.save(); ctx.strokeStyle = COL.greyB; ctx.fillStyle = COL.greyB; ctx.lineWidth = 4; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1 - 16, y); ctx.stroke(); arrowTip(ctx, x1, y, 1, 0, 24, 11); ctx.restore();
-  }
+  if (dp > 0.003) drawTex(ctx, String.raw`\vdots`, S.lx, LB.dots, LB.size, { alpha: dp });
   S.plans.forEach((P, i) => {
     const m = clamp((st.bMorph - i * 0.25) / 0.5, 0, 1); if (m <= 0.001) return;
     if (m >= 0.999) drawSprites(ctx, S.R[i], { alpha: a }); else drawMorph(ctx, P, m, a);
+    const q = clamp((st.bMorph - i * 0.25 - 0.42) / 0.18, 0, 1);
+    if (q > 0.003) drawSprites(ctx, S.E[i], { p: q, alpha: a });
   });
-  const dr = clamp((st.bMorph - 0.75) / 0.25, 0, 1);
-  if (dr > 0.003) drawTex(ctx, String.raw`\vdots`, LB.rx, LB.dots, LB.size, { alpha: dr });
+  const dr = clamp((st.bMorph - 0.85) / 0.25, 0, 1);
+  if (dr > 0.003) drawTex(ctx, String.raw`\vdots`, S.rx, LB.dots, LB.size, { alpha: dr });
 }
 // Beats 24 and 31: an aside, the way every aside with me goes (as in beat 2): what is on the stage shrinks into a card
 // of its own colour, moved over to the left, and I come in on the right with a thought.
@@ -340,11 +347,12 @@ async function labDistance() {
 function labSigmaUp() { ptw('sigHi', 1, 0.5); return ptw('sig', 2, 1.6, { delay: 0.5 }); }
 function labSigmaDown() { return ptw('sig', 0.5, 1.9); }
 function labVacuum() { ptw('eq1', 1, 0.8, { delay: 1.4 }); return ptw('sig', 0, 1.8); }
-// 30: the plot and the formula go; 2, 3, 10 … each rewritten with base e
+// 30: the plot and the formula go; 2, 3, 10 … each equal to the same thing with base e (bMorph runs past 1 so the
+// last row's = finishes writing)
 function labBases() {
   ptw('plotOut', 1, 0.7);
-  ptw('bStack', 1, 1.6, { delay: 0.6, ease: linear }); ptw('bArrow', 1, 0.7, { delay: 2.3 });
-  return ptw('bMorph', 1, 2.4, { delay: 2.8, ease: linear });
+  ptw('bStack', 1, 1.6, { delay: 0.6, ease: linear });
+  return ptw('bMorph', 1.1, 2.64, { delay: 2.5, ease: linear });
 }
 // 31: an aside: me again: but why exponential?
 function labWhy() {
