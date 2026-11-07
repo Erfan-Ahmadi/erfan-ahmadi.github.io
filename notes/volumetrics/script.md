@@ -52,7 +52,7 @@ The working script below has light edits; the original drafts, word for word, ar
 > For the rest of this video I'm going to be slightly dishonest. I'll assume our stuff doesn't scatter light,
 
 **21b.** [The scattering stops. Each speck glows red on its own, and the beam dims a little so the glow shows: emission.]
-> and that it doesn't glow, or give off any light of its own. Scattering and emission get their own video.
+> and that it doesn't glow, or give off any light of its own. I'll get to them in the next video.
 
 **21c.** [The glow goes: plain stuff again, the beam dimmer past the box.]
 > For now, our particles only absorb light.
@@ -61,7 +61,8 @@ The working script below has light edits; the original drafts, word for word, ar
 > So they take some of the laser's light, and less of it makes it to the other end. How much less? That's what the sensor is for. Here it reads fifty percent: half the light made it through.
 
 **23.** [The whole setup is copied, and the copy slides down to the bottom half of the stage. In the copy, a second identical box slides in from the right beside the first, the laser and the sensor moving outward to make room. The copy's sensor reads "?". So: above, one box and 50%; below, two boxes and "?".]
-> Now, a question. What if I put a second, identical box right next to this one? What does the sensor read now? Pause and try to answer, if you want.
+> Now, I've got a question for you. What if I put a second, identical box right next to this one? What does the sensor read now? Pause and try to answer, if you want.
+
 
 **24.** [The stick figure comes in, its readout "0%".]
 > It's natural to say zero. One box took half the light, so two should take all of it.
