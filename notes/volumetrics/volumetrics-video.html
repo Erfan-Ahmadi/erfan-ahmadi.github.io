@@ -5149,7 +5149,8 @@ function drawUses(ctx, dt, st) {
     if (u.draw && i < 3) {   // on the side cards' own clock
       const s = r[2] / 700, T0 = TIME; ctx.translate(r[0], r[1]); ctx.scale(s, s);
       TIME = st.useT; try { u.draw(ctx, sdt, r[3] / s, fresh); } finally { TIME = T0; }
-    } else if (u.draw && !(i === 3 && st.labOn > 0.003)) { const s = r[2] / 700; ctx.translate(r[0], r[1]); ctx.scale(s, s); u.draw(ctx, dt, r[3] / s, fresh); }   // (from beat 21 the lab draws this one)
+    } else if (i === 3 && st.labOn > 0.003) { /* from beat 21 the lab draws this card's picture, grown out of it */ }
+    else if (u.draw) { const s = r[2] / 700; ctx.translate(r[0], r[1]); ctx.scale(s, s); u.draw(ctx, dt, r[3] / s, fresh); }
     else {
       presCloudOffscreen(dt, false);
       const ar = r[2] / r[3], sw = Math.min(W, H * ar), sh = Math.min(H, W / ar);
