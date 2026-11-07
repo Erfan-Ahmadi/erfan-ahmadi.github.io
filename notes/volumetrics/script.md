@@ -46,7 +46,7 @@ The working script below has light edits; the original drafts, word for word, ar
 
 ## Part 3: only absorption, and the first formula
 
-**21.** [The three field cards and the caption go, and the box grows out of its card until the laser, the box of plain stuff and the sensor fill the stage. Then the dishonesty, shown on this very box: the beam hits the specks and breaks into rays off them, and the stuff around the beam glows a faint red: scattering.]
+**21.** [The three field cards and the caption go, and the box grows out of its card until the laser, the box of plain stuff and the sensor fill the stage. Then the dishonesty, shown on this very box: each speck the beam passes lights up and sends thin red rays off it, fading as they go, and the stuff around the beam glows a faint red: scattering.]
 > For the rest of this video I'm going to be slightly dishonest. I'll assume our stuff doesn't scatter light,
 
 **21b.** [The scattering stops. Each speck glows red on its own, and the beam dims a little so the glow shows: emission.]
@@ -58,7 +58,7 @@ The working script below has light edits; the original drafts, word for word, ar
 **22.** [The sensor's reading appears for the first time: 50%.]
 > So they take some of the laser's light, and less of it makes it to the other end. How much less? That's what the sensor is for. Here it reads fifty percent: half the light made it through.
 
-**23.** [The whole setup is copied, and the copy slides down to the bottom half of the stage. In the copy, a second identical box slides in from the right beside the first, the laser and the sensor moving outward to make room, and the copy's reading reshapes from 50% into "?". So: above, one box and 50%; below, two boxes and "?".]
+**23.** [The whole setup is copied, without its readout, and the copy slides down to the bottom half of the stage. In the copy, a second identical box slides in from the right beside the first, the laser and the sensor moving outward to make room; then a readout pops up on the copy's sensor: "?". So: above, one box and 50%; below, two boxes and "?".]
 > Now, a question. What if I put a second, identical box right next to this one? What does the sensor read now? Pause and try to answer, if you want.
 
 **24.** [The stick figure comes in, its readout "0%".]

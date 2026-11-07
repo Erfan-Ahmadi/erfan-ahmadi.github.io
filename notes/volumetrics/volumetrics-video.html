@@ -4712,7 +4712,7 @@ const PS_DEFAULTS = () => ({
   fx: { show: [0, 0, 0, 0], clock: [0, 0, 0, 0], run: [0, 0, 0, 0], dim: [0, 0, 0, 0], grey: [0, 0, 0, 0], big: 0 },
   // part 3, the lab (lab.js): the box on the stage, its scattering and glow, the readings, the second row and its
   // boxes, me guessing; then the formula and its plot; then the bases
-  labOn: 0, labX: 0, scat: 0, glow: 0, read1: 0, split: 0, c2: 1, r2: '50%', r2From: '', r2M: 1, lfig: 0, lthink: '', lthinkP: 1,
+  labOn: 0, labX: 0, scat: 0, glow: 0, read1: 0, read2: 0, split: 0, c2: 1, r2: '?', r2From: '', r2M: 1, lfig: 0, lthink: '', lthinkP: 1,
   rowsOut: 0, fml: 0, axC: 0, dotD: 0, curveTo: 0, sig: 1, sigHi: 0, eq1: 0, plotOut: 0, bStack: 0, bArrow: 0, bMorph: 0,
 });
 const PS = PS_DEFAULTS();
@@ -5305,33 +5305,44 @@ function drawMorphText(ctx, from, to, m, a, size = 50) {
   if (from && m < 0.999) { if (m <= 0.001) drawSprites(ctx, labTxt(from, size), { alpha: a }); else drawReshape(ctx, labPlan(from, to, size), m, a); }
   else if (to) drawSprites(ctx, labTxt(to, size), { alpha: a });
 }
-// The sensor's readout: a box over the sensor, joined to it by a line, its text reshaping when it changes.
-function drawLabReadout(ctx, xs, from, to, m, a) {
+// The sensor's readout: a box over the sensor, joined to it by a line, its text reshaping when it changes. pop: it
+// grows into place as it comes in.
+function drawLabReadout(ctx, xs, from, to, m, a, pop = false) {
   if (a <= 0.003) return;
-  const bw = 210, bh = 92, by = -48 - 44 - bh;
+  const bw = 210, bh = 92, by = -48 - 44 - bh, k = pop ? lerp(0.55, 1, a) : 1;
+  ctx.save(); if (k !== 1) { ctx.translate(xs, -48); ctx.scale(k, k); ctx.translate(-xs, 48); }
   ctx.save(); ctx.globalAlpha *= a; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 2.5;
   ctx.beginPath(); ctx.moveTo(xs, -48); ctx.lineTo(xs, by + bh); ctx.stroke();
   ctx.fillStyle = BG; ctx.beginPath(); ctx.roundRect(xs - bw / 2, by, bw, bh, 12); ctx.fill(); ctx.stroke(); ctx.restore();
   ctx.save(); ctx.translate(xs, by + bh / 2 + 3); drawMorphText(ctx, from, to, m, a); ctx.restore();
+  ctx.restore();
 }
 // Beat 21: what we leave out, shown on the box itself. Scattering: rays break off the specks the beam passes, and the
 // stuff around the beam turns faintly red. Beat 21b: emission: every speck glows red on its own.
 const hash1 = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
 function drawScatter(ctx, B, a) {
   if (a <= 0.003) return;
-  const w = B.x1 - B.x0;
-  for (let k = 0; k < 6; k++) {   // the red haze along the beam, strongest where the light comes in
-    const x = B.x0 + (k / 6) * w, g = ctx.createLinearGradient(0, -150, 0, 150), al = 0.2 * a * Math.exp(-1.1 * (k / 6));
-    g.addColorStop(0, 'rgba(255,59,48,0)'); g.addColorStop(0.5, `rgba(255,59,48,${al.toFixed(3)})`); g.addColorStop(1, 'rgba(255,59,48,0)');
-    ctx.fillStyle = g; ctx.fillRect(x, -150, w / 6 + 1, 300);
-  }
-  const t = reduced ? 1.3 : TIME;
-  BOXSPECKS.forEach(([u, v, ph], j) => {   // the specks near the beam send rays off it, one after another
-    const by = B.top + 16 + v * (B.bot - B.top - 32); if (Math.abs(by) > 48) return;
-    const [sx, sy] = speckXY(B, u, v, ph), P = 1.1 + 0.6 * hash1(j), q = t / P + hash1(j + 7), n = Math.floor(q), age = (q - n) * P;
-    const th = 0.4 + hash1(j * 31 + n) * (2 * Math.PI - 0.8), S = pathSampler([[sx, sy], [sx + 700 * Math.cos(th), sy + 700 * Math.sin(th)]]);
-    drawPhotonDot(ctx, S, 300 * age, SH.color, a * (1 - age / P), { r: 7, trail: 55 });
+  // the red haze along the beam: light scattered out of it, lighting up the stuff around it
+  const g = ctx.createLinearGradient(0, -160, 0, 160);
+  g.addColorStop(0, 'rgba(255,59,48,0)'); g.addColorStop(0.5, `rgba(255,59,48,${(0.16 * a).toFixed(3)})`); g.addColorStop(1, 'rgba(255,59,48,0)');
+  ctx.fillStyle = g; ctx.fillRect(B.x0, -160, B.x1 - B.x0, 320);
+  // every speck the beam passes sends rays off it, each fading as it goes and shimmering a little
+  const t = reduced ? 0 : TIME;
+  ctx.save(); ctx.lineCap = 'round';
+  BOXSPECKS.forEach(([u, v, ph], j) => {
+    const by = B.top + 16 + v * (B.bot - B.top - 32); if (Math.abs(by) > 26) return;   // only the specks the beam really passes
+    const [sx, sy] = speckXY(B, u, v, ph);
+    for (let k = 0; k < 2; k++) {
+      const th = 0.45 + hash1(j * 7 + k) * (2 * Math.PI - 0.9), L = 150 + 90 * hash1(j * 13 + k), ex = sx + L * Math.cos(th), ey = sy + L * Math.sin(th);
+      const al = a * (0.72 + 0.28 * Math.sin(2 * Math.PI * 0.5 * t + 2.3 * k + ph));
+      const rg = ctx.createLinearGradient(sx, sy, ex, ey); rg.addColorStop(0, `rgba(255,70,58,${(0.6 * al).toFixed(3)})`); rg.addColorStop(1, 'rgba(255,70,58,0)');
+      ctx.strokeStyle = rg; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+    }
+    const R = 16, gg = ctx.createRadialGradient(sx, sy, 0, sx, sy, R);   // the speck lit where the beam hits it
+    gg.addColorStop(0, `rgba(255,80,64,${(0.55 * a).toFixed(3)})`); gg.addColorStop(1, 'rgba(255,80,64,0)');
+    ctx.fillStyle = gg; ctx.fillRect(sx - R, sy - R, 2 * R, 2 * R);
   });
+  ctx.restore();
 }
 function drawGlow(ctx, B, a) {
   if (a <= 0.003) return;
@@ -5365,7 +5376,7 @@ function drawLabRow(ctx, X, o, alpha) {
   }
   drawLaser(ctx, L.laser, 0, SH.color, 1);
   drawSensor(ctx, L.sensor, 0, SH.color, T(L.sensor - 18) * SH.I0);
-  drawLabReadout(ctx, L.sensor, o.from, o.to, o.m, o.read);
+  drawLabReadout(ctx, L.sensor, o.from, o.to, o.m, o.read, o.pop);
   ctx.restore();
 }
 // Beats 26–29: e^{−σd} at the top; under it a plot of the light that gets through against the distance d, in box
@@ -5464,7 +5475,7 @@ function drawLab(ctx, dt, st) {
     const out = 1 - smooth(clamp(st.rowsOut, 0, 1)), x = smooth(clamp(st.labX, 0, 1)), sp = smooth(clamp(st.split, 0, 1));
     const X1 = mixXf(mixXf(labCardXf(st), LABXF.full, x), LABXF.top, sp);
     drawLabRow(ctx, X1, { c: 1, scat: st.scat, glow: st.glow, from: '', to: '50%', m: 1, read: smooth(clamp(st.read1, 0, 1)) }, out);
-    if (sp > 0.003) drawLabRow(ctx, mixXf(LABXF.full, LABXF.bot, sp), { c: st.c2, from: st.r2From, to: st.r2, m: st.r2M, read: smooth(clamp(st.read1, 0, 1)) }, out);
+    if (sp > 0.003) drawLabRow(ctx, mixXf(LABXF.full, LABXF.bot, sp), { c: st.c2, from: st.r2From, to: st.r2, m: st.r2M, read: smooth(clamp(st.read2, 0, 1)), pop: true }, out);
   }
   drawLabPlot(ctx, st);
   drawLabBases(ctx, st);
@@ -5487,12 +5498,13 @@ function labAbsorb() { return ptw('glow', 0, 0.9); }
 // 22: the sensor's reading, for the first time
 function labRead() { return ptw('read1', 1, 0.8); }
 function labRead2(text, dur, delay = 0) { PS.r2From = PS.r2; PS.r2 = text; PS.r2M = 0; return ptw('r2M', 1, dur, { delay, ease: linear }); }
-// 23: the whole setup is copied, the copy slides down, a second box slides in beside its first, and its reading turns into "?"
+// 23: the whole setup is copied, without its readout; the copy slides down, a second box slides in beside its first,
+// and then a readout pops up on it: "?"
 async function labSecond() {
-  const g = PRES.gen; PS.r2 = '50%'; PS.r2From = ''; PS.r2M = 1;
+  const g = PRES.gen; PS.r2 = '?'; PS.r2From = ''; PS.r2M = 1; PS.read2 = 0;
   await ptw('split', 1, 1.3); if (!labAlive(g)) return;
   await ptw('c2', 2, 1.4); if (!labAlive(g)) return;
-  await labRead2('?', 0.8);
+  await ptw('read2', 1, 0.45);
 }
 // 24: me, guessing zero
 function labGuess() { PS.lthink = '0\\%'; PS.lthinkP = 0; ptw('lfig', 1, 0.8); return ptw('lthinkP', 1, 0.6, { delay: 0.7, ease: linear }); }
