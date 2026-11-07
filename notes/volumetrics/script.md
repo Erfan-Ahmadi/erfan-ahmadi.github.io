@@ -79,7 +79,7 @@ The working script below has light edits; the original drafts, word for word, ar
 **29.** [The constant goes to zero: the curve flattens into a line at 100%, the box empties and the sensor reads 100%; "= 1" comes in after the formula.]
 > And when that number is zero, this is just one: everything gets through. Nothing is absorbed. There is no stuff: it's a vacuum.
 
-**30.** [The plot, the box and the formula go. A vertical stack writes in: $2^{-ad}$, $3^{-bd}$, $10^{-cd}$, ⋮; an arrow to the right, and a copy of each reshapes into the same thing with base $e$ and a new constant: $e^{-a'd}$, $e^{-b'd}$, $e^{-c'd}$, ⋮.]
+**30.** [The plot, the box and the formula go. A vertical stack writes in: $2^{-\sigma d}$, $3^{-\sigma d}$, $10^{-\sigma d}$, ⋮, with $\sigma$ in its yellow; an arrow to the right, and a copy of each turns into the same thing with base $e$, the change of base a rough number multiplying $\sigma$ (that's $\ln 2$, $\ln 3$, $\ln 10$): $e^{-0.69\,\sigma d}$, $e^{-1.1\,\sigma d}$, $e^{-2.3\,\sigma d}$, ⋮. The $-$, $\sigma$ and $d$ glide across, the base turns into $e$ and the number comes in.]
 > If you're a little rusty on calculus and wondering why the number $e$ is in there, roughly 2.718, I have to say: there's nothing special about it. You could use any base: two, three, ten. We just rewrite them all with base $e$, because $e$ makes integrals and differential equations a little easier to work with. You don't have to worry about that here.
 
 **31.** [An aside, the device for every "you might be asking": the stick figure comes back, its readout "but why exponential?".]

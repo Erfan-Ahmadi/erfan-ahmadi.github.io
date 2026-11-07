@@ -175,14 +175,17 @@ function drawLabPlot(ctx, st) {
   ctx.restore();
   ctx.restore();
 }
-// Beat 30: any base will do: 2, 3, 10, …, each rewritten with base e (a different constant in the exponent).
-const LB = { rows: [330, 480, 630], lx: 700, rx: 1240, size: 84, dots: 770 };
-const LBL = [String.raw`2^{-a d}`, String.raw`3^{-b d}`, String.raw`10^{-c d}`], LBR = [String.raw`e^{-a' d}`, String.raw`e^{-b' d}`, String.raw`e^{-c' d}`];
+// Beat 30: any base will do: 2, 3, 10, …, each rewritten with base e, the change of base a number in the exponent
+// (ln 2, ln 3, ln 10, rounded); σ keeps its yellow from beat 28. The −, σ and d glide over, the base turns into e and
+// the number comes in, as manim's TransformMatchingTex does it.
+const LB = { rows: [330, 480, 630], lx: 680, rx: 1260, size: 84, dots: 770 };
+const LBS = String.raw`\textcolor{${COL.yellow}}{\sigma}`;
+const LBL = ['2', '3', '10'].map((b) => String.raw`${b}^{-${LBS} d}`), LBR = ['0.69', '1.1', '2.3'].map((k) => String.raw`e^{-${k}\,${LBS} d}`);
 let lbSp = null;
 function lbSprites() {
   if (lbSp) return lbSp;
   const L = LBL.map((s, i) => place(tex(s), { x: LB.lx, y: LB.rows[i], size: LB.size })), R = LBR.map((s, i) => place(tex(s), { x: LB.rx, y: LB.rows[i], size: LB.size }));
-  return (lbSp = { L, R, plans: L.map((sp, i) => reshapePlan(sp, R[i])) });
+  return (lbSp = { L, R, plans: L.map((sp, i) => matchPlan(sp, R[i])) });
 }
 function drawLabBases(ctx, st) {
   if (st.bStack <= 0.003) return;
@@ -198,7 +201,7 @@ function drawLabBases(ctx, st) {
   }
   S.plans.forEach((P, i) => {
     const m = clamp((st.bMorph - i * 0.25) / 0.5, 0, 1); if (m <= 0.001) return;
-    if (m >= 0.999) drawSprites(ctx, S.R[i], { alpha: a }); else drawReshape(ctx, P, m, a);
+    if (m >= 0.999) drawSprites(ctx, S.R[i], { alpha: a }); else drawMorph(ctx, P, m, a);
   });
   const dr = clamp((st.bMorph - 0.75) / 0.25, 0, 1);
   if (dr > 0.003) drawTex(ctx, String.raw`\vdots`, LB.rx, LB.dots, LB.size, { alpha: dr });
