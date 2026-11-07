@@ -5532,10 +5532,15 @@ function drawLabPlot(ctx, st) {
   ctx.save(); ctx.globalAlpha = a * ax;
   drawBeam(ctx, X0 - 26, xs - 11, y, SH.color, SH.I0, T, [X0, Xd]);
   if (w > 1) { ctx.strokeStyle = COL.greyA; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(X0, LP.top, w, H, Math.min(12, w / 2)); ctx.stroke(); }
-  if (Fo.c > 0.003 && w > 1) {   // option 1: a brace under the box, d in its blue, stretching with it
-    const al = Fo.c * (0.7 + 0.3 * clamp(st.dAct || 0, 0, 1)), cx = X0 + w / 2;
-    drawBrace(ctx, cx, LP.bot + 16, w, 24, 6, hexRgb(LDCOL), al);
-    drawTex(ctx, 'd', cx, LP.bot + 84, 60, { alpha: al, color: LDCOL });
+  if (Fo.c > 0.003 && w > 1) {   // option 1: a brace under the box, d in its blue, stretching with it; while σ changes, σ in the box instead, in its yellow
+    const sF = clamp(st.sAct || 0, 0, 1), al = Fo.c * (0.7 + 0.3 * clamp(st.dAct || 0, 0, 1)) * (1 - sF), cx = X0 + w / 2;
+    if (al > 0.003) { drawBrace(ctx, cx, LP.bot + 16, w, 24, 6, hexRgb(LDCOL), al); drawTex(ctx, 'd', cx, LP.bot + 84, 60, { alpha: al, color: LDCOL }); }
+    if (Fo.s > 0.003) {   // in the upper half, over the specks, on a little shade so it reads among them
+      const sy = LP.top + 46, sg = ctx.createRadialGradient(cx, sy, 0, cx, sy, 42);
+      sg.addColorStop(0, `rgba(28,27,24,${(0.8 * Fo.s).toFixed(3)})`); sg.addColorStop(1, 'rgba(28,27,24,0)');
+      ctx.fillStyle = sg; ctx.fillRect(cx - 42, sy - 42, 84, 84);
+      drawTex(ctx, String.raw`\sigma`, cx, sy, 64, { alpha: Fo.s, color: COL.yellow });
+    }
   }
   ctx.save(); ctx.translate(X0 - 26, y); ctx.scale(0.6, 0.6); drawLaser(ctx, 0, 0, SH.color, 1); ctx.restore();
   ctx.save(); ctx.translate(xs, y); ctx.scale(0.6, 0.6); drawSensor(ctx, 0, 0, SH.color, f(d) * SH.I0); ctx.restore();
