@@ -83,17 +83,21 @@ function drawGlow(ctx, B, a) {
 // 100% × ½ = 50%; a second slides in, 50% × ½ = 25%, the reading halving as it comes; a third, 25% × ½ = 12.5%; a
 // moment to look; then it jumps back to one box and goes again. Worked out from the time u into the loop, so stepping
 // around the presentation can't leave it half done.
-const LOOP = { P: 8.4 };
+const LOOP = { P: 9.9 };
 function labLoopAt(u) {
-  const ss = (a, b) => smooth(clamp((u - a) / (b - a), 0, 1)), wr = (a) => clamp((u - a) / 0.6, 0, 1);
-  const c = 1 + ss(1.5, 2.9) + ss(3.9, 5.3);
-  const [from, to, m] = u < 1.5 ? ['', '50%', 1] : u < 3.9 ? ['50%', '25%', clamp((u - 1.5) / 1.2, 0, 1)] : ['25%', '12.5%', clamp((u - 3.9) / 1.2, 0, 1)];
-  return { c, from, to, m, mult: [wr(0.3), wr(2.2), wr(4.6)], fade: Math.min(clamp(u / 0.3, 0, 1), clamp((LOOP.P - u) / 0.3, 0, 1)) };
+  const ss = (a, b) => smooth(clamp((u - a) / (b - a), 0, 1)), lin = (a, b) => clamp((u - a) / (b - a), 0, 1);
+  const c = 1 + ss(2.0, 3.4) + ss(5.2, 6.6);
+  // the reading halves as each box's multiplication turns into its result
+  const [from, to, m] = u < 4.2 ? ['', '50%', 1] : u < 7.4 ? ['50%', '25%', lin(4.2, 5.0)] : ['25%', '12.5%', lin(7.4, 8.2)];
+  return { c, from, to, m, mult: [lin(0.3, 0.8), lin(3.4, 3.9), lin(6.6, 7.1)], multM: [lin(1.1, 1.8), lin(4.2, 4.9), lin(7.4, 8.1)], fade: Math.min(clamp(u / 0.3, 0, 1), clamp((LOOP.P - u) / 0.3, 0, 1)) };
 }
-// Over each box of the bottom row, in the loop: what it does to what comes in. The ½ is in the lavender of
-// the wrong sum's −50% in beat 24: minus a half becomes times a half.
+// Over each box of the bottom row, in the loop: what comes in, times a half, which then turns into what goes out (the
+// way manim transforms one formula into another). The ½ is in the lavender of the wrong sum's −50% in beat 24: minus a
+// half becomes times a half.
 const LHALF = String.raw`\textcolor{${COL.lavender}}{\tfrac{1}{2}}`, LRES = (v) => String.raw`\textcolor{${COL.yellow}}{${v}\%}`;
-const LMULT = [['100', '50'], ['50', '25'], ['25', '12.5']].map(([a, b]) => String.raw`${a}\% \times ${LHALF} = ${LRES(b)}`);
+const LMULT = ['100', '50', '25'].map((a) => String.raw`${a}\% \times ${LHALF}`), LOUT = ['50', '25', '12.5'].map((v) => LRES(v));
+let lmSp = null;
+const lmSprites = () => lmSp || (lmSp = LMULT.map((src, k) => { const A = place(tex(src), { x: 0, y: 0, size: 50 }), B = place(tex(LOUT[k]), { x: 0, y: 0, size: 54 }); return { A, B, P: reshapePlan(A, B) }; }));
 // One row: laser, c boxes, sensor, in the transform X. o: c, the readout (from, to, m, a), the scattering and glow;
 // myst hides what happens past the first box behind a row of "?" (the light past it is the question), and rev is how
 // far the beam has come back past the first box once the answer is shown.
@@ -131,9 +135,11 @@ function drawLabRow(ctx, X, o, alpha) {
   }
   drawLaser(ctx, L.laser, 0, SH.color, 1);
   drawSensor(ctx, L.sensor, 0, SH.color, front >= end - 1 ? T(end) * SH.I0 * past : 0);
-  if (o.mult) L.boxes.forEach((b, k) => {   // what each box does, over it: what comes in, times a half
-    const p = clamp(o.mult[k] || 0, 0, 1); if (p <= 0.003 || b.a <= 0.003) return;
-    drawTex(ctx, LMULT[k], b.x0 + LAB.BW / 2, LAB.top - 46, 50, { p, alpha: b.a });
+  if (o.mult) L.boxes.forEach((b, k) => {   // what each box does, over it: what comes in, times a half, turning into what goes out
+    const p = clamp(o.mult[k] || 0, 0, 1), m = clamp((o.multM && o.multM[k]) || 0, 0, 1), S = lmSprites()[k]; if (p <= 0.003 || b.a <= 0.003 || !S) return;
+    ctx.save(); ctx.translate(b.x0 + LAB.BW / 2, LAB.top - 46);
+    if (m <= 0.001) drawSprites(ctx, S.A, { p, alpha: b.a }); else if (m >= 0.999) drawSprites(ctx, S.B, { alpha: b.a }); else drawReshape(ctx, S.P, m, b.a);
+    ctx.restore();
   });
   drawLabReadout(ctx, L.sensor, o.from, o.to, o.m, o.read, o.pop);
   ctx.restore();
@@ -298,11 +304,12 @@ async function labSecond() {
   await ptw('read2', 1, 0.45);
 }
 // 24: an aside: me, guessing zero
-function labGuess() {   // and over my head, how I got there
+function labGuess() {
   PS.lthink = '0\\%'; PS.lthinkP = 0; PS.wrong = 0; PS.cross = 0; ptw('lside', 1, 1.4); ptw('lfig', 1, 1.0, { delay: 0.8 });
-  ptw('lthinkP', 1, 0.6, { delay: 1.7, ease: linear });
-  return ptw('wrong', 1, 1.6, { delay: 2.4, ease: linear });
+  return ptw('lthinkP', 1, 0.6, { delay: 1.7, ease: linear });
 }
+// 24b: over my head, how I got there
+function labWrong() { return ptw('wrong', 1, 1.6, { ease: linear }); }
 // 25: "But that's not what happens": the sum is crossed out. 25b: back from the aside, the light carries on and it reads
 // twenty-five. 25c: a third box, twelve and a half.
 function labCross() { return ptw('cross', 1, 0.8, { ease: linear }); }

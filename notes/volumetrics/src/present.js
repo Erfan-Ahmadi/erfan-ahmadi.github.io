@@ -127,6 +127,7 @@ const BEATS = [
   { n: '23', name: 'the copy', run: () => labCopy() },
   { n: '23b', name: 'a second box', run: () => labSecond() },
   { n: '24', name: 'zero?', run: () => labGuess() },
+  { n: '24b', name: 'how I got zero', run: () => labWrong() },
   { n: '25', name: "that's not what happens", run: () => labCross() },
   { n: '25b', name: 'twenty-five', run: () => labReveal() },
   { n: '25c', name: 'a third box', run: () => labThird() },
