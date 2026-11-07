@@ -31,7 +31,7 @@ The working script below has light edits; the original drafts, word for word, ar
 
 ## Part 2: what this is, and what we keep
 
-**15.–15g.** [Seven presses, at "This video isn't a shader tutorial", "and it isn't a physics lecture", "It's the part in between", "By the end of this series", "the physics and the math", "derive it yourself" and "And most importantly". The cards and the equation go, and the equation stays away from here until it has been earned, late in the series. A small raymarcher with its shader code fades in at the left end, an arrow under it. The arrow walks to the right, drawing a line behind it, and a small physics lecture's chalkboard, scribbles and sketches with nothing readable, comes in at that end. (The presentation still shows them the other way round; to be swapped.) The arrow walks back to the middle and sways back and forth there from then on. Then the whole spectrum moves into an aside at the top, still swaying; under it, "Goals:" comes in on the left, and the figure walks over to the right. Then one bullet per press: "the physics and math behind the intimidating look"; "derive it yourself", while a copy of the figure, "WTF?!" and all, walks out to the right along a growing arrow, its readout widening and the "WTF?!" reshaping into "I understand it now" on the way, "Now" under the first, "Then" under the copy. As soon as the copy sets off, the first figure, its "WTF?!" and its "Now" fade to grey: the past; "a model, not a law: its assumptions and limits".]
+**15.–15g.** [Seven presses, at "This video isn't a shader tutorial", "and it isn't a physics lecture", "It's the part in between", "By the end of this series", "the physics and the math", "derive it yourself" and "And most importantly". The cards and the equation go, and the equation stays away from here until it has been earned, late in the series. A small raymarcher with its shader code fades in at the left end, an arrow under it. The arrow walks to the right, drawing a line behind it, and a small physics lecture's chalkboard, scribbles and sketches with nothing readable, comes in at that end. The arrow walks back to the middle and sways back and forth there from then on. Then the whole spectrum moves into an aside at the top, still swaying; under it, "Goals:" comes in on the left, and the figure walks over to the right. Then one bullet per press: "the physics and math behind the intimidating look"; "derive it yourself", while a copy of the figure, "WTF?!" and all, walks out to the right along a growing arrow, its readout widening and the "WTF?!" reshaping into "I understand it now" on the way, "Now" under the first, "Then" under the copy. As soon as the copy sets off, the first figure, its "WTF?!" and its "Now" fade to grey: the past; "a model, not a law: its assumptions and limits".]
 > This video isn't a shader tutorial, and it isn't a physics lecture. It's the part in between. By the end of this series, I want the physics and the math to feel so intuitive that you could derive it yourself. And most importantly, I want you to see that this isn't a law of nature to accept blindly. It's a simplified model of the real world, with its own assumptions and limits. So, forget the symbols for a minute.
 
 **16.** [The aside, the goals and both figures go; the figure isn't needed from here on, and what follows sits in the middle of the stage. No formula: the caption alone writes in, large at the top: "light, travelling some distance, through some stuff."]
@@ -46,9 +46,7 @@ The working script below has light edits; the original drafts, word for word, ar
 
 ## Part 3: only absorption, and the first formula
 
-(Beats 21 on are narration and directions only; their visuals are not built yet.)
-
-**21.** [The three field cards go; the laser, the box of plain stuff and the sensor take the whole stage. Then the dishonesty, shown on this very box: the beam hits the specks and breaks into rays off them, and the stuff around the beam glows a faint red: scattering.]
+**21.** [The three field cards and the caption go, and the box grows out of its card until the laser, the box of plain stuff and the sensor fill the stage. Then the dishonesty, shown on this very box: the beam hits the specks and breaks into rays off them, and the stuff around the beam glows a faint red: scattering.]
 > For the rest of this video I'm going to be slightly dishonest. I'll assume our stuff doesn't scatter light,
 
 **21b.** [The scattering stops. Each speck glows red on its own, and the beam dims a little so the glow shows: emission.]
@@ -60,28 +58,28 @@ The working script below has light edits; the original drafts, word for word, ar
 **22.** [The sensor's reading appears for the first time: 50%.]
 > So they take some of the laser's light, and less of it makes it to the other end. How much less? That's what the sensor is for. Here it reads fifty percent: half the light made it through.
 
-**23.** [The whole setup is copied, and the copy slides down to the bottom half of the stage. In the copy, a second identical box slides in from the right beside the first, the laser and the sensor moving outward to make room. The copy's sensor reads "?". So: above, one box and 50%; below, two boxes and "?".]
+**23.** [The whole setup is copied, and the copy slides down to the bottom half of the stage. In the copy, a second identical box slides in from the right beside the first, the laser and the sensor moving outward to make room, and the copy's reading reshapes from 50% into "?". So: above, one box and 50%; below, two boxes and "?".]
 > Now, a question. What if I put a second, identical box right next to this one? What does the sensor read now? Pause and try to answer, if you want.
 
 **24.** [The stick figure comes in, its readout "0%".]
 > It's natural to say zero. One box took half the light, so two should take all of it.
 
-**25.** [The figure's readout goes. The copy's sensor settles on 25%. A third box slides in the same way: 12.5%.]
-> But that's not what happens. The sensor reads twenty-five percent. Add a third box: twelve and a half. Each box halves the light that enters it. That's exactly what exponential means: multiplying by a fixed fraction, again and again.
+**25.–25b.** [The figure and its readout go, and the copy's reading reshapes from "?" into 25%. Next press, a third box slides in the same way, and the reading reshapes into 12.5%.]
+> But that's not what happens. The sensor reads twenty-five percent. [25b] Add a third box: twelve and a half. Each box halves the light that enters it. That's exactly what exponential means: multiplying by a fixed fraction, again and again.
 
-**26.** [The single-box setup goes. The formula writes in, just $e^{-\sigma d}$ (the symbol in the exponent is still to be chosen; the full form with $I_0$ waits for the very end of the video), and under it a plot: light through against distance. The curve draws from left to right with a dot riding it; under the plot, the box grows along with the dot.]
+**26.** [The single-box setup goes. The formula writes in, just $e^{-\sigma d}$ (the symbol in the exponent is still to be chosen; the full form with $I_0$ waits for the very end of the video), and under it a plot: the light that gets through, 100% at the top, against the distance $d$, in box lengths, so the curve passes 50%, 25% and 12.5% at one, two and three boxes. The curve, in the laser's red, draws from left to right with a dot riding it; under the plot, the box grows along with the dot, its left end at the plot's 0 and its right end under the dot, a faint dashed line joining the two; the laser before it, the sensor after it, reading what the curve says.]
 > This behaviour has a formula, and you may have heard its name: the Beer–Lambert law. Let's see it in action.
 
-**27.** [The dot runs back and forth along the curve; the box grows and shrinks with it, and the sensor reads what the curve says.]
+**27.** [The dot runs back and forth along the curve; the box grows and shrinks with it, and the sensor reads what the curve says. It stops at two boxes: 25%.]
 > Notice how the further the light has to travel through our stuff, the less of it makes it out the other end.
 
-**28.** [The constant in the exponent is highlighted. As it goes up, the stuff looks denser, the curve drops faster and the sensor reads less; as it goes down, the stuff thins out and the curve flattens. The box stays still for this; only the stuff and the curve change. (Production note: everything on screen should serve a purpose, especially with two synced views, where a viewer is easily confused.)]
-> And notice how the more absorbing the stuff is, the quicker it dims the light. That absorptivity is this number in the exponent. Turn it up, and the stuff thickens and less light gets through. Turn it down, and more does.
+**28.–28b.** [The constant in the exponent lights up in yellow and goes up: the stuff looks denser, the curve drops faster and the sensor reads less. Next press, it goes down: the stuff thins out and the curve flattens. The box stays still for this; only the stuff and the curve change. (Production note: everything on screen should serve a purpose, especially with two synced views, where a viewer is easily confused.)]
+> And notice how the more absorbing the stuff is, the quicker it dims the light. That absorptivity is this number in the exponent. Turn it up, and the stuff thickens and less light gets through. [28b] Turn it down, and more does.
 
-**29.** [The constant goes to zero: the curve flattens into a line at 1, and the box empties.]
+**29.** [The constant goes to zero: the curve flattens into a line at 100%, the box empties and the sensor reads 100%; "= 1" comes in after the formula.]
 > And when that number is zero, this is just one: everything gets through. Nothing is absorbed. There is no stuff: it's a vacuum.
 
-**30.** [A vertical stack: $2^{-ax}$, $3^{-bx}$, $10^{-cx}$, …; an arrow to the right, and every base becomes $e$.]
+**30.** [The plot, the box and the formula go. A vertical stack writes in: $2^{-ad}$, $3^{-bd}$, $10^{-cd}$, ⋮; an arrow to the right, and a copy of each reshapes into the same thing with base $e$ and a new constant: $e^{-a'd}$, $e^{-b'd}$, $e^{-c'd}$, ⋮.]
 > If you're a little rusty on calculus and wondering why the number $e$ is in there, roughly 2.718, I have to say: there's nothing special about it. You could use any base: two, three, ten. We just rewrite them all with base $e$, because $e$ makes integrals and differential equations a little easier to work with. You don't have to worry about that here.
 
 **31.** [An aside, the device for every "you might be asking": the stick figure comes back, its readout "but why exponential?".]
@@ -92,8 +90,7 @@ The working script below has light edits; the original drafts, word for word, ar
 ## Open
 
 - The cards in beats 12–14 hold TODO placeholders for the animations that answer them.
-- The spectrum in beat 15 is to be swapped in the presentation: shader tutorial first, physics lecture second.
 - What the box holds once the body starts, the example the rest of the video keeps, is open. For now it is plain stuff.
 - The symbol for the constant in the exponent (beat 26 on) is to be chosen.
 - The formula stays $e^{-\sigma d}$ throughout. The full form, and how it turns into the version with emission, comes at the very end of the video, as the lead into the next one.
-- Beats 21–31: visuals to build.
+- The quiz's three readings aren't marked on the curve in beat 26. They could be: dots at one, two and three boxes, at 50%, 25% and 12.5%.
