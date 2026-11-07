@@ -79,7 +79,18 @@ function drawGlow(ctx, B, a) {
     dot(ctx, x, y, 4, '#FF5A4A', a * p);
   }
 }
-// Over each box of the bottom row, once its light is shown: what it does to what comes in. The ½ is in the lavender of
+// Beat 25d, "multiplying by a fixed fraction, again and again": the bottom row plays it over and over. One box,
+// 100% × ½ = 50%; a second slides in, 50% × ½ = 25%, the reading halving as it comes; a third, 25% × ½ = 12.5%; a
+// moment to look; then it jumps back to one box and goes again. Worked out from the time u into the loop, so stepping
+// around the presentation can't leave it half done.
+const LOOP = { P: 8.4 };
+function labLoopAt(u) {
+  const ss = (a, b) => smooth(clamp((u - a) / (b - a), 0, 1)), wr = (a) => clamp((u - a) / 0.6, 0, 1);
+  const c = 1 + ss(1.5, 2.9) + ss(3.9, 5.3);
+  const [from, to, m] = u < 1.5 ? ['', '50%', 1] : u < 3.9 ? ['50%', '25%', clamp((u - 1.5) / 1.2, 0, 1)] : ['25%', '12.5%', clamp((u - 3.9) / 1.2, 0, 1)];
+  return { c, from, to, m, mult: [wr(0.3), wr(2.2), wr(4.6)], fade: Math.min(clamp(u / 0.3, 0, 1), clamp((LOOP.P - u) / 0.3, 0, 1)) };
+}
+// Over each box of the bottom row, in the loop: what it does to what comes in. The ½ is in the lavender of
 // the wrong sum's −50% in beat 24: minus a half becomes times a half.
 const LHALF = String.raw`\textcolor{${COL.lavender}}{\tfrac{1}{2}}`, LRES = (v) => String.raw`\textcolor{${COL.yellow}}{${v}\%}`;
 const LMULT = [['100', '50'], ['50', '25'], ['25', '12.5']].map(([a, b]) => String.raw`${a}\% \times ${LHALF} = ${LRES(b)}`);
@@ -101,7 +112,8 @@ function drawLabRow(ctx, X, o, alpha) {
   // the beam: every box it crosses takes half of what enters it
   const T = (x) => { let tau = 0; for (const b of L.boxes) tau += b.a * ln2 * clamp(x - b.x0, 0, LAB.BW); return Math.exp(-tau); }, knots = [];
   for (const b of L.boxes) knots.push(b.x0, b.x0 + LAB.BW);
-  const power = SH.I0 * (1 - 0.45 * (o.glow || 0)), cut = L.boxes[0].x0 + LAB.BW, end = L.sensor - 18, myst = clamp(o.myst || 0, 0, 1);
+  // cut: where the second box begins (the first box's end and the gap after it), past which the light is the question
+  const power = SH.I0 * (1 - 0.45 * (o.glow || 0)), cut = L.boxes[0].x0 + LAB.BW + LAB.G, end = L.sensor - 18, myst = clamp(o.myst || 0, 0, 1);
   const front = lerp(cut, end, clamp(o.rev ?? 1, 0, 1)), past = 1 - smooth(myst);
   drawBeam(ctx, L.laser, cut + 0.5, 0, SH.color, power, T, knots);   // through the first box, as we know it
   if (front > cut + 1 && past > 0.003) drawBeam(ctx, cut, front, 0, SH.color, power * past, T, knots);
@@ -252,7 +264,11 @@ function drawLabStage(ctx, dt, st) {
     const out = 1 - smooth(clamp(st.rowsOut, 0, 1)), x = smooth(clamp(st.labX, 0, 1)), sp = smooth(clamp(st.split, 0, 1));
     const X1 = mixXf(mixXf(labCardXf(st), LABXF.full, x), LABXF.top, sp);
     drawLabRow(ctx, X1, { c: 1, scat: st.scat, glow: st.glow, from: '', to: '50%', m: 1, read: smooth(clamp(st.read1, 0, 1)) }, out);
-    if (sp > 0.003) drawLabRow(ctx, mixXf(LABXF.full, LABXF.bot, sp), { c: st.c2, from: st.r2From, to: st.r2, m: st.r2M, read: smooth(clamp(st.read2, 0, 1)), pop: true, myst: st.myst, rev: st.rev, mult: st.mult }, out);
+    if (sp > 0.003) {
+      let o = { c: st.c2, from: st.r2From, to: st.r2, m: st.r2M, read: smooth(clamp(st.read2, 0, 1)), pop: true, myst: st.myst, rev: st.rev }, al = out * (1 - smooth(clamp(st.rowFade, 0, 1)));
+      if (st.loopOn) { const Q = labLoopAt(reduced ? 6 : (((TIME - st.loopT0) % LOOP.P) + LOOP.P) % LOOP.P); o = { ...o, ...Q, read: 1, myst: 0, rev: 1 }; al *= Q.fade; }
+      drawLabRow(ctx, mixXf(LABXF.full, LABXF.bot, sp), o, al);
+    }
   }
   drawLabPlot(ctx, st);
   drawLabBases(ctx, st);
@@ -288,17 +304,20 @@ function labGuess() {   // and over my head, how I got there
   return ptw('wrong', 1, 1.6, { delay: 2.4, ease: linear });
 }
 // 25: "But that's not what happens": the sum is crossed out. 25b: back from the aside, the light carries on and it reads
-// twenty-five, each box's multiplication over it. 25c: a third box, twelve and a half.
+// twenty-five. 25c: a third box, twelve and a half.
 function labCross() { return ptw('cross', 1, 0.8, { ease: linear }); }
 function labReveal() {
   ptw('lfig', 0, 0.5); ptw('wrong', 0, 0.5); ptw('cross', 0, 0.5); ptw('lside', 0, 1.2, { delay: 0.2 });
-  PS.mult = [0, 0, 0];
-  ptwi(PS.mult, 0, 1, 0.8, { delay: 1.3, ease: linear });   // the first box, as we know it: 100% × ½ = 50%
-  ptw('myst', 0, 0.5, { delay: 1.3 }); ptw('rev', 1, 1.0, { delay: 2.0, ease: linear });
-  ptwi(PS.mult, 1, 1, 0.8, { delay: 2.5, ease: linear });   // the second, as the light comes through it: 50% × ½ = 25%
-  return labRead2('25%', 0.9, 2.9);
+  ptw('myst', 0, 0.5, { delay: 1.3 }); ptw('rev', 1, 1.0, { delay: 1.6, ease: linear });
+  return labRead2('25%', 0.9, 2.5);
 }
-function labThird() { PS.mult[2] = 1; labRead2('12.5%', 1.2); return ptw('c2', 3, 1.4); }   // the box slides in with its sum, the reading changing as it comes
+function labThird() { labRead2('12.5%', 1.2); return ptw('c2', 3, 1.4); }   // the reading changes as the box slides in
+// 25d: the bottom row fades, and the loop starts from one box
+async function labLoop() {
+  const g = PRES.gen;
+  await ptw('rowFade', 1, 0.35); if (!labAlive(g)) return;
+  PS.loopT0 = TIME; PS.loopOn = 1; PS.rowFade = 0;
+}
 // 26: the rows go; e^{−σd} writes in, the plot under it, and the curve draws with its dot, the box growing under it
 async function labFormula() {
   ptw('rowsOut', 1, 0.7); ptw('fml', 1, 1.2, { delay: 0.5, ease: linear }); ptw('axC', 1, 1.0, { delay: 1.2 });
