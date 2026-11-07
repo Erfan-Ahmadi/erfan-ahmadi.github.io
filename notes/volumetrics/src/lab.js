@@ -154,7 +154,7 @@ function drawLabRow(ctx, X, o, alpha) {
 const LP = { L: 520, R: 1440, T: 250, B: 560, top: 690, bot: 870, beam: 780, size: 100, y: 140 }, LPD = 3;   // LPD: the plot's length, in boxes
 let LPA = null;
 const lpAxes = () => LPA || (LPA = makeAxes({ L: LP.L, R: LP.R, T: LP.T, B: LP.B, xr: [0, LPD, 1], yr: [0, 1, 0.5], ext: 40, xl: 'd', yl: '', labSize: 54, numSize: 28 }));
-const PFML = String.raw`e^{-\htmlClass{t-sig}{\sigma}\,d}`, PFML1 = PFML + String.raw`\mathrel{\htmlClass{t-eq1}{=}}\htmlClass{t-eq1}{1}`;
+const PFML = String.raw`e^{-\htmlClass{t-sig}{\sigma}\,\htmlClass{t-ld}{d}}`, PFML1 = PFML + String.raw`\mathrel{\htmlClass{t-eq1}{=}}\htmlClass{t-eq1}{1}`;
 let lpFml = null;
 function lpFormula() {   // laid out once: e^{−σd} centred, "= 1" after it, so it doesn't move when that comes in
   if (lpFml) return lpFml;
@@ -165,13 +165,13 @@ function lpFormula() {   // laid out once: e^{−σd} centred, "= 1" after it, s
 const LPSPECKS = Array.from({ length: 320 }, (_, i) => { const k = i % 160, c = k % 40, r = Math.floor(k / 40); return [(c + 0.15 + 0.7 * hash1(i * 3 + 1)) / 40, (r + 0.15 + 0.7 * hash1(i * 3 + 2)) / 4, hash1(i * 3 + 3) * 2 * Math.PI]; });
 function drawLabPlot(ctx, st) {
   const a = 1 - smooth(clamp(st.plotOut, 0, 1)); if (a <= 0.003 || st.fml <= 0.003) return;
-  const A = lpAxes(), F = lpFormula(), sig = Math.max(0, st.sig) * Math.LN2, f = (x) => Math.exp(-sig * x), ax = smooth(clamp(st.axC, 0, 1));
+  const A = lpAxes(), F = lpFormula(), sig = Math.max(0, st.sig) * Math.LN2, f = (x) => Math.exp(-sig * x), ax = smooth(clamp(st.axC, 0, 1)), Fo = labFocus(st);
   TERM_COL['t-sig'] = hexRgb(COL.yellow);
-  drawSprites(ctx, F.main, { p: st.fml, alpha: a, hi: { 't-sig': smooth(clamp(st.sigHi, 0, 1)) } });
+  drawLabFormula(ctx, F, st, a); drawLabPanel(ctx, st, a);
   if (st.eq1 > 0.003) drawSprites(ctx, F.eq1, { alpha: a * smooth(clamp(st.eq1, 0, 1)) });
   if (ax <= 0.003) return;
   ctx.save(); ctx.globalAlpha = a;
-  drawAxes(ctx, A, { c: ax, nums: 0, lab: ax });
+  drawAxes(ctx, A, { c: ax, nums: 0, lab: ax, xlColor: Fo.c > 0.003 ? mixRgb(WHITE_RGB, hexRgb(LDCOL), Fo.c) : null });
   for (const [v, s] of [[1, '100%'], [0.5, '50%']]) drawTex(ctx, String.raw`\text{${s.replace('%', '\\%')}}`, A.ox - 22, A.Y(v), 28, { ax: 1, alpha: ax });
   const d = clamp(st.dotD, 0, LPD), X0 = A.X(0), Xd = A.X(d), y = LP.beam, H = LP.bot - LP.top;
   drawCurve(ctx, A, f, { p: clamp(st.curveTo, 0, LPD) / LPD, from: 0, to: LPD, color: SH.color, width: 6 });
@@ -184,7 +184,7 @@ function drawLabPlot(ctx, st) {
     LPSPECKS.forEach(([u, v, ph], i) => {
       const al = i < 160 ? ra : rb; if (al <= 0.003) return;
       const x = X0 + 10 + u * (A.X(LPD) - X0 - 20) + (reduced ? 0 : 4 * Math.sin(TIME * 0.9 + ph)), yy = LP.top + 10 + v * (H - 20) + (reduced ? 0 : 4 * Math.cos(TIME * 0.7 + 1.3 * ph));
-      dot(ctx, x, yy, 3, COL.yellow, 0.62 * al);
+      dot(ctx, x, yy, 3, COL.yellow, Math.min(1, 0.62 * al * (1 + 0.45 * Fo.s)));
     });
     ctx.restore();
   }
@@ -192,6 +192,11 @@ function drawLabPlot(ctx, st) {
   ctx.save(); ctx.globalAlpha = a * ax;
   drawBeam(ctx, X0 - 26, xs - 11, y, SH.color, SH.I0, T, [X0, Xd]);
   if (w > 1) { ctx.strokeStyle = COL.greyA; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(X0, LP.top, w, H, Math.min(12, w / 2)); ctx.stroke(); }
+  if (Fo.c > 0.003 && w > 1) {   // option 1: a brace under the box, d in its blue, stretching with it
+    const al = Fo.c * (0.7 + 0.3 * clamp(st.dAct || 0, 0, 1)), cx = X0 + w / 2;
+    drawBrace(ctx, cx, LP.bot + 16, w, 24, 6, hexRgb(LDCOL), al);
+    drawTex(ctx, 'd', cx, LP.bot + 84, 60, { alpha: al, color: LDCOL });
+  }
   ctx.save(); ctx.translate(X0 - 26, y); ctx.scale(0.6, 0.6); drawLaser(ctx, 0, 0, SH.color, 1); ctx.restore();
   ctx.save(); ctx.translate(xs, y); ctx.scale(0.6, 0.6); drawSensor(ctx, 0, 0, SH.color, f(d) * SH.I0); ctx.restore();
   const v = f(d) * 100; drawNumber(ctx, v, xs + 30, y - 44, { size: 44, dec: Math.abs(v - Math.round(v)) < 0.05 ? 0 : 1, suffix: '%', alpha: a * ax });   // 50%, 25%, 12.5%
@@ -204,6 +209,70 @@ function drawLabPlot(ctx, st) {
   }
   ctx.restore();
   ctx.restore();
+}
+// Which of σ and d is changing (beats 27–29): the bench's "σ or d?" tab tries four ways to show it, alone or together;
+// the presentation uses none of them yet (its state has none of these keys, so the plot is drawn as before).
+// ind1, colour, brace and focus: d in blue (the blue the boxes were counted in at beat 24), on the formula, the axis and
+// a brace under the box; σ in its yellow, the specks' colour; the one changing lit and a little bigger, the other dimmed.
+// ind2, live values; ind3, the numbers in the formula; ind4, two small sliders. sAct and dAct (0 to 1): how much σ or d
+// is changing right now.
+const LDCOL = COL.blue;
+const labFocus = (st) => { const c = smooth(clamp(st.ind1 || 0, 0, 1)); return { c, s: c * clamp(st.sAct || 0, 0, 1), d: c * clamp(st.dAct || 0, 0, 1) }; };
+function drawLabFormula(ctx, F, st, a) {
+  const hiS = smooth(clamp(st.sigHi, 0, 1)), num = smooth(clamp(st.ind3 || 0, 0, 1)), Fo = labFocus(st), sym = a * (1 - num);
+  if (sym > 0.003) {
+    if (Fo.c <= 0.003 || st.fml < 1) drawSprites(ctx, F.main, { p: st.fml, alpha: sym, hi: { 't-sig': hiS } });
+    else for (const s of F.main) {
+      const isS = s.a.terms.includes('t-sig'), isD = s.a.terms.includes('t-ld'), base = ink(s.color);
+      const col = isS ? mixRgb(base, hexRgb(COL.yellow), Math.max(hiS, Fo.c)) : isD ? mixRgb(base, hexRgb(LDCOL), Fo.c) : base;
+      const al = s.alpha * sym * (isS ? 1 - 0.65 * Fo.d : isD ? 1 - 0.65 * Fo.s : 1 - 0.35 * Math.max(Fo.s, Fo.d));
+      const k = 1 + 0.22 * (isS ? Fo.s : isD ? Fo.d : 0);
+      if (k < 1.001) { drawSprite(ctx, s, al, col); continue; }
+      const [l, r, t, b] = inkBox(s), cx = (l + r) / 2, cy = (t + b) / 2;
+      ctx.save(); ctx.translate(cx, cy); ctx.scale(k, k); ctx.translate(-cx, -cy); drawSprite(ctx, s, al, col); ctx.restore();
+    }
+  }
+  if (num > 0.003) drawLabNumbers(ctx, st, a * num);
+}
+// ind3: the formula with its numbers in: σ per box (ln 2 ≈ 0.69 at the usual σ, the only value that gives the readings)
+// and d in boxes, then what the sensor reads; a little smaller than e^{−σd}, from a fixed left edge that centres its
+// widest form, so nothing jitters as the numbers change and it stays clear of the panel at the top right.
+const rgbHex = (c) => '#' + c.map((v) => clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0')).join('');
+let lnX = null; const LNS = 88;
+function drawLabNumbers(ctx, st, a) {
+  const sv = Math.max(0, st.sig) * Math.LN2, dv = clamp(st.dotD, 0, LPD), v = Math.exp(-sv * dv) * 100;
+  const dc = rgbHex(mixRgb(WHITE_RGB, hexRgb(LDCOL), smooth(clamp(st.ind1 || 0, 0, 1))));
+  const src = (s, d, r) => String.raw`e^{-\textcolor{${COL.yellow}}{${s}}\times\textcolor{${dc}}{${d}}}\approx ${r}\%`;
+  if (lnX == null) lnX = 960 - (tex(src('0.69', '2.0', '68.1')).w * LNS) / 2;
+  drawTex(ctx, src(sv.toFixed(2), dv.toFixed(1), fmtNum(v, Math.abs(v - Math.round(v)) < 0.05 ? 0 : 1)), lnX, LP.y, LNS, { ax: 0, alpha: a });
+}
+// ind2 and ind4, at the top right, clear of the formula even with its numbers in: σ and d as values and/or small
+// sliders, the one changing bright and the other dim; σ relative to the usual (×2) or per box (0.69), d in boxes.
+const LPAN = { x: 1475, y: [118, 192], t0: 1517, t1: 1715, size: 50 };
+function drawLabPanel(ctx, st, a) {
+  const live = smooth(clamp(st.ind2 || 0, 0, 1)), sl = smooth(clamp(st.ind4 || 0, 0, 1)), on = Math.max(live, sl);
+  if (on <= 0.003 || a <= 0.003) return;
+  const c = smooth(clamp(st.ind1 || 0, 0, 1)), sA = clamp(st.sAct || 0, 0, 1), dA = clamp(st.dAct || 0, 0, 1), s = Math.max(0, st.sig), d = clamp(st.dotD, 0, LPD);
+  const rows = [
+    { sym: String.raw`\sigma`, col: hexRgb(COL.yellow), f: s / 2, act: sA, other: dA, txt: st.sigAs === 'abs' ? '= ' + fmtNum(s * Math.LN2, 2) : '×' + fmtNum(s, 1) },
+    { sym: 'd', col: mixRgb(WHITE_RGB, hexRgb(LDCOL), c), f: d / LPD, act: dA, other: sA, txt: '= ' + fmtNum(d, 1) },
+  ];
+  rows.forEach((r, i) => {
+    const yb = LPAN.y[i], al = a * on * (1 - 0.6 * r.other * (1 - r.act)), ym = yb - 0.3 * LPAN.size, T = tex(r.sym);
+    drawSprites(ctx, place(T, { x: LPAN.x, y: yb - place(T, { x: 0, y: 0, size: LPAN.size })[0].base, size: LPAN.size }), { alpha: al, color: r.col });
+    if (sl > 0.003) {   // a track, filled up to the value in the symbol's colour, and its knob
+      const xv = lerp(LPAN.t0, LPAN.t1, clamp(r.f, 0, 1));
+      ctx.save(); ctx.lineCap = 'round'; ctx.lineWidth = 6;
+      ctx.strokeStyle = hexA(COL.greyD, al * sl); ctx.beginPath(); ctx.moveTo(LPAN.t0, ym); ctx.lineTo(LPAN.t1, ym); ctx.stroke();
+      ctx.strokeStyle = rgba(r.col, al * sl); ctx.beginPath(); ctx.moveTo(LPAN.t0, ym); ctx.lineTo(xv, ym); ctx.stroke();
+      ctx.fillStyle = rgba(r.col, al * sl); ctx.beginPath(); ctx.arc(xv, ym, 11 + 3 * r.act, 0, 2 * Math.PI); ctx.fill();
+      ctx.restore();
+    }
+    if (live > 0.003) {
+      ctx.save(); ctx.font = cm(LPAN.size * 1.21); ctx.textBaseline = 'alphabetic'; ctx.fillStyle = rgba(r.col, al * live);
+      ctx.fillText(sl > 0.5 ? r.txt.replace(/^= /, '') : r.txt, lerp(LPAN.x + 34, LPAN.t1 + 34, sl), yb); ctx.restore();
+    }
+  });
 }
 // Beat 30: any base will do: 2, 3, 10, …, each equal to the same thing with base e, the change of base a number in
 // the exponent (ln 2, ln 3, ln 10, rounded); σ keeps its yellow from beat 28. Each row is set as one formula, so its =
@@ -365,3 +434,40 @@ function labWhy() {
   PS.lthink = 'but why exponential?'; PS.lthinkP = 0; ptw('lside', 1, 1.4); ptw('lfig', 1, 1.0, { delay: 0.8 });
   return ptw('lthinkP', 1, 1.0, { delay: 1.7, ease: linear });
 }
+
+// ---------- σ or d? (the bench only, not the presentation) ----------
+// Beats 26–29's formula, plot and box, to try the four ways above of showing which of σ and d is changing, alone or
+// together. Which one is changing is worked out from how they move, so the buttons and the sliders under the stage
+// both show it.
+const SSD = defScene({
+  id: 'sigd', tab: 'σ or d?',
+  defaults: () => ({ fml: 1, axC: 1, curveTo: LPD, dotD: 2, sig: 1, sigHi: 1, eq1: 0, plotOut: 0, ind1: 1, ind2: 0, ind3: 0, ind4: 0, sigAs: 'rel', sAct: 0, dAct: 0 }),
+  actions: [
+    { id: 'dist', label: 'Change d', primary: true, run: async (st, alive) => {
+      await tween(st, 'dotD', 0.4, 1.3); if (!alive()) return; await tween(st, 'dotD', LPD, 2.6); if (!alive()) return; await tween(st, 'dotD', 2, 1.2);
+    } },
+    { id: 'more', label: 'More absorbing', run: (st) => tween(st, 'sig', 2, 1.6) },
+    { id: 'less', label: 'Less absorbing', run: (st) => tween(st, 'sig', 0.5, 1.9) },
+    { id: 'vacuum', label: 'Vacuum', run: (st) => tween(st, 'sig', 0, 1.8) },
+    { id: 'usual', label: 'Usual σ', run: (st) => tween(st, 'sig', 1, 1.4) },
+    RESET,
+  ],
+  params: [
+    { type: 'check', key: 'ind1', label: '1 · Colour, brace and focus', set: (v) => tween(SSD, 'ind1', v ? 1 : 0, 0.5) },
+    { type: 'check', key: 'ind2', label: '2 · Live values', set: (v) => tween(SSD, 'ind2', v ? 1 : 0, 0.5) },
+    { type: 'select', key: 'sigAs', label: '2 · σ shown as', options: [['rel', '×1, relative to the usual'], ['abs', '0.69 per box']] },
+    { type: 'check', key: 'ind3', label: '3 · Numbers in the formula', set: (v) => tween(SSD, 'ind3', v ? 1 : 0, 0.6) },
+    { type: 'check', key: 'ind4', label: '4 · Sliders', set: (v) => tween(SSD, 'ind4', v ? 1 : 0, 0.5) },
+    { type: 'range', key: 'sig', label: 'σ (× usual)', min: 0, max: 2, step: 0.01, fmt: (v) => v.toFixed(2), set: (v) => { untween(SSD, 'sig'); SSD.sig = v; } },
+    { type: 'range', key: 'dotD', label: 'd (boxes)', min: 0.05, max: LPD, step: 0.01, fmt: (v) => v.toFixed(2), set: (v) => { untween(SSD, 'dotD'); SSD.dotD = v; } },
+  ],
+  draw: (ctx, dt, st) => {
+    // what's changing, from how σ and d move between frames, held half a second after they stop so the focus doesn't flicker
+    if (st.pS != null && Math.abs(st.sig - st.pS) > 1e-5) st.tS = TIME;
+    if (st.pD != null && Math.abs(st.dotD - st.pD) > 1e-5) st.tD = TIME;
+    st.pS = st.sig; st.pD = st.dotD;
+    const k = 1 - Math.exp(-Math.max(0, dt) / 0.12), on = (t) => (t != null && TIME - t < 0.5 ? 1 : 0);
+    st.sAct += (on(st.tS) - st.sAct) * k; st.dAct += (on(st.tD) - st.dAct) * k;
+    drawLabPlot(ctx, st);
+  },
+});

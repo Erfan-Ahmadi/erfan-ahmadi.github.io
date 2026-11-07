@@ -261,7 +261,7 @@ function drawSprites(ctx, sprites, { p = 1, alpha = 1, color = null, hi = null, 
 }
 function drawTex(ctx, src, x, y, size, { ax = 0.5, ay = 0.5, p = 1, alpha = 1, color = null } = {}) {
   const sp = place(tex(src), { x, y, size, ax, ay });
-  drawSprites(ctx, sp, { p, alpha, color: color ? hexRgb(color) : null });
+  drawSprites(ctx, sp, { p, alpha, color: color ? (Array.isArray(color) ? color : hexRgb(color)) : null });
   return sp;
 }
 
@@ -983,7 +983,7 @@ function drawAxes(ctx, A, st) {
   ctx.restore();
   const lab = st.lab ?? 1;
   if (lab > 0.003) {
-    if (A.xl) drawTex(ctx, A.xl, xe + 22, A.oy, A.labSize, { ax: 0, ay: 0.5, p: lab });
+    if (A.xl) drawTex(ctx, A.xl, xe + 22, A.oy, A.labSize, { ax: 0, ay: 0.5, p: lab, color: st.xlColor || null });
     if (A.yl) drawTex(ctx, A.yl, A.ox + 26, ye + 14, A.labSize, { ax: 0, ay: 0.8, p: lab });
   }
 }
