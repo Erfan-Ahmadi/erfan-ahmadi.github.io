@@ -5370,11 +5370,11 @@ function labLoopAt(u) {
   const [from, to, m] = u < 4.2 ? ['', '50%', 1] : u < 7.4 ? ['50%', '25%', lin(4.2, 5.0)] : ['25%', '12.5%', lin(7.4, 8.2)];
   return { c, from, to, m, mult: [lin(0.3, 0.8), lin(3.4, 3.9), lin(6.6, 7.1)], multM: [lin(1.1, 1.8), lin(4.2, 4.9), lin(7.4, 8.1)], fade: Math.min(clamp(u / 0.3, 0, 1), clamp((LOOP.P - u) / 0.3, 0, 1)) };
 }
-// Over each box of the bottom row, in the loop: what comes in, times a half, which then turns into what goes out (the
-// way manim transforms one formula into another). The ½ is in the lavender of the wrong sum's −50% in beat 24: minus a
-// half becomes times a half.
-const LHALF = String.raw`\textcolor{${COL.lavender}}{\tfrac{1}{2}}`, LRES = (v) => String.raw`\textcolor{${COL.yellow}}{${v}\%}`;
-const LMULT = ['100', '50', '25'].map((a) => String.raw`${a}\% \times ${LHALF}`), LOUT = ['50', '25', '12.5'].map((v) => LRES(v));
+// In the loop, where each box of the bottom row ends, with a small pointer under it: what came in, times a half, which
+// then turns into what comes out (the way manim transforms one formula into another). The × ½ is in the red of the
+// wrong sum's − 50% in beat 24, the red of light taken away: minus a half becomes times a half.
+const LHALF = String.raw`\textcolor{${COL.red}}{\times \tfrac{1}{2}}`, LRES = (v) => String.raw`\textcolor{${COL.yellow}}{${v}\%}`;
+const LMULT = ['100', '50', '25'].map((a) => String.raw`${a}\% ${LHALF}`), LOUT = ['50', '25', '12.5'].map((v) => LRES(v));
 let lmSp = null;
 const lmSprites = () => lmSp || (lmSp = LMULT.map((src, k) => { const A = place(tex(src), { x: 0, y: 0, size: 50 }), B = place(tex(LOUT[k]), { x: 0, y: 0, size: 54 }); return { A, B, P: reshapePlan(A, B) }; }));
 // One row: laser, c boxes, sensor, in the transform X. o: c, the readout (from, to, m, a), the scattering and glow;
@@ -5414,9 +5414,12 @@ function drawLabRow(ctx, X, o, alpha) {
   }
   drawLaser(ctx, L.laser, 0, SH.color, 1);
   drawSensor(ctx, L.sensor, 0, SH.color, front >= end - 1 ? T(end) * SH.I0 * past : 0);
-  if (o.mult) L.boxes.forEach((b, k) => {   // what each box does, over it: what comes in, times a half, turning into what goes out
+  if (o.mult) L.boxes.forEach((b, k) => {   // what comes out of each box, where it ends: what came in, times a half, turning into the result
     const p = clamp(o.mult[k] || 0, 0, 1), m = clamp((o.multM && o.multM[k]) || 0, 0, 1), S = lmSprites()[k]; if (p <= 0.003 || b.a <= 0.003 || !S) return;
-    ctx.save(); ctx.translate(b.x0 + LAB.BW / 2, LAB.top - 46);
+    ctx.save(); ctx.translate(b.x0 + LAB.BW + LAB.G / 2, LAB.top);
+    ctx.fillStyle = hexA(COL.greyB, b.a * smooth(clamp(p * 2, 0, 1)));   // the pointer, its tip just over the box's end
+    ctx.beginPath(); ctx.moveTo(0, -10); ctx.lineTo(-11, -30); ctx.lineTo(11, -30); ctx.closePath(); ctx.fill();
+    ctx.translate(0, -66);
     if (m <= 0.001) drawSprites(ctx, S.A, { p, alpha: b.a }); else if (m >= 0.999) drawSprites(ctx, S.B, { alpha: b.a }); else drawReshape(ctx, S.P, m, b.a);
     ctx.restore();
   });
@@ -5475,6 +5478,7 @@ function drawLabPlot(ctx, st) {
   if (st.curveTo > 0.003) {
     const px = A.X(d), py = A.Y(f(d));
     dashed(ctx, px, py + 12, px, LP.top - 4, COL.greyC, 0.8, 2);
+    if (px - 12 > A.X(0) + 2) dashed(ctx, px - 12, py, A.X(0), py, COL.greyC, 0.8, 2);   // and across to the y-axis: how much gets through
     dot(ctx, px, py, 11, SH.color, 1);
   }
   ctx.restore();
@@ -5521,9 +5525,11 @@ function drawLabBases(ctx, st) {
 // Beats 24 and 31: an aside, the way every aside with me goes (as in beat 2): what is on the stage shrinks into a card
 // of its own colour, moved over to the left, and I come in on the right with a thought.
 const LASIDE = [60, 110, 1120, 630];
-// Beat 24's guess, worked out over my head: the same amount off for every box. Beat 25: crossed out in red.
-const LWRONG = [String.raw`\textcolor{${COL.blue}}{1}\text{ box:}\quad 100\% - \textcolor{${COL.lavender}}{50\%} = ${LRES('50')}`,
-  String.raw`\textcolor{${COL.blue}}{2}\text{ boxes:}\quad 100\% - \textcolor{${COL.lavender}}{100\%} = ${LRES('0')}`];
+// Beat 24's guess, worked out over my head: the same amount off for every box, what's taken off, its minus and all, in
+// the red of light taken away. Beat 25: crossed out in red.
+const LOFF = (v) => String.raw`\textcolor{${COL.red}}{-${v}\%}`;
+const LWRONG = [String.raw`\textcolor{${COL.blue}}{1}\text{ box:}\quad 100\% ${LOFF('50')} = ${LRES('50')}`,
+  String.raw`\textcolor{${COL.blue}}{2}\text{ boxes:}\quad 100\% ${LOFF('100')} = ${LRES('0')}`];
 const LW = { x: 1225, y: [170, 240], size: 40 };
 function drawLabFigure(ctx, st) {
   const a = smooth(clamp(st.lfig, 0, 1)); if (a <= 0.003) return;
