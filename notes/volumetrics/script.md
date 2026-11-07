@@ -58,8 +58,8 @@ The working script below has light edits; the original drafts, word for word, ar
 **22.** [The sensor's reading appears for the first time: 50%.]
 > So they take some of the laser's light, and less of it makes it to the other end. How much less? That's what the sensor is for. Here it reads fifty percent: half the light made it through.
 
-**23.** [The whole setup is copied, without its readout, and the copy slides down to the bottom half of the stage. In the copy, a second identical box slides in from the right beside the first, the laser and the sensor moving outward to make room, and the light past the first box gives way to a row of "?" drifting through the second box to the sensor, which goes dark: nothing gives the answer away. Then a readout pops up on the copy's sensor: "?". So: above, one box and 50%; below, two boxes and "?".]
-> Now, a question. What if I put a second, identical box right next to this one? What does the sensor read now? Pause and try to answer, if you want.
+**23.–23b.** [The whole setup is copied, without its readout, and the copy slides down, slowly, to the bottom half of the stage. Next press, in the copy, a second identical box slides in from the right beside the first, the laser and the sensor moving outward to make room, and the light past the first box gives way to a row of "?" drifting through the second box to the sensor, which goes dark: nothing gives the answer away. Then a readout pops up on the copy's sensor: "?". So: above, one box and 50%; below, two boxes and "?".]
+> Now, a question. [23b] What if I put a second, identical box right next to this one? What does the sensor read now? Pause and try to answer, if you want.
 
 **24.** [An aside, as every aside with the stick figure goes (as in beat 2): both setups shrink into a card of their own colour, moved over to the left, and the figure comes in on the right, its readout "0%".]
 > It's natural to say zero. One box took half the light, so two should take all of it.

@@ -251,11 +251,11 @@ function labAbsorb() { return ptw('glow', 0, 0.9); }
 // 22: the sensor's reading, for the first time
 function labRead() { return ptw('read1', 1, 0.8); }
 function labRead2(text, dur, delay = 0) { PS.r2From = PS.r2; PS.r2 = text; PS.r2M = 0; return ptw('r2M', 1, dur, { delay, ease: linear }); }
-// 23: the whole setup is copied, without its readout; the copy slides down, and a second box slides in beside its
+// 23: the whole setup is copied, without its readout, and the copy slides down. 23b: a second box slides in beside its
 // first while the light past the first box gives way to a row of "?"; then a readout pops up on it: "?"
+function labCopy() { PS.r2 = '?'; PS.r2From = ''; PS.r2M = 1; PS.read2 = 0; PS.myst = 0; PS.rev = 1; return ptw('split', 1, 1.95); }
 async function labSecond() {
-  const g = PRES.gen; PS.r2 = '?'; PS.r2From = ''; PS.r2M = 1; PS.read2 = 0; PS.myst = 0; PS.rev = 1;
-  await ptw('split', 1, 1.3); if (!labAlive(g)) return;
+  const g = PRES.gen;
   ptw('myst', 1, 1.2); await ptw('c2', 2, 1.4); if (!labAlive(g)) return;
   PS.rev = 0;
   await ptw('read2', 1, 0.45);
