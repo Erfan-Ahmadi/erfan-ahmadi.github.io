@@ -79,7 +79,9 @@ function drawGlow(ctx, B, a) {
     dot(ctx, x, y, 4, '#FF5A4A', a * p);
   }
 }
-// One row: laser, c boxes, sensor, in the transform X. o: c, the readout (from, to, m, a), the scattering and glow.
+// One row: laser, c boxes, sensor, in the transform X. o: c, the readout (from, to, m, a), the scattering and glow;
+// myst hides what happens past the first box behind a row of "?" (the light past it is the question), and rev is how
+// far the beam has come back past the first box once the answer is shown.
 function drawLabRow(ctx, X, o, alpha) {
   if (alpha <= 0.003) return;
   const L = labLayout(o.c), ln2 = Math.LN2 / LAB.BW;
@@ -95,13 +97,24 @@ function drawLabRow(ctx, X, o, alpha) {
   // the beam: every box it crosses takes half of what enters it
   const T = (x) => { let tau = 0; for (const b of L.boxes) tau += b.a * ln2 * clamp(x - b.x0, 0, LAB.BW); return Math.exp(-tau); }, knots = [];
   for (const b of L.boxes) knots.push(b.x0, b.x0 + LAB.BW);
-  drawBeam(ctx, L.laser, L.sensor - 18, 0, SH.color, SH.I0 * (1 - 0.45 * (o.glow || 0)), T, knots);
+  const power = SH.I0 * (1 - 0.45 * (o.glow || 0)), cut = L.boxes[0].x0 + LAB.BW, end = L.sensor - 18, myst = clamp(o.myst || 0, 0, 1);
+  const front = lerp(cut, end, clamp(o.rev ?? 1, 0, 1)), past = 1 - smooth(myst);
+  drawBeam(ctx, L.laser, cut + 0.5, 0, SH.color, power, T, knots);   // through the first box, as we know it
+  if (front > cut + 1 && past > 0.003) drawBeam(ctx, cut, front, 0, SH.color, power * past, T, knots);
+  if (myst > 0.003) {   // past it, only questions, drifting a little
+    const x0 = cut + 45, x1 = end - 30, n = Math.max(3, Math.round((x1 - x0) / 72));
+    for (let i = 0; i <= n; i++) {
+      const x = lerp(x0, x1, i / n), al = smooth(myst) * clamp(myst * (n + 2) - i * 0.7, 0, 1), dy = reduced ? 0 : 7 * Math.sin(2 * TIME + i * 1.3);
+      if (al <= 0.003) continue;
+      ctx.save(); ctx.translate(x, dy); drawSprites(ctx, labTxt('?', 34), { alpha: 0.8 * al, color: hexRgb(COL.greyB) }); ctx.restore();
+    }
+  }
   for (const b of L.boxes) {
     if (b.a <= 0.003) continue;
     ctx.save(); ctx.globalAlpha = ga * b.a; ctx.strokeStyle = COL.greyA; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(b.x0, LAB.top, LAB.BW, LAB.bot - LAB.top, 16); ctx.stroke(); ctx.restore();
   }
   drawLaser(ctx, L.laser, 0, SH.color, 1);
-  drawSensor(ctx, L.sensor, 0, SH.color, T(L.sensor - 18) * SH.I0);
+  drawSensor(ctx, L.sensor, 0, SH.color, front >= end - 1 ? T(end) * SH.I0 * past : 0);
   drawLabReadout(ctx, L.sensor, o.from, o.to, o.m, o.read, o.pop);
   ctx.restore();
 }
@@ -202,7 +215,7 @@ function drawLab(ctx, dt, st) {
     const out = 1 - smooth(clamp(st.rowsOut, 0, 1)), x = smooth(clamp(st.labX, 0, 1)), sp = smooth(clamp(st.split, 0, 1));
     const X1 = mixXf(mixXf(labCardXf(st), LABXF.full, x), LABXF.top, sp);
     drawLabRow(ctx, X1, { c: 1, scat: st.scat, glow: st.glow, from: '', to: '50%', m: 1, read: smooth(clamp(st.read1, 0, 1)) }, out);
-    if (sp > 0.003) drawLabRow(ctx, mixXf(LABXF.full, LABXF.bot, sp), { c: st.c2, from: st.r2From, to: st.r2, m: st.r2M, read: smooth(clamp(st.read2, 0, 1)), pop: true }, out);
+    if (sp > 0.003) drawLabRow(ctx, mixXf(LABXF.full, LABXF.bot, sp), { c: st.c2, from: st.r2From, to: st.r2, m: st.r2M, read: smooth(clamp(st.read2, 0, 1)), pop: true, myst: st.myst, rev: st.rev }, out);
   }
   drawLabPlot(ctx, st);
   drawLabBases(ctx, st);
@@ -223,18 +236,22 @@ function labAbsorb() { return ptw('glow', 0, 0.9); }
 // 22: the sensor's reading, for the first time
 function labRead() { return ptw('read1', 1, 0.8); }
 function labRead2(text, dur, delay = 0) { PS.r2From = PS.r2; PS.r2 = text; PS.r2M = 0; return ptw('r2M', 1, dur, { delay, ease: linear }); }
-// 23: the whole setup is copied, without its readout; the copy slides down, a second box slides in beside its first,
-// and then a readout pops up on it: "?"
+// 23: the whole setup is copied, without its readout; the copy slides down, and a second box slides in beside its
+// first while the light past the first box gives way to a row of "?"; then a readout pops up on it: "?"
 async function labSecond() {
-  const g = PRES.gen; PS.r2 = '?'; PS.r2From = ''; PS.r2M = 1; PS.read2 = 0;
+  const g = PRES.gen; PS.r2 = '?'; PS.r2From = ''; PS.r2M = 1; PS.read2 = 0; PS.myst = 0; PS.rev = 1;
   await ptw('split', 1, 1.3); if (!labAlive(g)) return;
-  await ptw('c2', 2, 1.4); if (!labAlive(g)) return;
+  ptw('myst', 1, 1.2); await ptw('c2', 2, 1.4); if (!labAlive(g)) return;
+  PS.rev = 0;
   await ptw('read2', 1, 0.45);
 }
 // 24: me, guessing zero
 function labGuess() { PS.lthink = '0\\%'; PS.lthinkP = 0; ptw('lfig', 1, 0.8); return ptw('lthinkP', 1, 0.6, { delay: 0.7, ease: linear }); }
 // 25: no: twenty-five; 25b: a third box, twelve and a half
-function labReveal() { ptw('lfig', 0, 0.6); return labRead2('25%', 0.9, 0.3); }
+function labReveal() {   // the questions clear, the light carries on from the first box to the sensor, and it reads 25%
+  ptw('lfig', 0, 0.6); ptw('myst', 0, 0.5); ptw('rev', 1, 1.0, { delay: 0.3, ease: linear });
+  return labRead2('25%', 0.9, 1.2);
+}
 function labThird() { labRead2('12.5%', 1.2); return ptw('c2', 3, 1.4); }   // the reading changes as the box slides in
 // 26: the rows go; e^{−σd} writes in, the plot under it, and the curve draws with its dot, the box growing under it
 async function labFormula() {
