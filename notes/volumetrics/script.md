@@ -37,7 +37,7 @@ The working script below has light edits; the original drafts, word for word, ar
 **16.** [The aside, the goals and both figures go; the figure isn't needed from here on, and what follows sits in the middle of the stage. No formula: the caption alone writes in, large at the top: "light, travelling some distance, through some stuff."]
 > In plain words, all of this is about one thing: what happens to light as it travels some distance through some stuff.
 
-**17.–20.** [One press per field, each a playing card fading in at its own place in a row of three: astronomy (starlight through dust on its way to a telescope), climate science (sunlight through the atmosphere, the bluer light scattering away), medical imaging (X-rays through the stick figure onto a detector). Then this video, at once: a laser, a closed box with plain stuff in it (a haze with specks drifting in it, in the yellow of the caption's "stuff"), and a sensor, the beam dimmer past the box, drawn like the bench's laser and tank. It opens on the left and pushes the other three into a column on the right, where they lose their colour and slow to a stop: the focus has moved. The caption's "light" takes the laser's red.]
+**17.–20.** [One press per field, each a playing card fading in at its own place in a row of three: astronomy (starlight through dust on its way to a telescope), climate science (sunlight through the atmosphere, the bluer light scattering away), medical imaging (X-rays through the stick figure onto a detector). Then this video, at once: a laser, a closed box with plain stuff in it (a haze with specks drifting in it, in the yellow of the caption's "stuff"), and a sensor with no reading on it yet (nothing on screen before it is introduced), the beam dimmer past the box, drawn like the bench's laser and tank. It opens on the left and pushes the other three into a column on the right, where they lose their colour and slow to a stop: the focus has moved. The caption's "light" takes the laser's red.]
 > And "stuff" really can be anything. In astronomy, it's the dust between the stars. In climate science, it's our own atmosphere. In medical imaging, it's your body. And for us, here, it's a box of… stuff.
 
 
@@ -57,7 +57,7 @@ The working script below has light edits; the original drafts, word for word, ar
 **21c.** [The glow goes: plain stuff again, the beam dimmer past the box.]
 > For now, our particles only absorb light.
 
-**22.** [The sensor's reading comes in: 50%.]
+**22.** [The sensor's reading appears for the first time: 50%.]
 > So they take some of the laser's light, and less of it makes it to the other end. How much less? That's what the sensor is for. Here it reads fifty percent: half the light made it through.
 
 **23.** [The whole setup is copied, and the copy slides down to the bottom half of the stage. In the copy, a second identical box slides in from the right beside the first, the laser and the sensor moving outward to make room. The copy's sensor reads "?". So: above, one box and 50%; below, two boxes and "?".]
@@ -69,7 +69,7 @@ The working script below has light edits; the original drafts, word for word, ar
 **25.** [The figure's readout goes. The copy's sensor settles on 25%. A third box slides in the same way: 12.5%.]
 > But that's not what happens. The sensor reads twenty-five percent. Add a third box: twelve and a half. Each box halves the light that enters it. That's exactly what exponential means: multiplying by a fixed fraction, again and again.
 
-**26.** [The single-box setup goes. The formula writes in, $I = I_0\,e^{-\sigma d}$ (the symbol in the exponent is still to be chosen), and under it a plot: light through against distance. The curve draws from left to right with a dot riding it; under the plot, the box grows along with the dot.]
+**26.** [The single-box setup goes. The formula writes in, just $e^{-\sigma d}$ (the symbol in the exponent is still to be chosen; the full form with $I_0$ waits for the very end of the video), and under it a plot: light through against distance. The curve draws from left to right with a dot riding it; under the plot, the box grows along with the dot.]
 > This behaviour has a formula, and you may have heard its name: the Beer–Lambert law. Let's see it in action.
 
 **27.** [The dot runs back and forth along the curve; the box grows and shrinks with it, and the sensor reads what the curve says.]
@@ -79,7 +79,7 @@ The working script below has light edits; the original drafts, word for word, ar
 > And notice how the more absorbing the stuff is, the quicker it dims the light. That absorptivity is this number in the exponent. Turn it up, and the stuff thickens and less light gets through. Turn it down, and more does.
 
 **29.** [The constant goes to zero: the curve flattens into a line at 1, and the box empties.]
-> And when that number is zero, the whole thing is just one. Nothing is absorbed. There is no stuff: it's a vacuum.
+> And when that number is zero, this is just one: everything gets through. Nothing is absorbed. There is no stuff: it's a vacuum.
 
 **30.** [A vertical stack: $2^{-ax}$, $3^{-bx}$, $10^{-cx}$, …; an arrow to the right, and every base becomes $e$.]
 > If you're a little rusty on calculus and wondering why the number $e$ is in there, roughly 2.718, I have to say: there's nothing special about it. You could use any base: two, three, ten. We just rewrite them all with base $e$, because $e$ makes integrals and differential equations a little easier to work with. You don't have to worry about that here.
@@ -95,4 +95,5 @@ The working script below has light edits; the original drafts, word for word, ar
 - The spectrum in beat 15 is to be swapped in the presentation: shader tutorial first, physics lecture second.
 - What the box holds once the body starts, the example the rest of the video keeps, is open. For now it is plain stuff.
 - The symbol for the constant in the exponent (beat 26 on) is to be chosen.
+- The formula stays $e^{-\sigma d}$ throughout. The full form, and how it turns into the version with emission, comes at the very end of the video, as the lead into the next one.
 - Beats 21–31: visuals to build.
