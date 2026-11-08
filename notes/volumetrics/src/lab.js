@@ -298,10 +298,13 @@ const LDCOL = COL.blue;
 function labTrack(st, dt) {
   const gen = st === PS ? PRES.gen : 0, k = 1 - Math.exp(-Math.max(0, dt) / 0.12), on = (t) => (t != null && TIME - t < 0.5 ? 1 : 0);
   if (st.lgen !== gen) { st.lgen = gen; st.pS = st.sig; st.pD = st.dotD; }
-  if (st.pS != null && Math.abs(st.sig - st.pS) > 1e-5) st.tS = TIME;
-  if (st.pD != null && Math.abs(st.dotD - st.pD) > 1e-5) st.tD = TIME;
+  // rS, rD: when the current run of changes began; if both are changing, only the one that started last is in focus
+  if (st.pS != null && Math.abs(st.sig - st.pS) > 1e-5) { if (!on(st.tS)) st.rS = TIME; st.tS = TIME; }
+  if (st.pD != null && Math.abs(st.dotD - st.pD) > 1e-5) { if (!on(st.tD)) st.rD = TIME; st.tD = TIME; }
   st.pS = st.sig; st.pD = st.dotD;
-  st.sAct = (st.sAct || 0) + (on(st.tS) - (st.sAct || 0)) * k; st.dAct = (st.dAct || 0) + (on(st.tD) - (st.dAct || 0)) * k;
+  let wS = on(st.tS), wD = on(st.tD);
+  if (wS && wD) { if ((st.rS ?? 0) >= (st.rD ?? 0)) wD = 0; else wS = 0; }
+  st.sAct = (st.sAct || 0) + (wS - (st.sAct || 0)) * k; st.dAct = (st.dAct || 0) + (wD - (st.dAct || 0)) * k;
   st.mv9 = (st.mv9 || 0) + ((Math.max(st.sAct, st.dAct) > 0.5 ? 1 : 0) - (st.mv9 || 0)) * (1 - Math.exp(-Math.max(0, dt) / 0.44));
 }
 // cs and cd: how much σ and d are in their colours (the presentation colours each only once it means something: d at
@@ -520,17 +523,30 @@ function labMarks() { ptw('dCont', 1, 0.8, { delay: 1.6 }); ptw('colD', 1, 0.8, 
 // boxes down to 0.4 and back; 28: σ up to twice the usual and down to half (even steps in log2). Both 30% slower than
 // the one-off moves they replace.
 const LDL = { P: 5.2 }, LSL = { P: 6.8 };
+const labDAt = (t0) => 1.7 + 1.3 * Math.cos((2 * Math.PI * Math.max(0, TIME - t0)) / LDL.P);
+const labSAt = (t0) => Math.pow(2, Math.sin((2 * Math.PI * Math.max(0, TIME - t0)) / LSL.P));
 function labLoops(st) {
   if (reduced) return;
-  if (st.dLoop) st.dotD = 1.7 + 1.3 * Math.cos((2 * Math.PI * Math.max(0, TIME - st.dLoopT0)) / LDL.P);
-  if (st.sLoop) st.sig = Math.pow(2, Math.sin((2 * Math.PI * Math.max(0, TIME - st.sLoopT0)) / LSL.P));
+  if (st.dLoop) st.dotD = labDAt(st.dLoopT0);
+  if (st.sLoop) st.sig = labSAt(st.sLoopT0);
 }
+// A loop's start, kept outside the presentation's state: each press rebuilds the beats before it from scratch, and the
+// loop must carry on from where it was, so the next beat can start from where the dot (or σ) is.
+const labLoopStart = (key, t) => (instant && PRES[key] != null ? PRES[key] : (PRES[key] = t));
 // 27: the dot runs back and forth along the curve, the box with it, until the next press (still at two boxes if motion is reduced)
-function labDistance() { ptw('marksOut', 1, 0.6); PS.dLoop = 1; PS.dLoopT0 = TIME; return reduced ? ptw('dotD', 2, 1.2) : Promise.resolve(); }
+function labDistance() { ptw('marksOut', 1, 0.6); PS.dLoop = 1; PS.dLoopT0 = labLoopStart('dT0', TIME); return reduced ? ptw('dotD', 2, 1.2) : Promise.resolve(); }
 // 28: the dot settles at two boxes, then σ goes up to twice the usual and down to half, over and over, until the next press
-function labSigma() { PS.dLoop = 0; ptw('sigHi', 1, 0.5); PS.sLoop = 1; PS.sLoopT0 = TIME + 0.9; return ptw('dotD', 2, 0.9); }
+// (from where the dot is; σ takes its yellow as it starts to move)
+function labSigma() {
+  if (PS.dLoop && !reduced) PS.dotD = labDAt(PS.dLoopT0);
+  PS.dLoop = 0; ptw('sigHi', 1, 0.5, { delay: 0.9 }); PS.sLoop = 1; PS.sLoopT0 = labLoopStart('sT0', TIME + 0.9);
+  return ptw('dotD', 2, 0.9);
+}
 // 29: σ to zero from wherever it is: a vacuum, and "= 1"
-function labVacuum() { PS.dLoop = 0; PS.sLoop = 0; ptw('dotD', 2, 0.6); ptw('eq1', 1, 0.8, { delay: 1.4 }); return ptw('sig', 0, 1.8); }
+function labVacuum() {
+  if (PS.sLoop && !reduced) PS.sig = labSAt(PS.sLoopT0);
+  PS.dLoop = 0; PS.sLoop = 0; ptw('dotD', 2, 0.6); ptw('eq1', 1, 0.8, { delay: 1.4 }); return ptw('sig', 0, 1.8);
+}
 // 30: the plot and the formula go; 2, 3, 10 … each equal to the same thing with base e (bMorph runs past 1 so the
 // last row's = finishes writing)
 function labBases() {
