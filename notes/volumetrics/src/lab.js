@@ -417,8 +417,8 @@ function drawLabStage(ctx, dt, st) {
     const X1 = mixXf(mixXf(labCardXf(st), LABXF.full, x), LABXF.top, sp);
     const tOut = 1 - smooth(clamp(st.topOut || 0, 0, 1));
     drawLabRow(ctx, X1, { c: 1, scat: st.scat, glow: st.glow, from: '', to: '50%', m: 1, read: smooth(clamp(st.read1, 0, 1)) }, out * tOut);
-    const td = smooth(clamp(st.topDim || 0, 0, 1)) * tOut;   // from 25b: greyed, so the eye goes to the row with the question
-    if (td > 0.003) { const L1 = labLayout(1); greyOut(ctx, [X1.ox + X1.s * (L1.laser - 160), X1.oy - X1.s * 250, X1.s * (L1.sensor - L1.laser + 330), X1.s * 520], 0.85 * td, 0.3 * td); }
+    const td = smooth(clamp(st.topDim || 0, 0, 1)) * tOut;   // from 25b: a touch less colour, so the eye goes to the row with the question
+    if (td > 0.003) { const L1 = labLayout(1); greyOut(ctx, [X1.ox + X1.s * (L1.laser - 160), X1.oy - X1.s * 250, X1.s * (L1.sensor - L1.laser + 330), X1.s * 520], 0.3 * td, 0.08 * td); }   // slight, hardly noticed
     if (sp > 0.003) {
       let o = { c: st.c2, from: st.r2From, to: st.r2, m: st.r2M, read: smooth(clamp(st.read2, 0, 1)), pop: true, myst: st.myst, rev: st.rev }, al = out * (1 - smooth(clamp(st.rowFade, 0, 1)));
       if (st.hvOn) {   // 25d–25f: the halving, a box per press (drawHalveRow), as the Halving tab's labels at the boxes' ends with × ½
@@ -453,13 +453,9 @@ function labGlow() { ptw('scat', 0, 0.6); return ptw('glow', 1, 1.0, { delay: 0.
 // 21d: the glow goes: only absorption
 function labAbsorb() { return ptw('glow', 0, 0.9); }
 // 22: the sensor's reading, for the first time
-// 22: the reading comes in, then is brought forward a moment (the rest dims, the readout grows a little), then back
-async function labRead() {
-  const g = PRES.gen;
-  await ptw('read1', 1, 0.8); if (!labAlive(g)) return;
-  await ptw('r1Hi', 1, 0.5); if (!labAlive(g)) return;
-  await ptw('r1Hi', 0, 0.8, { delay: 1.4 });
-}
+// 22: the reading comes in already brought forward (the rest dims, the readout a little bigger); 22b: back to normal
+function labRead() { ptw('r1Hi', 1, 0.6); return ptw('read1', 1, 0.8); }
+function labReadDone() { return ptw('r1Hi', 0, 0.8); }
 function labRead2(text, dur, delay = 0) { PS.r2From = PS.r2; PS.r2 = text; PS.r2M = 0; return ptw('r2M', 1, dur, { delay, ease: linear }); }
 // 23: the whole setup is copied, without its readout, and the copy slides down. 23b: a second box slides in beside its
 // first while the light past the first box gives way to a row of "?"; then a readout pops up on it: "?"

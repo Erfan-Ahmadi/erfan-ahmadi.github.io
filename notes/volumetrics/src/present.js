@@ -124,6 +124,7 @@ const BEATS = [
   { n: '21c', name: "doesn't glow", run: () => labGlow() },
   { n: '21d', name: 'only absorbs', run: () => labAbsorb() },
   { n: '22', name: 'the sensor', run: () => labRead() },
+  { n: '22b', name: 'the reading, back to normal', run: () => labReadDone() },
   { n: '23', name: 'the copy', run: () => labCopy() },
   { n: '23b', name: 'a second box', run: () => labSecond() },
   { n: '24', name: 'zero?', run: () => labGuess() },
