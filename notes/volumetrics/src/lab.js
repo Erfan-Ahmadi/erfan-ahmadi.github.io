@@ -183,12 +183,13 @@ function drawLabRow(ctx, X, o, alpha) {
 const LP = { L: 520, R: 1440, T: 250, B: 560, top: 690, bot: 870, beam: 780, size: 100, y: 150 }, LPD = 3;   // LPD: the plot's length, in boxes
 let LPA = null;
 const lpAxes = () => LPA || (LPA = makeAxes({ L: LP.L, R: LP.R, T: LP.T, B: LP.B, xr: [0, LPD, 1], yr: [0, 1, 0.5], ext: 40, xl: 'd', yl: '', labSize: 54, numSize: 28 }));
-const PFML = String.raw`e^{-\htmlClass{t-sig}{\sigma}\,\htmlClass{t-ld}{d}}`, PFML1 = PFML + String.raw`\mathrel{\htmlClass{t-eq1}{=}}\htmlClass{t-eq1}{1}`;
+// at 29, with σ gone to zero: "= e^0" after it, then "= 1"
+const PFML = String.raw`e^{-\htmlClass{t-sig}{\sigma}\,\htmlClass{t-ld}{d}}`, PFML1 = PFML + String.raw`\mathrel{\htmlClass{t-eq1}{=}}\mathord{\htmlClass{t-eq1}{e^{0}}}\mathrel{\htmlClass{t-eq2}{=}}\mathord{\htmlClass{t-eq2}{1}}`;
 let lpFml = null;
-function lpFormula() {   // laid out once: e^{−σd} centred, "= 1" after it, so it doesn't move when that comes in
+function lpFormula() {   // laid out once: e^{−σd} centred, "= e^0 = 1" after it, so it doesn't move when that comes in
   if (lpFml) return lpFml;
-  const sp = place(tex(PFML1), { x: 960 - (tex(PFML).w * LP.size) / 2, y: LP.y, size: LP.size, ax: 0 });
-  return (lpFml = { main: sp.filter((s) => !s.a.terms.includes('t-eq1')), eq1: sp.filter((s) => s.a.terms.includes('t-eq1')) });
+  const sp = place(tex(PFML1), { x: 960 - (tex(PFML).w * LP.size) / 2, y: LP.y, size: LP.size, ax: 0 }), has = (s, t) => s.a.terms.includes(t);
+  return (lpFml = { main: sp.filter((s) => !has(s, 't-eq1') && !has(s, 't-eq2')), eq1: sp.filter((s) => has(s, 't-eq1')), eq2: sp.filter((s) => has(s, 't-eq2')) });
 }
 // the long box's stuff: a jittered grid, 40 across by 4 down, twice over (the second set comes in as σ passes its usual value)
 const LPSPECKS = Array.from({ length: 320 }, (_, i) => { const k = i % 160, c = k % 40, r = Math.floor(k / 40); return [(c + 0.15 + 0.7 * hash1(i * 3 + 1)) / 40, (r + 0.15 + 0.7 * hash1(i * 3 + 2)) / 4, hash1(i * 3 + 3) * 2 * Math.PI]; });
@@ -198,6 +199,7 @@ function drawLabPlot(ctx, st) {
   TERM_COL['t-sig'] = hexRgb(COL.yellow);
   drawLabFormula(ctx, F, st, a);
   if (st.eq1 > 0.003) drawSprites(ctx, F.eq1, { alpha: a * smooth(clamp(st.eq1, 0, 1)) });
+  if (st.eq2 > 0.003) drawSprites(ctx, F.eq2, { alpha: a * smooth(clamp(st.eq2, 0, 1)) });
   const bA = st.pbox != null ? smooth(clamp(st.pbox, 0, 1)) : ax;   // the box, the light and the sensor: with the axes (the bench), or from the joined boxes (beat 26)
   if (ax <= 0.003 && bA <= 0.003) return;
   ctx.save(); ctx.globalAlpha = a;
@@ -236,7 +238,8 @@ function drawLabPlot(ctx, st) {
   }
   const n10 = smooth(clamp(st.ind10 || 0, 0, 1));
   if (n10 > 0.003 && w > 1) {   // option 10, as option 1 shows them but with their values: d = … on the brace under the box, which gives way, while σ changes, to σ = … in the box, on a little shade
-    const cx = X0 + w / 2, as = n10 * clamp(st.sAct || 0, 0, 1), ad = n10 * (0.7 + 0.3 * clamp(st.dAct || 0, 0, 1)) * (1 - clamp(st.sAct || 0, 0, 1)), dcol = mixRgb(WHITE_RGB, hexRgb(LDCOL), Fo.c);
+    // sPin (beat 29): σ's value stays written in the box once it has stopped, σ = 0 in the emptied box
+    const cx = X0 + w / 2, as = n10 * Math.max(clamp(st.sAct || 0, 0, 1), smooth(clamp(st.sPin || 0, 0, 1))), ad = n10 * (0.7 + 0.3 * clamp(st.dAct || 0, 0, 1)) * (1 - clamp(st.sAct || 0, 0, 1)), dcol = mixRgb(WHITE_RGB, hexRgb(LDCOL), Fo.c);
     if (ad > 0.003) {
       drawBrace(ctx, cx, LP.bot + 16, w, 24, 6, dcol, ad);
       const dc = smooth(clamp(st.dCont ?? 1, 0, 1)), dl = `d = ${d.toFixed(1)}`;   // beat 26: first the count, 3 boxes; 26b: it becomes d = 3.0
@@ -247,7 +250,7 @@ function drawLabPlot(ctx, st) {
       }
     }
     if (as > 0.003) {
-      const src = String.raw`\sigma = ${(Math.max(0, st.sig) * Math.LN2).toFixed(2)}`, sy = LP.top + 46, tw = tex(src).w * 50;
+      const sv = Math.max(0, st.sig) * Math.LN2, src = String.raw`\sigma = ${sv < 0.005 ? '0' : sv.toFixed(2)}`, sy = LP.top + 46, tw = tex(src).w * 50;
       ctx.fillStyle = `rgba(28,27,24,${(0.72 * as).toFixed(3)})`; ctx.beginPath(); ctx.roundRect(cx - tw / 2 - 12, sy - 30, tw + 24, 60, 10); ctx.fill();
       drawTex(ctx, src, cx, sy, 50, { alpha: as, color: COL.yellow });
     }
@@ -545,7 +548,7 @@ function labSigma() {
 // 29: σ to zero from wherever it is: a vacuum, and "= 1"
 function labVacuum() {
   if (PS.sLoop && !reduced) PS.sig = labSAt(PS.sLoopT0);
-  PS.dLoop = 0; PS.sLoop = 0; ptw('dotD', 2, 0.6); ptw('eq1', 1, 0.8, { delay: 1.4 }); return ptw('sig', 0, 1.8);
+  PS.dLoop = 0; PS.sLoop = 0; PS.sPin = 1; ptw('dotD', 2, 0.6); ptw('eq1', 1, 0.7, { delay: 1.4 }); ptw('eq2', 1, 0.7, { delay: 2.3 }); return ptw('sig', 0, 1.8);
 }
 // 30: the plot and the formula go; 2, 3, 10 … each equal to the same thing with base e (bMorph runs past 1 so the
 // last row's = finishes writing)
