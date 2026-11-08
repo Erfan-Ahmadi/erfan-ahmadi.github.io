@@ -179,9 +179,9 @@ async function presQuestion(i) {
 async function presToCard(i) {
   const c = PS.qc[i];
   if (i === 2) ptw('qSide', 1, 1.3);
+  // the writing happens on the way, inside the moving box, done as it lands
+  ptwi(c, 'title', 1, 0.75, { delay: 0.55, ease: linear }); ptwi(c, 'todo', 1, 0.5, { delay: 0.8 });
   await ptwi(c, 'm', 1, 1.3);
-  ptwi(c, 'todo', 1, 0.47, { delay: 0.2 });   // the writing 1.5× as fast as it was; the move stays as it is
-  await ptwi(c, 'title', 1, 0.6, { ease: linear });
 }
 // Beat 15: the cards and the equation go; the shader tutorial comes in at the left end, its code typing, the arrow
 // under it. 15b: the arrow walks to the other end, drawing the line behind it, and the physics lecture comes in. 15c: it
@@ -393,8 +393,10 @@ function drawQCards(ctx, st) {
     const pad = 12, m = smooth(clamp(c.m, 0, 1)), C = qRect(i, st), k = C[2] / 480, a = smooth(clamp(c.box, 0, 1)) * ga;
     const R = lerpRect([mx(x0) - pad, my(y0) - pad, ek * (x1 - x0) + 2 * pad, ek * (y1 - y0) + 2 * pad], C, m);
     ctx.save(); ctx.strokeStyle = hexA(q.col, a * lerp(1, 0.8, m)); ctx.lineWidth = 3.5; ctx.beginPath(); ctx.roundRect(R[0], R[1], R[2], R[3], lerp(10, 16, m)); ctx.stroke(); ctx.restore();
-    if (c.title > 0.003) q.title.forEach((src, j) => drawTex(ctx, src, C[0] + C[2] / 2, C[1] + (50 + j * 44) * k, 32 * k, { p: c.title, color: q.col, alpha: ga }));
-    if (c.todo > 0.003) (q.draw || drawTodo)(ctx, [C[0] + 24 * k, C[1] + 136 * k, C[2] - 48 * k, C[3] - 160 * k], c.todo * ga, q, k);
+    // the title and the TODO ride in the box as it moves (R: where it is now; C: the card)
+    const kr = R[2] / 480;
+    if (c.title > 0.003) q.title.forEach((src, j) => drawTex(ctx, src, R[0] + R[2] / 2, R[1] + (50 + j * 44) * kr, 32 * kr, { p: c.title, color: q.col, alpha: ga }));
+    if (c.todo > 0.003) (q.draw || drawTodo)(ctx, [R[0] + 24 * kr, R[1] + 136 * kr, R[2] - 48 * kr, R[3] - 160 * kr], c.todo * ga, q, kr);
   });
 }
 function drawTodo(ctx, r, a, q, k = 1) {
