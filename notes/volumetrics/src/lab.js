@@ -122,8 +122,10 @@ function drawGlow(ctx, B, a) {
   }
 }
 // The × ½ of the halving (beats 25d–25f), in the red of the wrong sum's − 50% in beat 24, the red of light taken away:
-// minus a half becomes times a half. Amounts of light in yellow.
-const LHALF = String.raw`\textcolor{${COL.red}}{\times \tfrac{1}{2}}`, LRES = (v) => String.raw`\textcolor{${COL.yellow}}{${v}\%}`;
+// minus a half becomes times a half. Amounts of light (100%, 50%, …) in lavender, a colour of their own: yellow is σ's,
+// blue d's.
+const AMTCOL = COL.lavender;
+const LHALF = String.raw`\textcolor{${COL.red}}{\times \tfrac{1}{2}}`, LRES = (v) => String.raw`\textcolor{${AMTCOL}}{${v}\%}`;
 // One row: laser, c boxes, sensor, in the transform X. o: c, the readout (from, to, m, a), the scattering and glow;
 // myst hides what happens past the first box behind a row of "?" (the light past it is the question), and rev is how
 // far the beam has come back past the first box once the answer is shown.
@@ -190,7 +192,7 @@ function drawLabPlot(ctx, st) {
   if (ax <= 0.003 && bA <= 0.003) return;
   ctx.save(); ctx.globalAlpha = a;
   if (ax > 0.003) {
-    drawAxes(ctx, A, { c: ax, nums: 0, lab: ax, xlColor: Fo.c > 0.003 ? mixRgb(WHITE_RGB, hexRgb(LDCOL), Fo.c) : null });
+    drawAxes(ctx, A, { c: ax, nums: 0, lab: ax, xlColor: Fo.cd > 0.003 ? mixRgb(WHITE_RGB, hexRgb(LDCOL), Fo.cd) : null });
     for (const [v, s] of [[1, '100%'], [0.5, '50%']]) drawTex(ctx, String.raw`\text{${s.replace('%', '\\%')}}`, A.ox - 22, A.Y(v), 28, { ax: 1, alpha: ax });
   }
   const d = clamp(st.dotD, 0, LPD), X0 = A.X(0), Xd = A.X(d), y = LP.beam, H = LP.bot - LP.top;
@@ -265,7 +267,7 @@ function drawLabMarks(ctx, st, A, f, a) {
   for (let i = 0; i <= LPD; i++) {
     const x = A.X(i), py = A.Y(f(i)), p = smooth(clamp((rise - 0.12 * i) / 0.64, 0, 1)), src = hvAmt(100 / Math.pow(2, i)), tw = tex(src).w * HV.size * k;
     if (p > 0.003) dashed(ctx, x, LP.top - 2, x, lerp(LP.top - 2, py + 9, p), COL.greyC, 0.8 * al, 2);
-    if (p > 0.85) dot(ctx, x, py, 7, COL.yellow, al * smooth((p - 0.85) / 0.15));
+    if (p > 0.85) dot(ctx, x, py, 7, AMTCOL, al * smooth((p - 0.85) / 0.15));
     hvLabel(ctx, { src, a: al, pa: 1 - p }, lerp(x, x + 18 + tw / 2, p), lerp(LP.top - 66 * k, py - 24, p), LP.top - 10 * k, k, false);
   }
 }
@@ -292,22 +294,24 @@ function labTrack(st, dt) {
   st.sAct = (st.sAct || 0) + (on(st.tS) - (st.sAct || 0)) * k; st.dAct = (st.dAct || 0) + (on(st.tD) - (st.dAct || 0)) * k;
   st.mv9 = (st.mv9 || 0) + ((Math.max(st.sAct, st.dAct) > 0.5 ? 1 : 0) - (st.mv9 || 0)) * (1 - Math.exp(-Math.max(0, dt) / 0.44));
 }
-const labFocus = (st) => { const c = smooth(clamp(st.ind1 || 0, 0, 1)); return { c, s: c * clamp(st.sAct || 0, 0, 1), d: c * clamp(st.dAct || 0, 0, 1) }; };
+// cs and cd: how much σ and d are in their colours (the presentation colours each only once it means something: d at
+// 26c, σ at 28 with sigHi; the bench has both on).
+const labFocus = (st) => { const c = smooth(clamp(st.ind1 || 0, 0, 1)); return { c, s: c * clamp(st.sAct || 0, 0, 1), d: c * clamp(st.dAct || 0, 0, 1), cs: c * smooth(clamp(st.colS ?? 1, 0, 1)), cd: c * smooth(clamp(st.colD ?? 1, 0, 1)) }; };
 function drawLabFormula(ctx, F, st, a) {
   const hiS = smooth(clamp(st.sigHi, 0, 1)), num = smooth(clamp(st.ind3 || 0, 0, 1)), Fo = labFocus(st), sym = a * (1 - num);
   const m9 = smooth(clamp(st.ind9 || 0, 0, 1) * clamp(st.mv9 || 0, 0, 1));
   if (m9 > 0.002 && sym > 0.003 && st.fml >= 1) {   // option 9: on its way to the dot, or riding it, as its numbers (manim's TransformMatchingTex)
     const A = lpAxes(), d = clamp(st.dotD, 0, LPD), px = A.X(d), py = A.Y(Math.exp(-Math.max(0, st.sig) * Math.LN2 * d));
-    const N = place(tex(labNumSrc(st)), { x: px + 26, y: py - 46, size: 58, ax: 0 }), M = F.main.map((q) => ({ ...q, color: q.a.terms.includes('t-sig') ? mixRgb(WHITE_RGB, hexRgb(COL.yellow), Math.max(hiS, Fo.c)) : q.a.terms.includes('t-ld') ? mixRgb(WHITE_RGB, hexRgb(LDCOL), Fo.c) : q.color }));   // in the colours it has at the top, so nothing flashes white
+    const N = place(tex(labNumSrc(st)), { x: px + 26, y: py - 46, size: 58, ax: 0 }), M = F.main.map((q) => ({ ...q, color: q.a.terms.includes('t-sig') ? mixRgb(WHITE_RGB, hexRgb(COL.yellow), Math.max(hiS, Fo.cs)) : q.a.terms.includes('t-ld') ? mixRgb(WHITE_RGB, hexRgb(LDCOL), Fo.cd) : q.color }));   // in the colours it has at the top, so nothing flashes white
     if (m9 >= 0.998) drawSprites(ctx, N, { alpha: sym }); else drawMorph(ctx, matchPlan(M, N), m9, sym);
     return;
   }
   if (sym > 0.003) {
     TERM_COL['t-ld'] = hexRgb(LDCOL);   // while it writes in, already in the colours it keeps
-    if (Fo.c <= 0.003 || st.fml < 1) drawSprites(ctx, F.main, { p: st.fml, alpha: sym, hi: { 't-sig': Math.max(hiS, Fo.c), 't-ld': Fo.c } });
+    if (Fo.c <= 0.003 || st.fml < 1) drawSprites(ctx, F.main, { p: st.fml, alpha: sym, hi: { 't-sig': Math.max(hiS, Fo.cs), 't-ld': Fo.cd } });
     else for (const s of F.main) {
       const isS = s.a.terms.includes('t-sig'), isD = s.a.terms.includes('t-ld'), base = ink(s.color);
-      const col = isS ? mixRgb(base, hexRgb(COL.yellow), Math.max(hiS, Fo.c)) : isD ? mixRgb(base, hexRgb(LDCOL), Fo.c) : base;
+      const col = isS ? mixRgb(base, hexRgb(COL.yellow), Math.max(hiS, Fo.cs)) : isD ? mixRgb(base, hexRgb(LDCOL), Fo.cd) : base;
       const al = s.alpha * sym * (isS ? 1 - 0.65 * Fo.d : isD ? 1 - 0.65 * Fo.s : 1 - 0.35 * Math.max(Fo.s, Fo.d));
       const k = 1 + 0.22 * (isS ? Fo.s : isD ? Fo.d : 0);
       if (k < 1.001) { drawSprite(ctx, s, al, col); continue; }
@@ -382,8 +386,8 @@ const LASIDE = [60, 110, 1120, 630];
 // Beat 24's guess, worked out over my head: the same amount off for every box, what's taken off, its minus and all, in
 // the red of light taken away. Beat 25: crossed out in red.
 const LOFF = (v) => String.raw`\textcolor{${COL.red}}{-${v}\%}`;
-const LWRONG = [String.raw`\textcolor{${COL.blue}}{1}\text{ box:}\quad 100\% ${LOFF('50')} = ${LRES('50')}`,
-  String.raw`\textcolor{${COL.blue}}{2}\text{ boxes:}\quad 100\% ${LOFF('100')} = ${LRES('0')}`];
+const LWRONG = [String.raw`\textcolor{${COL.blue}}{1}\text{ box:}\quad ${LRES('100')} ${LOFF('50')} = ${LRES('50')}`,
+  String.raw`\textcolor{${COL.blue}}{2}\text{ boxes:}\quad ${LRES('100')} ${LOFF('100')} = ${LRES('0')}`];
 const LW = { x: 1225, y: [170, 240], size: 40 };
 function drawLabFigure(ctx, st) {
   const a = smooth(clamp(st.lfig, 0, 1)); if (a <= 0.003) return;
@@ -490,16 +494,17 @@ async function labHalve() {
   PS.hvOn = 1; PS.hvA = 0; ptw('hvA', 1, 0.4); return labHalveStep(1);
 }
 function labHalveStep(k) { PS.hvStep = k; PS.hvT0 = instant ? -1e9 : TIME; return Promise.resolve(); }
-// 26: the one-box row goes; the three boxes close up into one long box, the plot's, under where the plot comes (its
-// brace counting them: 3 boxes); e^{−σd} writes in, the axes, and the curve draws from left to right, its dot at the end.
-// 26b: the amounts rise to the curve, and 3 boxes becomes d = 3.0.
-async function labFormula() {
+// 26: the one-box row goes and the bottom row's three boxes close up, end to end, where the plot's box will be, their
+// amounts over the joins; e^{−σd} writes in, plain: σ and d take their colours only once we know what they are.
+// 26b: the three boxes become one long box (its brace counting them: 3 boxes), and the plot sketches in above it, its
+// dot at the end. 26c: the amounts rise to their places on the curve; 3 boxes becomes d = 3.0, and d takes its blue.
+function labFormula() {
   PS.dotD = LPD; PS.curveTo = 0; PS.dCont = 0;
-  ptw('topOut', 1, 0.6); ptw('merge', 1, 1.6, { delay: 0.3 }); ptw('pbox', 1, 0.3, { delay: 1.9 });
-  ptw('fml', 1, 1.2, { delay: 1.0, ease: linear }); ptw('axC', 1, 1.0, { delay: 1.7 });
-  await ptw('curveTo', LPD, 3.2, { delay: 2.6 });
+  ptw('topOut', 1, 0.6); ptw('merge', 1, 1.6, { delay: 0.3 });
+  return ptw('fml', 1, 1.2, { delay: 1.0, ease: linear });
 }
-function labMarks() { ptw('dCont', 1, 0.8, { delay: 1.6 }); return ptw('rise', 1, 2.2); }
+async function labPlot() { ptw('pbox', 1, 0.5); ptw('axC', 1, 1.0, { delay: 0.2 }); await ptw('curveTo', LPD, 3.2, { delay: 1.0 }); }
+function labMarks() { ptw('dCont', 1, 0.8, { delay: 1.6 }); ptw('colD', 1, 0.8, { delay: 1.6 }); return ptw('rise', 1, 2.2); }
 // 27 and 28 play back and forth until the next press, never stopping on their own: a cycle worked out from the clock
 // (as the halving's steps are), so a press stops it wherever it is and the next beat carries on from there. 27: the dot from three
 // boxes down to 0.4 and back; 28: σ up to twice the usual and down to half (even steps in log2). Both 30% slower than
@@ -620,7 +625,7 @@ function hvLabel(ctx, Lb, x, y, tip, k, shade) {
   if (pa > 0.003) { ctx.save(); ctx.fillStyle = hexA(COL.greyB, pa); ctx.beginPath(); ctx.moveTo(x, tip); ctx.lineTo(x - 11 * k, tip - 20 * k); ctx.lineTo(x + 11 * k, tip - 20 * k); ctx.closePath(); ctx.fill(); ctx.restore(); }
   ctx.save(); ctx.translate(x, y); ctx.scale(k, k);
   if (shade) { ctx.fillStyle = `rgba(28,27,24,${(0.75 * Lb.a).toFixed(3)})`; ctx.beginPath(); ctx.roundRect(-110, -38, 220, 76, 12); ctx.fill(); }
-  if (Lb.num != null) drawNumber(ctx, Lb.num, 0, 23, { size: 65, dec: Math.abs(Lb.num - Math.round(Lb.num)) < 0.05 ? 0 : 1, suffix: '%', color: COL.yellow, alpha: Lb.a, align: 'center' });
+  if (Lb.num != null) drawNumber(ctx, Lb.num, 0, 23, { size: 65, dec: Math.abs(Lb.num - Math.round(Lb.num)) < 0.05 ? 0 : 1, suffix: '%', color: AMTCOL, alpha: Lb.a, align: 'center' });
   else if (Lb.to && Lb.m > 0.001) { if (Lb.m >= 0.999) drawSprites(ctx, hvSp(Lb.to), { alpha: Lb.a }); else (Lb.match ? drawMorph : drawReshape)(ctx, hvPlan(Lb.src, Lb.to, Lb.match), Lb.m, Lb.a); }
   else drawSprites(ctx, hvSp(Lb.src), { p: Lb.p ?? 1, alpha: Lb.a });
   ctx.restore();
