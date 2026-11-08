@@ -196,11 +196,12 @@ function lpFormula() {   // laid out once: e^{−σd} centred, "= e^0 = 1" after
 const inkSpan = (S) => S.reduce(([l, r, t, b], s) => { const [q0, q1, q2, q3] = inkBox(s); return [Math.min(l, q0), Math.max(r, q1), Math.min(t, q2), Math.max(b, q3)]; }, [Infinity, -Infinity, Infinity, -Infinity]);
 // 29b: everything but e^{−σd} goes (eOnly), the formula comes down to the middle of the stage (eMove, its ink's middle
 // to x = 960, y = LE.y) and a box goes around its e (eBox), in the orange and the style of the hook's "Why e?" box (beat
-// 14), the question this answers.
-const LE = { y: 500 };
+// 14), the question this answers; the e grows a little in it and the exponent greys a little.
+// With the box, the e grows a little (grow) and the exponent loses some of its colour (grey: how far toward grey).
+const LE = { y: 500, grow: 0.25, grey: 0.5, shift: 10 };   // shift: how far the exponent moves over to make room
 function drawLabE(ctx, F, a, eb) {
-  const [l, r, t, b] = inkBox(F.e), px = 9, py = 12;   // a little tighter across, so it clears the exponent's minus
-  ctx.save(); ctx.strokeStyle = hexA(COL.gold, a * eb); ctx.lineWidth = 3.5; ctx.beginPath(); ctx.roundRect(l - px, t - py, r - l + 2 * px, b - t + 2 * py, 10); ctx.stroke(); ctx.restore();
+  const [l, r, t, b] = inkBox(F.e), cy = (t + b) / 2, ke = 1 + LE.grow * eb, L = r - (r - l) * ke, T = cy - (cy - t) * ke, B = cy + (b - cy) * ke, px = 9, py = 12;   // around the e as it grows; a little tighter across, clear of the exponent's minus
+  ctx.save(); ctx.strokeStyle = hexA(COL.gold, a * eb); ctx.lineWidth = 3.5; ctx.beginPath(); ctx.roundRect(L - px, T - py, r - L + 2 * px, B - T + 2 * py, 10); ctx.stroke(); ctx.restore();
 }
 // the long box's stuff: a jittered grid, 40 across by 4 down, twice over (the second set comes in as σ passes its usual value)
 const LPSPECKS = Array.from({ length: 320 }, (_, i) => { const k = i % 160, c = k % 40, r = Math.floor(k / 40); return [(c + 0.15 + 0.7 * hash1(i * 3 + 1)) / 40, (r + 0.15 + 0.7 * hash1(i * 3 + 2)) / 4, hash1(i * 3 + 3) * 2 * Math.PI]; });
@@ -341,6 +342,7 @@ function labTrack(st, dt) {
 const labFocus = (st) => { const c = smooth(clamp(st.ind1 || 0, 0, 1)); return { c, s: c * clamp(st.sAct || 0, 0, 1), d: c * clamp(st.dAct || 0, 0, 1), cs: c * smooth(clamp(st.colS ?? 1, 0, 1)), cd: c * smooth(clamp(st.colD ?? 1, 0, 1)) }; };
 function drawLabFormula(ctx, F, st, a) {
   const hiS = smooth(clamp(st.sigHi, 0, 1)), num = smooth(clamp(st.ind3 || 0, 0, 1)), Fo = labFocus(st), sym = a * (1 - num);
+  const eb = smooth(clamp(st.eBox || 0, 0, 1));   // 29b: the e a little bigger, the exponent a little greyed
   const m9 = smooth(clamp(st.ind9 || 0, 0, 1) * clamp(st.mv9 || 0, 0, 1));
   if (m9 > 0.002 && sym > 0.003 && st.fml >= 1) {   // option 9: on its way to the dot, or riding it, as its numbers (manim's TransformMatchingTex)
     const A = lpAxes(), d = clamp(st.dotD, 0, LPD), px = A.X(d), py = A.Y(Math.exp(-Math.max(0, st.sig) * Math.LN2 * d));
@@ -352,13 +354,18 @@ function drawLabFormula(ctx, F, st, a) {
     TERM_COL['t-ld'] = hexRgb(LDCOL);   // while it writes in, already in the colours it keeps
     if (Fo.c <= 0.003 || st.fml < 1) drawSprites(ctx, F.main, { p: st.fml, alpha: sym, hi: { 't-sig': Math.max(hiS, Fo.cs), 't-ld': Fo.cd } });
     else for (const s of F.main) {
-      const isS = s.a.terms.includes('t-sig'), isD = s.a.terms.includes('t-ld'), base = ink(s.color);
-      const col = isS ? mixRgb(base, hexRgb(COL.yellow), Math.max(hiS, Fo.cs)) : isD ? mixRgb(base, hexRgb(LDCOL), Fo.cd) : base;
-      const al = s.alpha * sym * (isS ? 1 - 0.65 * Fo.d : isD ? 1 - 0.65 * Fo.s : 1 - 0.35 * Math.max(Fo.s, Fo.d));
-      const k = 1 + 0.22 * (isS ? Fo.s : isD ? Fo.d : 0);
-      if (k < 1.001) { drawSprite(ctx, s, al, col); continue; }
+      const isS = s.a.terms.includes('t-sig'), isD = s.a.terms.includes('t-ld'), isE = s === F.e, base = ink(s.color);
+      let col = isS ? mixRgb(base, hexRgb(COL.yellow), Math.max(hiS, Fo.cs)) : isD ? mixRgb(base, hexRgb(LDCOL), Fo.cd) : base;
+      let al = s.alpha * sym * (isS ? 1 - 0.65 * Fo.d : isD ? 1 - 0.65 * Fo.s : 1 - 0.35 * Math.max(Fo.s, Fo.d));
+      if (eb > 0.003 && !isE) { col = mixRgb(col, hexRgb(COL.grey), LE.grey * eb); al *= 1 - 0.2 * eb; }
+      if (eb > 0.003 && isE) {   // grown from its right edge, so it keeps clear of the exponent
+        const [, r, t, b] = inkBox(s), cy = (t + b) / 2, ke = 1 + LE.grow * eb;
+        ctx.save(); ctx.translate(r, cy); ctx.scale(ke, ke); ctx.translate(-r, -cy); drawSprite(ctx, s, al, col); ctx.restore(); continue;
+      }
+      const k = 1 + 0.22 * (isS ? Fo.s : isD ? Fo.d : 0), dx = LE.shift * eb;   // 29b: the exponent moves over a little, making room for the e
+      if (k < 1.001 && dx < 0.01) { drawSprite(ctx, s, al, col); continue; }
       const [l, r, t, b] = inkBox(s), cx = (l + r) / 2, cy = (t + b) / 2;
-      ctx.save(); ctx.translate(cx, cy); ctx.scale(k, k); ctx.translate(-cx, -cy); drawSprite(ctx, s, al, col); ctx.restore();
+      ctx.save(); ctx.translate(dx, 0); ctx.translate(cx, cy); ctx.scale(k, k); ctx.translate(-cx, -cy); drawSprite(ctx, s, al, col); ctx.restore();
     }
   }
   const n8 = smooth(clamp(st.ind8 || 0, 0, 1));
