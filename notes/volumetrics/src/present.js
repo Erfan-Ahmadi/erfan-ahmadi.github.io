@@ -180,8 +180,8 @@ async function presToCard(i) {
   const c = PS.qc[i];
   if (i === 2) ptw('qSide', 1, 1.3);
   await ptwi(c, 'm', 1, 1.3);
-  ptwi(c, 'todo', 1, 0.7, { delay: 0.3 });
-  await ptwi(c, 'title', 1, 0.9, { ease: linear });
+  ptwi(c, 'todo', 1, 0.47, { delay: 0.2 });   // the writing 1.5× as fast as it was; the move stays as it is
+  await ptwi(c, 'title', 1, 0.6, { ease: linear });
 }
 // Beat 15: the cards and the equation go; the shader tutorial comes in at the left end, its code typing, the arrow
 // under it. 15b: the arrow walks to the other end, drawing the line behind it, and the physics lecture comes in. 15c: it
@@ -382,6 +382,8 @@ function presCloudOffscreen(dt, withMag) {
 // then the question under it and a place for its animation.
 function drawQCards(ctx, st) {
   const ga = st.qcA; if (ga <= 0.003) return;
+  // the terms are measured on the equation's own layout: onto the stage through the transform the equation is drawn with
+  const [ex, ey, ek] = eqXf(st), mx = (x) => ex + ek * (x - PEQ.x), my = (y) => ey + ek * (y - PEQ.y);
   QCARDS.forEach((q, i) => {
     const c = st.qc[i]; if (c.box <= 0.003) return;
     const ss = peq().filter((s) => s.a.terms.includes(q.term)); if (!ss.length) return;
@@ -389,7 +391,7 @@ function drawQCards(ctx, st) {
     for (const s of ss) { const [l, r, t, b] = inkBox(s); x0 = Math.min(x0, l); x1 = Math.max(x1, r); y0 = Math.min(y0, t); y1 = Math.max(y1, b); }
     // the highlight's box, which then turns into the card
     const pad = 12, m = smooth(clamp(c.m, 0, 1)), C = qRect(i, st), k = C[2] / 480, a = smooth(clamp(c.box, 0, 1)) * ga;
-    const R = lerpRect([x0 - pad, y0 - pad, x1 - x0 + 2 * pad, y1 - y0 + 2 * pad], C, m);
+    const R = lerpRect([mx(x0) - pad, my(y0) - pad, ek * (x1 - x0) + 2 * pad, ek * (y1 - y0) + 2 * pad], C, m);
     ctx.save(); ctx.strokeStyle = hexA(q.col, a * lerp(1, 0.8, m)); ctx.lineWidth = 3.5; ctx.beginPath(); ctx.roundRect(R[0], R[1], R[2], R[3], lerp(10, 16, m)); ctx.stroke(); ctx.restore();
     if (c.title > 0.003) q.title.forEach((src, j) => drawTex(ctx, src, C[0] + C[2] / 2, C[1] + (50 + j * 44) * k, 32 * k, { p: c.title, color: q.col, alpha: ga }));
     if (c.todo > 0.003) (q.draw || drawTodo)(ctx, [C[0] + 24 * k, C[1] + 136 * k, C[2] - 48 * k, C[3] - 160 * k], c.todo * ga, q, k);
