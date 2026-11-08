@@ -5689,8 +5689,8 @@ const LASIDE = [60, 110, 1120, 630];
 // Beat 24's guess, worked out over my head: the same amount off for every box, what's taken off, its minus and all, in
 // the red of light taken away. Beat 25: crossed out in red.
 const LOFF = (v) => String.raw`\textcolor{${COL.red}}{-${v}\%}`;
-const LWRONG = [String.raw`\textcolor{${COL.blue}}{1}\text{ box:}\quad ${LRES('100')} ${LOFF('50')} = ${LRES('50')}`,
-  String.raw`\textcolor{${COL.blue}}{2}\text{ boxes:}\quad ${LRES('100')} ${LOFF('100')} = ${LRES('0')}`];
+const LWRONG = [String.raw`\textcolor{${COL.blue}}{1}\text{ box:}\quad 100\% ${LOFF('50')} = 50\%`,
+  String.raw`\textcolor{${COL.blue}}{2}\text{ boxes:}\quad 100\% ${LOFF('100')} = 0\%`];   // the amounts in white here
 const LW = { x: 1225, y: [170, 240], size: 40 };
 function drawLabFigure(ctx, st) {
   const a = smooth(clamp(st.lfig, 0, 1)); if (a <= 0.003) return;
