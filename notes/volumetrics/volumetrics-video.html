@@ -4719,8 +4719,8 @@ const PS_DEFAULTS = () => ({
   fx: { show: [0, 0, 0, 0], clock: [0, 0, 0, 0], run: [0, 0, 0, 0], dim: [0, 0, 0, 0], grey: [0, 0, 0, 0], big: 0 },
   // part 3, the lab (lab.js): the box on the stage, its scattering and glow, the readings, the second row and its
   // boxes, me guessing; then the formula and its plot; then the bases
-  labOn: 0, labX: 0, scat: 0, glow: 0, read1: 0, read2: 0, split: 0, c2: 1, myst: 0, rev: 1, r2: '?', r2From: '', r2M: 1, lfig: 0, lthink: '', lthinkP: 1, lside: 0, wrong: 0, cross: 0, rowFade: 0, loopOn: 0, loopT0: 0,
-  rowsOut: 0, fml: 0, axC: 0, dotD: 0, curveTo: 0, sig: 1, sigHi: 0, eq1: 0, plotOut: 0, bStack: 0, bMorph: 0, ind1: 1, ind8: 1, ind10: 1, readDim: 1, sAct: 0, dAct: 0, mv9: 0, dLoop: 0, dLoopT0: 0, sLoop: 0, sLoopT0: 0,
+  labOn: 0, labX: 0, scat: 0, glow: 0, read1: 0, read2: 0, split: 0, c2: 1, myst: 0, rev: 1, r2: '?', r2From: '', r2M: 1, lfig: 0, lthink: '', lthinkP: 1, lside: 0, wrong: 0, cross: 0, rowFade: 0,
+  rowsOut: 0, fml: 0, axC: 0, dotD: 0, curveTo: 0, sig: 1, sigHi: 0, eq1: 0, plotOut: 0, bStack: 0, bMorph: 0, ind1: 1, ind8: 1, ind10: 1, readDim: 1, sAct: 0, dAct: 0, mv9: 0, dLoop: 0, dLoopT0: 0, sLoop: 0, sLoopT0: 0, hvOn: 0, hvA: 0, hvStep: 0, hvT0: 0, topDim: 0, topOut: 0, merge: 0, pbox: 0, rise: 0, marksOut: 0, dCont: 0, r1Hi: 0,
 });
 const PS = PS_DEFAULTS();
 // The equation, with its terms named: the four effects for the braces, and the parts the questions point at.
@@ -4783,8 +4783,11 @@ const BEATS = [
   { n: '25', name: "that's not what happens", run: () => labCross() },
   { n: '25b', name: 'twenty-five', run: () => labReveal() },
   { n: '25c', name: 'a third box', run: () => labThird() },
-  { n: '25d', name: 'a fixed fraction, again and again', run: () => labLoop() },
+  { n: '25d', name: 'a fixed fraction, again and again', run: () => labHalve() },
+  { n: '25e', name: 'again: a second box', run: () => labHalveStep(2) },
+  { n: '25f', name: 'and again: a third', run: () => labHalveStep(3) },
   { n: '26', name: 'the formula', run: () => labFormula() },
+  { n: '26b', name: 'the boxes on the curve', run: () => labMarks() },
   { n: '27', name: 'distance', run: () => labDistance() },
   { n: '28', name: 'more or less absorbing', run: () => labSigma() },
   { n: '29', name: 'a vacuum', run: () => labVacuum() },
@@ -5296,14 +5299,15 @@ function labCardXf(st) {
   const r = useRect(3, st), k = r[2] / 700, [ox, oy, s] = boxFit(r[3] / k);
   return { ox: r[0] + k * (ox + s * 470), oy: r[1] + k * oy, s: k * s };
 }
-// c boxes (fractional while one slides in from the right): the boxes stay centred, the laser and sensor move out
-function labLayout(c) {
-  const T = c * LAB.BW + (c - 1) * LAB.G, boxes = [];
+// c boxes (fractional while one slides in from the right): the boxes stay centred, the laser and sensor move out. g, lg
+// and sg: the gaps between the boxes and to the laser and the sensor (beat 26 closes them up).
+function labLayout(c, g = LAB.G, lg = LAB.laserGap, sg = LAB.sensorGap) {
+  const T = c * LAB.BW + (c - 1) * g, boxes = [];
   for (let k = 0; k < Math.max(1, Math.ceil(c - 1e-6)); k++) {
     const a = clamp(c - k, 0, 1);
-    boxes.push({ x0: -T / 2 + k * (LAB.BW + LAB.G) + (1 - smooth(a)) * 1000, a });
+    boxes.push({ x0: -T / 2 + k * (LAB.BW + g) + (1 - smooth(a)) * 1000, a });
   }
-  return { laser: -T / 2 - LAB.laserGap, sensor: T / 2 + LAB.sensorGap, boxes };
+  return { laser: -T / 2 - lg, sensor: T / 2 + sg, boxes };
 }
 // Text that reshapes into other text (the sensor's readout), as sprites around (0, 0).
 const labTxtCache = new Map(), labPlanCache = new Map();
@@ -5405,32 +5409,16 @@ function drawGlow(ctx, B, a) {
     dot(ctx, x, y, 4, '#FF5A4A', a * p);
   }
 }
-// Beat 25d, "multiplying by a fixed fraction, again and again": the bottom row plays it over and over. One box,
-// 100% × ½ = 50%; a second slides in, 50% × ½ = 25%, the reading halving as it comes; a third, 25% × ½ = 12.5%; a
-// moment to look; then it jumps back to one box and goes again. Worked out from the time u into the loop, so stepping
-// around the presentation can't leave it half done.
-const LOOP = { P: 9.9 };
-function labLoopAt(u) {
-  const ss = (a, b) => smooth(clamp((u - a) / (b - a), 0, 1)), lin = (a, b) => clamp((u - a) / (b - a), 0, 1);
-  const c = 1 + ss(2.0, 3.4) + ss(5.2, 6.6);
-  // the reading halves as each box's multiplication turns into its result
-  const [from, to, m] = u < 4.2 ? ['', '50%', 1] : u < 7.4 ? ['50%', '25%', lin(4.2, 5.0)] : ['25%', '12.5%', lin(7.4, 8.2)];
-  return { c, from, to, m, mult: [lin(0.3, 0.8), lin(3.4, 3.9), lin(6.6, 7.1)], multM: [lin(1.1, 1.8), lin(4.2, 4.9), lin(7.4, 8.1)], fade: Math.min(clamp(u / 0.3, 0, 1), clamp((LOOP.P - u) / 0.3, 0, 1)) };
-}
-// In the loop, where each box of the bottom row ends, with a small pointer under it: what came in, times a half, which
-// then turns into what comes out (the way manim transforms one formula into another). The × ½ is in the red of the
-// wrong sum's − 50% in beat 24, the red of light taken away: minus a half becomes times a half.
+// The × ½ of the halving (beats 25d–25f), in the red of the wrong sum's − 50% in beat 24, the red of light taken away:
+// minus a half becomes times a half. Amounts of light in yellow.
 const LHALF = String.raw`\textcolor{${COL.red}}{\times \tfrac{1}{2}}`, LRES = (v) => String.raw`\textcolor{${COL.yellow}}{${v}\%}`;
-const LMULT = ['100', '50', '25'].map((a) => String.raw`${a}\% ${LHALF}`), LOUT = ['50', '25', '12.5'].map((v) => LRES(v));
-let lmSp = null;
-const lmSprites = () => lmSp || (lmSp = LMULT.map((src, k) => { const A = place(tex(src), { x: 0, y: 0, size: 50 }), B = place(tex(LOUT[k]), { x: 0, y: 0, size: 54 }); return { A, B, P: reshapePlan(A, B) }; }));
 // One row: laser, c boxes, sensor, in the transform X. o: c, the readout (from, to, m, a), the scattering and glow;
 // myst hides what happens past the first box behind a row of "?" (the light past it is the question), and rev is how
 // far the beam has come back past the first box once the answer is shown.
 function drawLabRow(ctx, X, o, alpha) {
   if (alpha <= 0.003) return;
-  const L = labLayout(o.c), ln2 = Math.LN2 / LAB.BW;
-  ctx.save(); ctx.translate(X.ox, X.oy); ctx.scale(X.s, X.s); ctx.globalAlpha *= alpha;
+  const L = labLayout(o.c, o.g, o.lg, o.sg), ln2 = Math.LN2 / LAB.BW;
+  ctx.save(); ctx.translate(X.ox, X.oy); ctx.scale(X.s, X.sy ?? X.s); ctx.globalAlpha *= alpha;
   const ga = ctx.globalAlpha;
   for (const b of L.boxes) {
     if (b.a <= 0.003) continue;
@@ -5461,15 +5449,6 @@ function drawLabRow(ctx, X, o, alpha) {
   }
   drawLaser(ctx, L.laser, 0, SH.color, 1);
   drawSensor(ctx, L.sensor, 0, SH.color, front >= end - 1 ? T(end) * SH.I0 * past : 0);
-  if (o.mult) L.boxes.forEach((b, k) => {   // what comes out of each box, where it ends: what came in, times a half, turning into the result
-    const p = clamp(o.mult[k] || 0, 0, 1), m = clamp((o.multM && o.multM[k]) || 0, 0, 1), S = lmSprites()[k]; if (p <= 0.003 || b.a <= 0.003 || !S) return;
-    ctx.save(); ctx.translate(b.x0 + LAB.BW + LAB.G / 2, LAB.top);
-    ctx.fillStyle = hexA(COL.greyB, b.a * smooth(clamp(p * 2, 0, 1)));   // the pointer, its tip just over the box's end
-    ctx.beginPath(); ctx.moveTo(0, -10); ctx.lineTo(-11, -30); ctx.lineTo(11, -30); ctx.closePath(); ctx.fill();
-    ctx.translate(0, -66);
-    if (m <= 0.001) drawSprites(ctx, S.A, { p, alpha: b.a }); else if (m >= 0.999) drawSprites(ctx, S.B, { alpha: b.a }); else drawReshape(ctx, S.P, m, b.a);
-    ctx.restore();
-  });
   drawLabReadout(ctx, L.sensor, o.from, o.to, o.m, o.read, o.pop);
   ctx.restore();
 }
@@ -5495,16 +5474,19 @@ function drawLabPlot(ctx, st) {
   TERM_COL['t-sig'] = hexRgb(COL.yellow);
   drawLabFormula(ctx, F, st, a);
   if (st.eq1 > 0.003) drawSprites(ctx, F.eq1, { alpha: a * smooth(clamp(st.eq1, 0, 1)) });
-  if (ax <= 0.003) return;
+  const bA = st.pbox != null ? smooth(clamp(st.pbox, 0, 1)) : ax;   // the box, the light and the sensor: with the axes (the bench), or from the joined boxes (beat 26)
+  if (ax <= 0.003 && bA <= 0.003) return;
   ctx.save(); ctx.globalAlpha = a;
-  drawAxes(ctx, A, { c: ax, nums: 0, lab: ax, xlColor: Fo.c > 0.003 ? mixRgb(WHITE_RGB, hexRgb(LDCOL), Fo.c) : null });
-  for (const [v, s] of [[1, '100%'], [0.5, '50%']]) drawTex(ctx, String.raw`\text{${s.replace('%', '\\%')}}`, A.ox - 22, A.Y(v), 28, { ax: 1, alpha: ax });
+  if (ax > 0.003) {
+    drawAxes(ctx, A, { c: ax, nums: 0, lab: ax, xlColor: Fo.c > 0.003 ? mixRgb(WHITE_RGB, hexRgb(LDCOL), Fo.c) : null });
+    for (const [v, s] of [[1, '100%'], [0.5, '50%']]) drawTex(ctx, String.raw`\text{${s.replace('%', '\\%')}}`, A.ox - 22, A.Y(v), 28, { ax: 1, alpha: ax });
+  }
   const d = clamp(st.dotD, 0, LPD), X0 = A.X(0), Xd = A.X(d), y = LP.beam, H = LP.bot - LP.top;
-  drawCurve(ctx, A, f, { p: clamp(st.curveTo, 0, LPD) / LPD, from: 0, to: LPD, color: SH.color, width: 6 });
+  if (ax > 0.003) drawCurve(ctx, A, f, { p: clamp(st.curveTo, 0, LPD) / LPD, from: 0, to: LPD, color: SH.color, width: 6 });
   // the box, as long as the dot is far; its stuff as dense as σ says, gone when σ is 0
   const ra = clamp(st.sig, 0, 1), rb = clamp(st.sig - 1, 0, 1), w = Xd - X0;
-  if (w > 1) {
-    ctx.save(); ctx.globalAlpha = a * ax; ctx.beginPath(); ctx.roundRect(X0, LP.top, w, H, Math.min(12, w / 2)); ctx.clip();
+  if (w > 1 && bA > 0.003) {
+    ctx.save(); ctx.globalAlpha = a * bA; ctx.beginPath(); ctx.roundRect(X0, LP.top, w, H, Math.min(12, w / 2)); ctx.clip();
     const g = ctx.createLinearGradient(0, LP.top, 0, LP.bot); g.addColorStop(0, `rgba(170,164,152,${(0.09 * Math.min(2, st.sig)).toFixed(3)})`); g.addColorStop(1, `rgba(170,164,152,${(0.15 * Math.min(2, st.sig)).toFixed(3)})`);
     ctx.fillStyle = g; ctx.fillRect(X0, LP.top, w, H);
     LPSPECKS.forEach(([u, v, ph], i) => {
@@ -5515,7 +5497,7 @@ function drawLabPlot(ctx, st) {
     ctx.restore();
   }
   const T = (x) => Math.exp(-sig * (clamp(x, X0, Xd) - X0) / A.sx), xs = Xd + 46;
-  ctx.save(); ctx.globalAlpha = a * ax;
+  ctx.save(); ctx.globalAlpha = a * bA;
   drawBeam(ctx, X0 - 26, xs - 11, y, SH.color, SH.I0, T, [X0, Xd]);
   if (w > 1) { ctx.strokeStyle = COL.greyA; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(X0, LP.top, w, H, Math.min(12, w / 2)); ctx.stroke(); }
   if (Fo.c > 0.003 && w > 1 && (st.ind10 || 0) < 0.5) {   // option 1: a brace under the box, d in its blue, stretching with it; while σ changes, σ in the box instead, in its yellow (option 10 draws its own)
@@ -5531,7 +5513,15 @@ function drawLabPlot(ctx, st) {
   const n10 = smooth(clamp(st.ind10 || 0, 0, 1));
   if (n10 > 0.003 && w > 1) {   // option 10, as option 1 shows them but with their values: d = … on the brace under the box, which gives way, while σ changes, to σ = … in the box, on a little shade
     const cx = X0 + w / 2, as = n10 * clamp(st.sAct || 0, 0, 1), ad = n10 * (0.7 + 0.3 * clamp(st.dAct || 0, 0, 1)) * (1 - clamp(st.sAct || 0, 0, 1)), dcol = mixRgb(WHITE_RGB, hexRgb(LDCOL), Fo.c);
-    if (ad > 0.003) { drawBrace(ctx, cx, LP.bot + 16, w, 24, 6, dcol, ad); drawTex(ctx, `d = ${d.toFixed(1)}`, cx, LP.bot + 84, 56, { alpha: ad, color: dcol }); }
+    if (ad > 0.003) {
+      drawBrace(ctx, cx, LP.bot + 16, w, 24, 6, dcol, ad);
+      const dc = smooth(clamp(st.dCont ?? 1, 0, 1)), dl = `d = ${d.toFixed(1)}`;   // beat 26: first the count, 3 boxes; 26b: it becomes d = 3.0
+      if (dc >= 0.999) drawTex(ctx, dl, cx, LP.bot + 84, 56, { alpha: ad, color: dcol });
+      else {
+        const sp = (src) => place(tex(src), { x: cx, y: LP.bot + 84, size: 56 }).map((q) => ({ ...q, color: dcol })), A0 = sp(String.raw`${hvPct(d)}\text{ boxes}`);
+        if (dc <= 0.001) drawSprites(ctx, A0, { alpha: ad }); else drawMorph(ctx, matchPlan(A0, sp(dl)), dc, ad);
+      }
+    }
     if (as > 0.003) {
       const src = String.raw`\sigma = ${(Math.max(0, st.sig) * Math.LN2).toFixed(2)}`, sy = LP.top + 46, tw = tex(src).w * 50;
       ctx.fillStyle = `rgba(28,27,24,${(0.72 * as).toFixed(3)})`; ctx.beginPath(); ctx.roundRect(cx - tw / 2 - 12, sy - 30, tw + 24, 60, 10); ctx.fill();
@@ -5541,16 +5531,31 @@ function drawLabPlot(ctx, st) {
   ctx.save(); ctx.translate(X0 - 26, y); ctx.scale(0.6, 0.6); drawLaser(ctx, 0, 0, SH.color, 1); ctx.restore();
   ctx.save(); ctx.translate(xs, y); ctx.scale(0.6, 0.6); drawSensor(ctx, 0, 0, SH.color, f(d) * SH.I0); ctx.restore();
   const v = f(d) * 100, rd = smooth(clamp(st.readDim || 0, 0, 1)), dec = Math.abs(v - Math.round(v)) < 0.05 ? 0 : 1;   // 50%, 25%, 12.5%
-  drawNumber(ctx, v, xs + 30, y - 44, { size: 44, dec, suffix: '%', color: rd > 0.5 ? COL.grey : COL.white, alpha: a * ax * (1 - 0.15 * rd) });   // greyed a little when readDim is on, so the numbers elsewhere stand out
-  // the dot riding the curve, and a faint line down to the box's end: the same d in both
-  if (st.curveTo > 0.003) {
+  drawNumber(ctx, v, xs + 30, y - 44, { size: 44, dec, suffix: '%', color: rd > 0.5 ? COL.grey : COL.white, alpha: a * bA * (1 - 0.15 * rd) });   // greyed a little when readDim is on, so the numbers elsewhere stand out
+  // the dot on the curve, once the curve has reached it, and a faint line down to the box's end: the same d in both
+  if (ax > 0.003 && st.curveTo > 0.003 && st.curveTo >= d - 1e-3) {
     const px = A.X(d), py = A.Y(f(d));
     dashed(ctx, px, py + 12, px, LP.top - 4, COL.greyC, 0.8, 2);
     if (px - 12 > A.X(0) + 2) dashed(ctx, px - 12, py, A.X(0), py, COL.greyC, 0.8, 2);   // and across to the y-axis: how much gets through
     dot(ctx, px, py, 11, SH.color, 1);
   }
   ctx.restore();
+  drawLabMarks(ctx, st, A, f, a);
   ctx.restore();
+}
+// Beats 26–26b: the halving's amounts (100% where the light goes in, then 50%, 25% and 12.5% where each box ended),
+// over the joined box at 0, 1, 2 and 3 box lengths; at 26b they rise along dashed lines to their places on the curve,
+// each a dot there with its amount beside it. They go at 27.
+function drawLabMarks(ctx, st, A, f, a) {
+  if (st.pbox == null) return;
+  const al = a * (smooth(clamp(st.pbox, 0, 1)) >= 0.5 ? 1 : 0) * (1 - smooth(clamp(st.marksOut || 0, 0, 1))), rise = clamp(st.rise || 0, 0, 1), k = 0.6;
+  if (al <= 0.003) return;
+  for (let i = 0; i <= LPD; i++) {
+    const x = A.X(i), py = A.Y(f(i)), p = smooth(clamp((rise - 0.12 * i) / 0.64, 0, 1)), src = hvAmt(100 / Math.pow(2, i)), tw = tex(src).w * HV.size * k;
+    if (p > 0.003) dashed(ctx, x, LP.top - 2, x, lerp(LP.top - 2, py + 9, p), COL.greyC, 0.8 * al, 2);
+    if (p > 0.85) dot(ctx, x, py, 7, COL.yellow, al * smooth((p - 0.85) / 0.15));
+    hvLabel(ctx, { src, a: al, pa: 1 - p }, lerp(x, x + 18 + tw / 2, p), lerp(LP.top - 66 * k, py - 24, p), LP.top - 10 * k, k, false);
+  }
 }
 // Which of σ and d is changing (beats 27–29). The presentation shows it with options 1, 8 and 10 and the greyed readout
 // (in its PS_DEFAULTS); the bench's "σ or d?" tab can try them with 3 and 9 too, alone or together.
@@ -5628,7 +5633,7 @@ function drawLabNumbers(ctx, st, a) {
 // in, as manim's TransformMatchingTex does it); the row's = writes in as the copy lands.
 const LB = { rows: [330, 480, 630], size: 84, dots: 770, cx: 960 };
 const LBS = String.raw`\textcolor{${COL.yellow}}{\sigma}`, LBD = String.raw`\textcolor{${LDCOL}}{d}`;   // σ in its yellow and d in its blue, as at beats 26–29
-const LBROW = [['2', '0.69'], ['3', '1.1'], ['10', '2.3']].map(([b, k]) =>
+const LBROW = [['2', '0.69'], ['3', '1.10'], ['10', '2.30']].map(([b, k]) =>
   String.raw`\mathord{\htmlClass{t-bl}{${b}^{-${LBS} ${LBD}}}}\mathrel{\htmlClass{t-beq}{=}}\mathord{\htmlClass{t-br}{e^{-${k}\,${LBS} ${LBD}}}}`);
 let lbSp = null;
 function lbSprites() {
@@ -5698,11 +5703,26 @@ function drawLabStage(ctx, dt, st) {
   if (st.labOn > 0.003) {
     const out = 1 - smooth(clamp(st.rowsOut, 0, 1)), x = smooth(clamp(st.labX, 0, 1)), sp = smooth(clamp(st.split, 0, 1));
     const X1 = mixXf(mixXf(labCardXf(st), LABXF.full, x), LABXF.top, sp);
-    drawLabRow(ctx, X1, { c: 1, scat: st.scat, glow: st.glow, from: '', to: '50%', m: 1, read: smooth(clamp(st.read1, 0, 1)) }, out);
+    const tOut = 1 - smooth(clamp(st.topOut || 0, 0, 1));
+    drawLabRow(ctx, X1, { c: 1, scat: st.scat, glow: st.glow, from: '', to: '50%', m: 1, read: smooth(clamp(st.read1, 0, 1)) }, out * tOut);
+    const td = smooth(clamp(st.topDim || 0, 0, 1)) * tOut;   // from 25b: greyed, so the eye goes to the row with the question
+    if (td > 0.003) { const L1 = labLayout(1); greyOut(ctx, [X1.ox + X1.s * (L1.laser - 160), X1.oy - X1.s * 250, X1.s * (L1.sensor - L1.laser + 330), X1.s * 520], 0.85 * td, 0.3 * td); }
     if (sp > 0.003) {
       let o = { c: st.c2, from: st.r2From, to: st.r2, m: st.r2M, read: smooth(clamp(st.read2, 0, 1)), pop: true, myst: st.myst, rev: st.rev }, al = out * (1 - smooth(clamp(st.rowFade, 0, 1)));
-      if (st.loopOn) { const Q = labLoopAt(reduced ? 6 : (((TIME - st.loopT0) % LOOP.P) + LOOP.P) % LOOP.P); o = { ...o, ...Q, read: 1, myst: 0, rev: 1 }; al *= Q.fade; }
-      drawLabRow(ctx, mixXf(LABXF.full, LABXF.bot, sp), o, al);
+      if (st.hvOn) {   // 25d–25f: the halving, a box per press (drawHalveRow), as the Halving tab's labels at the boxes' ends with × ½
+        const S = hvSchedule(HV_PRES), [b0, b1] = hvStepSpan(S, st.hvStep, true), Xb = mixXf(LABXF.full, LABXF.bot, sp), J = labJoinXf();
+        const e = smooth(clamp(st.merge || 0, 0, 1)), pb = smooth(clamp(st.pbox || 0, 0, 1)), ha = out * smooth(clamp(st.hvA, 0, 1));
+        // 26: closing up into the plot's box; once that is drawn by the plot (pbox), this fades and the plot keeps the labels
+        const Xm = { ox: lerp(Xb.ox, J.ox, e), oy: lerp(Xb.oy, J.oy, e), s: lerp(Xb.s, J.s, e), sy: lerp(Xb.s, J.sy, e), lk: lerp(Xb.s, 0.6, e), e, lg: J.lg, sg: J.sg };
+        drawHalveRow(ctx, Xm, S, HV_PRES, reduced ? b1 : clamp(b0 + TIME - st.hvT0, b0, b1), ha * (1 - pb), pb < 0.5 ? ha : 0);
+      } else drawLabRow(ctx, mixXf(LABXF.full, LABXF.bot, sp), o, al);
+    }
+    const hi = smooth(clamp(st.r1Hi || 0, 0, 1));
+    if (hi > 0.003) {   // 22: the reading brought forward a moment: everything else dims, the readout grows a little
+      ctx.save(); ctx.fillStyle = `rgba(28,27,24,${(0.62 * hi).toFixed(3)})`; ctx.fillRect(0, 0, W, H); ctx.restore();
+      const L1 = labLayout(1), cy = -138, k = 1 + 0.16 * hi;
+      ctx.save(); ctx.translate(X1.ox, X1.oy); ctx.scale(X1.s, X1.s); ctx.translate(L1.sensor, cy); ctx.scale(k, k); ctx.translate(-L1.sensor, -cy);
+      drawLabReadout(ctx, L1.sensor, '', '50%', 1, 1); ctx.restore();
     }
   }
   labLoops(st); labTrack(st, dt); drawLabPlot(ctx, st);
@@ -5721,7 +5741,13 @@ function labGlow() { ptw('scat', 0, 0.6); return ptw('glow', 1, 1.0, { delay: 0.
 // 21d: the glow goes: only absorption
 function labAbsorb() { return ptw('glow', 0, 0.9); }
 // 22: the sensor's reading, for the first time
-function labRead() { return ptw('read1', 1, 0.8); }
+// 22: the reading comes in, then is brought forward a moment (the rest dims, the readout grows a little), then back
+async function labRead() {
+  const g = PRES.gen;
+  await ptw('read1', 1, 0.8); if (!labAlive(g)) return;
+  await ptw('r1Hi', 1, 0.5); if (!labAlive(g)) return;
+  await ptw('r1Hi', 0, 0.8, { delay: 1.4 });
+}
 function labRead2(text, dur, delay = 0) { PS.r2From = PS.r2; PS.r2 = text; PS.r2M = 0; return ptw('r2M', 1, dur, { delay, ease: linear }); }
 // 23: the whole setup is copied, without its readout, and the copy slides down. 23b: a second box slides in beside its
 // first while the light past the first box gives way to a row of "?"; then a readout pops up on it: "?"
@@ -5744,25 +5770,30 @@ function labWrong() { return ptw('wrong', 1, 1.6, { ease: linear }); }
 function labCross() { return ptw('cross', 1, 0.8, { ease: linear }); }
 function labReveal() {
   ptw('lfig', 0, 0.5); ptw('wrong', 0, 0.5); ptw('cross', 0, 0.5); ptw('lside', 0, 1.2, { delay: 0.2 });
-  ptw('myst', 0, 0.5, { delay: 1.3 }); ptw('rev', 1, 1.0, { delay: 1.6, ease: linear });
+  ptw('myst', 0, 0.5, { delay: 1.3 }); ptw('rev', 1, 1.0, { delay: 1.6, ease: linear }); ptw('topDim', 1, 0.8, { delay: 1.2 });
   return labRead2('25%', 0.9, 2.5);
 }
 function labThird() { labRead2('12.5%', 1.2); return ptw('c2', 3, 1.4); }   // the reading changes as the box slides in
-// 25d: the bottom row fades, and the loop starts from one box
-async function labLoop() {
+// 25d: the bottom row fades and comes back as one box, 100% going in and, at its end, 100% × ½ turning into 50%;
+// 25e and 25f: the next box slides in, and the same at its end. Each step plays from the clock, so a rebuild shows it done.
+async function labHalve() {
   const g = PRES.gen;
   await ptw('rowFade', 1, 0.35); if (!labAlive(g)) return;
-  PS.loopT0 = TIME; PS.loopOn = 1; PS.rowFade = 0;
+  PS.hvOn = 1; PS.hvA = 0; ptw('hvA', 1, 0.4); return labHalveStep(1);
 }
-// 26: the rows go; e^{−σd} writes in, the plot under it, and the curve draws with its dot, the box growing under it
+function labHalveStep(k) { PS.hvStep = k; PS.hvT0 = instant ? -1e9 : TIME; return Promise.resolve(); }
+// 26: the one-box row goes; the three boxes close up into one long box, the plot's, under where the plot comes (its
+// brace counting them: 3 boxes); e^{−σd} writes in, the axes, and the curve draws from left to right, its dot at the end.
+// 26b: the amounts rise to the curve, and 3 boxes becomes d = 3.0.
 async function labFormula() {
-  ptw('rowsOut', 1, 0.7); ptw('fml', 1, 1.2, { delay: 0.5, ease: linear }); ptw('axC', 1, 1.0, { delay: 1.2 });
-  PS.dotD = 0; PS.curveTo = 0;
-  ptw('curveTo', LPD, 3.2, { delay: 2.2 }); await ptw('dotD', LPD, 3.2, { delay: 2.2 });
+  PS.dotD = LPD; PS.curveTo = 0; PS.dCont = 0;
+  ptw('topOut', 1, 0.6); ptw('merge', 1, 1.6, { delay: 0.3 }); ptw('pbox', 1, 0.3, { delay: 1.9 });
+  ptw('fml', 1, 1.2, { delay: 1.0, ease: linear }); ptw('axC', 1, 1.0, { delay: 1.7 });
+  await ptw('curveTo', LPD, 3.2, { delay: 2.6 });
 }
-// 27: the dot runs back and forth along the curve, the box with it; it stops at two boxes
+function labMarks() { ptw('dCont', 1, 0.8, { delay: 1.6 }); return ptw('rise', 1, 2.2); }
 // 27 and 28 play back and forth until the next press, never stopping on their own: a cycle worked out from the clock
-// (as 25d's loop is), so a press stops it wherever it is and the next beat carries on from there. 27: the dot from three
+// (as the halving's steps are), so a press stops it wherever it is and the next beat carries on from there. 27: the dot from three
 // boxes down to 0.4 and back; 28: σ up to twice the usual and down to half (even steps in log2). Both 30% slower than
 // the one-off moves they replace.
 const LDL = { P: 5.2 }, LSL = { P: 6.8 };
@@ -5772,7 +5803,7 @@ function labLoops(st) {
   if (st.sLoop) st.sig = Math.pow(2, Math.sin((2 * Math.PI * Math.max(0, TIME - st.sLoopT0)) / LSL.P));
 }
 // 27: the dot runs back and forth along the curve, the box with it, until the next press (still at two boxes if motion is reduced)
-function labDistance() { PS.dLoop = 1; PS.dLoopT0 = TIME; return reduced ? ptw('dotD', 2, 1.2) : Promise.resolve(); }
+function labDistance() { ptw('marksOut', 1, 0.6); PS.dLoop = 1; PS.dLoopT0 = TIME; return reduced ? ptw('dotD', 2, 1.2) : Promise.resolve(); }
 // 28: the dot settles at two boxes, then σ goes up to twice the usual and down to half, over and over, until the next press
 function labSigma() { PS.dLoop = 0; ptw('sigHi', 1, 0.5); PS.sLoop = 1; PS.sLoopT0 = TIME + 0.9; return ptw('dotD', 2, 0.9); }
 // 29: σ to zero from wherever it is: a vacuum, and "= 1"
@@ -5818,6 +5849,154 @@ const SSD = defScene({
     { type: 'range', key: 'dotD', label: 'd (boxes)', min: 0.05, max: LPD, step: 0.01, fmt: (v) => v.toFixed(2), set: (v) => { untween(SSD, 'dotD'); SSD.dotD = v; } },
   ],
   draw: (ctx, dt, st) => { labTrack(st, dt); drawLabPlot(ctx, st); },
+});
+
+// ---------- Halving: ways to animate beats 25d–25f, a fixed fraction again and again ----------
+// One row of laser, boxes and sensor, a box per press. mode: 'ends', a label where each box ends (the boxes all there,
+// or coming in one by one); 'travel', one label riding along with the light from the laser to the sensor, halved by
+// each box it crosses. how: 'step', the amount jumps to half where the box ends; 'times', "× ½" comes in beside it,
+// then the two turn into the result; 'smooth', it drops through the box, half by its end (the exponential inside each
+// box). start: a 100% first, where the light goes in. place (travel): the label above the boxes, or on the beam. Amounts
+// in yellow, the × ½ in red; each label has the small pointer. The presentation (HV_PRES) uses labels at the ends, × ½,
+// the start, boxes one by one and the readout; the bench's tab tries the rest.
+const HV = { v: 300, size: 54 };
+const HV_PRES = { mode: 'ends', how: 'times', start: 1, n: 3, oneBy: 1, place: 'above', readout: 1 };
+const hvPct = (v) => String(+v.toFixed(2));
+const hvAmt = (v) => LRES(hvPct(v));
+const hvMul = (v) => `${hvAmt(v)} ${LHALF}`;
+const hvOut = (k) => 100 / Math.pow(2, k + 1);   // what leaves box k (k = −1: what goes in)
+const hvSpC = new Map(), hvPlC = new Map();
+const hvSp = (src) => { if (!hvSpC.has(src)) hvSpC.set(src, place(tex(src), { x: 0, y: 0, size: HV.size })); return hvSpC.get(src); };
+const hvPlan = (a, b, match) => { const k = (match ? 'm|' : 'r|') + a + '>' + b; if (!hvPlC.has(k)) hvPlC.set(k, match ? matchPlan(hvSp(a), hvSp(b)) : reshapePlan(hvSp(a), hvSp(b))); return hvPlC.get(k); };
+// a row of n boxes, fitted to the stage (the bench)
+function halveXf(n) { const T = n * LAB.BW + (n - 1) * LAB.G, s = Math.min(1.1, 1780 / (T + 640)); return { ox: 960 - 10 * s, oy: 600, s }; }
+// The schedule for a set of options: when each thing happens, on one clock. Each box's part is one step.
+function hvSchedule(o) {
+  const n = Math.round(o.n), how = o.how;
+  if (o.mode === 'travel') {
+    const L = labLayout(n), xs = o.start ? L.laser + 150 : L.boxes[0].x0 - 46, segs = [], ev = [];
+    let t = 0.5, x = xs;
+    const move = (to) => { const d = Math.abs(to - x); segs.push({ t0: t, t1: t + d / HV.v, x0: x, x1: to }); t += d / HV.v; x = to; };
+    for (let k = 0; k < n; k++) {
+      const b = L.boxes[k], t0 = t; move(b.x0); const tin = t; move(b.x0 + LAB.BW);
+      const e = { k, t0, tin, tout: t };
+      if (how !== 'smooth') { e.morph = [t, t + 0.6]; segs.push({ t0: t, t1: t + 0.9, x0: x, x1: x }); t += 0.9; }
+      if (k === n - 1) move(L.sensor);   // and on to the sensor after the last
+      e.end = t; ev.push(e);
+    }
+    return { mode: 'travel', n, how, L, xs, segs, ev, arrive: ev[n - 1].end, startEnd: 0.5, steps: ev.map((e) => [e.t0, e.end]) };
+  }
+  const one = !!o.oneBy && n > 1, spans = []; let t = 0.3;
+  const startAt = t; if (o.start) t += 0.8;
+  const startEnd = t;
+  for (let k = 0; k < n; k++) {
+    const t0 = t; let slide = null; if (one && k > 0) { slide = [t, t + 1.4]; t += 1.5; }
+    const lt = t, done = lt + (how === 'times' ? 1.6 : how === 'smooth' ? 1.2 : 0.5);
+    t += how === 'times' ? 2.1 : how === 'smooth' ? 1.6 : 1.1;
+    spans.push({ k, slide, t0, lt, done, end: t });
+  }
+  return { mode: 'ends', n, how, one, startAt, startEnd, spans, steps: spans.map((sp) => [sp.t0, sp.end]) };
+}
+// The clock's span for step k (0: only what goes in; k: up to and through box k). fromZero: step 1 plays from the very
+// start, the 100% going in too (the presentation's 25d).
+function hvStepSpan(S, k, fromZero) {
+  if (k <= 0) return [0, S.startEnd];
+  const [a, b] = S.steps[Math.min(k, S.n) - 1];
+  return [k === 1 && fromZero ? 0 : a, b];
+}
+// One label centred at the stage point (x, y) at scale k, its pointer's tip at stage height tip (Lb.pa: how much of the
+// pointer shows); shade: a little shade behind it (on the beam, among the specks).
+function hvLabel(ctx, Lb, x, y, tip, k, shade) {
+  if (Lb.a <= 0.003) return;
+  const pa = Lb.a * (Lb.pa ?? 1);
+  if (pa > 0.003) { ctx.save(); ctx.fillStyle = hexA(COL.greyB, pa); ctx.beginPath(); ctx.moveTo(x, tip); ctx.lineTo(x - 11 * k, tip - 20 * k); ctx.lineTo(x + 11 * k, tip - 20 * k); ctx.closePath(); ctx.fill(); ctx.restore(); }
+  ctx.save(); ctx.translate(x, y); ctx.scale(k, k);
+  if (shade) { ctx.fillStyle = `rgba(28,27,24,${(0.75 * Lb.a).toFixed(3)})`; ctx.beginPath(); ctx.roundRect(-110, -38, 220, 76, 12); ctx.fill(); }
+  if (Lb.num != null) drawNumber(ctx, Lb.num, 0, 23, { size: 65, dec: Math.abs(Lb.num - Math.round(Lb.num)) < 0.05 ? 0 : 1, suffix: '%', color: COL.yellow, alpha: Lb.a, align: 'center' });
+  else if (Lb.to && Lb.m > 0.001) { if (Lb.m >= 0.999) drawSprites(ctx, hvSp(Lb.to), { alpha: Lb.a }); else (Lb.match ? drawMorph : drawReshape)(ctx, hvPlan(Lb.src, Lb.to, Lb.match), Lb.m, Lb.a); }
+  else drawSprites(ctx, hvSp(Lb.src), { p: Lb.p ?? 1, alpha: Lb.a });
+  ctx.restore();
+}
+// The row at clock time u, in the transform X (X.sy: its own height scale; X.lk: the labels' scale; X.e, X.lg, X.sg:
+// how far the boxes have closed up, and the laser's and sensor's gaps by then). labelAlpha: the labels' own alpha.
+function drawHalveRow(ctx, X, S, o, u, alpha = 1, labelAlpha = alpha) {
+  if (alpha <= 0.003 && labelAlpha <= 0.003) return;
+  const e = X.e || 0, g = LAB.G * (1 - e), lg = lerp(LAB.laserGap, X.lg ?? LAB.laserGap, e), sg = lerp(LAB.sensorGap, X.sg ?? LAB.sensorGap, e);
+  const labels = [], amt = (v, a) => (S.how === 'smooth' ? { num: v, a } : { src: hvAmt(v), a });
+  let c = S.n, read = 0, rFrom = '', rTo = '', rM = 1, travel = null;
+  if (S.mode === 'ends') {
+    if (S.one) { c = 1; for (const sp of S.spans) if (sp.slide) c += clamp((u - sp.slide[0]) / (sp.slide[1] - sp.slide[0]), 0, 1); }
+    const L = labLayout(c, g, lg, sg);
+    if (o.start) { const w = clamp((u - S.startAt) / 0.5, 0, 1); if (w > 0) labels.push({ x: L.boxes[0].x0 - g / 2, ...amt(100, S.how === 'smooth' ? w : 1), p: w }); }
+    for (const sp of S.spans) {
+      const b = L.boxes[sp.k]; if (!b || u < sp.lt) continue;
+      const w = u - sp.lt, vIn = hvOut(sp.k - 1), vOut = hvOut(sp.k), Lb = { x: b.x0 + LAB.BW + g / 2, a: b.a };
+      if (S.how === 'step') Object.assign(Lb, { src: hvAmt(vOut), p: clamp(w / 0.5, 0, 1) });
+      else if (S.how === 'times') Object.assign(Lb, w < 0.9 ? { src: hvMul(vIn), p: clamp(w / 0.5, 0, 1) } : { src: hvMul(vIn), to: hvAmt(vOut), m: smooth(clamp((w - 0.9) / 0.7, 0, 1)) });
+      else Object.assign(Lb, { num: vIn * Math.pow(2, -smooth(clamp(w / 1.2, 0, 1))), a: Lb.a * clamp(w / 0.25, 0, 1) });
+      labels.push(Lb);
+      if (u >= sp.done - 0.5) { rFrom = sp.k ? hvPct(vIn) + '%' : ''; rTo = hvPct(vOut) + '%'; rM = smooth(clamp((u - (sp.done - 0.5)) / 0.5, 0, 1)); read = 1; }
+    }
+  } else {
+    let x = S.xs; for (const sg2 of S.segs) if (u >= sg2.t0) x = u >= sg2.t1 ? sg2.x1 : lerp(sg2.x0, sg2.x1, (u - sg2.t0) / (sg2.t1 - sg2.t0));
+    let Lb;
+    if (S.how === 'smooth') {   // what's left after the stretch of stuff it has crossed
+      let inside = 0; for (const bx of S.L.boxes) inside += clamp(x - bx.x0, 0, LAB.BW);
+      Lb = { num: 100 * Math.pow(2, -inside / LAB.BW) };
+    } else {
+      Lb = { src: hvAmt(100) };
+      for (const ev of S.ev) {
+        const vIn = hvOut(ev.k - 1), vOut = hvOut(ev.k);
+        if (u >= ev.morph[1]) Lb = { src: hvAmt(vOut) };
+        else if (u >= ev.morph[0]) Lb = { src: S.how === 'times' ? hvMul(vIn) : hvAmt(vIn), to: hvAmt(vOut), m: smooth((u - ev.morph[0]) / 0.6) };
+        else if (S.how === 'times' && u >= ev.tin) Lb = { src: hvAmt(vIn), to: hvMul(vIn), m: smooth(clamp((u - ev.tin) / 0.4, 0, 1)), match: true };
+        else if (u >= ev.tin) Lb = { src: hvAmt(vIn) };
+      }
+    }
+    travel = { ...Lb, x, a: clamp((u - 0.1) / 0.4, 0, 1) };
+    if (u >= S.arrive - 0.4) { rTo = hvPct(hvOut(S.n - 1)) + '%'; read = clamp((u - S.arrive + 0.4) / 0.4, 0, 1); }
+  }
+  drawLabRow(ctx, X, { c, g, lg, sg, from: rFrom, to: rTo, m: rM, read: o.readout ? read * (1 - e) : 0, pop: true }, alpha);
+  // the labels in the stage's own space, so they keep their shape however the row is squeezed
+  const sy = X.sy ?? X.s, k = X.lk ?? X.s, top = X.oy + sy * LAB.top, at = (xr) => X.ox + X.s * xr;
+  for (const Lb of labels) hvLabel(ctx, { ...Lb, a: Lb.a * labelAlpha }, at(Lb.x), top - 66 * k, top - 10 * k, k, false);
+  if (travel && travel.a > 0.003) {
+    const tx = at(travel.x), ta = travel.a * labelAlpha, gl = ctx.createRadialGradient(tx, X.oy, 0, tx, X.oy, 30 * k);   // the light it rides with, on the beam
+    gl.addColorStop(0, `rgba(255,96,72,${(0.55 * ta).toFixed(3)})`); gl.addColorStop(1, 'rgba(255,96,72,0)');
+    ctx.fillStyle = gl; ctx.fillRect(tx - 30 * k, X.oy - 30 * k, 60 * k, 60 * k);
+    if (o.place === 'beam') hvLabel(ctx, { ...travel, a: ta }, tx, X.oy - 78 * k, X.oy - 14 * k, k, true);
+    else hvLabel(ctx, { ...travel, a: ta }, tx, top - 66 * k, top - 10 * k, k, false);
+  }
+}
+// Beat 26: where the bottom row's three boxes go, closed up into one long box that is exactly the plot's box at three
+// box lengths (from the plot's 0 to its 3, at its height), the laser and the sensor where the plot draws them.
+function labJoinXf() {
+  const A = lpAxes(), ox = (A.X(0) + A.X(LPD)) / 2, s = (A.X(LPD) - A.X(0)) / (LPD * LAB.BW), half = (LPD * LAB.BW) / 2;
+  return { ox, oy: LP.beam, s, sy: (LP.bot - LP.top) / (LAB.bot - LAB.top), lg: (ox - (A.X(0) - 26)) / s - half, sg: (A.X(LPD) + 46 - ox) / s - half };
+}
+// The bench's tab: a box per press (Next box), the step playing once and staying; Back shows the step before, done.
+const SHV = defScene({
+  id: 'halve', tab: 'Halving',
+  defaults: () => ({ mode: 'ends', how: 'times', start: 1, n: 3, oneBy: 1, place: 'above', readout: 1, step: 0, stepT0: 0 }),
+  actions: [
+    { id: 'next', label: 'Next box', primary: true, run: (st) => { const n = Math.round(st.n); if (st.step < n) { st.step++; st.stepT0 = TIME; } } },
+    { id: 'back', label: 'Back', run: (st) => { st.step = Math.max(0, st.step - 1); st.stepT0 = -1e9; } },
+    { id: 'again', label: 'From the start', run: (st) => { st.step = 0; st.stepT0 = TIME; } },
+    RESET,
+  ],
+  params: [
+    { type: 'select', key: 'mode', label: 'Style', options: [['ends', 'A label at each box’s end'], ['travel', 'One label travelling, halved by each box']], set: (v) => { SHV.mode = v; SHV.step = 0; SHV.stepT0 = TIME; } },
+    { type: 'select', key: 'how', label: 'The halving', options: [['step', 'Jumps to half where the box ends'], ['times', '× ½, then the result'], ['smooth', 'Drops smoothly through the box']], set: (v) => { SHV.how = v; SHV.step = 0; SHV.stepT0 = TIME; } },
+    { type: 'check', key: 'start', label: 'Start with 100% on the left', set: (v) => { SHV.start = v ? 1 : 0; SHV.step = 0; SHV.stepT0 = TIME; } },
+    { type: 'range', key: 'n', label: 'Boxes', min: 1, max: 4, step: 1, fmt: (v) => String(v), set: (v) => { SHV.n = v; SHV.step = 0; SHV.stepT0 = TIME; } },
+    { type: 'check', key: 'oneBy', label: 'Boxes come in one by one (labels at the ends)', set: (v) => { SHV.oneBy = v ? 1 : 0; SHV.step = 0; SHV.stepT0 = TIME; } },
+    { type: 'select', key: 'place', label: 'Travelling label', options: [['above', 'Above the boxes'], ['beam', 'On the beam']] },
+    { type: 'check', key: 'readout', label: 'Sensor readout', set: (v) => { SHV.readout = v ? 1 : 0; } },
+  ],
+  draw: (ctx, dt, st) => {
+    const S = hvSchedule(st), [b0, b1] = hvStepSpan(S, st.step, false);
+    drawHalveRow(ctx, halveXf(S.n), S, st, reduced ? b1 : clamp(b0 + TIME - st.stepT0, b0, b1));
+  },
 });
 
 //@@SCENES@@

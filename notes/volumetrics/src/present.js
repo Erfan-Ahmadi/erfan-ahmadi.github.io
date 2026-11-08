@@ -67,8 +67,8 @@ const PS_DEFAULTS = () => ({
   fx: { show: [0, 0, 0, 0], clock: [0, 0, 0, 0], run: [0, 0, 0, 0], dim: [0, 0, 0, 0], grey: [0, 0, 0, 0], big: 0 },
   // part 3, the lab (lab.js): the box on the stage, its scattering and glow, the readings, the second row and its
   // boxes, me guessing; then the formula and its plot; then the bases
-  labOn: 0, labX: 0, scat: 0, glow: 0, read1: 0, read2: 0, split: 0, c2: 1, myst: 0, rev: 1, r2: '?', r2From: '', r2M: 1, lfig: 0, lthink: '', lthinkP: 1, lside: 0, wrong: 0, cross: 0, rowFade: 0, loopOn: 0, loopT0: 0,
-  rowsOut: 0, fml: 0, axC: 0, dotD: 0, curveTo: 0, sig: 1, sigHi: 0, eq1: 0, plotOut: 0, bStack: 0, bMorph: 0, ind1: 1, ind8: 1, ind10: 1, readDim: 1, sAct: 0, dAct: 0, mv9: 0, dLoop: 0, dLoopT0: 0, sLoop: 0, sLoopT0: 0,
+  labOn: 0, labX: 0, scat: 0, glow: 0, read1: 0, read2: 0, split: 0, c2: 1, myst: 0, rev: 1, r2: '?', r2From: '', r2M: 1, lfig: 0, lthink: '', lthinkP: 1, lside: 0, wrong: 0, cross: 0, rowFade: 0,
+  rowsOut: 0, fml: 0, axC: 0, dotD: 0, curveTo: 0, sig: 1, sigHi: 0, eq1: 0, plotOut: 0, bStack: 0, bMorph: 0, ind1: 1, ind8: 1, ind10: 1, readDim: 1, sAct: 0, dAct: 0, mv9: 0, dLoop: 0, dLoopT0: 0, sLoop: 0, sLoopT0: 0, hvOn: 0, hvA: 0, hvStep: 0, hvT0: 0, topDim: 0, topOut: 0, merge: 0, pbox: 0, rise: 0, marksOut: 0, dCont: 0, r1Hi: 0,
 });
 const PS = PS_DEFAULTS();
 // The equation, with its terms named: the four effects for the braces, and the parts the questions point at.
@@ -131,8 +131,11 @@ const BEATS = [
   { n: '25', name: "that's not what happens", run: () => labCross() },
   { n: '25b', name: 'twenty-five', run: () => labReveal() },
   { n: '25c', name: 'a third box', run: () => labThird() },
-  { n: '25d', name: 'a fixed fraction, again and again', run: () => labLoop() },
+  { n: '25d', name: 'a fixed fraction, again and again', run: () => labHalve() },
+  { n: '25e', name: 'again: a second box', run: () => labHalveStep(2) },
+  { n: '25f', name: 'and again: a third', run: () => labHalveStep(3) },
   { n: '26', name: 'the formula', run: () => labFormula() },
+  { n: '26b', name: 'the boxes on the curve', run: () => labMarks() },
   { n: '27', name: 'distance', run: () => labDistance() },
   { n: '28', name: 'more or less absorbing', run: () => labSigma() },
   { n: '29', name: 'a vacuum', run: () => labVacuum() },
