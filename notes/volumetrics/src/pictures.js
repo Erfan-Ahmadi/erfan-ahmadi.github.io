@@ -137,55 +137,73 @@ function drawCodePanel(ctx, r, a, p, t) {
 }
 
 // ---- the fields: light crossing some stuff ----
-// A handful of photons, each on a straight leg. In a step through the stuff one may be absorbed (it fades where it
-// is) or scattered (it turns to a random direction and carries on); one that reaches a receiver stops there. Each is
-// drawn as a ray, as the light is everywhere else in the video: the stretch of its path just behind it, bending where
-// it scattered (pts: where its path began and turned).
-const newSpecks = (seed) => ({ list: [], acc: 0, rnd: rng32(seed) });
-function stepSpecks(P, dt, o) {
-  if (dt <= 0) return;
-  P.acc += dt * o.rate;
-  while (P.acc >= 1) { P.acc -= 1; const q = Object.assign({ s: 0, die: -1, scat: 0 }, o.spawn(P.rnd)); q.pts = [[q.x, q.y]]; P.list.push(q); }
-  for (const q of P.list) {
-    if (q.die >= 0) { q.die += dt; continue; }
-    const step = o.speed * dt, n = Math.max(1, Math.ceil(step / 3)), ds = step / n;
-    for (let k = 0; k < n; k++) {
-      q.x += q.dx * ds; q.y += q.dy * ds; q.s += ds;
-      if (o.hit && o.hit(q)) { q.die = 0; q.hit = 1; if (o.onHit) o.onHit(q); break; }
-      const [sa, ss] = o.ext(q.x, q.y, q);
-      if (sa > 0 && P.rnd() < sa * ds) { q.die = 0; break; }
-      if (ss > 0 && P.rnd() < ss * ds) { const t = P.rnd() * Math.PI * 2; q.dx = Math.cos(t); q.dy = Math.sin(t); q.s = 0; q.scat++; q.pts.push([q.x, q.y]); if (q.pts.length > 8) q.pts.shift(); }
-    }
+// Each card's light is switched on as the card comes in (on: seconds since then, on the cards' own clock). It leaves its
+// source as a front, FIELD.v units a second, drawing its rays behind it, and what receives it lights up as the front
+// gets there; after that the rays stay, as light does. Along each ray the light is as bright as e^{−τ} says, τ the stuff
+// it has crossed so far, so it's dimmer past the dust, the air, the body. Light scattered out of a ray shows as a soft
+// glow where it leaves, and a few faint rays going off to the side.
+const FIELD = { v: 1000, delay: 0.5, rise: 0.3 };
+const fieldFront = (on) => (reduced ? Infinity : Math.max(0, on - FIELD.delay) * FIELD.v);   // how far the light has got from its source
+const fieldSrc = (on) => (reduced ? 1 : smooth(clamp((on - FIELD.delay + 0.15) / FIELD.rise, 0, 1)));   // the source, switching on
+const fieldAt = (front, s) => (reduced ? 1 : smooth(clamp((front - s) / (FIELD.rise * FIELD.v), 0, 1)));   // something s from the source, lighting up as the front passes it
+// all that the light has reached so far: a disc around its source, as wide as the front has got
+function fieldClip(ctx, x, y, front) { if (front < 1e5) { ctx.beginPath(); ctx.arc(x, y, Math.max(0, front), 0, 2 * Math.PI); ctx.clip(); } }
+// The light along a ray from (x0, y0) to (x1, y1), at n + 1 points: ext(x, y) gives how much of its warm part and of its
+// blue part is taken per unit there, and mix(warm, blue) turns what's left of each into a brightness and a colour.
+function fieldSamples(x0, y0, x1, y1, n, ext, mix) {
+  const L = Math.hypot(x1 - x0, y1 - y0), m = 8, ds = L / (n * m), I = [], C = [];
+  let tw = 0, tb = 0;
+  for (let k = 0; k <= n; k++) {
+    if (k > 0) for (let j = 0; j < m; j++) { const u = (k - 1 + (j + 0.5) / m) / n, [ew, eb] = ext(lerp(x0, x1, u), lerp(y0, y1, u)); tw += ew * ds; tb += eb * ds; }
+    const [i, c] = mix(Math.exp(-tw), Math.exp(-tb)); I.push(i); C.push(c);
   }
-  const [x0, y0, x1, y1] = o.bounds;
-  P.list = P.list.filter((q) => (q.die < 0 ? q.x > x0 && q.x < x1 && q.y > y0 && q.y < y1 : q.die < 0.45));
+  return { x0, y0, x1, y1, L, I, C };
 }
-function drawSpecks(ctx, P, { r = 4, trail = 28 } = {}) {
-  // brightest at its front and fading back over trail; all of it fading once it's absorbed or has arrived
-  ctx.save(); ctx.lineCap = 'round'; ctx.lineWidth = r * 0.62;
-  for (const q of P.list) {
-    const f = q.die < 0 ? 1 : 1 - q.die / 0.45; if (f <= 0) continue;
-    const pts = q.pts ? [...q.pts, [q.x, q.y]] : [[q.x, q.y]];
-    let back = 0;
-    for (let i = pts.length - 1; i > 0 && back < trail; i--) {
-      const [x1, y1] = pts[i], [x0, y0] = pts[i - 1], L = Math.hypot(x1 - x0, y1 - y0); if (L < 1e-6) continue;
-      const take = Math.min(L, trail - back), xa = x1 + ((x0 - x1) * take) / L, ya = y1 + ((y0 - y1) * take) / L;
-      const g = ctx.createLinearGradient(x1, y1, xa, ya);
-      g.addColorStop(0, hexA(q.c, 0.95 * f * (1 - back / trail))); g.addColorStop(1, hexA(q.c, 0.95 * f * (1 - (back + take) / trail)));
-      ctx.strokeStyle = g; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(xa, ya); ctx.stroke();
-      back += take;
-    }
-  }
+// light with a warm part and a blue part (wb of it blue): what's left of each sets how bright it is and its colour
+const twoTone = (warm, blue, wb) => (tw, tb) => { const a = (1 - wb) * tw, b = wb * tb, s = a + b; return [s, s > 1e-6 ? warm.map((v, i) => (a * v + b * blue[i]) / s) : warm]; };
+const FCACHE = {};
+const fieldCache = (key, h, make) => (FCACHE[key] && FCACHE[key].h === h ? FCACHE[key].v : (FCACHE[key] = { h, v: make() }).v);
+// A ray, drawn as far as the front has got (s0: how far along the light's path the ray begins). I: its brightness at
+// evenly spaced points along it; col: its colour, [r, g, b] or one per point. A thin core and, unless halo is 0, a wide
+// faint halo, both added onto what's under them, as light adds up.
+function fieldRay(ctx, x0, y0, x1, y1, front, s0, I, col, { w = 2, a = 0.8, halo = 1 } = {}) {
+  const L = Math.hypot(x1 - x0, y1 - y0), f = clamp((front - s0) / L, 0, 1); if (f <= 0 || L < 1 || a <= 0.003) return;
+  const n = I.length - 1, soft = Math.min(f, 30 / L), cAt = (k) => (typeof col === 'function' ? col(k) : col);
+  const rgba = ([r, g, b], al) => `rgba(${r | 0},${g | 0},${b | 0},${al.toFixed(3)})`, gr = ctx.createLinearGradient(x0, y0, x1, y1);
+  for (let k = 0; k <= n; k++) { const u = k / n; if (u > f) break; gr.addColorStop(u, rgba(cAt(k), clamp(I[k], 0, 1) * (f < 1 ? clamp((f - u) / soft, 0, 1) : 1))); }
+  if (f < 1) gr.addColorStop(f, rgba(cAt(Math.min(n, Math.ceil(f * n))), 0));   // its front, soft
+  const A0 = ctx.globalAlpha;
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = gr; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(lerp(x0, x1, f), lerp(y0, y1, f));
+  if (halo > 0) { ctx.globalAlpha = A0 * a * 0.16 * halo; ctx.lineWidth = w * 4.5; ctx.stroke(); }
+  ctx.globalAlpha = A0 * a; ctx.lineWidth = w; ctx.stroke();
   ctx.restore();
 }
-// The first frame a card shows, its photons are already on their way.
-function warmSpecks(P, o, fresh) { if (fresh && !reduced) { P.list.length = 0; for (let k = 0; k < 40; k++) stepSpecks(P, 0.08, o); } }
+// Light scattered out of ray r at its point k, going off at angle ang for len units, fading out as it goes
+function fieldBranch(ctx, r, k, ang, len, front, s0, col, a) {
+  if (k == null) return;
+  const n = r.I.length - 1, u = k / n, x = lerp(r.x0, r.x1, u), y = lerp(r.y0, r.y1, u), i0 = r.I[k];
+  fieldRay(ctx, x, y, x + Math.cos(ang) * len, y + Math.sin(ang) * len, front, s0 + u * r.L, [i0, 0.5 * i0, 0.18 * i0, 0], col, { w: 1.5, a });
+}
+const glowAt = (ctx, x, y, R, [r, g, b], al) => {   // a soft round glow, added on
+  if (al <= 0.003) return;
+  const gr = ctx.createRadialGradient(x, y, 0, x, y, R); gr.addColorStop(0, `rgba(${r | 0},${g | 0},${b | 0},${al.toFixed(3)})`); gr.addColorStop(1, `rgba(${r | 0},${g | 0},${b | 0},0)`);
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, R, 0, 2 * Math.PI); ctx.fill(); ctx.restore();
+};
 
 // ---- astronomy: starlight through interstellar dust, to a telescope ----
+// Dust takes more of the blue than of the red, so the starlight comes out of it dimmer and a little redder; what it
+// scatters is bluish, so the dust glows faintly blue where the star lights it, more of it nearer the star.
 const STARFIELD = (() => { const r = rng32(4242), out = []; for (let i = 0; i < 90; i++) out.push([r() * 700, r(), lerp(0.6, 1.9, r() ** 2), lerp(0.25, 0.85, r()), r() * 6.283]); return out; })();
 const DUST = [[330, 0.48, 95, 0.9], [395, 0.36, 70, 0.7], [290, 0.64, 70, 0.6], [420, 0.62, 85, 0.75], [352, 0.27, 55, 0.5], [255, 0.4, 50, 0.45]];
 const dustAt = (x, y, h) => DUST.reduce((s, [bx, by, br, w]) => s + w * Math.exp(-((x - bx) ** 2 + (y - by * h) ** 2) / (2 * (br * 0.55) ** 2)), 0);
-const SPK_STARS = newSpecks(11);
+// ys: where the rays meet the telescope's lens, about its middle; branch: a ray, where along it (x), which way, how far
+const ASTRO = { sx: 72, tx: 560, r0: 12, k: 0.0052, ys: [-13, -6.5, 0, 6.5, 13], branch: [[1, 330, -2.3, 125], [2, 395, 2.15, 105], [3, 425, -0.8, 115]] };
+const astroMix = twoTone([255, 226, 182], [178, 200, 255], 0.4);
+const astroRays = (h) => fieldCache('astro', h, () => ASTRO.ys.map((dy) => {
+  const cy = h / 2, { sx, tx, r0 } = ASTRO, L = Math.hypot(tx - sx, dy);
+  return fieldSamples(sx + ((tx - sx) / L) * r0, cy + (dy / L) * r0, tx, cy + dy, 32, (x, y) => { const d = ASTRO.k * dustAt(x, y, h); return [0.85 * d, 1.2 * d]; }, astroMix);
+}));
 function drawTelescope(ctx, x, y) {   // its aperture at (x, y), looking left
   ctx.save(); ctx.fillStyle = BODY; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 2.5; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   ctx.beginPath(); ctx.moveTo(x + 56, y + 14); ctx.lineTo(x + 30, y + 96); ctx.moveTo(x + 56, y + 14); ctx.lineTo(x + 58, y + 100); ctx.moveTo(x + 56, y + 14); ctx.lineTo(x + 86, y + 96); ctx.stroke();
@@ -194,8 +212,8 @@ function drawTelescope(ctx, x, y) {   // its aperture at (x, y), looking left
   ctx.beginPath(); ctx.roundRect(x + 102, y - 6, 16, 12, 2); ctx.fill(); ctx.stroke();
   ctx.restore();
 }
-function drawUseStars(ctx, dt, h, fresh) {
-  const cy = h / 2, sx = 72, tx = 560;
+function drawUseStars(ctx, dt, h, on = 1e9) {
+  const cy = h / 2, { sx, tx, r0 } = ASTRO, front = fieldFront(on), src = fieldSrc(on), R = astroRays(h);
   ctx.fillStyle = '#0F1015'; ctx.fillRect(0, 0, 700, h);
   for (const [x, y, rr, b, ph] of STARFIELD) dot(ctx, x, y * h, rr, '#DCE3EE', b * (reduced ? 0.85 : 0.72 + 0.28 * Math.sin(TIME * 1.6 + ph)));
   // the dust
@@ -204,86 +222,91 @@ function drawUseStars(ctx, dt, h, fresh) {
     g.addColorStop(0, `rgba(156,102,66,${0.62 * w})`); g.addColorStop(0.6, `rgba(124,80,54,${0.28 * w})`); g.addColorStop(1, 'rgba(124,80,54,0)');
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(bx, by * h, br, 0, Math.PI * 2); ctx.fill();
   }
-  // the line of sight, dimmer past the dust
-  ctx.save(); ctx.lineWidth = 2; ctx.lineCap = 'round';
-  let tau = 0; const N = 60;
-  for (let i = 0; i < N; i++) {
-    const xa = lerp(sx + 14, tx, i / N), xb = lerp(sx + 14, tx, (i + 1) / N);
-    tau += 0.0044 * dustAt((xa + xb) / 2, cy, h) * (xb - xa);
-    ctx.strokeStyle = `rgba(255,241,208,${0.3 * Math.exp(-tau)})`; ctx.beginPath(); ctx.moveTo(xa, cy); ctx.lineTo(xb, cy); ctx.stroke();
+  // the dust lit by the star, each cloud as the light gets to it: the light it scatters, faint and bluish, more nearer the star
+  for (const [bx, by, br, w] of DUST) {
+    const y = by * h, dd = Math.hypot(bx - sx, y - cy), lit = (src * w * fieldAt(front, dd - br)) / (1 + (dd / 260) ** 2);
+    glowAt(ctx, bx - ((bx - sx) / dd) * br * 0.2, y - ((y - cy) / dd) * br * 0.2, br * 1.15, [140, 172, 255], 0.42 * lit);   // a little toward the star, the side it lights
   }
-  ctx.restore();
-  // the star
+  // the starlight on its way to the telescope, dimmer and a little redder past the dust, a little of it scattered off to the side
+  for (const r of R) fieldRay(ctx, r.x0, r.y0, r.x1, r.y1, front, r0, r.I, (k) => r.C[k], { w: 1.8, a: 0.85 * src, halo: 0.6 });
+  for (const [i, x, ang, len] of ASTRO.branch) { const r = R[i]; fieldBranch(ctx, r, Math.round(((x - r.x0) / (r.x1 - r.x0)) * (r.I.length - 1)), ang, len, front, r0, [150, 180, 255], 0.55 * src); }
+  // the star, switching on
   const sg = ctx.createRadialGradient(sx, cy, 0, sx, cy, 70);
-  sg.addColorStop(0, 'rgba(255,246,223,0.6)'); sg.addColorStop(1, 'rgba(255,246,223,0)');
+  sg.addColorStop(0, `rgba(255,246,223,${(0.6 * src).toFixed(3)})`); sg.addColorStop(1, 'rgba(255,246,223,0)');
   ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(sx, cy, 70, 0, Math.PI * 2); ctx.fill();
-  ctx.save(); ctx.strokeStyle = 'rgba(255,246,223,0.55)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sx - 38, cy); ctx.lineTo(sx + 38, cy); ctx.moveTo(sx, cy - 38); ctx.lineTo(sx, cy + 38); ctx.stroke(); ctx.restore();
-  dot(ctx, sx, cy, 10, '#FFF6DF');
-  // its light on the way
-  const o = {
-    rate: 7, speed: 210, bounds: [-20, -20, 720, h + 20],
-    spawn: (rnd) => { const t = (rnd() - 0.5) * 0.05; return { x: sx + 14, y: cy + (rnd() - 0.5) * 8, dx: Math.cos(t), dy: Math.sin(t), c: '#FFF1D0' }; },
-    ext: (x, y) => { const d = dustAt(x, y, h); return [0.002 * d, 0.0024 * d]; },
-    hit: (q) => q.x >= tx && Math.abs(q.y - cy) <= 19,
-  };
-  warmSpecks(SPK_STARS, o, fresh); stepSpecks(SPK_STARS, dt, o);
-  if (!reduced) drawSpecks(ctx, SPK_STARS, { r: 3.6, trail: 110 });
+  if (src > 0.003) { ctx.save(); ctx.strokeStyle = `rgba(255,246,223,${(0.55 * src).toFixed(3)})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sx - 38, cy); ctx.lineTo(sx + 38, cy); ctx.moveTo(sx, cy - 38); ctx.lineTo(sx, cy + 38); ctx.stroke(); ctx.restore(); }
+  dot(ctx, sx, cy, 10, '#FFF6DF', lerp(0.3, 1, src));
   drawTelescope(ctx, tx, cy);
+  // its lens catching the light as it gets there
+  const m = R[2], n = m.I.length - 1;
+  glowAt(ctx, tx + 2, cy, 34, m.C[n], 0.8 * Math.sqrt(m.I[n]) * fieldAt(front, r0 + m.L) * src);
 }
 
 // ---- climate science: sunlight through our atmosphere ----
-// Bluer light scatters more in the air, so most of what turns away is blue; the rest reaches the ground.
-const SPK_SKY = newSpecks(12);
-function drawUseSky(ctx, dt, h, fresh) {
-  const ex = 1000, ey = h * 0.6, R = 520, A = 64, sx = 66, sy = h * 0.6;
+// The air scatters blue light much more than the rest, so the sunlight reaches the ground a little dimmer and warmer,
+// and the air glows blue with what it scattered: the sky. The air and the ground light up as the sunlight gets there.
+// at: where the rays land, in degrees round the ground from the point under the sun; branch: a ray, which way, how far
+const SKY = { ex: 1000, ey: 0.6, R: 520, A: 64, sx: 66, sy: 0.6, r0: 42, at: [-24, -18, -12, -6, 0, 6, 12, 18], branch: [[1, -2.4, 95], [3, -1.75, 80], [5, 2.45, 90], [7, 1.5, 80]] };
+const skyMix = twoTone([255, 231, 176], [158, 195, 242], 0.34);
+const skyRays = (h) => fieldCache('sky', h, () => {
+  const { ex, R, A, sx, r0 } = SKY, ey = SKY.ey * h, sy = SKY.sy * h;
+  const ext = (x, y) => { const d = Math.hypot(x - ex, y - ey) - R; if (d > A || d < 0) return [0, 0]; const rho = Math.exp(-d / 22); return [0.0135 * rho, 0.0615 * rho]; };   // absorbed, 0.0015, and scattered, four or five times as much of the blue
+  return SKY.at.map((deg) => {
+    const t = (deg * Math.PI) / 180, px = ex - R * Math.cos(t), py = ey + R * Math.sin(t), L = Math.hypot(px - sx, py - sy);
+    const r = fieldSamples(sx + ((px - sx) / L) * r0, sy + ((py - sy) / L) * r0, px, py, 40, ext, skyMix), n = r.I.length - 1;
+    for (let k = 0; k <= n; k++) if (Math.hypot(lerp(r.x0, px, k / n) - ex, lerp(r.y0, py, k / n) - ey) - R <= 26) { r.kb = k; break; }   // deep in the air: where its branch leaves
+    return r;
+  });
+});
+function drawUseSky(ctx, dt, h, on = 1e9) {
+  const { ex, R, A, sx, r0 } = SKY, ey = SKY.ey * h, sy = SKY.sy * h, front = fieldFront(on), src = fieldSrc(on), RS = skyRays(h);
   ctx.fillStyle = '#0F1116'; ctx.fillRect(0, 0, 700, h);
-  // the air: thickest at the ground, gone a little way up
-  const g = ctx.createRadialGradient(ex, ey, R, ex, ey, R + A);
-  g.addColorStop(0, 'rgba(116,166,234,0.5)'); g.addColorStop(0.45, 'rgba(116,166,234,0.17)'); g.addColorStop(1, 'rgba(116,166,234,0)');
-  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(ex, ey, R + A, 0, Math.PI * 2); ctx.fill();
-  // the ground, lit from the sun's side
+  const air = (k) => {   // the air: thickest at the ground, gone a little way up
+    const g = ctx.createRadialGradient(ex, ey, R, ex, ey, R + A);
+    g.addColorStop(0, `rgba(116,166,234,${(0.5 * k).toFixed(3)})`); g.addColorStop(0.45, `rgba(116,166,234,${(0.17 * k).toFixed(3)})`); g.addColorStop(1, 'rgba(116,166,234,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(ex, ey, R + A, 0, Math.PI * 2); ctx.fill();
+  };
+  // before the sunlight gets there: the air barely there, the ground dark
+  air(0.25); ctx.fillStyle = '#121C26'; ctx.beginPath(); ctx.arc(ex, ey, R, 0, Math.PI * 2); ctx.fill();
+  // as it gets there: the air glowing blue with the light it scatters, the ground in daylight
+  ctx.save(); fieldClip(ctx, sx, sy, front); ctx.globalAlpha *= src;
+  air(1);
   const gg = ctx.createLinearGradient(ex - R, 0, 700, 0); gg.addColorStop(0, '#2C5677'); gg.addColorStop(1, '#14202B');
   ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(ex, ey, R, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
   ctx.save(); ctx.strokeStyle = 'rgba(170,205,240,0.55)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(ex, ey, R, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
-  // the sun
+  // the sun, switching on
   const sg = ctx.createRadialGradient(sx, sy, 0, sx, sy, 130);
-  sg.addColorStop(0, hexA(COL.yellow, 0.45)); sg.addColorStop(1, hexA(COL.yellow, 0));
+  sg.addColorStop(0, hexA(COL.yellow, 0.45 * src)); sg.addColorStop(1, hexA(COL.yellow, 0));
   ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(sx, sy, 130, 0, Math.PI * 2); ctx.fill();
-  dot(ctx, sx, sy, 38, '#FFD98A');
-  // sunlight on the way: one photon in three bluish
-  const dist = (q) => Math.hypot(q.x - ex, q.y - ey);
-  const o = {
-    rate: 10, speed: 230, bounds: [-20, -20, 720, h + 20],
-    spawn: (rnd) => {
-      const ty = lerp(0.12, 0.96, rnd()) * h, tx2 = ex - Math.sqrt(Math.max(0, (R + 20) ** 2 - (ty - ey) ** 2));
-      const dx = tx2 - sx, dy = ty - sy, L = Math.hypot(dx, dy), blue = rnd() < 0.34;
-      return { x: sx + (dx / L) * 44, y: sy + (dy / L) * 44, dx: dx / L, dy: dy / L, c: blue ? '#9EC3F2' : '#FFE7B0', blue };
-    },
-    ext: (x, y, q) => { const d = Math.hypot(x - ex, y - ey) - R; if (d > A || d < 0) return [0, 0]; const rho = Math.exp(-d / 22); return [0.0015 * rho, (q.blue ? 0.034 : 0.006) * rho]; },
-    hit: (q) => dist(q) < R,
-  };
-  warmSpecks(SPK_SKY, o, fresh); stepSpecks(SPK_SKY, dt, o);
-  if (!reduced) drawSpecks(ctx, SPK_SKY, { r: 3.6, trail: 120 });
+  dot(ctx, sx, sy, 38, '#FFD98A', lerp(0.25, 1, src));
+  // the sunlight, dimmer and warmer at the ground, some of its blue going off to the side on the way
+  for (const r of RS) fieldRay(ctx, r.x0, r.y0, r.x1, r.y1, front, r0, r.I, (k) => r.C[k], { w: 1.8, a: 0.8 * src });
+  for (const [i, ang, len] of SKY.branch) fieldBranch(ctx, RS[i], RS[i].kb, ang, len, front, r0, [150, 190, 255], 0.65 * src);
 }
 
 // ---- medical imaging: X-rays through a body, onto a detector ----
-// The body is me, the stick figure, standing in the X-rays, its strokes thickened into a body that absorbs them. The
-// detector shows how much of each ray gets through, the line integral along it; photons that arrive flash where they
-// land. It doesn't have to be exact.
-const XR = { fx: 98, dx0: 604, half: 165, n: 66, me: [452, 112, 0.95], body: 16, sigma: 0.05 };   // me: x, feet below the centre line, scale
-const XR_GRID = { h: 0 };
-function xrayGrid(h) {   // the body drawn at half resolution, so asking how dense it is somewhere is one lookup
-  if (XR_GRID.h === h) return XR_GRID;
-  const w = 350, gh = Math.ceil(h / 2), c = document.createElement('canvas'); c.width = w; c.height = gh;
-  const g = c.getContext('2d'), [mx, my, ms] = XR.me;
+// The body is me, the stick figure, standing in the X-rays, its strokes thickened into a body that takes them out of the
+// beam. Each ray is dimmer past it by however much of it the ray crossed, and the detector shows how much of each gets
+// through, the line integral along it. Most of what soft tissue takes out of an X-ray beam is scattered rather than
+// absorbed, so the body glows faintly where the rays cross it. It doesn't have to be exact.
+// me: x, feet below the centre line, scale; rays: how many; branch: a ray, which way, how far (leaving where it loses most)
+const XR = { fx: 98, dx0: 604, half: 165, n: 66, me: [452, 112, 0.95], body: 16, sigma: 0.05, rays: 21, r0: 10, col: [196, 218, 255], branch: [[8, -2.2, 70], [13, 2.0, 60]] };
+// The body drawn once at half resolution, 240 units either side of the card's middle line (whatever the card's height,
+// as it changes while the cards move at beat 20), so asking how dense it is somewhere is one lookup.
+const XR_GRID = { w: 350, gh: 240, a: null };
+function xrayGrid() {
+  if (XR_GRID.a) return XR_GRID;
+  const { w, gh } = XR_GRID, c = document.createElement('canvas'); c.width = w; c.height = gh;
+  const g = c.getContext('2d', { willReadFrequently: true }), [mx, my, ms] = XR.me;
   g.scale(0.5, 0.5); g.lineWidth = XR.body; g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = '#fff';
-  traceFigure(g, mx, h / 2 + my, ms); g.stroke();
+  traceFigure(g, mx, gh + my, ms); g.stroke();
   const d = g.getImageData(0, 0, w, gh).data, a = new Float32Array(w * gh);
   for (let i = 0; i < w * gh; i++) a[i] = d[4 * i + 3] / 255;
-  return Object.assign(XR_GRID, { h, w, gh, a });
+  XR_GRID.a = a; return XR_GRID;
 }
-function xrayDensity(x, y, h) {
-  const G = xrayGrid(h), i = Math.floor(x / 2), j = Math.floor(y / 2);
+function xrayDensity(x, y, h) {   // (x, y) on a card h tall
+  const G = xrayGrid(), i = Math.floor(x / 2), j = Math.floor((y - h / 2) / 2 + G.gh / 2);
   return i < 0 || j < 0 || i >= G.w || j >= G.gh ? 0 : XR.sigma * G.a[j * G.w + i];
 }
 const XR_CACHE = { h: 0, T: null };
@@ -297,39 +320,49 @@ function xrayProfile(h) {
   }
   return Object.assign(XR_CACHE, { h, T }).T;
 }
-const SPK_XRAY = newSpecks(13), XR_FLASH = [];
-function drawUseXray(ctx, dt, h, fresh) {
-  const cy = h / 2, { fx, dx0, half } = XR, [mx, my, ms] = XR.me;
+const xrayRays = (h) => fieldCache('xray', h, () => {
+  const cy = h / 2, { fx, dx0, half, r0 } = XR;
+  return Array.from({ length: XR.rays }, (_, j) => {
+    const y = cy - half + ((j + 0.5) / XR.rays) * 2 * half, L = Math.hypot(dx0 - fx, y - cy);
+    const r = fieldSamples(fx + ((dx0 - fx) / L) * r0, cy + ((y - cy) / L) * r0, dx0, y, 40, (x, yy) => { const m = xrayDensity(x, yy, h); return [m, m]; }, (t) => [t, XR.col]);
+    let best = 0.02; for (let k = 1; k < r.I.length; k++) if (r.I[k - 1] - r.I[k] > best) { best = r.I[k - 1] - r.I[k]; r.kb = k; }   // where it loses the most, if it crosses me at all
+    return r;
+  });
+});
+function drawUseXray(ctx, dt, h, on = 1e9) {
+  const cy = h / 2, { fx, dx0, half, r0 } = XR, [mx, my, ms] = XR.me, front = fieldFront(on), src = fieldSrc(on), RS = xrayRays(h);
   ctx.fillStyle = '#111317'; ctx.fillRect(0, 0, 700, h);
-  // the fan of rays
-  ctx.save(); ctx.fillStyle = 'rgba(170,200,255,0.05)'; ctx.beginPath(); ctx.moveTo(fx, cy); ctx.lineTo(dx0, cy - half); ctx.lineTo(dx0, cy + half); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = 'rgba(170,200,255,0.25)'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 8]); ctx.beginPath(); ctx.moveTo(fx, cy); ctx.lineTo(dx0, cy - half); ctx.moveTo(fx, cy); ctx.lineTo(dx0, cy + half); ctx.stroke(); ctx.restore();
+  const fan = () => { ctx.beginPath(); ctx.moveTo(fx, cy); ctx.lineTo(dx0, cy - half); ctx.lineTo(dx0, cy + half); ctx.closePath(); };
+  // the fan the X-rays fill, as far as they've got
+  ctx.save(); fieldClip(ctx, fx, cy, front); ctx.globalAlpha *= src;
+  ctx.fillStyle = 'rgba(170,200,255,0.05)'; fan(); ctx.fill();
+  ctx.strokeStyle = 'rgba(170,200,255,0.25)'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 8]); ctx.beginPath(); ctx.moveTo(fx, cy); ctx.lineTo(dx0, cy - half); ctx.moveTo(fx, cy); ctx.lineTo(dx0, cy + half); ctx.stroke();
+  ctx.restore();
   // me, in the way: the body the X-rays cross, and my strokes over it
   ctx.save(); ctx.strokeStyle = 'rgba(214,170,150,0.24)'; ctx.lineWidth = XR.body; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   traceFigure(ctx, mx, cy + my, ms); ctx.stroke(); ctx.restore();
   drawFigure(ctx, mx, cy + my, ms, 1);
-  // the tube
+  // where the X-rays cross the body, the ones it scatters: a faint glow there, inside the fan, as they get there
+  if (src > 0.003) {
+    ctx.save(); fan(); ctx.clip(); fieldClip(ctx, fx, cy, front);
+    ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = `rgba(196,218,255,${(0.035 * src).toFixed(3)})`; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.lineWidth = XR.body + 10; traceFigure(ctx, mx, cy + my, ms); ctx.stroke();
+    ctx.restore();
+  }
+  // the tube, its focal spot switching on
   ctx.save(); ctx.fillStyle = BODY; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 2.5;
   ctx.beginPath(); ctx.roundRect(24, cy - 38, 70, 76, 8); ctx.fill(); ctx.stroke();
   ctx.fillStyle = NOZZLE; ctx.beginPath(); ctx.roundRect(88, cy - 12, 12, 24, 3); ctx.fill(); ctx.stroke(); ctx.restore();
-  // the X-rays on the way
-  const o = {
-    rate: 18, speed: 280, bounds: [-20, -20, 720, h + 20],
-    spawn: (rnd) => { const t = (rnd() * 2 - 1) * Math.atan(half / (dx0 - fx)) * 0.98; return { x: fx + 4, y: cy, dx: Math.cos(t), dy: Math.sin(t), c: '#C4DAFF' }; },
-    ext: (x, y) => [xrayDensity(x, y, h), 0],
-    hit: (q) => q.x >= dx0,
-    onHit: (q) => { if (!fresh) XR_FLASH.push([q.y, 0]); },
-  };
-  warmSpecks(SPK_XRAY, o, fresh); stepSpecks(SPK_XRAY, dt, o);
-  if (!reduced) drawSpecks(ctx, SPK_XRAY, { r: 3.2, trail: 120 });
-  // the detector: how much of each ray gets through
+  glowAt(ctx, fx + 2, cy, 26, XR.col, 0.7 * src);
+  // the X-rays, each dimmer past the body by however much of it it crossed, a few scattered off to the side
+  for (const r of RS) fieldRay(ctx, r.x0, r.y0, r.x1, r.y1, front, r0, r.I, XR.col, { w: 1.4, a: 0.7 * src, halo: 0 });
+  for (const [j, ang, len] of XR.branch) fieldBranch(ctx, RS[j], RS[j].kb, ang, len, front, r0, XR.col, 0.5 * src);
+  // the detector: each strip lighting up as the X-rays reach it, as bright as what gets through
   const T = xrayProfile(h), bh = (2 * half) / XR.n;
   ctx.save(); ctx.fillStyle = BODY; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(dx0, cy - half - 8, 34, 2 * half + 16, 4); ctx.fill(); ctx.stroke();
-  for (let b = 0; b < XR.n; b++) { ctx.fillStyle = `rgba(225,236,255,${0.04 + 0.92 * T[b] ** 0.8})`; ctx.fillRect(dx0 + 4, cy - half + b * bh, 22, bh + 0.5); }
-  for (let i = XR_FLASH.length - 1; i >= 0; i--) {
-    const f = XR_FLASH[i]; f[1] += dt;
-    if (f[1] > 0.5) { XR_FLASH.splice(i, 1); continue; }
-    dot(ctx, dx0 + 15, f[0], 5 + 6 * f[1], '#E8F0FF', 0.8 * (1 - f[1] / 0.5));
+  for (let b = 0; b < XR.n; b++) {
+    const y = cy - half + b * bh, lit = fieldAt(front, Math.hypot(dx0 - fx, y + bh / 2 - cy)) * src;
+    ctx.fillStyle = `rgba(225,236,255,${(0.04 + 0.92 * lit * T[b] ** 0.8).toFixed(3)})`; ctx.fillRect(dx0 + 4, y, 22, bh + 0.5);
   }
   ctx.restore();
 }

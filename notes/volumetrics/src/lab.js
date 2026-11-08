@@ -189,7 +189,18 @@ let lpFml = null;
 function lpFormula() {   // laid out once: e^{−σd} centred, "= e^0 = 1" after it, so it doesn't move when that comes in
   if (lpFml) return lpFml;
   const sp = place(tex(PFML1), { x: 960 - (tex(PFML).w * LP.size) / 2, y: LP.y, size: LP.size, ax: 0 }), has = (s, t) => s.a.terms.includes(t);
-  return (lpFml = { main: sp.filter((s) => !has(s, 't-eq1') && !has(s, 't-eq2')), eq1: sp.filter((s) => has(s, 't-eq1')), eq2: sp.filter((s) => has(s, 't-eq2')) });
+  const main = sp.filter((s) => !has(s, 't-eq1') && !has(s, 't-eq2')), [l, r, t, b] = inkSpan(main);
+  // c: the middle of e^{−σd}'s ink, for 29b; e: its e, the first thing in it
+  return (lpFml = { main, eq1: sp.filter((s) => has(s, 't-eq1')), eq2: sp.filter((s) => has(s, 't-eq2')), c: [(l + r) / 2, (t + b) / 2], e: main.reduce((m, s) => (s.x < m.x ? s : m)) });
+}
+const inkSpan = (S) => S.reduce(([l, r, t, b], s) => { const [q0, q1, q2, q3] = inkBox(s); return [Math.min(l, q0), Math.max(r, q1), Math.min(t, q2), Math.max(b, q3)]; }, [Infinity, -Infinity, Infinity, -Infinity]);
+// 29b: everything but e^{−σd} goes (eOnly), the formula comes down to the middle of the stage (eMove, its ink's middle
+// to x = 960, y = LE.y) and a box goes around its e (eBox), in the orange and the style of the hook's "Why e?" box (beat
+// 14), the question this answers.
+const LE = { y: 500 };
+function drawLabE(ctx, F, a, eb) {
+  const [l, r, t, b] = inkBox(F.e), px = 9, py = 12;   // a little tighter across, so it clears the exponent's minus
+  ctx.save(); ctx.strokeStyle = hexA(COL.gold, a * eb); ctx.lineWidth = 3.5; ctx.beginPath(); ctx.roundRect(l - px, t - py, r - l + 2 * px, b - t + 2 * py, 10); ctx.stroke(); ctx.restore();
 }
 // the long box's stuff: a jittered grid, 40 across by 4 down, twice over (the second set comes in as σ passes its usual value)
 const LPSPECKS = Array.from({ length: 320 }, (_, i) => { const k = i % 160, c = k % 40, r = Math.floor(k / 40); return [(c + 0.15 + 0.7 * hash1(i * 3 + 1)) / 40, (r + 0.15 + 0.7 * hash1(i * 3 + 2)) / 4, hash1(i * 3 + 3) * 2 * Math.PI]; });
@@ -197,12 +208,16 @@ function drawLabPlot(ctx, st) {
   const a = 1 - smooth(clamp(st.plotOut, 0, 1)); if (a <= 0.003 || st.fml <= 0.003) return;
   const A = lpAxes(), F = lpFormula(), sig = Math.max(0, st.sig) * Math.LN2, f = (x) => Math.exp(-sig * x), ax = smooth(clamp(st.axC, 0, 1)), Fo = labFocus(st);
   TERM_COL['t-sig'] = hexRgb(COL.yellow);
+  const rest = a * (1 - smooth(clamp(st.eOnly || 0, 0, 1))), em = smooth(clamp(st.eMove || 0, 0, 1)), eb = smooth(clamp(st.eBox || 0, 0, 1));   // 29b: all but e^{−σd} goes (rest)
+  ctx.save(); if (em > 0.001) ctx.translate((960 - F.c[0]) * em, (LE.y - F.c[1]) * em);
   drawLabFormula(ctx, F, st, a);
-  if (st.eq1 > 0.003) drawSprites(ctx, F.eq1, { alpha: a * smooth(clamp(st.eq1, 0, 1)) });
-  if (st.eq2 > 0.003) drawSprites(ctx, F.eq2, { alpha: a * smooth(clamp(st.eq2, 0, 1)) });
+  if (st.eq1 > 0.003) drawSprites(ctx, F.eq1, { alpha: rest * smooth(clamp(st.eq1, 0, 1)) });
+  if (st.eq2 > 0.003) drawSprites(ctx, F.eq2, { alpha: rest * smooth(clamp(st.eq2, 0, 1)) });
+  if (eb > 0.003) drawLabE(ctx, F, a, eb);
+  ctx.restore();
   const bA = st.pbox != null ? smooth(clamp(st.pbox, 0, 1)) : ax;   // the box, the light and the sensor: with the axes (the bench), or from the joined boxes (beat 26)
-  if (ax <= 0.003 && bA <= 0.003) return;
-  ctx.save(); ctx.globalAlpha = a;
+  if ((ax <= 0.003 && bA <= 0.003) || rest <= 0.003) return;
+  ctx.save(); ctx.globalAlpha = rest;
   if (ax > 0.003) {
     drawAxes(ctx, A, { c: ax, nums: 0, lab: ax, xlColor: Fo.cd > 0.003 ? mixRgb(WHITE_RGB, hexRgb(LDCOL), Fo.cd) : null });
     for (const [v, s] of [[1, '100%'], [0.5, '50%']]) drawTex(ctx, String.raw`\text{${s.replace('%', '\\%')}}`, A.ox - 22, A.Y(v), 28, { ax: 1, alpha: ax });
@@ -223,7 +238,7 @@ function drawLabPlot(ctx, st) {
     ctx.restore();
   }
   const T = (x) => Math.exp(-sig * (clamp(x, X0, Xd) - X0) / A.sx), xs = Xd + 46;
-  ctx.save(); ctx.globalAlpha = a * bA;
+  ctx.save(); ctx.globalAlpha = rest * bA;
   drawBeam(ctx, X0 - 26, xs - 11, y, SH.color, SH.I0, T, [X0, Xd]);
   if (w > 1) { ctx.strokeStyle = COL.greyA; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(X0, LP.top, w, H, Math.min(12, w / 2)); ctx.stroke(); }
   if (Fo.c > 0.003 && w > 1 && (st.ind10 || 0) < 0.5) {   // option 1: a brace under the box, d in its blue, stretching with it; while σ changes, σ in the box instead, in its yellow (option 10 draws its own)
@@ -258,7 +273,7 @@ function drawLabPlot(ctx, st) {
   ctx.save(); ctx.translate(X0 - 26, y); ctx.scale(0.6, 0.6); drawLaser(ctx, 0, 0, SH.color, 1); ctx.restore();
   ctx.save(); ctx.translate(xs, y); ctx.scale(0.6, 0.6); drawSensor(ctx, 0, 0, SH.color, f(d) * SH.I0); ctx.restore();
   const v = f(d) * 100, rd = smooth(clamp(st.readDim || 0, 0, 1)), dec = Math.abs(v - Math.round(v)) < 0.05 ? 0 : 1;   // 50%, 25%, 12.5%
-  drawNumber(ctx, v, xs + 30, y - 44, { size: 44, dec, suffix: '%', color: rd > 0.5 ? COL.grey : COL.white, alpha: a * bA * (1 - 0.15 * rd) });   // greyed a little when readDim is on, so the numbers elsewhere stand out
+  drawNumber(ctx, v, xs + 30, y - 44, { size: 44, dec, suffix: '%', color: rd > 0.5 ? COL.grey : COL.white, alpha: rest * bA * (1 - 0.15 * rd) });   // greyed a little when readDim is on, so the numbers elsewhere stand out
   // the dot on the curve, once the curve has reached it, and a faint line down to the box's end: the same d in both
   if (ax > 0.003 && st.curveTo > 0.003 && st.curveTo >= d - 1e-3) {
     const px = A.X(d), py = A.Y(f(d));
@@ -267,7 +282,7 @@ function drawLabPlot(ctx, st) {
     dot(ctx, px, py, 11, SH.color, 1);
   }
   ctx.restore();
-  drawLabMarks(ctx, st, A, f, a);
+  drawLabMarks(ctx, st, A, f, rest);
   ctx.restore();
 }
 // Beats 21b–21d: what we leave out, written over the box: "No Scattering" (21b), "No Emission" under it (21c), and then
@@ -369,7 +384,7 @@ function drawLabNumbers(ctx, st, a) {
   if (lnX == null) lnX = 960 - (tex(String.raw`e^{-0.69\times 2.0}`).w * LP.size) / 2;
   drawTex(ctx, labNumSrc(st), lnX, LP.y, LP.size, { ax: 0, alpha: a });
 }
-// Beat 30: any base will do: 2, 3, 10, …, each equal to the same thing with base e, the change of base a number in
+// Beats 30–30b: any base will do: 2, 3, 10, … (30), each equal to the same thing with base e (30b), the change of base a number in
 // the exponent (ln 2, ln 3, ln 10, rounded); σ keeps its yellow and d its blue. Each row is set as one formula, so its =
 // sits on the row's baseline with the usual space either side, and the rows line up on their = signs. A copy of the
 // left side glides over and becomes the right side (the −, σ and d move, the base turns into e and the number comes
@@ -421,9 +436,9 @@ function drawLabFigure(ctx, st) {
   const fx = 1500, fy = 840, fs = 1.24;
   drawFigure(ctx, fx, fy, fs, a);
   drawThinking(ctx, fx + 110, fy - 410, 1, 100, '', st.lthink, 1, st.lthinkP, a, figHead(fx, fy, fs));
-  const w = clamp(st.wrong, 0, 1); if (w <= 0.003) return;
+  const w = clamp(st.wrong, 0, 2); if (w <= 0.003) return;   // a line per press: one box (24b), then two (24c)
   let x1 = 0;
-  LWRONG.forEach((src, i) => { const sp = drawTex(ctx, src, LW.x, LW.y[i], LW.size, { ax: 0, p: clamp(w * 2 - i, 0, 1), alpha: a }); for (const q of sp) x1 = Math.max(x1, inkBox(q)[1]); });
+  LWRONG.forEach((src, i) => { const sp = drawTex(ctx, src, LW.x, LW.y[i], LW.size, { ax: 0, p: clamp(w - i, 0, 1), alpha: a }); for (const q of sp) x1 = Math.max(x1, inkBox(q)[1]); });
   const c = clamp(st.cross, 0, 1); if (c <= 0.003) return;
   const X0 = LW.x - 16, X1 = x1 + 16, Y0 = LW.y[0] - 34, Y1 = LW.y[1] + 34, c1 = smooth(clamp(c * 2, 0, 1)), c2 = smooth(clamp(c * 2 - 1, 0, 1));
   ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = '#FF4B42'; ctx.lineWidth = 8; ctx.lineCap = 'round';
@@ -502,8 +517,8 @@ function labGuess() {
   PS.lthink = '0\\%'; PS.lthinkP = 0; PS.wrong = 0; PS.cross = 0; ptw('lside', 1, 1.4); ptw('lfig', 1, 1.0, { delay: 0.8 });
   return ptw('lthinkP', 1, 0.6, { delay: 1.7, ease: linear });
 }
-// 24b: over my head, how I got there
-function labWrong() { return ptw('wrong', 1, 1.6, { ease: linear }); }
+// 24b: over my head, how I got there: one box. 24c: two boxes, under it
+function labWrong(k) { return ptw('wrong', k, 0.8, { ease: linear }); }
 // 25: "But that's not what happens": the sum is crossed out. 25b: back from the aside, the light carries on and it reads
 // twenty-five. 25c: a third box, twelve and a half.
 function labCross() { return ptw('cross', 1, 0.8, { ease: linear }); }
@@ -561,13 +576,12 @@ function labVacuum() {
   if (PS.sLoop && !reduced) PS.sig = labSAt(PS.sLoopT0);
   PS.dLoop = 0; PS.sLoop = 0; PS.sPin = 1; ptw('dotD', 2, 0.6); ptw('eq1', 1, 0.7, { delay: 1.4 }); ptw('eq2', 1, 0.7, { delay: 2.3 }); return ptw('sig', 0, 1.8);
 }
-// 30: the plot and the formula go; 2, 3, 10 … each equal to the same thing with base e (bMorph runs past 1 so the
-// last row's = finishes writing)
-function labBases() {
-  ptw('plotOut', 1, 0.7);
-  ptw('bStack', 1, 1.6, { delay: 0.6, ease: linear });
-  return ptw('bMorph', 1.1, 2.64, { delay: 2.5, ease: linear });
-}
+// 29b: only e^{−σd}, in the middle of the stage, a box around its e
+function labE() { ptw('eOnly', 1, 0.7); ptw('eMove', 1, 1.1, { delay: 0.35 }); return ptw('eBox', 1, 0.6, { delay: 1.4 }); }
+// 30: it goes, and 2, 3, 10 … write in. 30b: each becomes the same thing with base e (bMorph runs past 1 so the last
+// row's = finishes writing)
+function labBases() { ptw('plotOut', 1, 0.7); return ptw('bStack', 1, 1.6, { delay: 0.6, ease: linear }); }
+function labBasesE() { return ptw('bMorph', 1.1, 2.64, { ease: linear }); }
 // 31: an aside: me again: but why exponential?
 function labWhy() {
   PS.lthink = 'but why exponential?'; PS.lthinkP = 0; ptw('lside', 1, 1.4); ptw('lfig', 1, 1.0, { delay: 0.8 });

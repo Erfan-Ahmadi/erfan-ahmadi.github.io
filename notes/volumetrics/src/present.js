@@ -63,12 +63,12 @@ const PS_DEFAULTS = () => ({
   qc: QCARDS.map(() => ({ box: 0, m: 0, title: 0, todo: 0 })), qcA: 1, qSide: 0,
   eqA: 1, eqTop: 0, spec: [0, 0], chalk: 0, code: 0, specT: 0, ptrX: 0, ptrA: 0, lineP: 0, wig: 0, wigT: 0, side: 0,
   goalsA: 0, figMid: 0, fut: 0, futW: 0, goals: [0, 0, 0], p15: 1, cap: 0,
-  uses: [0, 0, 0, 0], useX: [0, 0, 0], useT: 0, grow: 0, usesOut: 0, capOut: 0, boxQ: 0, lines: 0,
+  uses: [0, 0, 0, 0], useX: [0, 0, 0], useT: 0, useOn: [-1e9, -1e9, -1e9], grow: 0, usesOut: 0, capOut: 0, boxQ: 0, lines: 0,
   fx: { show: [0, 0, 0, 0], clock: [0, 0, 0, 0], run: [0, 0, 0, 0], dim: [0, 0, 0, 0], grey: [0, 0, 0, 0], big: 0 },
   // part 3, the lab (lab.js): the box on the stage, its scattering and glow, the readings, the second row and its
   // boxes, me guessing; then the formula and its plot; then the bases
   labOn: 0, labX: 0, scat: 0, glow: 0, read1: 0, read2: 0, split: 0, c2: 1, myst: 0, rev: 1, r2: '?', r2From: '', r2M: 1, lfig: 0, lthink: '', lthinkP: 1, lside: 0, wrong: 0, cross: 0, rowFade: 0,
-  rowsOut: 0, fml: 0, axC: 0, dotD: 0, curveTo: 0, sig: 1, sigHi: 0, eq1: 0, plotOut: 0, bStack: 0, bMorph: 0, ind1: 1, ind8: 1, ind10: 1, readDim: 1, dLoop: 0, dLoopT0: 0, sLoop: 0, sLoopT0: 0, hvOn: 0, hvA: 0, hvStep: 0, hvT0: 0, topDim: 0, topOut: 0, merge: 0, pbox: 0, rise: 0, marksOut: 0, dCont: 0, r1Hi: 0, colS: 0, colD: 0, sPin: 0, eq2: 0, lbNS: 0, lbNE: 0, lbJA: 0, lbOut: 0,
+  rowsOut: 0, fml: 0, axC: 0, dotD: 0, curveTo: 0, sig: 1, sigHi: 0, eq1: 0, plotOut: 0, bStack: 0, bMorph: 0, ind1: 1, ind8: 1, ind10: 1, readDim: 1, dLoop: 0, dLoopT0: 0, sLoop: 0, sLoopT0: 0, hvOn: 0, hvA: 0, hvStep: 0, hvT0: 0, topDim: 0, topOut: 0, merge: 0, pbox: 0, rise: 0, marksOut: 0, dCont: 0, r1Hi: 0, colS: 0, colD: 0, sPin: 0, eq2: 0, lbNS: 0, lbNE: 0, lbJA: 0, lbOut: 0, eOnly: 0, eMove: 0, eBox: 0,
 });
 const PS = PS_DEFAULTS();
 // The equation, with its terms named: the four effects for the braces, and the parts the questions point at.
@@ -128,7 +128,8 @@ const BEATS = [
   { n: '23', name: 'the copy', run: () => labCopy() },
   { n: '23b', name: 'a second box', run: () => labSecond() },
   { n: '24', name: 'zero?', run: () => labGuess() },
-  { n: '24b', name: 'how I got zero', run: () => labWrong() },
+  { n: '24b', name: 'how I got zero: one box', run: () => labWrong(1) },
+  { n: '24c', name: 'two boxes', run: () => labWrong(2) },
   { n: '25', name: "that's not what happens", run: () => labCross() },
   { n: '25b', name: 'twenty-five', run: () => labReveal() },
   { n: '25c', name: 'a third box', run: () => labThird() },
@@ -141,7 +142,9 @@ const BEATS = [
   { n: '27', name: 'distance', run: () => labDistance() },
   { n: '28', name: 'more or less absorbing', run: () => labSigma() },
   { n: '29', name: 'a vacuum', run: () => labVacuum() },
+  { n: '29b', name: 'why e?', run: () => labE() },
   { n: '30', name: 'any base', run: () => labBases() },
+  { n: '30b', name: 'all with base e', run: () => labBasesE() },
   { n: '31', name: 'but why exponential?', run: () => labWhy() },
 ];
 // A beat by its number in the script; a number between two beats opens the next one.
@@ -224,11 +227,13 @@ async function presDefine() {
   ptw('p15', 0, 0.6); ptw('fig', 0, 0.8);   // the goals and I go: from here on it is about the physics
   await ptw('cap', 1, 1.5, { ease: linear, delay: 0.5 });
 }
-// Beats 17–19: a card fades in at its place in the row. 20: this video's card opens on the left at once and pushes
-// the other three into the column.
+// Beats 17–19: a card fades in at its place in the row, its light switching on as it does (useOn: when, on the cards'
+// clock; long ago if the beat is only being rebuilt). 20: this video's card opens on the left at once and pushes the
+// other three into the column.
 function presUse(i) {
   if (i === 3) { ptwi(PS.uses, 3, 1, 0.5); ptw('lines', 1, 0.8, { delay: 0.6 }); return ptw('grow', 1, 1.6); }
   if (i === 0) PS.useT = TIME;
+  PS.useOn[i] = instant ? -1e9 : PS.useT;
   PS.useX[i] = rowX(i, 3);
   return ptwi(PS.uses, i, 1, 0.9);
 }
@@ -510,15 +515,15 @@ function drawUses(ctx, dt, st) {
   st.useT += sdt;
   for (let i = 0; i < 4; i++) {
     const u = USES[i], side = i < 3 ? calm : 0, a = smooth(clamp(st.uses[i], 0, 1)) * (1 - smooth(clamp(st.usesOut, 0, 1))) * lerp(1, 0.8, side);
-    if (a <= 0.003) { u.seen = false; continue; }
-    const r = useRect(i, st), fresh = !u.seen, ls = clamp(r[2] / 590, 0.72, 1); u.seen = true;
+    if (a <= 0.003) continue;
+    const r = useRect(i, st), ls = clamp(r[2] / 590, 0.72, 1);
     if (r[2] < 4 || r[3] < 4) continue;
     ctx.save(); ctx.globalAlpha = a; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip();
     if (u.draw && i < 3) {   // on the side cards' own clock
       const s = r[2] / 700, T0 = TIME; ctx.translate(r[0], r[1]); ctx.scale(s, s);
-      TIME = st.useT; try { u.draw(ctx, sdt, r[3] / s, fresh); } finally { TIME = T0; }
+      TIME = st.useT; try { u.draw(ctx, sdt, r[3] / s, st.useT - st.useOn[i]); } finally { TIME = T0; }
     } else if (i === 3 && st.labOn > 0.003) { /* from beat 21 the lab draws this card's picture, grown out of it */ }
-    else if (u.draw) { const s = r[2] / 700; ctx.translate(r[0], r[1]); ctx.scale(s, s); u.draw(ctx, dt, r[3] / s, fresh); }
+    else if (u.draw) { const s = r[2] / 700; ctx.translate(r[0], r[1]); ctx.scale(s, s); u.draw(ctx, dt, r[3] / s); }
     else {
       presCloudOffscreen(dt, false);
       const ar = r[2] / r[3], sw = Math.min(W, H * ar), sh = Math.min(H, W / ar);
