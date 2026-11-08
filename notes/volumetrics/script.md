@@ -46,14 +46,14 @@ The working script below has light edits; the original drafts, word for word, ar
 
 ## Part 3: only absorption, and the first formula
 
-**21.–21b.** [The three field cards and the caption go, and the box grows out of its card until the laser, the box of plain stuff and the sensor fill the stage. Next press, the dishonesty, shown on this very box: the few specks right in the beam's path light up where it hits them, and from each, every second or so, a thin red ray of its light leaves in some direction; every speck a ray meets on its way sends it off in a new one, flashing as it's hit, a few bounces, each a little dimmer, until the ray leaves the box; the stuff around the beam glows a faint red: scattering.]
+**21.–21b.** [The three field cards and the caption go, and the box grows out of its card until the laser, the box of plain stuff and the sensor fill the stage. Next press, the dishonesty, shown on this very box: the few specks right in the beam's path light up where it hits them, and from each, every second or so, a thin red ray of its light leaves in some direction; every speck a ray meets on its way sends it off in a new one, flashing as it's hit, a few bounces, each a little dimmer, until the ray leaves the box; the stuff around the beam glows a faint red: scattering. Over the box, "No Scattering" writes in.]
 > For the rest of this video I'm going to be slightly dishonest. [21b] I'll assume our stuff doesn't scatter light,
 
-**21c.** [The scattering stops. Each speck glows red on its own, and the beam dims a little so the glow shows: emission.]
+**21c.** [The scattering stops. Each speck glows red on its own, and the beam dims a little so the glow shows: emission. Under "No Scattering", "No Emission" writes in.]
 > and that it doesn't glow, or give off any light of its own. I'll get to them in the next video.
 
-**21d.** [The glow goes: plain stuff again, the beam dimmer past the box.]
-> For now, our particles only absorb light.
+**21d.** [The glow goes: plain stuff again, the beam dimmer past the box. The two lines turn into one, the letters they share moving over: "Just Absorption". It goes when the setup is copied, at 23.]
+> For now, our particles only absorb light: whatever light hits one is taken in, turned into a little heat, and is gone from the beam.
 
 **22.–22b.** [The sensor's reading appears for the first time, 50%, already brought forward: everything else dims and the readout is a little bigger. Next press, everything goes back as it was.]
 > So they take some of the laser's light, and less of it makes it to the other end. How much less? That's what the sensor is for. Here it reads fifty percent: half the light made it through. [22b]

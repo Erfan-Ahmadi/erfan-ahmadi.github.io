@@ -270,6 +270,17 @@ function drawLabPlot(ctx, st) {
   drawLabMarks(ctx, st, A, f, a);
   ctx.restore();
 }
+// Beats 21b–21d: what we leave out, written over the box: "No Scattering" (21b), "No Emission" under it (21c), and then
+// the two turn into one, "Just Absorption" (21d, manim's TransformMatchingTex: the letters they share move over). It
+// goes when the setup is copied (23).
+function drawLabNoLabels(ctx, st, X) {
+  const a = 1 - smooth(clamp(st.lbOut || 0, 0, 1)), ns = clamp(st.lbNS || 0, 0, 1), ne = clamp(st.lbNE || 0, 0, 1), m = smooth(clamp(st.lbJA || 0, 0, 1));
+  if (a <= 0.003 || ns + ne <= 0.003) return;
+  const k = X.s / 1.2, top = X.oy + X.s * LAB.top, size = 56 * k, at = (src, y) => place(tex(String.raw`\text{${src}}`), { x: X.ox, y, size });
+  const A1 = at('No Scattering', top - 140 * k), A2 = at('No Emission', top - 72 * k);
+  if (m <= 0.001) { drawSprites(ctx, A1, { p: ns, alpha: a }); if (ne > 0.003) drawSprites(ctx, A2, { p: ne, alpha: a }); }
+  else { const B = at('Just Absorption', top - 106 * k); if (m >= 0.999) drawSprites(ctx, B, { alpha: a }); else drawMorph(ctx, matchPlan([...A1, ...A2], B), m, a); }
+}
 // Beats 26–26b: the halving's amounts (100% where the light goes in, then 50%, 25% and 12.5% where each box ended),
 // over the joined box at 0, 1, 2 and 3 box lengths; at 26b they rise along dashed lines to their places on the curve,
 // each a dot there with its amount beside it. They go at 27.
@@ -449,6 +460,7 @@ function drawLabStage(ctx, dt, st) {
         drawHalveRow(ctx, Xm, S, HV_PRES, reduced ? b1 : clamp(b0 + TIME - st.hvT0, b0, b1), ha * (1 - pb), pb < 0.5 ? ha : 0);
       } else drawLabRow(ctx, mixXf(LABXF.full, LABXF.bot, sp), o, al);
     }
+    drawLabNoLabels(ctx, st, X1);
     const hi = smooth(clamp(st.r1Hi || 0, 0, 1));
     if (hi > 0.003) {   // 22: the reading brought forward a moment: everything else dims, the readout grows a little
       ctx.save(); ctx.fillStyle = `rgba(28,27,24,${(0.62 * hi).toFixed(3)})`; ctx.fillRect(0, 0, W, H); ctx.restore();
@@ -467,19 +479,18 @@ const labAlive = (g) => g === PRES.gen;
 // 21: the field cards and the caption go, and the box grows out of its card to fill the stage
 function labZoom() { ptw('usesOut', 1, 0.6); ptw('capOut', 1, 0.6); PS.labOn = 1; return ptw('labX', 1, 1.4, { delay: 0.2 }); }
 // 21b: it scatters
-function labScatter() { return ptw('scat', 1, 1.0); }
+function labScatter() { ptw('lbNS', 1, 0.8, { delay: 0.3, ease: linear }); return ptw('scat', 1, 1.0); }
 // 21c: it stops scattering; every speck glows red, the beam a little dimmer so the glow shows
-function labGlow() { ptw('scat', 0, 0.6); return ptw('glow', 1, 1.0, { delay: 0.4 }); }
+function labGlow() { ptw('scat', 0, 0.6); ptw('lbNE', 1, 0.8, { delay: 0.4, ease: linear }); return ptw('glow', 1, 1.0, { delay: 0.4 }); }
 // 21d: the glow goes: only absorption
-function labAbsorb() { return ptw('glow', 0, 0.9); }
-// 22: the sensor's reading, for the first time
+function labAbsorb() { ptw('lbJA', 1, 1.2, { delay: 0.2 }); return ptw('glow', 0, 0.9); }
 // 22: the reading comes in already brought forward (the rest dims, the readout a little bigger); 22b: back to normal
 function labRead() { ptw('r1Hi', 1, 0.6); return ptw('read1', 1, 0.8); }
 function labReadDone() { return ptw('r1Hi', 0, 0.8); }
 function labRead2(text, dur, delay = 0) { PS.r2From = PS.r2; PS.r2 = text; PS.r2M = 0; return ptw('r2M', 1, dur, { delay, ease: linear }); }
 // 23: the whole setup is copied, without its readout, and the copy slides down. 23b: a second box slides in beside its
 // first while the light past the first box gives way to a row of "?"; then a readout pops up on it: "?"
-function labCopy() { PS.r2 = '?'; PS.r2From = ''; PS.r2M = 1; PS.read2 = 0; PS.myst = 0; PS.rev = 1; return ptw('split', 1, 1.95); }
+function labCopy() { PS.r2 = '?'; PS.r2From = ''; PS.r2M = 1; PS.read2 = 0; PS.myst = 0; PS.rev = 1; ptw('lbOut', 1, 0.5); return ptw('split', 1, 1.95); }
 async function labSecond() {
   const g = PRES.gen;
   ptw('myst', 1, 1.2); await ptw('c2', 2, 1.4); if (!labAlive(g)) return;
