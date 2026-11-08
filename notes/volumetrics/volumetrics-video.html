@@ -4330,14 +4330,16 @@ function drawCodePanel(ctx, r, a, p, t) {
   ctx.restore();
 }
 
-// ---- the fields: photons crossing some stuff ----
+// ---- the fields: light crossing some stuff ----
 // A handful of photons, each on a straight leg. In a step through the stuff one may be absorbed (it fades where it
-// is) or scattered (it turns to a random direction and carries on); one that reaches a receiver stops there.
+// is) or scattered (it turns to a random direction and carries on); one that reaches a receiver stops there. Each is
+// drawn as a ray, as the light is everywhere else in the video: the stretch of its path just behind it, bending where
+// it scattered (pts: where its path began and turned).
 const newSpecks = (seed) => ({ list: [], acc: 0, rnd: rng32(seed) });
 function stepSpecks(P, dt, o) {
   if (dt <= 0) return;
   P.acc += dt * o.rate;
-  while (P.acc >= 1) { P.acc -= 1; const q = o.spawn(P.rnd); P.list.push(Object.assign({ s: 0, die: -1, scat: 0 }, q)); }
+  while (P.acc >= 1) { P.acc -= 1; const q = Object.assign({ s: 0, die: -1, scat: 0 }, o.spawn(P.rnd)); q.pts = [[q.x, q.y]]; P.list.push(q); }
   for (const q of P.list) {
     if (q.die >= 0) { q.die += dt; continue; }
     const step = o.speed * dt, n = Math.max(1, Math.ceil(step / 3)), ds = step / n;
@@ -4346,19 +4348,27 @@ function stepSpecks(P, dt, o) {
       if (o.hit && o.hit(q)) { q.die = 0; q.hit = 1; if (o.onHit) o.onHit(q); break; }
       const [sa, ss] = o.ext(q.x, q.y, q);
       if (sa > 0 && P.rnd() < sa * ds) { q.die = 0; break; }
-      if (ss > 0 && P.rnd() < ss * ds) { const t = P.rnd() * Math.PI * 2; q.dx = Math.cos(t); q.dy = Math.sin(t); q.s = 0; q.scat++; }
+      if (ss > 0 && P.rnd() < ss * ds) { const t = P.rnd() * Math.PI * 2; q.dx = Math.cos(t); q.dy = Math.sin(t); q.s = 0; q.scat++; q.pts.push([q.x, q.y]); if (q.pts.length > 8) q.pts.shift(); }
     }
   }
   const [x0, y0, x1, y1] = o.bounds;
   P.list = P.list.filter((q) => (q.die < 0 ? q.x > x0 && q.x < x1 && q.y > y0 && q.y < y1 : q.die < 0.45));
 }
 function drawSpecks(ctx, P, { r = 4, trail = 28 } = {}) {
-  ctx.save(); ctx.lineCap = 'round';
+  // brightest at its front and fading back over trail; all of it fading once it's absorbed or has arrived
+  ctx.save(); ctx.lineCap = 'round'; ctx.lineWidth = r * 0.62;
   for (const q of P.list) {
     const f = q.die < 0 ? 1 : 1 - q.die / 0.45; if (f <= 0) continue;
-    const L = Math.min(trail, q.s);
-    if (L > 1 && q.die < 0) { ctx.strokeStyle = hexA(q.c, 0.32); ctx.lineWidth = r * 1.2; ctx.beginPath(); ctx.moveTo(q.x - q.dx * L, q.y - q.dy * L); ctx.lineTo(q.x, q.y); ctx.stroke(); }
-    dot(ctx, q.x, q.y, r * (q.die < 0 ? 1 : 1 + 0.9 * (1 - f)), q.c, q.die < 0 ? 1 : 0.85 * f);
+    const pts = q.pts ? [...q.pts, [q.x, q.y]] : [[q.x, q.y]];
+    let back = 0;
+    for (let i = pts.length - 1; i > 0 && back < trail; i--) {
+      const [x1, y1] = pts[i], [x0, y0] = pts[i - 1], L = Math.hypot(x1 - x0, y1 - y0); if (L < 1e-6) continue;
+      const take = Math.min(L, trail - back), xa = x1 + ((x0 - x1) * take) / L, ya = y1 + ((y0 - y1) * take) / L;
+      const g = ctx.createLinearGradient(x1, y1, xa, ya);
+      g.addColorStop(0, hexA(q.c, 0.95 * f * (1 - back / trail))); g.addColorStop(1, hexA(q.c, 0.95 * f * (1 - (back + take) / trail)));
+      ctx.strokeStyle = g; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(xa, ya); ctx.stroke();
+      back += take;
+    }
   }
   ctx.restore();
 }
@@ -4411,7 +4421,7 @@ function drawUseStars(ctx, dt, h, fresh) {
     hit: (q) => q.x >= tx && Math.abs(q.y - cy) <= 19,
   };
   warmSpecks(SPK_STARS, o, fresh); stepSpecks(SPK_STARS, dt, o);
-  if (!reduced) drawSpecks(ctx, SPK_STARS, { r: 3.6, trail: 24 });
+  if (!reduced) drawSpecks(ctx, SPK_STARS, { r: 3.6, trail: 110 });
   drawTelescope(ctx, tx, cy);
 }
 
@@ -4447,7 +4457,7 @@ function drawUseSky(ctx, dt, h, fresh) {
     hit: (q) => dist(q) < R,
   };
   warmSpecks(SPK_SKY, o, fresh); stepSpecks(SPK_SKY, dt, o);
-  if (!reduced) drawSpecks(ctx, SPK_SKY, { r: 3.6, trail: 24 });
+  if (!reduced) drawSpecks(ctx, SPK_SKY, { r: 3.6, trail: 120 });
 }
 
 // ---- medical imaging: X-rays through a body, onto a detector ----
@@ -4505,7 +4515,7 @@ function drawUseXray(ctx, dt, h, fresh) {
     onHit: (q) => { if (!fresh) XR_FLASH.push([q.y, 0]); },
   };
   warmSpecks(SPK_XRAY, o, fresh); stepSpecks(SPK_XRAY, dt, o);
-  if (!reduced) drawSpecks(ctx, SPK_XRAY, { r: 3.2, trail: 22 });
+  if (!reduced) drawSpecks(ctx, SPK_XRAY, { r: 3.2, trail: 120 });
   // the detector: how much of each ray gets through
   const T = xrayProfile(h), bh = (2 * half) / XR.n;
   ctx.save(); ctx.fillStyle = BODY; ctx.strokeStyle = COL.greyB; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(dx0, cy - half - 8, 34, 2 * half + 16, 4); ctx.fill(); ctx.stroke();
