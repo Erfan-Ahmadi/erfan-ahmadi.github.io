@@ -415,8 +415,9 @@ function lbSprites() {
   return (lbSp = { L, E, R, lx: mid(L.flat()), rx: mid(R.flat()), plans: L.map((sp, i) => matchPlan(sp, R[i])) });
 }
 function drawLabBases(ctx, st) {
-  if (st.bStack <= 0.003) return;
-  const S = lbSprites(), a = 1;
+  const a = 1 - smooth(clamp(st.bOut || 0, 0, 1));   // they go at 32
+  if (st.bStack <= 0.003 || a <= 0.003) return;
+  const S = lbSprites();
   S.L.forEach((sp, i) => { const p = clamp((st.bStack - i * 0.25) / 0.5, 0, 1); if (p > 0.003) drawSprites(ctx, sp, { p, alpha: a }); });
   const dp = clamp((st.bStack - 0.75) / 0.25, 0, 1);
   if (dp > 0.003) drawTex(ctx, String.raw`\vdots`, S.lx, LB.dots, LB.size, { alpha: dp });
@@ -493,6 +494,7 @@ function drawLabStage(ctx, dt, st) {
   }
   labLoops(st); labTrack(st, dt); drawLabPlot(ctx, st);
   drawLabBases(ctx, st);
+  drawWhy(ctx, dt, st);   // part 4, from beat 32 (why.js)
 }
 
 // ---- the beats ----

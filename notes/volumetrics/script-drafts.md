@@ -53,6 +53,36 @@ Now you might still be asking. Ok, there is nothing special about e, but why do 
 
 .... (I'll write the next parts soon)
 
+## Why exponential, first draft (added later, word for word)
+
+to answer that question we should take a look at how light passes through a tiny slab of volume (the zoom in animation, everything else disappears but only a tiny slab remains and we see the shadowing effect with no rays just a sheet, and the length delta_x shows up hinting that it's a delta in distance)
+[again remember, every animation or visual component needs to serve a purpose for learning]
+
+here we see that 99% of the particles make it through, the other 1% get absorbed and cause shadows on the other end, that's why the light dims out. 
+
+and notice it doesn't matter how bright or dim the light is (animation of changing light intensity), the particles always absorb 1% and let 99% pass.
+in other word this tiny slab of volume says [readout]: I don't care where you come from or how much energy you have, I'm going to take 1% of it.
+
+what the tiny slab does is equivalent to multiplication by 99%, add another, multiply by 99%, add another multiply by 99%. so the percentage of light that gets detected on the other end is 99% to the power of how many slabs you have. (animation that the power of 99% changes in the exponent, and the numbers get added or removed slabs)
+
+[write me better transcripts here.]
+
+but there is still a problem, we're assuming each slab acts independantly as if it doesn't care, but is that true at all? let's assume two slabs with particles placed in a way that block all light (not tiny slabs anymore, but a specific structure that first does 50% and the other does 100% of remainig)
+here the first one takes 50% of incoming light, and the other takes 100% of remaining
+(or another case where first one does 50% and the second one is hiding behind it absorbing nothing) 
+or you might bring up another case where the first slab absorbs 50% the light, and the second slab absorbs nothing, because it sits in the shadow of the first one.
+
+and yes you're correct! and that's why particles being placed like this break our equation! you've now learned that this equation we've been talking about is not a nature of law, it assumes particles are placed randomly (show randomly) not like this or that (the two other versions)
+
+[split screen, left is exponential media, right is non exponential and everything in the next paragraph appears there]
+as a matter of fact, particles placed like thos is called non-exponential media and there is research in that field. see for example here in this paper, how assumptions about particle placement change the look of the dragon. [show the image of the dragon on the right side] (https://graphics.unizar.es/projects/Jarabo2018radiative/) 
+[btw can I use this in my youtube video with proper attribution?]
+
+but for the sake of this video going forward, we're going to assume exponential media
+[pause]
+...
+we've dicovered .... but real world is rarely like that, a volume changes density and particles and absorbtivity changes as light passes through a volume. [example of cloud or something] ... intro to next quiz about A or B
+
 ## Notes from the flow discussions
 
 ```text

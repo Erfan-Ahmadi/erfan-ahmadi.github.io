@@ -69,6 +69,7 @@ const PS_DEFAULTS = () => ({
   // boxes, me guessing; then the formula and its plot; then the bases
   labOn: 0, labX: 0, scat: 0, glow: 0, read1: 0, read2: 0, split: 0, c2: 1, myst: 0, rev: 1, r2: '?', r2From: '', r2M: 1, lfig: 0, lthink: '', lthinkP: 1, lside: 0, wrong: 0, cross: 0, rowFade: 0,
   rowsOut: 0, fml: 0, axC: 0, dotD: 0, curveTo: 0, sig: 1, sigHi: 0, eq1: 0, plotOut: 0, bStack: 0, bMorph: 0, ind1: 1, ind8: 1, ind10: 1, readDim: 1, dLoop: 0, dLoopT0: 0, sLoop: 0, sLoopT0: 0, hvOn: 0, hvA: 0, hvStep: 0, hvT0: 0, topDim: 0, topOut: 0, merge: 0, pbox: 0, rise: 0, marksOut: 0, dCont: 0, r1Hi: 0, colS: 0, colD: 0, sPin: 0, eq2: 0, lbNS: 0, lbNE: 0, lbJA: 0, lbOut: 0, eOnly: 0, eMove: 0, eBox: 0,
+  ...WHY_DEFAULTS(),   // part 4 (why.js)
 });
 const PS = PS_DEFAULTS();
 // The equation, with its terms named: the four effects for the braces, and the parts the questions point at.
@@ -146,6 +147,30 @@ const BEATS = [
   { n: '30', name: 'any base', run: () => labBases() },
   { n: '30b', name: 'all with base e', run: () => labBasesE() },
   { n: '31', name: 'but why exponential?', run: () => labWhy() },
+  // part 4 (why.js): into the beam, a thin slab and its shadows; 0.99 again and again; where the particles are placed
+  { n: '32', name: 'a closer look', run: () => whyBox() },
+  { n: '32b', name: 'a tiny slab', run: () => whySlab() },
+  { n: '32c', name: 'ninety-nine percent', run: () => whyRead() },
+  { n: '32d', name: 'a particle and its shadow', run: () => whyShadow() },
+  { n: '33', name: 'brighter or dimmer', run: () => whyBright() },
+  { n: '33b', name: 'what the slab says', run: () => whySays() },
+  { n: '34', name: 'times 0.99', run: () => whyTimes() },
+  { n: '34b', name: 'another slab', run: () => whyAdd(2) },
+  { n: '34c', name: 'and another', run: () => whyAdd(3) },
+  { n: '34d', name: 'to the power of the slabs', run: () => whyPower() },
+  { n: '35', name: 'sixty-nine: fifty percent', run: () => whyBoxful() },
+  { n: '35b', name: "that's our box", run: () => whyOut() },
+  { n: '35c', name: 'sixty-nine more', run: () => whyTwo() },
+  { n: '36', name: 'the catch', run: () => whyCatch() },
+  { n: '36b', name: 'holes', run: () => whyHoles() },
+  { n: '37', name: 'placed with care: half', run: () => whyCareful() },
+  { n: '37b', name: 'where the first lets light through', run: () => whyGaps() },
+  { n: '38', name: 'or hide them', run: () => whyHide() },
+  { n: '39', name: 'right, both times', run: () => whyBoth() },
+  { n: '39b', name: 'placed at random', run: () => whySplit() },
+  { n: '40', name: 'exponential and non-exponential', run: () => whyNames() },
+  { n: '40b', name: 'one example', run: () => whyFigure() },
+  { n: '41', name: 'we stay on this side', run: () => whyStay() },
 ];
 // A beat by its number in the script; a number between two beats opens the next one.
 function presIndex(label) {

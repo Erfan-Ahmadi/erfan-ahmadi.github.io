@@ -85,6 +85,36 @@ The working script below has light edits; the original drafts, word for word, ar
 **31.** [An aside, the device for every "you might be asking": the stack shrinks into a card of its own colour, moved over to the left, and the stick figure comes in on the right, its readout "but why exponential?".]
 > Now, you might still be asking: fine, there's nothing special about $e$. But why do we get exponential behaviour here at all?
 
+**32.–32d.** [Back from the aside: the figure and the stack of bases go, and the box is on the stage again as at beat 22, laser, box and sensor, reading 50%. Next press, one very thin slice of the box is marked, the box's whole height, and we go into the beam there: the row goes, the slice opens into a slab, and the beam, magnified across its width until it fills the stage, is a sheet of light from the left edge to the sensor's face on the right (no rays: a sheet). In the slab, one particle, as tall as 1% of the beam, and behind it its shadow, a thin dark line all the way to the sensor. Under the slab a small brace, $\Delta d$ in $d$'s blue: a small piece of the distance. Next press, the sensor's readout pops up: 99%. Next press, a ring goes round the particle and thin dashed lines run along its shadow to the sensor (they go at 33).]
+> To answer that, we need to look much closer: [32b] at one very thin slice of our box. A tiny slab. [32c] Almost all of the light goes straight through: here, ninety-nine percent. [32d] The other one percent hits a particle and is absorbed, and behind each of those particles is a shadow. Those shadows are why the light is dimmer on the other side.
+
+**33.–33b.** [The light goes brighter and dimmer, over and over, until the next press; the readout stays at 99%. Next press, the slab says its piece, in a readout over it like the figure's thoughts: "whatever comes in, I take 1%" (the light keeps changing under it).]
+> And notice: it doesn't matter how bright the light is. Turn it up, turn it down: the particles still stop one percent of it, and ninety-nine percent still gets through. [33b] In other words, this slab is saying: "I don't care where you've been, or how bright you are. I'm taking one percent."
+
+**34.–34d.** [The light settles and the slab's readout goes. Over the slab, "× 0.99", in the red of the boxes' "× ½". Next press, a second slab beside the first, with its own particle and shadow and its own "× 0.99": the sensor reads 98%. Next press, a third: 97%. Next press, the three "× 0.99" come together into $0.99^{3}$ at the top (the count in blue, the colour of how much stuff the light crosses), $\Delta d$ goes, and slabs come and go, 3 to 40 and back, the count following them and the readout with it, until the next press. As there get to be more of them they are drawn thinner, all of them in the width of the lab's box. The readout is always measured from the picture: the share of the sheet's height in no shadow.]
+> So going through this slab is just a multiplication: times ninety-nine percent. [34b] Add another slab: times ninety-nine percent again. [34c] And another: again. [34d] So what reaches the sensor is ninety-nine percent, to the power of however many slabs there are.
+
+**35.–35c.** [The slabs go up to 69, from however many there are: $0.99^{69}$, and the sensor reads 50%. By the sensor, half the sheet is striped with shadows; the laser's face is in sight on the left. Next press, we come out of the beam: the sheet closes up into the thin beam, its stripes blurring into a beam that gets dimmer along its length, and round it the lab's box, laser and sensor are back, reading 50%: the box of beat 22. Next press, a second box drops in beside it, the row making room: $0.99^{138}$, 25%.]
+> Sixty-nine of them, and it's down to fifty percent. [35b] That's our box. It never took half the light in one go: it's sixty-nine thin slabs, each taking one percent of whatever reaches it. [35c] Sixty-nine more: twenty-five. And that's where the exponential comes from: the same small fraction, taken again and again.
+
+**36.–36b.** [A ring marks the beam between the two boxes: the light on its way into the second. Next press, into the beam again, both boxes this time: the formula goes, and the light that leaves the first box is a sheet with dark stripes in it, the first box's shadows. Some of the second box's particles sit in them.]
+> But there's a catch. I let every slab act as if the others weren't there. Is that fair? [36b] Light that has been through a slab isn't just dimmer. It has holes in it: that slab's shadows.
+
+**37.–37b.** [The first box's particles, the same sixty-nine, move to places chosen with care: five bands of the beam, each closed off by ten particles in a row, one a step lower than the last, and the other nineteen behind them, in their shadows. The second box's particles go. Half the beam, in five clean bands, reaches the sensor: 50%. Next press, the second box's particles come back, in the first box's own arrangement but one band lower, exactly where the first lets light through: the bands close one after another and the sensor reads 0%.]
+> So suppose I place the particles carefully. This box takes half the light. [37b] In the next one, I put every particle exactly where the first one let light through. Now the second box takes all that's left, and the sensor reads zero.
+
+**38.** [An aside, as for every "you might": the stage shrinks into its card on the left and the figure comes in on the right, its readout "or hide them?". In the card, the second box's particles move up one band, right behind the first box's: they sit in its shadows, the bands of light open again, and the sensor reads 50%.]
+> Or you might try the opposite: hide the second box's particles right behind the first one's, in their shadows. Then there's nothing left for them to take, and the sensor still reads fifty.
+
+**39.–39b.** [Back from the aside, both careful placements, one above the other: the second box filling the gaps, 0%, and the second box hiding, 50%. Next press, the two move over to the right half of the stage, a line down the middle, and on the left the two boxes with their particles placed at random come in: 25%.]
+> And you'd be right, both times. Stuff built like this breaks our formula. [39b] So the Beer–Lambert law isn't a law of nature. It quietly assumes the particles are placed at random: each one with no idea where the others are. Then a particle is just as likely to land in a shadow as anywhere else, so every slab gets its fair share of whatever light is left.
+
+**40.–41.** [The names write in over the two halves: "exponential media" on the left, "non-exponential media" on the right. Next press, on the right, the two careful placements make way for a card that will hold the paper's figure (a placeholder until there is permission to show it: Jarabo, Aliaga and Gutierrez, 2018, "A Radiative Transfer Framework for Spatially-Correlated Materials"). Next press, the right half greys out: we stay on the left.]
+> Stuff where that holds is called an exponential medium. Stuff where it doesn't is non-exponential, and people are researching it right now. [40b] Here's one example: the same dragon, rendered with different assumptions about how its particles are placed. [41] For the rest of this video, though, we stay on this side: particles placed at random.
+
+**Next (no beats yet).** [The bridge to the next quiz, A or B.]
+> So now we know why it's exponential. But I've been making one more assumption without saying it: that our stuff is the same all the way through. Real stuff isn't. A cloud is thick here and thin there…
+
 (The next parts are still to be written.)
 
 ## Open
@@ -93,4 +123,6 @@ The working script below has light edits; the original drafts, word for word, ar
 - What the box holds once the body starts, the example the rest of the video keeps, is open. For now it is plain stuff.
 - The symbol for the constant in the exponent (beat 26 on) is to be chosen.
 - The formula stays $e^{-\sigma d}$ throughout. The full form, and how it turns into the version with emission, comes at the very end of the video, as the lead into the next one.
+- Beat 40b's figure is a placeholder: the paper's dragon needs its authors' permission, and its caption should be checked against the line "the same dragon".
+- At 1% a thin slab has one particle in the beam's way, so beat 32d shows one particle and one shadow, where the narration says "each of those particles".
 - The quiz's three readings aren't marked on the curve in beat 26. They could be: dots at one, two and three boxes, at 50%, 25% and 12.5%.

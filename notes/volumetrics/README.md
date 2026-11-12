@@ -48,7 +48,7 @@ Edit `src/`, never the built page:
 
 Scene 17 needs WebGL2; while the camera is still it keeps averaging frames until the picture settles.
 
-Presentation mode (<kbd>V</kbd> or Present) plays the video's beats from `script.md` on the stage, one key press each: <kbd>→</kbd> next, <kbd>←</kbd> back (a beat the way it ends), <kbd>Space</kbd> pauses every animation, <kbd>R</kbd> replays, <kbd>Esc</kbd> leaves. The beats carry their numbers from `script.md`, shown in the counter after each press: `#present` opens in it, `#present-15b` at beat 15b. The beats live in `src/present.js`; the narration in `script.md`, with Erfan's drafts word for word in `script-drafts.md`.
+Presentation mode (<kbd>V</kbd> or Present) plays the video's beats from `script.md` on the stage, one key press each: <kbd>→</kbd> next, <kbd>←</kbd> back (a beat the way it ends), <kbd>Space</kbd> pauses every animation, <kbd>R</kbd> replays, <kbd>Esc</kbd> leaves. The beats carry their numbers from `script.md`, shown in the counter after each press: `#present` opens in it, `#present-15b` at beat 15b. The beats live in `src/present.js` (part 3, beats 21–31, in `src/lab.js`; part 4, beats 32–41, in `src/why.js`); the narration in `script.md`, with Erfan's drafts word for word in `script-drafts.md`.
 
 Buttons under the stage play each scene's animations. The laser, the beam's look and width, the container and the medium are shared, so a change shows in every scene that uses them. "Fade into scene…" crossfades slowly into another scene, and the speed slider scales every animation.
 
