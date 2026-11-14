@@ -15,10 +15,10 @@ The working script below has light edits; the original drafts, word for word, ar
 > Rendering clouds became one of the biggest goals of my career. It's a big part of why I kept going in computer graphics. But, for years, I delayed learning how it actually works.
 
 **7.** [The card goes. The figure shrinks into the bottom-left corner and stays there; as soon as it starts moving, its readout reshapes into "WTF?!". The equation writes in, large, in about two seconds.]
-> Mainly because the first thing I ran into was a formula that looked like this. And that was intimidating, and every resource I found just handed it to me and said: accept it.
+> Mainly because the first thing I ran into was a formula that looked like this. And that was intimidating, and every resource I found just handed it to me and wanted me to accept it.
 
 **8.** [One press for all four effects: the four braces grow under their terms together, a moment apart, and the four cells fade into a 2 × 2 grid under the equation, each with its name in its corner, the particle and photons playing in it, back to back, a little over a second apart, the first already most of the way to the particle. Every cell shows the paths in a neutral grey with arrows, the beam's line through the particle toward an eye at the right, all on the centre line. Absorption and out-scattering in red, emission and in-scattering in green. In emission, light leaves the particle every way at once, and only the photon heading for the eye has colour. Nothing already on screen changes.]
-> Parts of it made sense: each term is a different way light and the stuff interact.
+> Parts of it made sense: like how each term is a different way light and the stuff interact.
 
 **12.–12b.** [The braces and the grid fade. A yellow box goes around the integral in the exponent, and everything outside it greys out; the part keeps a light yellow tint. Next press: the box leaves the equation and turns into a card that stays, the question writing in as its title on the way, so it's done as the card lands, "why an integral in the exponent?", and most of the card a place for the animation that answers it later (TODO: variable density).]
 > But nobody explained to me why there's an integral inside an exponent…
@@ -32,7 +32,7 @@ The working script below has light edits; the original drafts, word for word, ar
 ## Part 2: what this is, and what we keep
 
 **15.–15g.** [Seven presses, at "This video isn't a shader tutorial", "and it isn't a physics lecture", "It's the part in between", "By the end of this series", "the physics and the math", "derive it yourself" and "And most importantly". The cards and the equation go, and the equation stays away from here until it has been earned, late in the series. A small raymarcher with its shader code fades in at the left end, an arrow under it. The arrow walks to the right, drawing a line behind it, and a small physics lecture's chalkboard, scribbles and sketches with nothing readable, comes in at that end. The arrow walks back to the middle and sways back and forth there from then on. Then the whole spectrum moves into an aside at the top, still swaying; under it, "Goals:" comes in on the left, and the figure walks over to the right. Then one bullet per press: "the physics and math behind the intimidating look"; "derive it yourself", while a copy of the figure, "WTF?!" and all, walks out to the right along a growing arrow, its readout widening and the "WTF?!" reshaping into "I understand it now" on the way, "Now" under the first, "Then" under the copy. As soon as the copy sets off, the first figure, its "WTF?!" and its "Now" fade to grey: the past; "a model, not a law: its assumptions and limits".]
-> This video isn't a shader tutorial, and it isn't a physics lecture. It's the part in between. By the end of this series, I want the physics and the math to feel so intuitive that you could derive it yourself. And most importantly, I want you to see that this isn't a law of nature to accept blindly. It's a simplified model of the real world, with its own assumptions and limits. So, forget the symbols for a minute.
+> This video isn't a shader tutorial, and it isn't a physics lecture either. It's the part in between. By the end of this series, I want the physics and the math to feel so intuitive that you could derive it yourself. And most importantly, I want you to see that this isn't a law of nature to accept blindly. It's a simplified model of the real world, with its own assumptions and limits. So let's forget about the symbols for a minute.
 
 **16.** [The aside, the goals and both figures go; the figure isn't needed from here on, and what follows sits in the middle of the stage. No formula: the caption alone writes in, large at the top: "light, travelling some distance, through some stuff."]
 > In plain words, all of this is about one thing: what happens to light as it travels some distance through some stuff.
@@ -42,27 +42,27 @@ The working script below has light edits; the original drafts, word for word, ar
 
 
 **20b.–20h.** [One press per thing the box holds, the beam dimming more or less across it: fog; a cloud; smoke, thin streams curling up like a cigarette's and gathering under the lid; a block of tinted glass, catching the light; coffee; beer, with a head of foam; then, at "It doesn't matter yet", plain stuff again.]
-> Fog, [20c] a cloud, [20d] smoke, [20e] tinted glass, [20f] a cup of coffee, [20g] a glass of beer. [20h] It doesn't matter yet. Different stuff, same story.
+> Fog, [20c] a cloud, [20d] smoke, [20e] tinted glass, [20f] a cup of coffee, [20g] a glass of beer. [20h] It doesn't matter here. Different stuff, same story.
 
 ## Part 3: only absorption, and the first formula
 
 **21.–21b.** [The three field cards and the caption go, and the box grows out of its card until the laser, the box of plain stuff and the sensor fill the stage. Next press, the dishonesty, shown on this very box: the few specks right in the beam's path light up where it hits them, and from each, every second or so, a thin red ray of its light leaves in some direction; every speck a ray meets on its way sends it off in a new one, flashing as it's hit, a few bounces, each a little dimmer, until the ray leaves the box; the stuff around the beam glows a faint red: scattering. Over the box, "No Scattering" writes in.]
-> For the rest of this video I'm going to be slightly dishonest. [21b] I'll assume our stuff doesn't scatter light,
+> And, For the rest of this video I'm going to be slightly dishonest. [21b] I'll assume our stuff doesn't scatter light,
 
 **21c.** [The scattering stops. Each speck glows red on its own, and the beam dims a little so the glow shows: emission. Under "No Scattering", "No Emission" writes in.]
-> and that it doesn't glow, or give off any light of its own. I'll get to them in the next video.
+> and that it doesn't glow, or give off any light of its own. I'll get to them in a later video.
 
 **21d.** [The glow goes: plain stuff again, the beam dimmer past the box. The two lines turn into one, the letters they share moving over: "Just Absorption". It goes when the setup is copied, at 23.]
-> For now, our particles only absorb light: whenever light hits one particle, it's is taken in and turned into a little heat.
+> For now, our particles only absorb light: whenever light hits one particle, it's is taken in and turned into heat.
 
 **22.–22b.** [The sensor's reading appears for the first time, 50%, already brought forward: everything else dims and the readout is a little bigger. Next press, everything goes back as it was.]
 > So they take some of the laser's light, and less of it makes it to the other end. How much less? That's what the sensor is for. Here it reads fifty percent: half the light made it through. [22b]
 
 **23.–23b.** [The whole setup is copied, without its readout, and the copy slides down, slowly, to the bottom half of the stage. Next press, in the copy, a second identical box slides in from the right beside the first, the laser and the sensor moving outward to make room, and the light past the first box gives way to a row of "?" drifting through the second box to the sensor, which goes dark: nothing gives the answer away. Then a readout pops up on the copy's sensor: "?". So: above, one box and 50%; below, two boxes and "?".]
-> Now, I've got a question for you. [23b] What if I put a second, identical box right next to this one? What does the sensor read now? Pause and try to answer, if you want.
+> Now, I've got a question for you. [23b] What if I put a second, identical box right next to this one? What does the sensor read now? if you want you can pause and try to answer it .
 
 **24.–24c.** [An aside, as every aside with the stick figure goes (as in beat 2): both setups shrink into a card of their own colour, moved over to the left, and the figure comes in on the right, its readout "0%". Next press, over its head, the guess worked out, the same amount off for every box: "1 box: 100% − 50% = 50%"; the press after, under it, "2 boxes: 100% − 100% = 0%" (the count in blue; what's taken off, its minus sign and all, in red, the colour of light taken away; the rest in white).]
-> It's natural to say zero. [24b] One box took half the light, [24c] so two should take all of it.
+> For a lot of us It's natural to say zero. [24b] One box took half the light, [24c] so two should take all of it.
 
 **25.–25f.** [At "But that's not what happens", a red cross strikes out the wrong sum. Next press, the figure, its readout and the sum go, and the card grows back to fill the stage. The question marks clear, the light carries on through the second box to the sensor, and the reading reshapes from "?" into 25%; from here the top row has a touch less colour, hardly noticed, so the eye stays on the bottom one, where the question is. Next press, a third box slides in the same way, and as soon as it starts sliding the reading reshapes into 12.5%. Next press, at "multiplying by a fixed fraction", the bottom row fades and comes back as one box, "100%" over a small pointer where the light goes in and, where the box ends, "100% × ½", which turns into "50%": what comes out of it; the reading shows 50%. Next press, the row makes room and a second box drops into its place from just above; the reading halves as it appears, and then at its end "50% × ½" fades in and turns into "25%". Next press, a third the same way: the reading to 12.5%, and "25% × ½" into "12.5%". The amounts are in lavender and the "× ½" in the red of the wrong sum's "− 50%": minus a half has become times a half. (Other ways to animate this, such as one label riding along with the light and halved by each box, are in the bench's Halving tab.)]
 > But that's not what happens. [25b] The sensor reads twenty-five percent. [25c] Add a third box: twelve and a half. Each box halves the light that enters it. That's exactly what exponential means: [25d] multiplying by a fixed fraction, [25e] again [25f] and again.
