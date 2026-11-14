@@ -55,8 +55,11 @@ The working script below has light edits; the original drafts, word for word, ar
 **21d.–21e.** [The glow goes: plain stuff again. The two lines turn into one, the letters they share moving over: "Just Absorption" (it goes when the setup is copied, at 23); and the light past the box goes dimmer than it really is: from here on the beam is drawn about as bright as the square of what gets through, with a little left over, so the drop shows to the eye (half the light hardly looks dimmer), while the readouts stay true. Next press, a ring on the beam in the box, and up to the right a lens grows out of it, two lines joining them: in the lens, light hits a particle and is taken in, the particle warming, over and over (beat 8's absorption cell).]
 > For now, our particles only absorb light: [21e] whenever light hits one particle, it's is taken in and turned into heat.
 
-**22.–22b.** [The lens and its ring go. The sensor's reading appears for the first time, 50%, already brought forward: everything else dims and the readout is a little bigger. Next press, everything goes back as it was.]
-> So they take some of the laser's light, and less of it makes it to the other end. How much less? That's what the sensor is for. Here it reads fifty percent: half the light made it through. [22b]
+**21f.** [The lens shrinks back into its ring, and the ring goes: the setup as it was, the light dimmer past the box.]
+> So they take some of the laser's light, and less of it makes it to the other end.
+
+**22.–22b.** [The sensor's reading appears for the first time, 50%, already brought forward: everything else dims and the readout is a little bigger. Next press, everything goes back as it was.]
+> How much less? That's what the sensor is for. Here it reads fifty percent: half the light made it through. [22b]
 
 **23.–23b.** [The whole setup is copied, without its readout, and the copy slides down, slowly, to the bottom half of the stage. Next press, in the copy, a second identical box slides in from the right beside the first, the laser and the sensor moving outward to make room, and the light past the first box gives way to a row of "?" drifting through the second box to the sensor, which goes dark: nothing gives the answer away. Then a readout pops up on the copy's sensor: "?". So: above, one box and 50%; below, two boxes and "?".]
 > Now, I've got a question for you. [23b] What if I put a second, identical box right next to this one? What does the sensor read now? if you want you can pause and try to answer it .

@@ -544,6 +544,8 @@ function labGlow() { ptw('scat', 0, 0.6); ptw('lbNE', 1, 0.8, { delay: 0.4, ease
 function labAbsorb() { ptw('lbJA', 1, 1.2, { delay: 0.2 }); ptw('lie', 1, 1.4, { delay: 0.5 }); return ptw('glow', 0, 0.9); }
 // 21e: a magnifier on the beam in the box: in its lens, light hitting a particle and taken in, the particle warming
 function labHeat() { PS.amagT = labLoopStart('amT', TIME + 0.6); return ptw('amag', 1, 1.1); }
+// 21f: the lens shrinks back into its ring and goes: the setup as it was, the light dimmer past the box
+function labHeatOut() { return ptw('amag', 0, 0.9); }
 // 22: the reading comes in already brought forward (the rest dims, the readout a little bigger); 22b: back to normal
 function labRead() { ptw('amag', 0, 0.5); ptw('r1Hi', 1, 0.6); return ptw('read1', 1, 0.8); }
 function labReadDone() { return ptw('r1Hi', 0, 0.8); }
