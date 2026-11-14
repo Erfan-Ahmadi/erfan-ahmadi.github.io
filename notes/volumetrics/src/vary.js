@@ -52,7 +52,7 @@ const vLoopShape = (u, t) => {   // t: seconds since the loop started
   return lerp(VSHAPES[k % n](u), VSHAPES[(k + 1) % n](u), f);
 };
 function VARY_DEFAULTS() { return {
-  von: 0, vc1: 0, vc2: 0, vsect: 0, vface: 0, vax: 0, vpl: 0, vs1: 0, vs2: 0, vdual: 0, vmute: 0, vswap: 0, vfA: 0, vfB: 0, vpA: 0, vpAa: 0,
+  von: 0, vfr: 1, vc1: 0, vc2: 0, vsect: 0, vface: 0, vax: 0, vpl: 0, vs1: 0, vs2: 0, vdual: 0, vmute: 0, vswap: 0, vfA: 0, vfB: 0, vpA: 0, vpAa: 0,
   vq: 0, vread: 0, va1: 0, va2: 0, va3: 0, va4: 0, vb1: 0, vb3: 0, vb4: 0, vfoc: 0, vone: 0, vcont: 0, vchop: 0, vprod: 0, vsum: 0, vint: 0,
   vshLoop: 0, vshT0: 0, vshR: 0, vsame: 0, vuni: 0, vsx: 0, varea: 0, vtau: 0, vname: 0, vtauOut: 0, varL: 0,
 }; }
@@ -130,9 +130,10 @@ function varyDraw(ctx, st, side, k, du) {
   if (fa > 0.003) dashed(ctx, L / 2, -VG.R * 0.94, L / 2, VG.R * 0.94, COL.greyA, 0.85 * fa, px(2.5));
   if (edges.length) { ctx.save(); ctx.lineWidth = px(1.6); for (const [u, a] of edges) { if (a * ch <= 0.01) continue; ctx.strokeStyle = hexA(COL.greyA, 0.5 * ch * a); ctx.beginPath(); ctx.moveTo((u / 2) * L, -VG.R * 0.72); ctx.lineTo((u / 2) * L, VG.R * 0.72); ctx.stroke(); } ctx.restore(); }
   // the light, the laser and the sensor
-  drawBeam(ctx, VG.laser, VG.sensor - 11, 0, SH.color, SH.I0, lieT(T), [0, L / 2, L], VARY.beam);   // (dimmer than it is, as in the lab: lab.js's lieT)
+  const fr = clamp(st.vfr ?? 1, 0, 1), lit = smooth(clamp((fr - 0.97) / 0.03, 0, 1));   // vfr: how far the light has got (42, 42b: it travels the path again)
+  if (fr > 0.001) drawBeam(ctx, VG.laser, lerp(VG.laser, VG.sensor - 11, fr), 0, SH.color, SH.I0, lieT(T), [0, L / 2, L], VARY.beam);   // (dimmer than it is, as in the lab: lab.js's lieT)
   ctx.save(); ctx.translate(VG.laser, 0); ctx.scale(VG.dev, VG.dev); drawLaser(ctx, 0, 0, SH.color, 1); ctx.restore();
-  ctx.save(); ctx.translate(VG.sensor, 0); ctx.scale(VG.dev, VG.dev); drawSensor(ctx, 0, 0, SH.color, T(L) * SH.I0); ctx.restore();
+  ctx.save(); ctx.translate(VG.sensor, 0); ctx.scale(VG.dev, VG.dev); drawSensor(ctx, 0, 0, SH.color, T(L) * SH.I0 * lit); ctx.restore();
   // the sensor's readout, over it; 56b: boxed, as the integral is
   const ra = smooth(clamp(st.vread, 0, 1));
   if (ra > 0.003) {
@@ -149,7 +150,7 @@ function varyDraw(ctx, st, side, k, du) {
     const c = smooth(clamp(a || 0, 0, 1)); if (c <= 0.003) continue;
     ctx.save(); ctx.strokeStyle = hexA(COL.white, 0.9 * c); ctx.lineWidth = px(3.5); ctx.beginPath(); ctx.arc(u * L, 0, VG.cr * lerp(1.25, 1, c), 0, Math.PI * 2); ctx.stroke(); ctx.restore();
   }
-  // 42c, 42d: σ written in each section, in its yellow, on a little shade; B's go with their sections as they swap
+  // 42d, 42e: σ written in each section, in its yellow, on a little shade; B's go with their sections as they swap
   for (const [a, val, x, y] of [[st.vs1, VARY.s1, L / 4 + dxs, -dys], [st.vs2, VARY.s2, (3 * L) / 4 - dxs, dys]]) {
     const sg = smooth(clamp(a, 0, 1)) * (1 - P.co); if (sg <= 0.003) continue;
     const src = String.raw`\sigma = ${val}`, size = px(lerp(50, 40, du)), tw = tex(src).w * size, cy = y - 78;
@@ -180,7 +181,7 @@ function varyDraw(ctx, st, side, k, du) {
   for (const v of [0.2, 0.4]) drawTex(ctx, String(v), A.ox - px(16), A.Y(v), px(lerp(28, 24, du)), { ax: 1, alpha: ax * lerp(1, 0.7, mu) });
   drawTex(ctx, String.raw`\sigma`, A.ox - px(14), VG.plotT - VG.ext + px(2), px(lerp(46, 40, du)), { ax: 1, alpha: ax, color: col });
   drawTex(ctx, 'x', A.X(2) + VG.ext + px(14), A.oy, px(lerp(46, 40, du)), { ax: 0, alpha: ax, color: mixRgb(hexRgb(LDCOL), hexRgb(COL.greyB), mu) });
-  // its line: while it is being drawn (42c, 42d), across the first section, down, across the second; after that, whatever σ is
+  // its line: while it is being drawn (42d, 42e), across the first section, down, across the second; after that, whatever σ is
   if (pl > 0.003) {
     ctx.save(); ctx.strokeStyle = rgba(col, ax); ctx.lineWidth = px(5); ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.beginPath();
     if (pl < 0.999) {
@@ -345,9 +346,13 @@ function varyStart() { return ptw('von', 1, 1.8); }
 function varyDense() { return ptw('vc1', 1, 0.6); }
 function varyThin() { ptw('vc1', 0, 0.5); return ptw('vc2', 1, 0.6); }   // (the dense spot's circle goes as this one comes)
 // 42: the circles go, and the cloud becomes the simple case: two sections, dense then thin, a dashed line between them
-function varySections() { ptw('vc1', 0, 0.4); ptw('vc2', 0, 0.4); ptw('vface', 1, 0.7, { delay: 1.4 }); return ptw('vsect', 1, 1.8, { delay: 0.2 }); }
-// 42b: the picture moves down and the plot's axes come in over it. 42c: σ = 0.4 written in the first section, and the
-// plot's line drawn across it. 42d: the line drops and goes on across the second, σ = 0.2 written there
+// The light starts over from the laser once the sections are there, and travels as far as the middle (the dense half);
+// 42b: then the rest of the way, through the thin half, to the sensor
+const VMID = (VG.L / 2 - VG.laser) / (VG.sensor - 11 - VG.laser);
+function varySections() { ptw('vc1', 0, 0.4); ptw('vc2', 0, 0.4); ptw('vface', 1, 0.7, { delay: 1.4 }); PS.vfr = 0; ptw('vfr', VMID, 1.8, { delay: 1.0, ease: linear }); return ptw('vsect', 1, 1.8, { delay: 0.2 }); }
+function varyRest() { return ptw('vfr', 1, 1.6, { ease: linear }); }
+// 42c: the picture moves down and the plot's axes come in over it. 42d: σ = 0.4 written in the first section, and the
+// plot's line drawn across it. 42e: the line drops and goes on across the second, σ = 0.2 written there
 function varyAxesIn() { return ptw('vax', 1, 1.2); }
 function varyPlot1() { ptw('vs1', 1, 0.6); return ptw('vpl', 1 / 2.25, 1.6, { delay: 0.2, ease: linear }); }
 function varyPlot2() { ptw('vs2', 1, 0.6, { delay: 0.5 }); return ptw('vpl', 1, 1.9, { ease: linear }); }
