@@ -12,7 +12,9 @@ const WHY = { yc: 540, hh: 240, f: 0.1, m: 5, w: 160, NMAX: 6, cx: 940, lf0: 560
 // yc, hh: the sheet's middle and half its height; f: what a slab takes; m: particles to a slab; w: a slab's thickness;
 // NMAX: as many as fit at that thickness; cx: the middle of the slabs; lf0, sx0: the laser's face and the sensor while
 // the slabs leave room; gap: the least room between them and the slabs.
-const WSLH = (LAB.BW * Math.log(1 - WHY.f)) / Math.log(0.5) / 2;   // half the slice we go into, in the lab's units: as long as takes 10% (the box takes 50%)
+// The slice we go into (32b), in the lab's units: its middle, clear of the specks on the beam's line, and half its
+// thickness: the landed slab's thickness over the zoom, so that the zoom is the same across the beam and along it.
+const WSX = 40, whySH = () => (WHY.w * SH.beamW) / (4 * WHY.hh);
 const WX1 = { ox: 960, oy: 560, s: 1.2 };                           // the lab's row, as at beat 22
 // The two thicker slabs (35–39), at scale 1: where they are, the laser's face and the sensor; three particles to a row,
 // each row as tall as a tenth of the sheet; which tenths the first slab's rows close, and the second's (in the gaps).
@@ -75,11 +77,14 @@ function whyTiny(n) {
   for (let k = 0; k < N; k++) slabs.push({ x0: x0 + k * WHY.w, x1: x0 + (k + 1) * WHY.w, a: smooth(clamp(n - k, 0, 1)) });
   return { slabs, laserX: Math.min(WHY.lf0, x0 - WHY.gap), sensorX: Math.max(WHY.sx0, x0 + cw + WHY.gap) };
 }
-// The zoom (32c): from the lab's row, one slice of the box, to the slab; far more across the beam than along it.
+// The zoom (32c), on the stage: from the lab's row, around the slice where it crosses the beam, the same in every
+// direction, until the beam is the sheet of the (smaller) picture and the slice its slab. X, Y: a point in the lab's
+// units, on the stage now.
 function whyZoomGeo(z) {
-  const e = smooth(clamp(z, 0, 1)), sx = Math.exp(e * Math.log(WHY.w / (2 * WSLH * WX1.s))), sy = Math.exp(e * Math.log((2 * WHY.hh) / (SH.beamW * WX1.s)));
-  const cx = lerp(WX1.ox, WHY.cx, e), cy = lerp(WX1.oy, WHY.yc, e);
-  return { e, cx, cy, X: (x) => cx + x * WX1.s * sx, Y: (y) => cy + y * WX1.s * sy, hh: (SH.beamW / 2) * WX1.s * sy };
+  const e = smooth(clamp(z, 0, 1)), Z1 = (2 * WHY.hh * WTK) / (SH.beamW * WX1.s), S = Math.exp(e * Math.log(Z1));
+  const x0 = WX1.ox + WX1.s * WSX, y0 = WX1.oy, x1 = WDC[0] + (WHY.cx - WDC[0]) * WTK, y1 = WDC[1] + (WHY.yc - WDC[1]) * WTK;
+  const cx = lerp(x0, x1, e), cy = lerp(y0, y1, e);
+  return { e, S, cx, cy, X: (x) => cx + WX1.s * (x - WSX) * S, Y: (y) => cy + WX1.s * y * S, hh: (SH.beamW / 2) * WX1.s * S };
 }
 // ---- drawing ----
 const whyDisc = (ctx, x, y, r, a) => {   // a particle, as the bench draws them
@@ -121,7 +126,8 @@ function whyView(ctx, V) {
     for (const p of V.parts) { if (p.a <= 0.003 || p.x >= V.xR) continue; const r = (p.D / 2) * 2 * hh; ctx.globalAlpha = A0 * p.a; ctx.fillRect(p.x, top + p.v * 2 * hh - r, V.xR - p.x, 2 * r); }
     ctx.restore();
   }
-  for (const s of V.slabs) if (s.a > 0.003) for (const x of [s.x0, s.x1]) dashed(ctx, x, top - 36, x, top + 2 * hh + 36, COL.greyC, s.a, 2);
+  const fe = V.fext ?? 36;
+  for (const s of V.slabs) if (s.a > 0.003) for (const x of [s.x0, s.x1]) dashed(ctx, x, top - fe, x, top + 2 * hh + fe, COL.greyC, s.a, 2);
   for (const p of V.parts) whyDisc(ctx, p.x, top + p.v * 2 * hh, (p.D / 2) * 2 * hh, p.a);
   whyLaser(ctx, V.laserX, yc, hh, V.laserA);
   whySensor(ctx, V.sensorX, yc, hh, V.sensorA);
@@ -163,7 +169,7 @@ function WHY_DEFAULTS() { return {
 // pass (32b); then all but the slice fades away; at the zoom (z > 0) the slice is drawn by whyZoomIn instead.
 function whyBox(ctx, st, z) {
   const sel = smooth(clamp(st.wsel, 0, 1)), fade = smooth(clamp(st.wfade, 0, 1)), X = WX1, sx = (x) => X.ox + X.s * x, sy = (y) => X.oy + X.s * y;
-  const lf = lerp(-LAB.BW / 2, -WSLH, sel), rf = lerp(LAB.BW / 2, WSLH, sel), xa = sx(-WSLH), xb = sx(WSLH), o = { c: 1, from: '', to: '50%', m: 1, read: 1 };
+  const h = whySH(), lf = lerp(-LAB.BW / 2, WSX - h, sel), rf = lerp(LAB.BW / 2, WSX + h, sel), xa = sx(WSX - h), xb = sx(WSX + h), o = { c: 1, from: '', to: '50%', m: 1, read: 1 };
   ctx.save(); ctx.beginPath(); ctx.rect(-50, -50, W + 100, H + 100); ctx.rect(xa, -50, xb - xa, H + 100); ctx.clip('evenodd');
   drawLabRow(ctx, X, o, 1 - fade);
   if (sel > 0.003 && fade < 0.997) {   // what the fronts have passed, dimmed
@@ -173,17 +179,21 @@ function whyBox(ctx, st, z) {
   }
   ctx.restore();
   if (z <= 0.001) { ctx.save(); ctx.beginPath(); ctx.rect(xa, -50, xb - xa, H + 100); ctx.clip(); drawLabRow(ctx, X, o, 1); ctx.restore(); }
-  const fa = 0.85 * sel * (1 - smooth(clamp(z * 2.5, 0, 1)));   // the fronts, which become the slab's faces
-  if (fa > 0.003) { ctx.save(); ctx.strokeStyle = hexA(COL.white, fa); ctx.lineWidth = 2.5; ctx.beginPath(); for (const x of [lf, rf]) { ctx.moveTo(sx(x), sy(LAB.top)); ctx.lineTo(sx(x), sy(LAB.bot)); } ctx.stroke(); ctx.restore(); }
+  const fa = 0.85 * sel;   // the fronts, which become the slab's faces (on the way in, whyZoomIn draws them)
+  if (fa > 0.003 && z <= 0.001) { ctx.save(); ctx.strokeStyle = hexA(COL.white, fa); ctx.lineWidth = 2; ctx.beginPath(); for (const x of [lf, rf]) { ctx.moveTo(sx(x), sy(LAB.top)); ctx.lineTo(sx(x), sy(LAB.bot)); } ctx.stroke(); ctx.restore(); }
 }
-// On the way in: the box's stuff in the slice, the box's walls and its specks, going as the slab's particles come
+// On the way in: the box's stuff in the slice (its haze, the box's walls, any speck drifting through: they don't grow,
+// they go, as the slab's particles come), and the fronts, going as its dashed faces come
 function whyZoomIn(ctx, Z) {
-  const a = 1 - smooth(clamp((Z.e - 0.25) / 0.4, 0, 1)); if (a <= 0.003) return;
-  const x0 = Z.X(-WSLH), x1 = Z.X(WSLH), B = { x0: -LAB.BW / 2, x1: LAB.BW / 2, top: LAB.top, bot: LAB.bot };
+  const h = whySH(), x0 = Z.X(WSX - h), x1 = Z.X(WSX + h), B = { x0: -LAB.BW / 2, x1: LAB.BW / 2, top: LAB.top, bot: LAB.bot };
+  const fa = 0.85 * (1 - smooth(clamp(Z.e / 0.45, 0, 1)));
+  if (fa > 0.003) { ctx.save(); ctx.strokeStyle = hexA(COL.white, fa); ctx.lineWidth = 2; ctx.beginPath(); for (const x of [x0, x1]) { ctx.moveTo(x, Math.max(-10, Z.Y(B.top))); ctx.lineTo(x, Math.min(H + 10, Z.Y(B.bot))); } ctx.stroke(); ctx.restore(); }
+  const a = 1 - smooth(clamp((Z.e - 0.15) / 0.4, 0, 1)); if (a <= 0.003) return;
   ctx.save(); ctx.beginPath(); ctx.rect(x0, -20, x1 - x0, H + 40); ctx.clip(); ctx.globalAlpha *= a;
   ctx.fillStyle = 'rgba(170,164,152,0.12)'; ctx.fillRect(x0, Z.Y(B.top), x1 - x0, Z.Y(B.bot) - Z.Y(B.top));
   ctx.strokeStyle = COL.greyA; ctx.lineWidth = 4.8; ctx.beginPath(); for (const y of [B.top, B.bot]) { ctx.moveTo(x0, Z.Y(y)); ctx.lineTo(x1, Z.Y(y)); } ctx.stroke();
-  for (const [u, v, ph, jy] of BOXSPECKS) { const [x, y] = speckXY(B, u, v, ph, jy); if (x < -WSLH - 8 || x > WSLH + 8) continue; dot(ctx, Z.X(x), Z.Y(y), 3.6 * WX1.s * (1 + 2 * Z.e), COL.yellow, 0.62); }
+  const sa = 1 - smooth(clamp(Z.e / 0.2, 0, 1));
+  if (sa > 0.003) for (const [u, v, ph, jy] of BOXSPECKS) { const [x, y] = speckXY(B, u, v, ph, jy); if (Math.abs(x - WSX) > h + 6) continue; dot(ctx, Z.X(x), Z.Y(y), 3.6 * WX1.s, COL.yellow, 0.62 * sa); }
   ctx.restore();
 }
 // The main picture, 32c–36: the tiny slabs, then (35) the two thicker ones, with the light, the laser and the sensor
@@ -191,7 +201,7 @@ function whyMain(st) {
   const z = clamp(st.wzoom, 0, 1), Z = whyZoomGeo(z), into = z < 1, ls = smooth(clamp(st.wls, 0, 1));
   const tinyA = 1 - smooth(clamp(st.wst / 0.4, 0, 1)), stx = smooth(clamp((st.wst - 0.25) / 0.6, 0, 1)), T = whyTiny(into ? 1 : st.wn);
   const yc = into ? Z.cy : WHY.yc, hh = into ? Z.hh : WHY.hh, slabs = [], parts = [];
-  const tiny = into ? [{ x0: Z.X(-WSLH), x1: Z.X(WSLH), a: 1 }] : T.slabs, pa = into ? smooth(clamp((Z.e - 0.4) / 0.35, 0, 1)) : 1;
+  const tiny = into ? [{ x0: Z.X(WSX - whySH()), x1: Z.X(WSX + whySH()), a: 1 }] : T.slabs, pa = into ? smooth(clamp((Z.e - 0.35) / 0.35, 0, 1)) : 1;
   if (tinyA > 0.003) tiny.forEach((s, k) => {
     slabs.push({ x0: s.x0, x1: s.x1, a: s.a * tinyA * (into ? Z.e : 1) });
     for (const p of WTINY[k]) parts.push({ x: lerp(s.x0, s.x1, p.xi), v: p.v, D: WHY.f / WHY.m, a: s.a * tinyA * pa });
@@ -199,8 +209,11 @@ function whyMain(st) {
   const f1 = smooth(clamp(st.ws1 / 0.25, 0, 1)), f2 = smooth(clamp(st.ws2 / 0.25, 0, 1));
   if (st.ws1 > 0.003 || st.ws2 > 0.003) { slabs.push(...whyTwoSlabs(f1, f2)); parts.push(...whyPlacedParts(st.ws1, st.ws2, st.whide)); }
   const laserX = lerp(T.laserX, WST.laserX, stx), sensorX = lerp(T.sensorX, WST.sensorX, stx), s0 = tiny[0];
-  return { yc, hh, slabs, parts, laserX, sensorX, laserA: ls, sensorA: ls, readA: smooth(clamp(st.wread, 0, 1)), power: clamp(st.wpow, 0, 1),
-    xL: lerp(s0.x0, laserX, ls), xR: lerp(s0.x1, sensorX, ls), sheet: into ? lerp(0.7, WHY.sheet, Z.e) : WHY.sheet, Z, into, T, tinyA };
+  // on the way in, everything is on the stage already (and the light only in the slice); once landed, in the picture's own
+  // units, drawn smaller
+  const l = into ? 0 : ls;
+  return { yc, hh, slabs, parts, laserX, sensorX, laserA: l, sensorA: l, readA: smooth(clamp(st.wread, 0, 1)), power: clamp(st.wpow, 0, 1), fext: into ? 36 * WTK : 36,
+    xL: lerp(s0.x0, laserX, l), xR: lerp(s0.x1, sensorX, l), sheet: into ? lerp(0.7, WHY.sheet, Z.e) : WHY.sheet, Z, into, T, tinyA };
 }
 function drawWhy(ctx, dt, st) {
   const on = clamp(st.won, 0, 1); if (on <= 0.003) return;
@@ -210,7 +223,7 @@ function drawWhy(ctx, dt, st) {
   if (z < 1) whyBox(ctx, st, z);
   if (z > 0) {
     // the tiny slabs' picture a fifth smaller: shrinking to it on the way in, back to full size as the thicker slabs come
-    const V = whyMain(st), stx = smooth(clamp((st.wst - 0.25) / 0.6, 0, 1)), k1 = V.into ? lerp(1, WTK, V.Z.e) : lerp(WTK, 1, stx);
+    const V = whyMain(st), stx = smooth(clamp((st.wst - 0.25) / 0.6, 0, 1)), k1 = V.into ? 1 : lerp(WTK, 1, stx);   // (on the way in, already on the stage)
     const at = lerpPos(lerpPos([WDC[0], WDC[1], k1], WPOS.bot, rows), WPOS.rBot, split), s0 = V.into ? null : V.T.slabs[0];
     const la = smooth(clamp(st.wlab, 0, 1)) * V.tinyA, fm = clamp(st.wfm, 0, 1);
     ctx.save(); ctx.globalAlpha *= 1 - fig;
@@ -256,12 +269,12 @@ function drawWhy(ctx, dt, st) {
 }
 
 // ---- the beats ----
-// 32: back from the aside: the bases go, and the box is on the stage again as at beat 22, reading 50%
-function whyBox32() { ptw('lfig', 0, 0.5); ptw('bOut', 1, 0.5); ptw('lside', 0, 1.2, { delay: 0.2 }); return ptw('won', 1, 0.9, { delay: 0.4 }); }
+// 32: back from the aside: the plot goes, and the box is on the stage again as at beat 22, reading 50%
+function whyBox32() { ptw('lfig', 0, 0.5); ptw('bOut', 1, 0.5); ptw('plotOut', 1, 0.5); ptw('lside', 0, 1.2, { delay: 0.2 }); return ptw('won', 1, 0.9, { delay: 0.4 }); }
 // 32b: two fronts sweep in from the box's ends and meet at a thin slice of it; then all but the slice fades away
 function whySelect() { ptw('wsel', 1, 1.4); return ptw('wfade', 1, 0.8, { delay: 1.8 }); }
 // 32c: the zoom; once in, the light runs from the laser, which comes back, to the sensor; then Δd under the slab
-function whyZoom() { ptw('wls', 1, 0.8, { delay: 2.3 }); ptw('wbr', 1, 0.6, { delay: 2.9 }); return ptw('wzoom', 1, 2.4); }
+function whyZoom() { ptw('wls', 1, 0.8, { delay: 2.5 }); ptw('wbr', 1, 0.6, { delay: 3.0 }); return ptw('wzoom', 1, 2.4); }
 // 32d: the sensor reads 90%
 function whyRead() { return ptw('wread', 1, 0.45); }
 // 33: the light goes brighter and dimmer, over and over, until the next press; the reading stays (dimmer once, if motion is reduced)

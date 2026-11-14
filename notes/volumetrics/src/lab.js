@@ -591,8 +591,13 @@ function labE() { ptw('eOnly', 1, 0.7); ptw('eMove', 1, 1.1, { delay: 0.35 }); r
 // row's = finishes writing)
 function labBases() { ptw('plotOut', 1, 0.7); return ptw('bStack', 1, 1.6, { delay: 0.6, ease: linear }); }
 function labBasesE() { return ptw('bMorph', 1.1, 2.64, { ease: linear }); }
-// 31: an aside: me again: but why exponential?
+// 31: an aside: me again: but why exponential? With the plot back in the card.
+// In the card, the bases make way for the plot again, as at 27: the formula, its curve and its dot, and the box with the
+// laser and the sensor under it, σ back at its usual value (set while the plot is out of sight, and labTrack told, so it
+// isn't taken for σ changing)
 function labWhy() {
+  Object.assign(PS, { sig: 1, pS: 1, sPin: 0, eq1: 0, eq2: 0, eOnly: 0, eMove: 0, eBox: 0 });
+  ptw('bOut', 1, 0.6); ptw('plotOut', 0, 0.9, { delay: 0.5 });
   PS.lthink = 'but why exponential?'; PS.lthinkP = 0; ptw('lside', 1, 1.4); ptw('lfig', 1, 1.0, { delay: 0.8 });
   return ptw('lthinkP', 1, 1.0, { delay: 1.7, ease: linear });
 }
