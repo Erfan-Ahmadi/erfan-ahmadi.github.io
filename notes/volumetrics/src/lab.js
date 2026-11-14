@@ -494,7 +494,7 @@ function drawLabStage(ctx, dt, st) {
     if (td > 0.003) { const L1 = labLayout(1); greyOut(ctx, [X1.ox + X1.s * (L1.laser - 160), X1.oy - X1.s * 250, X1.s * (L1.sensor - L1.laser + 330), X1.s * 520], 0.3 * td, 0.08 * td); }   // slight, hardly noticed
     if (sp > 0.003) {
       let o = { c: st.c2, from: st.r2From, to: st.r2, m: st.r2M, read: smooth(clamp(st.read2, 0, 1)), pop: true, myst: st.myst, rev: st.rev }, al = out * (1 - smooth(clamp(st.rowFade, 0, 1)));
-      if (st.hvOn) {   // 25d–25f: the halving, a box per press (drawHalveRow), as the Halving tab's labels at the boxes' ends with × ½
+      if (st.hvOn) {   // 25d: the halving, box after box by itself (drawHalveRow), as the Halving tab's labels at the boxes' ends with × ½
         const S = hvSchedule(HV_PRES), [b0, b1] = st.hvAuto ? [0, S.steps[S.n - 1][1]] : hvStepSpan(S, st.hvStep, true), Xb = mixXf(LABXF.full, LABXF.bot, sp), J = labJoinXf();
         const e = smooth(clamp(st.merge || 0, 0, 1)), pb = smooth(clamp(st.pbox || 0, 0, 1)), ha = out * smooth(clamp(st.hvA, 0, 1));
         // 26: closing up into the plot's box; once that is drawn by the plot (pbox), this fades and the plot keeps the labels
@@ -587,21 +587,14 @@ function labReveal() {
   return labRead2('25%', 0.9, 2.5);
 }
 function labThird() { labRead2('12.5%', 1.2); return ptw('c2', 3, 1.4); }   // the reading changes as the box slides in
-// 25d: the bottom row fades and comes back as one box, 100% going in and, at its end, 100% × ½ turning into 50%;
-// 25e and 25f: the next box slides in, and the same at its end. Each step plays from the clock, so a rebuild shows it done.
+// 25d, one press once the line is said: the bottom row fades and comes back as one box, 100% going in and, at its end,
+// 100% × ½ turning into 50%; then by itself the next box slides in and the same at its end, and the third: once through,
+// no repeat. It plays from the clock, so a rebuild shows it done.
+const HVAUTO = 1;   // its pace (1: as the boxes came in one press at a time)
 async function labHalve() {
   const g = PRES.gen;
   await ptw('rowFade', 1, 0.35); if (!labAlive(g)) return;
-  PS.hvOn = 1; PS.hvA = 0; ptw('hvA', 1, 0.4); return labHalveStep(1);
-}
-function labHalveStep(k) { PS.hvStep = k; PS.hvT0 = instant ? -1e9 : TIME; return Promise.resolve(); }
-// 25g: the bottom row starts over and plays the halving through by itself, box after box, a little quicker (HVAUTO)
-const HVAUTO = 1.3;
-async function labHalveAuto() {
-  const g = PRES.gen;
-  await ptw('hvA', 0, 0.35); if (!labAlive(g)) return;
-  PS.hvAuto = 1; PS.hvT0 = instant ? -1e9 : TIME + 0.2;
-  return ptw('hvA', 1, 0.35);
+  PS.hvOn = 1; PS.hvAuto = 1; PS.hvT0 = instant ? -1e9 : TIME; PS.hvA = 0; return ptw('hvA', 1, 0.4);
 }
 // 26, all of it back to back on one press: the one-box row goes and the bottom row's three boxes close up, end to end,
 // where the plot's box will be, their amounts over the joins; e^{−σx} writes in, plain (σ and x take their colours only
