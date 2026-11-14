@@ -336,7 +336,7 @@ function drawVary(ctx, dt, st) {
   // 50: both pictures lose their colour and dim; only the additions, drawn after this, keep theirs
   if (fo * (1 - one) > 0.003) for (const S of sides) greyOut(ctx, VHALF[S.name], fo * (1 - one) * on, 0.3 * fo * (1 - one) * on);
   // 46: the question
-  if (st.vq > 0.003) drawTex(ctx, String.raw`\text{A or B?}`, 960, 140, 64, { alpha: smooth(clamp(st.vq, 0, 1)) });
+  if (st.vq > 0.003) drawTex(ctx, String.raw`\text{More light reaches sensor in A or B?}`, 960, 140, 60, { alpha: smooth(clamp(st.vq, 0, 1)) });
   // 48–50: under each section its factor; 51: they go
   const pa = 1 - one;
   if (pa > 0.003) {
