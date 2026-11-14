@@ -6791,10 +6791,10 @@ async function whyCurve() {
   await ptw('wcur', 1, 1.6, { delay: 2.2, ease: linear }); if (!labAlive(g)) return;
   await whyUpTo5(g);
 }
-// 37: the formula goes, the light goes off, and the particles move into a clump at the top of the beam: the first slab's,
-// then the others'
-function whyClump() { ptw('wfo', 1, 0.6); ptw('wlight', 0, 0.6); return ptw('wclump', 1, 2.6, { delay: 0.7 }); }
-// 38: the same again: the dots go, back to one slab, the light on, its reading a step on the plot: it takes 10%.
+// 37: the formula goes, and so do the steps (the plot is cleared for the new placement's), the light goes off, and the
+// particles move into a clump at the top of the beam: the first slab's, then the others'
+function whyClump() { ptw('wfo', 1, 0.6); ptw('wdA', 0, 0.5); ptw('wlight', 0, 0.6); return ptw('wclump', 1, 2.6, { delay: 0.7 }); }
+// 38: the same again (the steps went at 37): back to one slab, the light on, its reading a step on the plot: it takes 10%.
 // 38b–38e: one more slab per press, up to five, each one's reading a step: hardly anything after the first
 async function whyFlat() {
   const g = PRES.gen;
