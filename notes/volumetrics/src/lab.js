@@ -223,7 +223,7 @@ function drawLabPlot(ctx, st) {
   if (st.eq2 > 0.003) drawSprites(ctx, F.eq2, { alpha: rest * smooth(clamp(st.eq2, 0, 1)) });   // 29: "= 1" (eq1: σ turning into 0, in drawLabFormula)
   if (eb > 0.003) drawLabE(ctx, F, a, eb);
   ctx.restore();
-  const bw = clamp(st.blW || 0, 0, 1), bo = 1 - smooth(clamp(st.blOut || 0, 0, 1));   // 26b: its name, for a moment
+  const bw = clamp(st.blW || 0, 0, 1), bo = 1 - smooth(clamp(st.blOut || 0, 0, 1));   // 26b: its name, until 27
   if (bw > 0.003 && bo > 0.003) drawTex(ctx, String.raw`\text{the Beer–Lambert law}`, inkSpan(F.main)[1] + 80, LP.y + 8, 54, { ax: 0, p: bw, alpha: rest * bo, color: COL.greyA });
   const bA = st.pbox != null ? smooth(clamp(st.pbox, 0, 1)) : ax;   // the box, the light and the sensor: with the axes (the bench), or from the joined boxes (beat 26)
   if ((ax <= 0.003 && bA <= 0.003) || rest <= 0.003) return;
@@ -615,8 +615,8 @@ function labFormula() {
   ptw('rise', 1, 1.8, { delay: 4.8 }); ptw('dCont', 1, 0.8, { delay: 6.0 }); ptw('colD', 1, 0.8, { delay: 6.0 });
   return ptw('marksOut', 1, 0.6, { delay: 7.2 });
 }
-// 26b: its name, "the Beer–Lambert law", writes in beside the formula for a moment and goes
-function labName() { ptw('blW', 1, 1.0, { ease: linear }); return ptw('blOut', 1, 0.6, { delay: 2.8 }); }
+// 26b: its name, "the Beer–Lambert law", writes in beside the formula and stays until the next press (27 takes it away)
+function labName() { return ptw('blW', 1, 1.0, { ease: linear }); }   // (it stays until 27, which takes it away)
 // 27 and 28 play back and forth until the next press, never stopping on their own: a cycle worked out from the clock
 // (as the halving's steps are), so a press stops it wherever it is and the next beat carries on from there. 27: the dot from three
 // boxes down to 0.4 and back; 28: σ up to twice the usual and down to half (even steps in log2). Both 30% slower than
@@ -633,7 +633,7 @@ function labLoops(st) {
 // loop must carry on from where it was, so the next beat can start from where the dot (or σ) is.
 const labLoopStart = (key, t) => (instant && PRES[key] != null ? PRES[key] : (PRES[key] = t));
 // 27: the dot runs back and forth along the curve, the box with it, until the next press (still at two boxes if motion is reduced)
-function labDistance() { ptw('marksOut', 1, 0.6); PS.dLoop = 1; PS.dLoopT0 = labLoopStart('dT0', TIME); return reduced ? ptw('dotD', 2, 1.2) : Promise.resolve(); }
+function labDistance() { ptw('blOut', 1, 0.5); ptw('marksOut', 1, 0.6); PS.dLoop = 1; PS.dLoopT0 = labLoopStart('dT0', TIME); return reduced ? ptw('dotD', 2, 1.2) : Promise.resolve(); }
 // 28: the dot stops, from wherever it is, and settles at 1.4 box lengths. 28b: σ goes up, to twice the usual (it takes its
 // yellow as it starts, and its value stays written in the box from here on). 28c: σ goes down, to half the usual
 const LFIX = 1.4;
