@@ -125,9 +125,9 @@ function whySteps(ctx, A, T, n, a) {
 const WCURVE = String.raw`e^{-\textcolor{${COL.yellow}}{\sigma}\,\textcolor{${COL.blue}}{x}}`;   // the continuous version, in the formula's colours
 // 39–40 and the ending: the two frames, denser and alive while they're talked over: twelve thin slabs (as wide as five
 // of the others), six particles in each, every particle wobbling, and the readings measured from the picture as they go,
-// the steps with them (as in the bench's shadows scene). At random (A) the steps stay around the exponential; clumped
-// (B) every slab's particles sit in one column at the top of the beam, all the columns bobbing up and down together, so
-// after the first slab hardly anything more is taken. max: as many as the long frame grows to (40). ax, av: how far a
+// the steps with them (as in the bench's shadows scene). At random (A) the steps stay around the exponential; in a
+// lattice (B) every slab's particles sit in one column, spread evenly over the whole height in rows that line up from slab
+// to slab, the whole lattice bobbing up and down together, so after the first slab nothing more is taken. max: as many as the long frame grows to (40). ax, av: how far a
 // particle wobbles across and up and down (av in the beam's height).
 const WDN = { n: 12, max: 24, m: 6, D: 0.02, ax: 6, av: 0.008, seed: 4242 };
 const WDW = (WHY.w * WPL.n) / WDN.n, WDA = (WPA.w * WPL.n) / WDN.n;   // a thin slab's width: in the picture, on the plot
@@ -138,6 +138,7 @@ const WDENSE = (() => {
     A.push(Array.from({ length: WDN.m }, () => ({ xi: lerp(0.15, 0.85, r()), v: lerp(lo, hi, r()), ...wob() })));
     B.push(Array.from({ length: WDN.m }, (_, j) => ({ xi: lerp(0.38, 0.62, r()), v: 0.07 + j * WDN.D * 0.98, ...wob() })));
   }
+  B.forEach((col) => col.forEach((p, j) => { p.xi = 0.5; p.v = (j + 0.5) / WDN.m; }));   // the lattice: rows across the whole height (drawn as before, so A stays as it was)
   return { A, B };
 })();
 // the picture for kind A or B with n thin slabs (fractional while one comes in), its particles where they are at time t
@@ -145,7 +146,7 @@ function whyDenseV(kind, n, t) {
   const S = WDENSE[kind], w = reduced ? 0 : 1, N = Math.max(1, Math.ceil(n - 1e-6)), slabs = [], parts = [], col = kind === 'B' ? WDN.av * Math.sin(2 * Math.PI * 0.45 * t) : 0;
   for (let k = 0; k < Math.min(N, WDN.max); k++) {
     const a = smooth(clamp(n - k, 0, 1)), x0 = WXA + k * WDW, x1 = x0 + WDW; slabs.push({ x0, x1, a });
-    for (const p of S[k]) parts.push({ x: lerp(x0, x1, p.xi) + w * WDN.ax * Math.sin(2 * Math.PI * p.fr[0] * t + p.ph[0]), v: p.v + w * (kind === 'B' ? col : WDN.av * Math.sin(2 * Math.PI * p.fr[1] * t + p.ph[1])), D: WDN.D, a, k });
+    for (const p of S[k]) parts.push({ x: lerp(x0, x1, p.xi) + w * WDN.ax * (kind === 'B' ? 0.45 : 1) * Math.sin(2 * Math.PI * p.fr[0] * t + p.ph[0]), v: p.v + w * (kind === 'B' ? col : WDN.av * Math.sin(2 * Math.PI * p.fr[1] * t + p.ph[1])), D: WDN.D, a, k });
   }
   const laserX = WXA - WHY.gap, sensorX = WXA + clamp(n, 1, WDN.max) * WDW + WHY.gap;
   return { yc: WHY.yc, hh: WHY.hh, slabs, parts, laserX, sensorX, laserA: 1, sensorA: 1, readA: 1, power: 1, light: 1, xL: laserX, xR: sensorX, sheet: WHY.sheet, fext: 36 };
@@ -346,7 +347,7 @@ function drawWhy(ctx, dt, st) {
       if (!V.into) whyBrace(ctx, V, n, smooth(clamp(st.wbr, 0, 1)));
       if (!V.into) whyHighlight(ctx, V, st);
       // 33b: what the slab says
-      if (st.wsay > 0.003 && s0) drawThinking(ctx, (s0.x0 + s0.x1) / 2, 168, 1, 84, '', String.raw`whatever comes in, I take 10\%`, 1, st.wsayP, smooth(clamp(st.wsay, 0, 1)), [(s0.x0 + s0.x1) / 2, V.yc - V.hh - 42]);
+      if (st.wsay > 0.003 && s0) whySays2(ctx, (s0.x0 + s0.x1) / 2, 126, st.wsayP, smooth(clamp(st.wsay, 0, 1)), [(s0.x0 + s0.x1) / 2, V.yc - V.hh - 42]);
       // 34–34c: × 0.9 over each slab
       if (la > 0.003 && !V.into && fm <= 0.001) V.T.slabs.forEach((s) => drawTex(ctx, WMUL, (s.x0 + s.x1) / 2, WF.ly, WF.lsize, { alpha: la * s.a }));
     });
@@ -412,10 +413,16 @@ const WHL = { ring: 5, lab: 46 };   // the rings, in particle radii; the label's
 function whyHighlight(ctx, V, st) {
   const pa = smooth(clamp(st.wpart || 0, 0, 1)), sa = smooth(clamp(st.wshad || 0, 0, 1)); if (pa <= 0.003 && sa <= 0.003) return;
   const top = V.yc - V.hh, t = reduced ? 0 : TIME, gold = COL.gold, live = V.parts.filter((p) => p.a > 0.003);
+  // everything else loses its colour and dims a little, so the eye goes to what's highlighted
+  const fo = Math.max(pa, sa); greyOut(ctx, [V.laserX - 260, top - 120, V.sensorX + 560 - (V.laserX - 260), 2 * V.hh + 300], 0.9 * fo, 0.3 * fo);
   live.forEach((p, i) => {
     const y = top + p.v * 2 * V.hh, r = (p.D / 2) * 2 * V.hh;
-    if (sa > 0.003) { ctx.save(); ctx.fillStyle = hexA(gold, 0.18 * sa); ctx.fillRect(p.x, y - r, V.xR - p.x, 2 * r); ctx.strokeStyle = hexA(gold, 0.9 * sa); ctx.lineWidth = 2.5; ctx.strokeRect(p.x, y - r, V.xR - p.x, 2 * r); ctx.restore(); }
-    if (pa > 0.003) { const R = r * (WHL.ring + 0.6 * Math.sin(2 * Math.PI * 1.1 * t + i * 1.3)); ctx.save(); ctx.strokeStyle = hexA(gold, 0.9 * pa); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(p.x, y, R, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); }
+    if (sa > 0.003) { ctx.save(); ctx.fillStyle = hexA(gold, 0.3 * sa); ctx.fillRect(p.x, y - r, V.xR - p.x, 2 * r); ctx.strokeStyle = hexA(gold, sa); ctx.lineWidth = 3; ctx.strokeRect(p.x, y - r, V.xR - p.x, 2 * r); ctx.restore(); }
+    whyDisc(ctx, p.x, y, r, Math.max(pa, sa));   // the particle itself, back in full
+    if (pa > 0.003) {   // its ring, on a dark edge so it reads on anything
+      const R = r * (WHL.ring + 0.6 * Math.sin(2 * Math.PI * 1.1 * t + i * 1.3));
+      ctx.save(); ctx.beginPath(); ctx.arc(p.x, y, R, 0, Math.PI * 2); ctx.strokeStyle = `rgba(28,27,24,${(0.7 * pa).toFixed(3)})`; ctx.lineWidth = 9; ctx.stroke(); ctx.strokeStyle = hexA(gold, pa); ctx.lineWidth = 4.5; ctx.stroke(); ctx.restore();
+    }
   });
   if (sa > 0.003 && live.length) {   // the top one, pointed out from over the beam
     const p = live.reduce((m, q) => (q.v < m.v ? q : m)), r = (p.D / 2) * 2 * V.hh, y = top + p.v * 2 * V.hh - r - 8, x = lerp(p.x, V.xR, 0.55), ly = top - 78;
@@ -428,7 +435,16 @@ function whyHighlight(ctx, V, st) {
 // 33: the light goes brighter and dimmer, over and over, until the next press; the reading stays (dimmer once, if motion is reduced)
 function whyBright() { ptw('wpart', 0, 0.5); ptw('wshad', 0, 0.5); PS.wpowLoop = 1; PS.wpowT0 = labLoopStart('wpT0', TIME + 0.2); return reduced ? ptw('wpow', 0.45, 1.2) : Promise.resolve(); }
 // 33b: what the slab says
-function whySays() { PS.wsayP = 0; ptw('wsay', 1, 0.5); return ptw('wsayP', 1, 1.1, { delay: 0.3, ease: linear }); }
+function whySays() { PS.wsayP = 0; ptw('wsay', 1, 0.5); return ptw('wsayP', 1, 2.6, { delay: 0.3, ease: linear }); }
+// 33b: what the slab says, in a readout over it like the figure's thoughts, word for word as it's said, on two lines
+const WSAYS = [String.raw`\text{I don't care where you've been, or how bright you are.}`, String.raw`\text{I'm taking ten percent.}`], WSZ = { size: 38, lh: 54, padX: 34, padY: 26 };
+function whySays2(ctx, x, y, p, a, head) {
+  if (a <= 0.003) return;
+  const L = WSAYS.map((src, i) => place(tex(src), { x, y: y + (i - (WSAYS.length - 1) / 2) * WSZ.lh, size: WSZ.size }));
+  const w = Math.max(...L.map((S) => { const [l, r] = inkSpan(S); return r - l; })) + 2 * WSZ.padX, h = WSAYS.length * WSZ.lh + 2 * WSZ.padY - 14;
+  drawThought(ctx, x, y, w, h, '', 1, a, head, COL.white);
+  L.forEach((S, i) => drawSprites(ctx, S, { p: clamp(p * 1.7 - i * 0.85, 0, 1), alpha: a }));
+}
 // 34: the light settles and the slab has said its piece: × 0.9 over it. 34b, 34c: another slab, and another
 function whyTimes() {
   if (PS.wpowLoop && !reduced) PS.wpow = whyPowAt(PS.wpowT0);
