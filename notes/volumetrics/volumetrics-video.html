@@ -2735,6 +2735,7 @@ function drawIntegral(ctx, dt, st) {
   drawFormulas(ctx, st);
 }
 
+const SCRIPT_NOTES = [{"start":"1","end":"1","part":"Part 1: the hook","lines":["Not long after I started making things with computers, I found out that people could simulate the look of clouds with actual physics."]},{"start":"2","end":"2","part":"Part 1: the hook","lines":["I got very excited about that, especially when I saw them in my favourite games and animations."]},{"start":"3","end":"3","part":"Part 1: the hook","lines":["Rendering clouds became one of the biggest goals of my career. It's a big part of why I kept going in computer graphics. But, for years, I delayed learning how it actually works."]},{"start":"7","end":"7","part":"Part 1: the hook","lines":["Mainly because the first thing I ran into was a formula that looked like this. And that was intimidating, and every resource I found just handed it to me and wanted me to accept it."]},{"start":"8","end":"8","part":"Part 1: the hook","lines":["Parts of it made sense: like how each term is a different way light and the stuff interact."]},{"start":"12","end":"12b","part":"Part 1: the hook","lines":["But nobody explained to me why there's an integral inside an exponent…"]},{"start":"13","end":"13b","part":"Part 1: the hook","lines":["…inside another integral."]},{"start":"14","end":"14b","part":"Part 1: the hook","lines":["And most importantly: why $e$? Why exponentials at all? And the answers turned out to be simpler, and more interesting, than I expected."]},{"start":"15","end":"15g","part":"Part 2: what this is, and what we keep","lines":["This video isn't a shader tutorial, [15b] and it isn't a physics lecture either. [15c] It's the part in between. [15d] By the end of this series, I want [15e] the physics and the math to feel so intuitive that you could [15f] derive it yourself. [15g] And most importantly, I want you to see that this isn't a law of nature to accept blindly. It's a simplified model of the real world, with its own assumptions and limits. So let's forget about the symbols for a minute."]},{"start":"16","end":"16","part":"Part 2: what this is, and what we keep","lines":["In plain words, all of this is about one thing: what happens to light as it travels some distance through some stuff."]},{"start":"17","end":"20","part":"Part 2: what this is, and what we keep","lines":["And \"stuff\" really can be anything. In astronomy, it's the dust between the stars. In climate science, it's our own atmosphere. In medical imaging, it's your body. And for us, here, it's a box of… stuff."]},{"start":"20b","end":"20h","part":"Part 2: what this is, and what we keep","lines":["Fog, [20c] a cloud, [20d] smoke, [20e] tinted glass, [20f] a cup of coffee, [20g] a glass of beer. [20h] It doesn't matter here. Different stuff, same story."]},{"start":"21","end":"21b","part":"Part 3: only absorption, and the first formula","lines":["And, For the rest of this video I'm going to be slightly dishonest. [21b] I'll assume our stuff doesn't scatter light,"]},{"start":"21c","end":"21c","part":"Part 3: only absorption, and the first formula","lines":["and that it doesn't glow, or give off any light of its own. I'll get to them in a later video."]},{"start":"21d","end":"21e","part":"Part 3: only absorption, and the first formula","lines":["For now, our particles only absorb light: [21e] whenever light hits one particle, it's is taken in and turned into heat."]},{"start":"21f","end":"21f","part":"Part 3: only absorption, and the first formula","lines":["So they take some of the laser's light, and less of it makes it to the other end."]},{"start":"22","end":"22b","part":"Part 3: only absorption, and the first formula","lines":["How much less? That's what the sensor is for. Here it reads fifty percent: half the light made it through. [22b]"]},{"start":"23","end":"23b","part":"Part 3: only absorption, and the first formula","lines":["Now, I've got a question for you. [23b] What if I put a second, identical box right next to this one? What does the sensor read now? if you want you can pause and try to answer it ."]},{"start":"24","end":"24c","part":"Part 3: only absorption, and the first formula","lines":["For a lot of us It's natural to say zero. [24b] One box took half the light, [24c] so two should take all of it."]},{"start":"25","end":"25f","part":"Part 3: only absorption, and the first formula","lines":["But that's not what happens. [25b] The sensor reads twenty-five percent. [25c] Add a third box: twelve and a half. Each box halves the light that enters it. That's exactly what exponential means: [25d] multiplying by a fixed fraction, [25e] again [25f] and again."]},{"start":"25g","end":"25g","part":"Part 3: only absorption, and the first formula","lines":["(No narration yet.)"]},{"start":"26","end":"26","part":"Part 3: only absorption, and the first formula","lines":["This behaviour can be described with an exponential."]},{"start":"26b","end":"26b","part":"Part 3: only absorption, and the first formula","lines":["You might have already seen this formula as the Beer–Lambert law."]},{"start":"27","end":"27","part":"Part 3: only absorption, and the first formula","lines":["It's obvious how changing the distance travelled affects the light making it through."]},{"start":"28","end":"28c","part":"Part 3: only absorption, and the first formula","lines":["And notice: [28b] the more absorbing the stuff is, the more it takes from the light, [28c] and the less absorbing the stuff, the less it takes."]},{"start":"28d","end":"28d","part":"Part 3: only absorption, and the first formula","lines":["That is controlled by our absorption coefficient, displayed by the letter sigma."]},{"start":"29","end":"29","part":"Part 3: only absorption, and the first formula","lines":["when this coefficient is zero, we get a constant 1: everything gets through. Nothing is absorbed. There is no stuff: it's a vacuum."]},{"start":"29b","end":"30b","part":"Part 3: only absorption, and the first formula","lines":["If you're a little rusty on calculus and wondering why the number $e$ shows up here, I have to say: there's nothing special about it. [30] You could use any base: two, three, ten. [30b] We just rewrite them all with base $e$, because $e$ makes integrals and differential equations easier to work with. You don't have to worry about that here."]},{"start":"31","end":"31b","part":"Part 3: only absorption, and the first formula","lines":["Now, you might still be asking: fine, there's nothing special about $e$. [31b] But why do we get exponential behaviour here at all?"]},{"start":"32","end":"32f","part":"Part 4: why exponential","lines":["To answer that, we need to look much closer, [32b] at one very thin slice of our box, [32c] a tiny slab. [32d] here, 90% of our light makes it through, [32e] the other 10% however, get absorbed by the particles [32f] and cast these shadows behind them. those tiny shadows are the reason the light looks a bit dimmer on the other end."]},{"start":"33","end":"33b","part":"Part 4: why exponential","lines":["And notice: it doesn't matter how bright the light is. Turn it up, turn it down: the particles still stop ten percent of it, and ninety percent still gets through. [33b] In other words, this slab is saying: \"I don't care where you've been, or how bright you are. I'm taking ten percent.\""]},{"start":"34","end":"34d","part":"Part 4: why exponential","lines":["So going through this slab is just a multiplication: times ninety percent. [34b] Add another slab: times 0.9 again. [34c] And another: again. [34d] So what reaches the sensor is ninety percent, to the power of however many slabs there are."]},{"start":"35","end":"35","part":"Part 4: why exponential","lines":["And of course, now we know we can write the same exponential with $e$ as its base."]},{"start":"36","end":"36","part":"Part 4: why exponential","lines":["And, as expected it follows the exponential curve."]},{"start":"37","end":"37","part":"Part 4: why exponential","lines":["Now, I know some of you still aren't satisfied: what if the particles are placed in a certain way? For example, like this."]},{"start":"38","end":"38e","part":"Part 4: why exponential","lines":["Same as before. Here the first slab takes away some light, [38b] but the rest of them [38c] barely take anything. [38d] After a point [38e] it stays constant, and it doesn't follow any exponential."]},{"start":"39","end":"39d","part":"Part 4: why exponential","lines":["This is exactly what I've been meaning to show you: the placement of the particles matters. [39b] You get exponentials only when your particles are placed randomly. [39c] As soon as you place them with some specific structure, you get what's called a non-exponential medium, [39d] which is a rabbit hole we won't go down."]},{"start":"40","end":"40d","part":"Part 4: why exponential","lines":["My point is that the formulas where you see exponentials have a hidden assumption behind them: [40b] that the particles are placed randomly. And that's the assumption we'll make from here on. [40c] It's one we can live with: in computer graphics, [40d] and in areas like astronomy, it's still what's used in practice."]},{"start":"41","end":"41c","part":"Part 5: when the density changes along the path","lines":["But we're still far from what happens in practice, where the volume changes shape and density across our path. [41b] For example, our cloud might have a higher density here, [41c] but a lower density here."]},{"start":"42","end":"42d","part":"Part 5: when the density changes along the path","lines":["But let's keep it simple, and assume our volume starts at a high density and then suddenly switches to a low density midway. [42b] Actually, let me plot the absorption coefficient for you: [42c] it starts at 0.4, [42d] and then suddenly switches to 0.2."]},{"start":"43","end":"43b","part":"Part 5: when the density changes along the path","lines":["Now, I have a question for you. [43b] I take these two sections and swap them around. Does it make the light brighter or dimmer on the other side?"]},{"start":"46","end":"46","part":"Part 5: when the density changes along the path","lines":["Pause here if you want and try to answer, In which of the two cases does the light come out brighter on the other end?"]},{"start":"47","end":"47","part":"Part 5: when the density changes along the path","lines":["OK, that was a trick question: both end up with the same amount of light on the other end, and the sensor reads the same value."]},{"start":"48","end":"48d","part":"Part 5: when the density changes along the path","lines":["Let's walk through the first one. The first section's effect is to multiply by e to the minus 0.4 x. [48b] The second section's effect is to multiply by e to the minus 0.2 x. [48c] And from basic calculus we know the exponents get added, and you end up with e to the minus, 0.4 plus 0.2, times x. [48d]"]},{"start":"49","end":"49b","part":"Part 5: when the density changes along the path","lines":["If you do the same thing on the other one, [49b] you end up with the same value."]},{"start":"50","end":"50","part":"Part 5: when the density changes along the path","lines":["I want you to pay attention to the addition here."]},{"start":"51","end":"51b","part":"Part 5: when the density changes along the path","lines":["And see what happens when your absorbtion changes continuously"]},{"start":"52","end":"52b","part":"Part 5: when the density changes along the path","lines":["For example, here the absorption starts to pick up, and gets higher and higher, [52b] and then it begins decreasing smoothly, until it reaches zero."]},{"start":"53","end":"53b","part":"Part 5: when the density changes along the path","lines":["Doing the same thing here: we chop it up into tiny sections, [53b] and each one multiplies the light by its own factor."]},{"start":"54","end":"54","part":"Part 5: when the density changes along the path","lines":["And when you multiply all of these, it becomes a summation over all the different absorption coefficients, in tiny distances."]},{"start":"55","end":"55","part":"Part 5: when the density changes along the path","lines":["You've probably noticed by now that this is the exact definition of an integral."]},{"start":"55b","end":"55b","part":"Part 5: when the density changes along the path","lines":["This integral has its own name: it's written $\\tau$, and it's called the optical depth."]},{"start":"56","end":"56b","part":"Part 5: when the density changes along the path","lines":["Your volume can change density and absorption all it wants, [56b] but as long as the integral remains the same, the sensor on the other end reads the same value."]},{"start":"57","end":"57c","part":"Part 5: when the density changes along the path","lines":["As a sanity check, look how it's consistent when our volume is uniform all across. [57b] It's the same formula we had before, sigma times $x$: [57c] that's the area under the curve."]},{"start":"58","end":"58","part":"Part 6: the ending","lines":["By now I hope you've understood that the reason exponentials show up is our assumption that the particles are placed at random,"]},{"start":"58b","end":"58b","part":"Part 6: the ending","lines":["and that the reason you see integrals in the exponent is that the absorption coefficient changes along a ray.","See you in the next video, where we'll cover emission and scattering, and the nuances we've skipped in this one."]}];
 // ---------- 3D: a cloud you can shine a laser into ----------
 // Hand-written WebGL2; the page loads no libraries. The cloud is a heap of soft blobs whose surface billows and
 // erodes with Perlin–Worley noise, the way Horizon Zero Dawn's clouds are built (Schneider, "The real-time
@@ -5064,6 +5065,8 @@ function presKey(e) {
   else if (k === 'r' || k === 'R') presGo(PRES.beat, true);
   else if (k === 'f' || k === 'F') toggleFull();
   else if (k === 'Escape') setPresent(false);
+  else if (k === 'n' || k === 'N') notesToggle();   // the notes window (notes.js)
+  else if ((k === 't' || k === 'T') && notesOpen()) notesResetTimer();
   else return;
   e.preventDefault();
 }
@@ -5389,6 +5392,7 @@ function presXfSprite(q, ex, ey, ek) {
 }
 const cmPlans = new Map();
 function drawPresent(ctx, dt) {
+  notesTick();   // the notes window follows the beat (notes.js)
   const st = PS;
   // the effects' terms take their colour, or grey once their effect is set aside (beats 21g–h)
   for (let i = 0; i < 4; i++) TERM_COL[PFX[i][0]] = mixRgb(hexRgb(PFX[i][2]), hexRgb(COL.greyC), smooth(clamp(st.fx.grey[i], 0, 1)));
@@ -7456,6 +7460,110 @@ function qcEmit(ctx, r, a) {
 QCARDS[0].draw = qcVary;
 QCARDS[1].draw = qcEmit;
 QCARDS[2].draw = qcExp;
+
+// ---------- presentation: the notes window (N) ----------
+// A second window that follows the presentation, for reading the narration while recording. It shows the narration of
+// the current beat's heading in script.md: what to say now large and lit, what was said dimmed, what comes later in
+// grey, and the press markers where they fall in it, the next one in orange: press there. Under it, what the press after
+// that leads to; over it, the beat, where it is in the video, and the time (in all, and on this beat; T resets it).
+// It's written from here and updated on every beat, and keys pressed in it go to the presentation, so either window can
+// have the focus. Its words come from script.md (SCRIPT_NOTES, put in by build.mjs), so it always reads the current
+// script. N again, or closing it, closes it.
+const NOTES = { win: null, beat: -1, t0: 0, tb: 0, tick: 0 };
+const notesOpen = () => !!(NOTES.win && !NOTES.win.closed);
+let notesGroups = null;
+function notesData() {   // each heading's beats as indices into BEATS, and its narration cut at the press markers
+  if (notesGroups) return notesGroups;
+  const idx = (n) => BEATS.findIndex((b) => b.n === n);
+  notesGroups = SCRIPT_NOTES.map((g) => {
+    const cut = g.lines.join('\n\n').split(/\[(\d+[a-z]?)\]/), segs = [{ n: g.start, text: cut[0] }];
+    for (let i = 1; i < cut.length; i += 2) segs.push({ n: cut[i], text: cut[i + 1] || '' });
+    return { ...g, i0: idx(g.start), i1: idx(g.end), segs: segs.map((s) => ({ ...s, i: idx(s.n) })) };
+  });
+  return notesGroups;
+}
+const notesGroupOf = (i) => notesData().find((g) => g.i0 >= 0 && g.i0 <= i && i <= (g.i1 >= 0 ? g.i1 : g.i0));
+// script.md's text for reading: HTML-safe, its few bits of LaTeX as plain symbols, paragraphs kept
+const notesText = (s) => s.trim().replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))
+  .replace(/\$([^$]+)\$/g, (_, m) => m.replace(/\\sigma/g, 'σ').replace(/\\tau/g, 'τ').replace(/\\int/g, '∫').replace(/\\times/g, '×').replace(/\\[,;!]/g, ' ').replace(/\\[a-zA-Z]+/g, '').replace(/[{}]/g, ''))
+  .replace(/\n\n/g, '<br><br>');
+const notesShort = (s, n) => { const t = s.trim(); return t.length <= n ? t : t.slice(0, n).replace(/\s+\S*$/, '') + ' …'; };   // a preview, cut at a word
+const notesTime = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+const NOTES_HTML = `<!doctype html><html><head><meta charset="utf-8"><title>Notes</title><style>
+html,body{margin:0;background:#1C1B18;color:#EEEAE2;font:400 26px/1.5 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:14px 32px;background:#1C1B18;border-bottom:1px solid #2E2C27}
+#beat b{font-size:42px;color:#F0784F;margin-right:14px;font-variant-numeric:tabular-nums}#beat span{color:#DCD7CC;font-size:22px}
+#beat i{display:block;font-style:normal;color:#6F6A60;font-size:15px}
+#count{color:#948E82;font-size:20px;font-variant-numeric:tabular-nums}
+#clock{text-align:right;font-variant-numeric:tabular-nums}#clock b{font-size:30px;font-weight:500}#clock span{display:block;color:#948E82;font-size:15px}
+main{padding:30px 40px 36px;max-width:1150px}
+.past{color:#5E5A52}.later{color:#948E82}
+.now{color:#FFFDF9;font-size:34px;background:rgba(240,120,79,.11);border-radius:6px;padding:2px 5px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.mark{display:inline-block;font-size:15px;line-height:1;padding:5px 9px;margin:0 6px;border-radius:999px;border:1px solid #47443D;color:#948E82;vertical-align:middle;font-variant-numeric:tabular-nums}
+.mark.next{background:#F0784F;border-color:#F0784F;color:#1C1B18;font-weight:600}
+.note{color:#948E82;font-style:italic;font-size:21px;margin:0 0 18px}
+footer{margin:0 40px;padding:16px 0 10px;border-top:1px solid #2E2C27;color:#6F6A60;font-size:21px;max-width:1150px}footer b{color:#948E82;font-weight:500}
+.keys{color:#47443D;font-size:14px;padding:6px 40px 18px}
+</style></head><body><header><div id="beat"></div><div id="count"></div><div id="clock"></div></header><main id="words"></main><footer id="next"></footer>
+<div class="keys">→ ← step &nbsp;·&nbsp; Space pause &nbsp;·&nbsp; T reset the time &nbsp;·&nbsp; N close</div></body></html>`;
+function notesToggle() {
+  if (notesOpen()) { NOTES.win.close(); NOTES.win = null; return; }
+  const w = window.open('', 'volnotes', 'popup,width=1040,height=700');
+  if (!w) { console.warn('The notes window was blocked: allow pop-ups for this page.'); return; }
+  NOTES.win = w; NOTES.t0 = performance.now(); NOTES.beat = -1;
+  w.document.open(); w.document.write(NOTES_HTML); w.document.close();
+  w.document.addEventListener('keydown', (e) => presKey(e));   // its keys drive the presentation
+  notesTick(true);
+  try { window.focus(); } catch (e) { /* the browser may keep the focus on the new window: its keys work too */ }
+}
+function notesResetTimer() { NOTES.t0 = NOTES.tb = performance.now(); notesTick(true); }
+function notesTick(force = false) {
+  if (!NOTES.win) return;
+  if (NOTES.win.closed) { NOTES.win = null; return; }
+  const now = performance.now();
+  if (PRES.beat !== NOTES.beat) { NOTES.beat = PRES.beat; NOTES.tb = now; notesRender(NOTES.win.document); }
+  if (force || now - NOTES.tick > 250) {
+    NOTES.tick = now; const c = NOTES.win.document.getElementById('clock');
+    if (c) c.innerHTML = `<b>${notesTime(now - NOTES.t0)}</b><span>this beat ${notesTime(now - NOTES.tb)}</span>`;
+  }
+}
+function notesRender(d) {
+  const i = clamp(PRES.beat, 0, BEATS.length - 1), B = BEATS[i], G = notesGroupOf(i), N = BEATS[i + 1], el = (id) => d.getElementById(id);
+  if (!el('words')) return;
+  el('beat').innerHTML = `<i>${notesText(G ? G.part : '')}</i><b>${B.n}</b><span>${notesText(B.name)}</span>`;
+  el('count').textContent = `${i + 1} / ${BEATS.length}`;
+  let html = '';
+  if (!G) html = `<p class="note">This beat has no heading in script.md.</p>`;
+  else {
+    const mine = G.segs.find((s) => s.n === B.n && s.text.trim());
+    if (!mine) html += `<p class="note">No lines of its own for this press${G.segs.some((s) => s.n === B.n) ? '' : ' (no marker for it in the script)'}: press again when it has played.</p>`;
+    const nextMark = G.segs.find((s) => s.i > i);
+    html += '<p>';
+    G.segs.forEach((s, k) => {
+      if (k > 0) html += `<span class="mark${s === nextMark ? ' next' : ''}">${s === nextMark ? '▶ ' : ''}${s.n}</span>`;
+      if (s.text.trim()) html += `<span class="${s.n === B.n ? 'now' : s.i >= 0 && s.i < i ? 'past' : 'later'}"${s.n === B.n ? ' id="now"' : ''}>${notesText(s.text)}</span> `;
+    });
+    if (!nextMark && N) html += `<span class="mark next">▶ ${N.n}</span>`;   // the next press is after the last words here
+    html += '</p>';
+  }
+  el('words').innerHTML = html;
+  const NG = N && notesGroupOf(i + 1);
+  el('next').innerHTML = !N ? '<b>The end.</b>' : NG && NG !== G
+    ? `<b>Then ${N.n} · ${notesText(N.name)}:</b> ${notesText(notesShort((NG.segs.find((s) => s.n === N.n) || NG.segs[0]).text, 240))}`
+    : `<b>Next press: ${N.n} · ${notesText(N.name)}</b>`;
+  const now = d.getElementById('now'); if (now) now.scrollIntoView({ block: 'center' });
+}
+// For checking the script against the beats: beats with no words of their own, markers naming no beat, headings whose
+// beats aren't in the presentation
+function notesProblems() {
+  const out = [], seen = new Set();
+  for (const g of notesData()) {
+    if (g.i0 < 0 || g.i1 < 0) out.push(`heading ${g.start}–${g.end}: not in the presentation`);
+    for (const s of g.segs) { if (s.i < 0) out.push(`marker [${s.n}] in ${g.start}: no such beat`); if (s.text.trim()) seen.add(s.n); }
+  }
+  for (const b of BEATS) if (!seen.has(b.n)) out.push(`beat ${b.n}: no lines of its own`);
+  return out;
+}
 
 //@@SCENES@@
 

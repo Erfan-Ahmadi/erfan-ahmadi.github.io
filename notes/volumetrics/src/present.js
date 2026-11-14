@@ -367,6 +367,8 @@ function presKey(e) {
   else if (k === 'r' || k === 'R') presGo(PRES.beat, true);
   else if (k === 'f' || k === 'F') toggleFull();
   else if (k === 'Escape') setPresent(false);
+  else if (k === 'n' || k === 'N') notesToggle();   // the notes window (notes.js)
+  else if ((k === 't' || k === 'T') && notesOpen()) notesResetTimer();
   else return;
   e.preventDefault();
 }
@@ -692,6 +694,7 @@ function presXfSprite(q, ex, ey, ek) {
 }
 const cmPlans = new Map();
 function drawPresent(ctx, dt) {
+  notesTick();   // the notes window follows the beat (notes.js)
   const st = PS;
   // the effects' terms take their colour, or grey once their effect is set aside (beats 21g–h)
   for (let i = 0; i < 4; i++) TERM_COL[PFX[i][0]] = mixRgb(hexRgb(PFX[i][2]), hexRgb(COL.greyC), smooth(clamp(st.fx.grey[i], 0, 1)));

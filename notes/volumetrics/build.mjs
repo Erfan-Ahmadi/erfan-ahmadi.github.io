@@ -25,7 +25,20 @@ const js = fs.readFileSync(path.join(dist, 'katex.min.js'), 'utf8');
 const outlines = JSON.stringify(glyphOutlines(path.join(dist, 'fonts'), [...keep]));
 // The 3D scenes (src/volume.js), then the scenes added after them (million.js, sheets.js, …), go in where app.js marks
 // the end of its scenes, so they register after the 2D ones and keep their numbers.
-const later = ['volume.js', 'million.js', 'sheets.js', 'bases.js', 'average.js', 'pictures.js', 'present.js', 'lab.js', 'why.js', 'vary.js', 'end.js', 'cards.js'].map((f) => fs.readFileSync(path.join(here, 'src', f), 'utf8')).join('\n');
+// The narration, beat by beat, for the notes window (src/notes.js), read from script.md: each heading's beats (one, or the
+// first and last of a run), the part it is in, and its narration (the lines starting with "> "), press markers and all.
+const SCRIPT_NOTES = [];
+{
+  let part = '';
+  for (const line of fs.readFileSync(path.join(here, 'script.md'), 'utf8').split('\n')) {
+    if (/^## /.test(line)) { if (/^## Open/.test(line)) break; part = line.slice(3).trim(); continue; }
+    const h = line.match(/^\*\*(\d+[a-z]?)\.(?:–(\d+[a-z]?)\.)?\*\*/);
+    if (h) SCRIPT_NOTES.push({ start: h[1], end: h[2] || h[1], part, lines: [] });
+    else if (/^>\s?/.test(line) && SCRIPT_NOTES.length && line.slice(1).trim()) SCRIPT_NOTES[SCRIPT_NOTES.length - 1].lines.push(line.replace(/^>\s?/, '').trim());
+  }
+  if (SCRIPT_NOTES.length < 10) throw new Error('script.md: no beats found for the notes window');
+}
+const later = `const SCRIPT_NOTES = ${JSON.stringify(SCRIPT_NOTES)};\n` + ['volume.js', 'million.js', 'sheets.js', 'bases.js', 'average.js', 'pictures.js', 'present.js', 'lab.js', 'why.js', 'vary.js', 'end.js', 'cards.js', 'notes.js'].map((f) => fs.readFileSync(path.join(here, 'src', f), 'utf8')).join('\n');
 const app = fs.readFileSync(path.join(here, 'src/app.js'), 'utf8').replace('//@@SCENES@@', () => later + '\n//@@SCENES@@');
 if (!app.includes('function g3draw') || !app.includes('function drawPresent')) throw new Error('app.js is missing the //@@SCENES@@ marker');
 const shell = fs.readFileSync(path.join(here, 'src/shell.html'), 'utf8');
