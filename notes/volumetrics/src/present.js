@@ -147,7 +147,7 @@ const BEATS = [
   { n: '30', name: 'any base', run: () => labBases() },
   { n: '30b', name: 'all with base e', run: () => labBasesE() },
   { n: '31', name: 'but why exponential?', run: () => labWhy() },
-  // part 4 (why.js): into one thin slab and its shadows; 0.9 again and again; where the particles are placed
+  // part 4 (why.js): into one thin slab and its shadows; 0.9 again and again; with base e, on a plot; clumped, it isn't exponential
   { n: '32', name: 'a closer look', run: () => whyBox32() },
   { n: '32b', name: 'one thin slice', run: () => whySelect() },
   { n: '32c', name: 'a tiny slab', run: () => whyZoom() },
@@ -158,14 +158,10 @@ const BEATS = [
   { n: '34b', name: 'another slab', run: () => whyAdd(2) },
   { n: '34c', name: 'and another', run: () => whyAdd(3) },
   { n: '34d', name: 'to the power of the slabs', run: () => whyPower() },
-  { n: '35', name: 'placed with care: half', run: () => whyCareful() },
-  { n: '35b', name: 'where the first lets light through', run: () => whyGaps() },
-  { n: '36', name: 'or hide them', run: () => whyHide() },
-  { n: '37', name: 'right, both times', run: () => whyBoth() },
-  { n: '37b', name: 'placed at random', run: () => whySplit() },
-  { n: '38', name: 'exponential and non-exponential', run: () => whyNames() },
-  { n: '38b', name: 'one example', run: () => whyFigure() },
-  { n: '39', name: 'we stay on this side', run: () => whyStay() },
+  { n: '35', name: 'with e as the base', run: () => whyE() },
+  { n: '36', name: 'it follows the curve', run: () => whyCurve() },
+  { n: '37', name: 'placed some other way', run: () => whyClump() },
+  { n: '38', name: 'hardly anything after the first', run: () => whyFlat() },
 ];
 // A beat by its number in the script; a number between two beats opens the next one.
 function presIndex(label) {

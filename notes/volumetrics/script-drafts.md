@@ -83,6 +83,23 @@ but for the sake of this video going forward, we're going to assume exponential 
 ...
 we've dicovered .... but real world is rarely like that, a volume changes density and particles and absorbtivity changes as light passes through a volume. [example of cloud or something] ... intro to next quiz about A or B
 
+## Why exponential, second draft: after beat 34 (added later, word for word)
+
+```text
+New script ideas and visual directions after 34:
+
+and of course now we know that we could rewrite the same exponential with e as the base. (the same back and forth animation but with e and the negative power in yellow in the exponent)
+
+ and notice how it follows the exponential curve  (the continous version draw and from 1 slabs to 5 in sync with the plot below it, the discrete version draws as each slab get added)
+
+Now I know some of you aren't still satisfied, because what if the particles are placed in a certain way? for example like this (light is off particles move to a structure where they are clumped up and in an area on top, and the same happens for the rest of slabs)
+
+the same sync situation as above. here the first slab takes away some light but the rest of it barely take anything, it becomes constant after a point. and doesn't map to any exponential.
+
+This is EXACTLY what I've been meaning to show you, that placement of the particles matter, and you get exponentials, only when your particles are placed randomly. as soon as you start placing it with a specific structure, you get non exponential media which is a rabbit hole we don't want to get into here.
+My point here is that these formulas where you see exponentials in them have a hidden assumption behind them, that the particles are placed randomly.  and that is the assumption we're going to make going forward which is still practical and has many usages in computer graphics but areas like astronomy. this is an assumption we can live with sometimes.
+```
+
 ## Notes from the flow discussions
 
 ```text

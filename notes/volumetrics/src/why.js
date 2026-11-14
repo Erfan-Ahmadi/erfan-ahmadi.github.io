@@ -1,4 +1,4 @@
-// ---------- presentation, part 4: why exponential (beats 32–39) ----------
+// ---------- presentation, part 4: why exponential (beats 32–38) ----------
 // We go into the box the way the bench's "Zoom into a slab" does: two fronts sweep in from its ends and meet at one thin
 // slice of it, dimming what they pass; then everything but the slice fades away, and we zoom in there, across the beam
 // far more than along it, until the beam is a sheet of light and the slice a slab with its particles in it, a shadow
@@ -6,8 +6,9 @@
 // Each slab takes 10% of the light that reaches it. Its particles are placed at random, and some of them land, at least
 // partly, in the shadows of the ones before: each slab gets its fair share of what's left (whyPlace), so n of them leave
 // exactly 0.9^n. Every reading is measured from the picture: the share of the sheet's height in no shadow.
-// Then two thicker slabs, their particles placed with care, in rows, as in the bench's "Shadows in a slab" lattice: the
-// second where the first lets light through (0%), or right behind it (50%); and two placed at random (25%).
+// Then (36) the picture moves up, its slabs lined up from the left, and under it a plot of what gets through against the
+// number of slabs, its n axis lined up with them: the curve, and a dot for each slab as it comes in. And (37–38) the same
+// slabs with their particles clumped at the top of the beam: the first slab takes 10%, the rest hardly anything.
 const WHY = { yc: 540, hh: 240, f: 0.1, m: 5, w: 160, NMAX: 6, cx: 940, lf0: 560, sx0: 1320, gap: 150, sheet: 0.8 };
 // yc, hh: the sheet's middle and half its height; f: what a slab takes; m: particles to a slab; w: a slab's thickness;
 // NMAX: as many as fit at that thickness; cx: the middle of the slabs; lf0, sx0: the laser's face and the sensor while
@@ -16,10 +17,7 @@ const WHY = { yc: 540, hh: 240, f: 0.1, m: 5, w: 160, NMAX: 6, cx: 940, lf0: 560
 // thickness: the landed slab's thickness over the zoom, so that the zoom is the same across the beam and along it.
 const WSX = 40, whySH = () => (WHY.w * SH.beamW) / (4 * WHY.hh);
 const WX1 = { ox: 960, oy: 560, s: 1.2 };                           // the lab's row, as at beat 22
-// The two thicker slabs (35–39), at scale 1: where they are, the laser's face and the sensor; three particles to a row,
-// each row as tall as a tenth of the sheet; which tenths the first slab's rows close, and the second's (in the gaps).
-const WST = { s1: [WHY.cx - 320, WHY.cx - 20], s2: [WHY.cx + 20, WHY.cx + 320], laserX: WHY.cx - 470, sensorX: WHY.cx + 470, xi: [0.2, 0.5, 0.8], D: 0.1 };
-const WROW1 = [1, 3, 5, 7, 9], WROW2 = [0, 2, 4, 6, 8];
+const WTK = 0.8;              // the slabs' picture is drawn a fifth smaller
 const WDC = [961, WHY.yc];   // the middle of the whole picture (laser to readout), for moving it about whole
 // Particles at random, each D of the beam's height, k to a slab, so that the light left past each slab is exactly
 // lits[s]: all but the last at random, then the last one moved up or down until it is so. Two in a slab at least far
@@ -54,7 +52,17 @@ function whyPlace(seed, { D, k, lits, T, H, far, xr, edge, sep = 0 }) {
 // the tiny slabs: five small particles each, a fiftieth of the sheet's height, side by side across it, so each slab
 // covers exactly a tenth of it on its own
 const WTINY = whyPlace(7, { D: WHY.f / WHY.m, k: WHY.m, lits: Array.from({ length: WHY.NMAX }, (_, n) => Math.pow(1 - WHY.f, n + 1)), T: WHY.w, H: 2 * WHY.hh, far: (WHY.f / WHY.m) * 2 * WHY.hh + 10, xr: [0.2, 0.8], edge: 0.06, sep: WHY.f / WHY.m });
-const WRAND = whyPlace(11, { D: WST.D, k: 7, lits: [0.5, 0.25], T: 300, H: 2 * WHY.hh, far: 56, xr: [0.14, 0.86], edge: 0.02 });
+// 37: the same particles clumped, each slab's five in a little zigzag column near the top of the beam, touching; each
+// slab's a little lower than the one before, less and less, so the first takes 10% and the rest hardly anything
+const WCLD = [0, 0.012, 0.018, 0.021, 0.022, 0.0225];
+const WCLUMP = WTINY.map((ps, k) => {
+  const rank = ps.map((p, i) => [p.v, i]).sort((a, b) => a[0] - b[0]).map(([, i]) => i), out = [];
+  rank.forEach((i, j) => { out[i] = { xi: 0.5 + (j % 2 ? 0.07 : -0.07), v: 0.06 + WCLD[k] + (WHY.f / WHY.m) * (j + 0.5) }; });
+  return out;
+});
+// what gets through past the first k slabs, placed at random (36) and clumped (38): the plot's dots
+const whyDots = (A) => Array.from({ length: WHY.NMAX + 1 }, (_, k) => whyLitOf(A.slice(0, k).flat().map((p) => [p.v - WHY.f / (2 * WHY.m), p.v + WHY.f / (2 * WHY.m)])));
+const WDOTA = whyDots(WTINY), WDOTB = whyDots(WCLUMP);
 // What's left of the light past these particles, 0 to 1: the share of the sheet's height in no shadow (a particle only
 // partly there, a: partly a shadow).
 function whyLit(parts) {
@@ -77,6 +85,18 @@ function whyTiny(n) {
   for (let k = 0; k < N; k++) slabs.push({ x0: x0 + k * WHY.w, x1: x0 + (k + 1) * WHY.w, a: smooth(clamp(n - k, 0, 1)) });
   return { slabs, laserX: Math.min(WHY.lf0, x0 - WHY.gap), sensorX: Math.max(WHY.sx0, x0 + cw + WHY.gap) };
 }
+// 36–38: the picture moves up (its middle at y), its slabs lined up from the left so that slab k ends where the plot under
+// it has n = k: the plot's n = 0 at x0, a slab's width w on the stage, 100% at T and 0% at B, up to n slabs.
+const WPL = { y: 345, n: 5, fy: 80, fs: 66 };   // and the formula's middle and size, then
+const WPA = { x0: 960 - (WPL.n * WHY.w * WTK) / 2, w: WHY.w * WTK, T: 700, B: 930 };
+const WXA = WDC[0] + (WPA.x0 - WDC[0]) / WTK;   // where the first slab begins, in the picture's own units
+function whyAnch(n) {
+  const N = Math.max(1, Math.ceil(n - 1e-6)), slabs = [];
+  for (let k = 0; k < N; k++) slabs.push({ x0: WXA + k * WHY.w, x1: WXA + (k + 1) * WHY.w, a: smooth(clamp(n - k, 0, 1)) });
+  return { slabs, laserX: WXA - WHY.gap, sensorX: WXA + clamp(n, 1, WHY.NMAX) * WHY.w + WHY.gap };
+}
+let WPAX = null;
+const whyAxes = () => WPAX || (WPAX = makeAxes({ L: WPA.x0, R: WPA.x0 + WPL.n * WPA.w, T: WPA.T, B: WPA.B, xr: [0, WPL.n, 1], yr: [0, 1, 0.5], ext: 40, xl: 'n', yl: '', labSize: 54, numSize: 28 }));
 // The zoom (32c), on the stage: from the lab's row, around the slice where it crosses the beam, the same in every
 // direction, until the beam is the sheet of the (smaller) picture and the slice its slab. X, Y: a point in the lab's
 // units, on the stage now.
@@ -92,12 +112,13 @@ const whyDisc = (ctx, x, y, r, a) => {   // a particle, as the bench draws them
   ctx.save(); ctx.globalAlpha *= a; ctx.fillStyle = PART; ctx.strokeStyle = COL.greyB; ctx.lineWidth = clamp(r * 0.16, 1.5, 3.2);
   ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.restore();
 };
-function whyLaser(ctx, xf, yc, hh, a) {   // the laser that sends out a sheet: its face, as tall as the sheet, at xf
+function whyLaser(ctx, xf, yc, hh, a, on = 1) {   // the laser that sends out a sheet: its face, as tall as the sheet, at xf; its light on or off
   if (a <= 0.003) return;
   ctx.save(); ctx.globalAlpha *= a; ctx.lineWidth = 3; ctx.strokeStyle = COL.greyB; ctx.lineJoin = 'round';
   ctx.fillStyle = BODY; ctx.beginPath(); ctx.roundRect(xf - 214, yc - hh - 30, 192, 2 * hh + 60, 14); ctx.fill(); ctx.stroke();
   ctx.fillStyle = NOZZLE; ctx.beginPath(); ctx.roundRect(xf - 22, yc - hh - 10, 22, 2 * hh + 20, 4); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = SH.color; ctx.beginPath(); ctx.arc(xf - 66, yc - hh - 4, 7, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#3E3B35'; ctx.beginPath(); ctx.arc(xf - 66, yc - hh - 4, 7, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha *= on; ctx.fillStyle = SH.color; ctx.fill();
   ctx.restore();
 }
 function whySensor(ctx, x, yc, hh, a) {
@@ -121,7 +142,7 @@ function whyView(ctx, V) {
   const { yc, hh } = V, top = yc - hh, c = hexRgb(SH.color);
   if (V.xR > V.xL + 0.5) {
     ctx.save(); const A0 = ctx.globalAlpha;
-    ctx.fillStyle = rgba(c, (V.sheet ?? WHY.sheet) * V.power); ctx.fillRect(V.xL, top, V.xR - V.xL, 2 * hh);
+    ctx.fillStyle = rgba(c, (V.sheet ?? WHY.sheet) * V.power * (V.light ?? 1)); ctx.fillRect(V.xL, top, V.xR - V.xL, 2 * hh);
     ctx.fillStyle = BG;   // the shadows: no light behind a particle, all the way to the sensor
     for (const p of V.parts) { if (p.a <= 0.003 || p.x >= V.xR) continue; const r = (p.D / 2) * 2 * hh; ctx.globalAlpha = A0 * p.a; ctx.fillRect(p.x, top + p.v * 2 * hh - r, V.xR - p.x, 2 * r); }
     ctx.restore();
@@ -129,28 +150,16 @@ function whyView(ctx, V) {
   const fe = V.fext ?? 36;
   for (const s of V.slabs) if (s.a > 0.003) for (const x of [s.x0, s.x1]) dashed(ctx, x, top - fe, x, top + 2 * hh + fe, COL.greyC, s.a, 2);
   for (const p of V.parts) whyDisc(ctx, p.x, top + p.v * 2 * hh, (p.D / 2) * 2 * hh, p.a);
-  whyLaser(ctx, V.laserX, yc, hh, V.laserA);
+  whyLaser(ctx, V.laserX, yc, hh, V.laserA, V.light ?? 1);
   whySensor(ctx, V.sensorX, yc, hh, V.sensorA);
-  whyReadout(ctx, V.sensorX, yc, whyLit(V.parts), V.readA);
+  whyReadout(ctx, V.sensorX, yc, whyLit(V.parts), V.readA * (V.light ?? 1));
 }
-// The two thicker slabs' particles: the first's rows (s1: 0 to 1, a row at a time), the second's (s2), in the first's
-// gaps or, as hide goes to 1, a tenth lower, right behind the first's
-const whyRow = (p, r) => smooth(clamp((p - 0.2 - r * 0.12) / 0.32, 0, 1));
-function whyPlacedParts(s1, s2, hide) {
-  const out = [], { D, xi } = WST;
-  WROW1.forEach((b, r) => { const a = whyRow(s1, r); for (const x of xi) out.push({ x: lerp(WST.s1[0], WST.s1[1], x), v: (b + 0.5) * D, D, a }); });
-  WROW2.forEach((b, r) => { const a = whyRow(s2, r), m = smooth(clamp((hide - r * 0.12) / 0.52, 0, 1)); for (const x of xi) out.push({ x: lerp(WST.s2[0], WST.s2[1], x), v: (b + m + 0.5) * D, D, a }); });
-  return out;
-}
-const whyRandParts = () => WRAND.flatMap((ps, j) => ps.map((p) => ({ x: lerp(...(j ? WST.s2 : WST.s1), p.xi), v: p.v, D: WST.D, a: 1 })));
-const whyTwoSlabs = (a1, a2) => [{ x0: WST.s1[0], x1: WST.s1[1], a: a1 }, { x0: WST.s2[0], x1: WST.s2[1], a: a2 }];
-const whyStructured = (parts, a1, a2) => ({ yc: WHY.yc, hh: WHY.hh, xL: WST.laserX, xR: WST.sensorX, power: 1, slabs: whyTwoSlabs(a1, a2), parts, laserX: WST.laserX, sensorX: WST.sensorX, laserA: 1, sensorA: 1, readA: 1 });
 // Drawn moved, the picture's middle at (x, y), scaled by k
 const whyAt = (ctx, [x, y, k], f) => { ctx.save(); ctx.translate(x, y); ctx.scale(k, k); ctx.translate(-WDC[0], -WDC[1]); f(); ctx.restore(); };
-const WTK = 0.8;   // the tiny slabs' picture (32c–34d), a fifth smaller than the thicker slabs' (35 on)
-const WPOS = { one: [WDC[0], WDC[1], 1], top: [960, 330, 0.68], bot: [960, 760, 0.68], rTop: [1440, 380, 0.58], rBot: [1440, 760, 0.58], left: [480, 570, 0.6] };
-const lerpPos = (a, b, t) => a.map((v, i) => lerp(v, b[i], t));
 const WMUL = String.raw`\textcolor{${COL.red}}{\times\,0.9}`, WPOW = (n) => String.raw`0.9^{\textcolor{${COL.blue}}{${n}}}`;
+// 35: the same with base e: ln 0.9 = −0.105, in σ's yellow (it is what σ will be, per slab), the count in blue
+const WEXP = (n) => String.raw`e^{\textcolor{${COL.yellow}}{-0.105}\times\textcolor{${COL.blue}}{${n}}}`;
+const wfePlans = new Map();
 const WF = { y: 150, size: 86, ly: WHY.yc - WHY.hh - 58, lsize: 50 };
 let wfX = null, wfPlan = null;
 const whyFx = () => wfX ?? (wfX = 960 - (tex(WPOW(6)).w * WF.size) / 2);   // from a fixed left edge, so 0.9 stays put as the count changes
@@ -163,8 +172,10 @@ function whyNAt(t0) {
 }
 function WHY_DEFAULTS() { return {
   won: 0, wsel: 0, wfade: 0, wzoom: 0, wls: 0, wread: 0, wbr: 0, wpow: 1, wpowLoop: 0, wpowT0: 0, wsay: 0, wsayP: 0, wlab: 0, wn: 1, wfm: 0, wnLoop: 0, wnT0: 0,
-  wst: 0, ws1: 0, ws2: 0, whide: 0, wrows: 0, wsplit: 0, wtitles: 0, wfig: 0, wstay: 0, bOut: 0,
+  wfe: 0, wpl: 0, wax: 0, wcur: 0, wdA: 0, wdB: 0, wlight: 1, wclump: 0, bOut: 0,
 }; }
+// 37: how far slab k's particles have moved into their clump: the first slab's first, then the others'
+const whyClumpAt = (c, k) => smooth(clamp((c - (k === 0 ? 0 : 0.3 + 0.07 * (k - 1))) / 0.42, 0, 1));   // (the last done as c reaches 1)
 // The lab's row, and on it the slice: the fronts sweep in from the box's ends and meet at its faces, dimming what they
 // pass (32b); then all but the slice fades away; at the zoom (z > 0) the slice is drawn by whyZoomIn instead.
 function whyBox(ctx, st, z) {
@@ -196,81 +207,92 @@ function whyZoomIn(ctx, Z) {
   if (sa > 0.003) for (const [u, v, ph, jy] of BOXSPECKS) { const [x, y] = speckXY(B, u, v, ph, jy); if (Math.abs(x - WSX) > h + 6) continue; dot(ctx, Z.X(x), Z.Y(y), 3.6 * WX1.s, COL.yellow, 0.62 * sa); }
   ctx.restore();
 }
-// The main picture, 32c–36: the tiny slabs, then (35) the two thicker ones, with the light, the laser and the sensor
+// The main picture: the slabs, centred (32c–35) or lined up from the left over the plot (36 on, as pl goes to 1), their
+// particles where they were placed or (37) clumped, with the light, the laser and the sensor
 function whyMain(st) {
-  const z = clamp(st.wzoom, 0, 1), Z = whyZoomGeo(z), into = z < 1, ls = smooth(clamp(st.wls, 0, 1));
-  const tinyA = 1 - smooth(clamp(st.wst / 0.4, 0, 1)), stx = smooth(clamp((st.wst - 0.25) / 0.6, 0, 1)), T = whyTiny(into ? 1 : st.wn);
-  const yc = into ? Z.cy : WHY.yc, hh = into ? Z.hh : WHY.hh, slabs = [], parts = [];
+  const z = clamp(st.wzoom, 0, 1), Z = whyZoomGeo(z), into = z < 1, ls = smooth(clamp(st.wls, 0, 1)), pl = smooth(clamp(st.wpl, 0, 1));
+  const C = whyTiny(into ? 1 : st.wn), A = whyAnch(into ? 1 : st.wn), T = { slabs: C.slabs.map((s, k) => ({ x0: lerp(s.x0, A.slabs[k].x0, pl), x1: lerp(s.x1, A.slabs[k].x1, pl), a: s.a })) };
+  const yc = into ? Z.cy : WHY.yc, hh = into ? Z.hh : WHY.hh, slabs = [], parts = [], D = WHY.f / WHY.m;
   const tiny = into ? [{ x0: Z.X(WSX - whySH()), x1: Z.X(WSX + whySH()), a: 1 }] : T.slabs, pa = into ? smooth(clamp((Z.e - 0.35) / 0.35, 0, 1)) : 1;
-  if (tinyA > 0.003) tiny.forEach((s, k) => {
-    slabs.push({ x0: s.x0, x1: s.x1, a: s.a * tinyA * (into ? Z.e : 1) });
-    for (const p of WTINY[k]) parts.push({ x: lerp(s.x0, s.x1, p.xi), v: p.v, D: WHY.f / WHY.m, a: s.a * tinyA * pa });
+  tiny.forEach((s, k) => {
+    slabs.push({ x0: s.x0, x1: s.x1, a: s.a * (into ? Z.e : 1) });
+    const c = into ? 0 : whyClumpAt(st.wclump, k);
+    WTINY[k].forEach((p, i) => { const q = WCLUMP[k][i]; parts.push({ x: lerp(s.x0, s.x1, lerp(p.xi, q.xi, c)), v: lerp(p.v, q.v, c), D, a: s.a * pa }); });
   });
-  const f1 = smooth(clamp(st.ws1 / 0.25, 0, 1)), f2 = smooth(clamp(st.ws2 / 0.25, 0, 1));
-  if (st.ws1 > 0.003 || st.ws2 > 0.003) { slabs.push(...whyTwoSlabs(f1, f2)); parts.push(...whyPlacedParts(st.ws1, st.ws2, st.whide)); }
-  const laserX = lerp(T.laserX, WST.laserX, stx), sensorX = lerp(T.sensorX, WST.sensorX, stx), s0 = tiny[0];
+  const laserX = lerp(C.laserX, A.laserX, pl), sensorX = lerp(C.sensorX, A.sensorX, pl), s0 = tiny[0];
   // on the way in, everything is on the stage already (and the light only in the slice); once landed, in the picture's own
   // units, drawn smaller
   const l = into ? 0 : ls;
-  return { yc, hh, slabs, parts, laserX, sensorX, laserA: l, sensorA: l, readA: smooth(clamp(st.wread, 0, 1)), power: clamp(st.wpow, 0, 1), fext: into ? 36 * WTK : 36,
-    xL: lerp(s0.x0, laserX, l), xR: lerp(s0.x1, sensorX, l), sheet: into ? lerp(0.7, WHY.sheet, Z.e) : WHY.sheet, Z, into, T, tinyA };
+  return { yc, hh, slabs, parts, laserX, sensorX, laserA: l, sensorA: l, readA: smooth(clamp(st.wread, 0, 1)), power: clamp(st.wpow, 0, 1), light: clamp(st.wlight, 0, 1), fext: into ? 36 * WTK : 36,
+    xL: lerp(s0.x0, laserX, l), xR: lerp(s0.x1, sensorX, l), sheet: into ? lerp(0.7, WHY.sheet, Z.e) : WHY.sheet, Z, into, T, pl };
 }
 function drawWhy(ctx, dt, st) {
   const on = clamp(st.won, 0, 1); if (on <= 0.003) return;
   if (!reduced) { if (st.wpowLoop) st.wpow = whyPowAt(st.wpowT0); if (st.wnLoop) st.wn = whyNAt(st.wnT0); }
-  const z = clamp(st.wzoom, 0, 1), rows = smooth(clamp(st.wrows, 0, 1)), split = smooth(clamp(st.wsplit, 0, 1)), fig = smooth(clamp(st.wfig, 0, 1));
+  const z = clamp(st.wzoom, 0, 1);
   ctx.save(); ctx.globalAlpha *= on;
   if (z < 1) whyBox(ctx, st, z);
   if (z > 0) {
-    // the tiny slabs' picture a fifth smaller: shrinking to it on the way in, back to full size as the thicker slabs come
-    const V = whyMain(st), stx = smooth(clamp((st.wst - 0.25) / 0.6, 0, 1)), k1 = V.into ? 1 : lerp(WTK, 1, stx);   // (on the way in, already on the stage)
-    const at = lerpPos(lerpPos([WDC[0], WDC[1], k1], WPOS.bot, rows), WPOS.rBot, split), s0 = V.into ? null : V.T.slabs[0];
-    const la = smooth(clamp(st.wlab, 0, 1)) * V.tinyA, fm = clamp(st.wfm, 0, 1);
-    ctx.save(); ctx.globalAlpha *= 1 - fig;
+    // the picture a fifth smaller (on the way in, it is on the stage already); from 36, moved up over the plot
+    const V = whyMain(st), at = V.into ? [WDC[0], WDC[1], 1] : [WDC[0], lerp(WDC[1], WPL.y, V.pl), WTK], s0 = V.into ? null : V.T.slabs[0];
+    const la = smooth(clamp(st.wlab, 0, 1)), fm = clamp(st.wfm, 0, 1), n = clamp(st.wn, 1, WHY.NMAX);
     whyAt(ctx, at, () => {
       if (V.into) whyZoomIn(ctx, V.Z);
       whyView(ctx, V);
       // Δd under the slab: a small piece of the distance d, in d's blue; as slabs come and go it stretches under all of
       // them, reading 2Δd, 3Δd, … (the count changing halfway through each slab's coming or going)
-      const br = smooth(clamp(st.wbr, 0, 1)) * V.tinyA;
+      const br = smooth(clamp(st.wbr, 0, 1));
       if (br > 0.003 && s0) {
-        const n = clamp(st.wn, 1, WHY.NMAX), k = Math.round(n), by = V.yc + V.hh + 44;
-        drawBrace(ctx, WHY.cx, by, n * WHY.w, 24, 6, hexRgb(LDCOL), br);
-        drawTex(ctx, k === 1 ? String.raw`\Delta d` : String.raw`${k}\,\Delta d`, WHY.cx, by + 56, 50, { alpha: br, color: LDCOL });
+        const k = Math.round(n), by = V.yc + V.hh + 44, cx = s0.x0 + (n * WHY.w) / 2;
+        drawBrace(ctx, cx, by, n * WHY.w, 24, 6, hexRgb(LDCOL), br);
+        drawTex(ctx, k === 1 ? String.raw`\Delta d` : String.raw`${k}\,\Delta d`, cx, by + 56, 50, { alpha: br, color: LDCOL });
       }
       // 33b: what the slab says
-      if (st.wsay > 0.003 && s0) drawThinking(ctx, (s0.x0 + s0.x1) / 2, 168, 1, 84, '', String.raw`whatever comes in, I take 10\%`, 1, st.wsayP, smooth(clamp(st.wsay, 0, 1)) * V.tinyA, [(s0.x0 + s0.x1) / 2, V.yc - V.hh - 42]);
+      if (st.wsay > 0.003 && s0) drawThinking(ctx, (s0.x0 + s0.x1) / 2, 168, 1, 84, '', String.raw`whatever comes in, I take 10\%`, 1, st.wsayP, smooth(clamp(st.wsay, 0, 1)), [(s0.x0 + s0.x1) / 2, V.yc - V.hh - 42]);
       // 34–34c: × 0.9 over each slab
       if (la > 0.003 && !V.into && fm <= 0.001) V.T.slabs.forEach((s) => drawTex(ctx, WMUL, (s.x0 + s.x1) / 2, WF.ly, WF.lsize, { alpha: la * s.a }));
     });
-    ctx.restore();
     // 34d: the three × 0.9 become 0.9^3 at the top, and the count follows the slabs from then on (the formula keeps its
-    // size: the labels it comes from are where the smaller picture has them)
+    // size: the labels it comes from are where the smaller picture has them). 35: 0.9^n becomes e^{−0.105 n}. From 36 it
+    // sits higher and a little smaller, over the picture.
     if (la > 0.003 && !V.into && fm > 0.001) {
+      const k = Math.round(n), fy = lerp(WF.y, WPL.fy, V.pl), fs = lerp(WF.size, WPL.fs, V.pl), fe = clamp(st.wfe, 0, 1);
+      const ex = 960 - (tex(WEXP(6)).w * fs) / 2;
       if (fm < 0.999) {
-        const [ax, ay, ak] = at, at3 = (k) => place(tex(WMUL), { x: ax + (WHY.cx + (k - 1) * WHY.w - WDC[0]) * ak, y: ay + (WF.ly - WDC[1]) * ak, size: WF.lsize * ak });
+        const [ax, ay, ak] = at, at3 = (j) => place(tex(WMUL), { x: ax + (WHY.cx + (j - 1) * WHY.w - WDC[0]) * ak, y: ay + (WF.ly - WDC[1]) * ak, size: WF.lsize * ak });
         if (!wfPlan || wfPlan.k !== ak) wfPlan = Object.assign(matchPlan([...at3(0), ...at3(1), ...at3(2)], place(tex(WPOW(3)), { x: whyFx(), y: WF.y, size: WF.size, ax: 0 })), { k: ak });
         drawMorph(ctx, wfPlan, fm, la);
-      } else drawTex(ctx, WPOW(Math.round(st.wn)), whyFx(), WF.y, WF.size, { ax: 0, alpha: la });
+      } else if (fe <= 0.001) drawTex(ctx, WPOW(k), whyFx(), fy, fs, { ax: 0, alpha: la });
+      else if (fe >= 0.999) drawTex(ctx, WEXP(k), ex, fy, fs, { ax: 0, alpha: la });
+      else {
+        const key = k + '|' + fy.toFixed(1) + '|' + fs.toFixed(1);
+        if (!wfePlans.has(key)) wfePlans.set(key, matchPlan(place(tex(WPOW(k)), { x: whyFx(), y: fy, size: fs, ax: 0 }), place(tex(WEXP(k)), { x: ex, y: fy, size: fs, ax: 0 })));
+        drawMorph(ctx, wfePlans.get(key), fe, la);
+      }
+    }
+    // 36–38: the plot under the picture, its n axis lined up with the slabs: the curve e^{−0.105 n}; a dot for each slab's
+    // reading as it comes in (placed at random, then clumped); and the reading now, in the light's red, a faint dashed line
+    // up to where the slabs end
+    const ax = smooth(clamp(st.wax, 0, 1));
+    if (ax > 0.003 && !V.into) {
+      const A = whyAxes(), f = (x) => Math.pow(1 - WHY.f, x);
+      drawAxes(ctx, A, { c: ax, nums: 0, lab: ax, xlColor: hexRgb(LDCOL) });
+      for (const [v, t] of [[1, '100%'], [0.5, '50%']]) drawTex(ctx, String.raw`\text{${t.replace('%', '\\%')}}`, A.ox - 22, A.Y(v), 28, { ax: 1, alpha: ax });
+      if (st.wcur > 0.003) drawCurve(ctx, A, f, { p: clamp(st.wcur, 0, 1), from: 0, to: WPL.n, color: SH.color, width: 6 });
+      const reach = (k) => (k === 0 ? 1 : smooth(clamp((st.wn - (k - 0.25)) / 0.25, 0, 1)));
+      for (const [dots, w] of [[WDOTA, st.wdA], [WDOTB, st.wdB]]) {
+        const a = ax * smooth(clamp(w, 0, 1)); if (a <= 0.003) continue;
+        for (let k = 0; k <= WPL.n; k++) dot(ctx, A.X(k), A.Y(dots[k]), 8, AMTCOL, a * reach(k));
+      }
+      const la2 = ax * clamp(st.wlight, 0, 1) * smooth(clamp(st.wcur * 3, 0, 1));
+      if (la2 > 0.003) {
+        const lit = whyLit(V.parts), px = A.X(n), py = A.Y(lit), yb = WPL.y + (WHY.hh + 36) * WTK;
+        dashed(ctx, px, yb + 4, px, py - 12, COL.greyC, 0.8 * la2, 2);
+        dot(ctx, px, py, 11, SH.color, la2);
+      }
     }
   }
-  // 37: the other careful placement, above: the second slab in the first one's gaps (0%)
-  if (rows > 0.003) { ctx.save(); ctx.globalAlpha *= rows * (1 - fig); whyAt(ctx, lerpPos(WPOS.top, WPOS.rTop, split), () => whyView(ctx, whyStructured(whyPlacedParts(1, 1, 0), 1, 1))); ctx.restore(); }
-  // 37b: and on the left, two slabs placed at random (25%), a line down the middle
-  if (split > 0.003) {
-    ctx.save(); ctx.globalAlpha *= split; whyAt(ctx, WPOS.left, () => whyView(ctx, whyStructured(whyRandParts(), 1, 1))); ctx.restore();
-    ctx.save(); ctx.strokeStyle = hexA(COL.greyD, split * on); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(960, 80); ctx.lineTo(960, 960); ctx.stroke(); ctx.restore();
-  }
-  // 38: their names; 38b: on the right, a place for the paper's figure; 39: the right greys out
-  const ta = clamp(st.wtitles, 0, 1);
-  if (ta > 0.003) { drawTex(ctx, String.raw`\text{exponential media}`, 480, 140, 46, { p: ta, alpha: on }); drawTex(ctx, String.raw`\text{non-exponential media}`, 1440, 140, 46, { p: ta, alpha: on }); }
-  if (fig > 0.003) {
-    const R = [1010, 220, 860, 720];
-    ctx.save(); ctx.globalAlpha *= on; ctx.strokeStyle = hexA(COL.greyC, fig); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(R[0], R[1], R[2], R[3], 14); ctx.stroke(); ctx.restore();
-    drawTodo(ctx, [R[0] + 28, R[1] + 28, R[2] - 56, R[3] - 56], fig * on, { todo: ['the figure from the paper, with permission:', 'Jarabo, Aliaga and Gutierrez (2018),', 'A Radiative Transfer Framework', 'for Spatially-Correlated Materials'] }, 1.2);
-  }
   ctx.restore();
-  greyOut(ctx, [985, 70, 900, 900], smooth(clamp(st.wstay, 0, 1)) * on, 0.35 * smooth(clamp(st.wstay, 0, 1)) * on);
 }
 
 // ---- the beats ----
@@ -299,23 +321,32 @@ function whyPower() {
   if (reduced) ptw('wn', WHY.NMAX, 1.5, { delay: 1.4 });
   return ptw('wfm', 1, 1.3);
 }
-// 35: the tiny slabs go; two thicker ones, the first's particles placed with care, in rows: half the light. 35b: the
-// second's, where the first lets light through, a row at a time: nothing is left
-function whyCareful() {
+// 35: 0.9^n with base e, e^{−0.105 n}; the slabs keep coming and going
+function whyE() { return ptw('wfe', 1, 1.4); }
+// Slabs come in one at a time, from however many there are up to five, a moment after each
+async function whyUpTo5(g) {
+  for (let k = Math.floor(PS.wn + 1e-6) + 1; k <= WPL.n; k++) {
+    await ptw('wn', k, 0.8); if (!labAlive(g)) return;
+    await sleep(0.3, 'pres'); if (!labAlive(g)) return;
+  }
+}
+// 36: the slabs settle at one, the picture moves up, its slabs lined up from the left, and the plot comes in under it;
+// the curve draws, and then the slabs come in one at a time up to five, each one's reading a dot on the plot
+async function whyCurve() {
+  const g = PRES.gen;
   if (PS.wnLoop && !reduced) PS.wn = whyNAt(PS.wnT0);
-  PS.wnLoop = 0; ptw('wst', 1, 1.5); return ptw('ws1', 1, 1.6, { delay: 1.2 });
+  PS.wnLoop = 0; ptw('wn', 1, 0.9); ptw('wpl', 1, 1.4); ptw('wax', 1, 1.0, { delay: 1.2 }); ptw('wdA', 1, 0.4, { delay: 2.2 });
+  await ptw('wcur', 1, 1.6, { delay: 2.2, ease: linear }); if (!labAlive(g)) return;
+  await whyUpTo5(g);
 }
-function whyGaps() { return ptw('ws2', 1, 1.8); }
-// 36: an aside: or hide them; in the card, the second slab's rows move down a tenth, right behind the first's: 50%
-function whyHide() {
-  PS.lthink = 'or hide them?'; PS.lthinkP = 0; ptw('lside', 1, 1.4); ptw('lfig', 1, 1.0, { delay: 0.8 }); ptw('lthinkP', 1, 1.0, { delay: 1.7, ease: linear });
-  return ptw('whide', 1, 2.0, { delay: 3.0 });
+// 37: the light goes off, and the particles move into a clump at the top of the beam: the first slab's, then the others'
+function whyClump() { ptw('wlight', 0, 0.6); return ptw('wclump', 1, 2.6, { delay: 0.7 }); }
+// 38: the same again: the dots go, back to one slab, the light on, and the slabs come in one at a time up to five, each
+// one's reading a dot: the first takes 10%, the rest hardly anything
+async function whyFlat() {
+  const g = PRES.gen;
+  ptw('wdA', 0, 0.5); await ptw('wn', 1, 0.9); if (!labAlive(g)) return;
+  ptw('wdB', 1, 0.4); await ptw('wlight', 1, 0.6); if (!labAlive(g)) return;
+  await sleep(0.3, 'pres'); if (!labAlive(g)) return;
+  await whyUpTo5(g);
 }
-// 37: back from the aside: both careful placements, one above the other. 37b: they move to the right, and two slabs
-// placed at random come in on the left
-function whyBoth() { ptw('lfig', 0, 0.5); ptw('lside', 0, 1.2, { delay: 0.2 }); return ptw('wrows', 1, 1.4, { delay: 1.0 }); }
-function whySplit() { return ptw('wsplit', 1, 1.6); }
-// 38: the names. 38b: a place for the paper's figure, on the right. 39: the right greys out: we stay on the left
-function whyNames() { return ptw('wtitles', 1, 1.0, { ease: linear }); }
-function whyFigure() { return ptw('wfig', 1, 0.9); }
-function whyStay() { return ptw('wstay', 1, 0.9); }
