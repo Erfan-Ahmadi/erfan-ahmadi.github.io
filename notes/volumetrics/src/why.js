@@ -1,4 +1,4 @@
-// ---------- presentation, part 4: why exponential (beats 32–38) ----------
+// ---------- presentation, part 4: why exponential (beats 32–40) ----------
 // We go into the box the way the bench's "Zoom into a slab" does: two fronts sweep in from its ends and meet at one thin
 // slice of it, dimming what they pass; then everything but the slice fades away, and we zoom in there, across the beam
 // far more than along it, until the beam is a sheet of light and the slice a slab with its particles in it, a shadow
@@ -9,10 +9,12 @@
 // Then (36) the picture moves up, its slabs lined up from the left, and under it a plot of what gets through against the
 // number of slabs, its n axis lined up with them: the curve, and a dot for each slab as it comes in. And (37–38) the same
 // slabs with their particles clumped at the top of the beam: the first slab takes 10%, the rest hardly anything.
-const WHY = { yc: 540, hh: 240, f: 0.1, m: 5, w: 160, NMAX: 6, cx: 940, lf0: 560, sx0: 1320, gap: 150, sheet: 0.8 };
+// Last (39–40) the two side by side, each in a frame: placed at random on the left, exponential; clumped on the right,
+// non-exponential, which greys out; and the exponential frame grows longer, across the stage, for what comes next.
+const WHY = { yc: 540, hh: 240, f: 0.1, m: 5, w: 160, NMAX: 6, NLONG: 10, cx: 940, lf0: 560, sx0: 1320, gap: 150, sheet: 0.8 };
 // yc, hh: the sheet's middle and half its height; f: what a slab takes; m: particles to a slab; w: a slab's thickness;
-// NMAX: as many as fit at that thickness; cx: the middle of the slabs; lf0, sx0: the laser's face and the sensor while
-// the slabs leave room; gap: the least room between them and the slabs.
+// NMAX: as many as fit at that thickness; NLONG: as many as the long frame holds (40); cx: the middle of the slabs;
+// lf0, sx0: the laser's face and the sensor while the slabs leave room; gap: the least room between them and the slabs.
 // The slice we go into (32b), in the lab's units: its middle, clear of the specks on the beam's line, and half its
 // thickness: the landed slab's thickness over the zoom, so that the zoom is the same across the beam and along it.
 const WSX = 40, whySH = () => (WHY.w * SH.beamW) / (4 * WHY.hh);
@@ -51,17 +53,17 @@ function whyPlace(seed, { D, k, lits, T, H, far, xr, edge, sep = 0 }) {
 }
 // the tiny slabs: five small particles each, a fiftieth of the sheet's height, side by side across it, so each slab
 // covers exactly a tenth of it on its own
-const WTINY = whyPlace(7, { D: WHY.f / WHY.m, k: WHY.m, lits: Array.from({ length: WHY.NMAX }, (_, n) => Math.pow(1 - WHY.f, n + 1)), T: WHY.w, H: 2 * WHY.hh, far: (WHY.f / WHY.m) * 2 * WHY.hh + 10, xr: [0.2, 0.8], edge: 0.06, sep: WHY.f / WHY.m });
+const WTINY = whyPlace(7, { D: WHY.f / WHY.m, k: WHY.m, lits: Array.from({ length: WHY.NLONG }, (_, n) => Math.pow(1 - WHY.f, n + 1)), T: WHY.w, H: 2 * WHY.hh, far: (WHY.f / WHY.m) * 2 * WHY.hh + 10, xr: [0.2, 0.8], edge: 0.06, sep: WHY.f / WHY.m });
 // 37: the same particles clumped, each slab's five in a little zigzag column near the top of the beam, touching; each
 // slab's a little lower than the one before, less and less, so the first takes 10% and the rest hardly anything
 const WCLD = [0, 0.012, 0.018, 0.021, 0.022, 0.0225];
 const WCLUMP = WTINY.map((ps, k) => {
   const rank = ps.map((p, i) => [p.v, i]).sort((a, b) => a[0] - b[0]).map(([, i]) => i), out = [];
-  rank.forEach((i, j) => { out[i] = { xi: 0.5 + (j % 2 ? 0.07 : -0.07), v: 0.06 + WCLD[k] + (WHY.f / WHY.m) * (j + 0.5) }; });
+  rank.forEach((i, j) => { out[i] = { xi: 0.5 + (j % 2 ? 0.07 : -0.07), v: 0.06 + WCLD[Math.min(k, WCLD.length - 1)] + (WHY.f / WHY.m) * (j + 0.5) }; });
   return out;
 });
 // what gets through past the first k slabs, placed at random (36) and clumped (38): the plot's dots
-const whyDots = (A) => Array.from({ length: WHY.NMAX + 1 }, (_, k) => whyLitOf(A.slice(0, k).flat().map((p) => [p.v - WHY.f / (2 * WHY.m), p.v + WHY.f / (2 * WHY.m)])));
+const whyDots = (A) => Array.from({ length: A.length + 1 }, (_, k) => whyLitOf(A.slice(0, k).flat().map((p) => [p.v - WHY.f / (2 * WHY.m), p.v + WHY.f / (2 * WHY.m)])));
 const WDOTA = whyDots(WTINY), WDOTB = whyDots(WCLUMP);
 // What's left of the light past these particles, 0 to 1: the share of the sheet's height in no shadow (a particle only
 // partly there, a: partly a shadow).
@@ -93,10 +95,18 @@ const WXA = WDC[0] + (WPA.x0 - WDC[0]) / WTK;   // where the first slab begins, 
 function whyAnch(n) {
   const N = Math.max(1, Math.ceil(n - 1e-6)), slabs = [];
   for (let k = 0; k < N; k++) slabs.push({ x0: WXA + k * WHY.w, x1: WXA + (k + 1) * WHY.w, a: smooth(clamp(n - k, 0, 1)) });
-  return { slabs, laserX: WXA - WHY.gap, sensorX: WXA + clamp(n, 1, WHY.NMAX) * WHY.w + WHY.gap };
+  return { slabs, laserX: WXA - WHY.gap, sensorX: WXA + clamp(n, 1, WHY.NLONG) * WHY.w + WHY.gap };
 }
+// the plot's axes, m slabs long (five; growing with the slabs in the long frame at 40)
 let WPAX = null;
-const whyAxes = () => WPAX || (WPAX = makeAxes({ L: WPA.x0, R: WPA.x0 + WPL.n * WPA.w, T: WPA.T, B: WPA.B, xr: [0, WPL.n, 1], yr: [0, 1, 0.5], ext: 40, xl: 'd', yl: '', labSize: 54, numSize: 28 }));
+function whyAxes(m = WPL.n) {
+  const make = () => makeAxes({ L: WPA.x0, R: WPA.x0 + m * WPA.w, T: WPA.T, B: WPA.B, xr: [0, m, 1], yr: [0, 1, 0.5], ext: 40, xl: 'd', yl: '', labSize: 54, numSize: 28 });
+  return m === WPL.n ? WPAX || (WPAX = make()) : make();
+}
+// 39–40: the frames. The picture over its plot, with n slabs, has its middle at WPC(n) on the stage; in a frame it is
+// drawn k as large, its middle at the frame's.
+const WPC = (n) => [978.5 + 0.5 * WPA.w * (n - WPL.n), 541];
+const WFRAME = { L: [50, 200, 890, 690], R: [980, 200, 890, 690], long: [50, 200, 1820, 690], k: 0.675, klong: 0.76, ty: 150, tsize: 44 };   // (klong: a little larger in the long frame)
 // The discrete version: what gets through after each whole slab, level across a slab and dropping at its end, with a dot
 // at each slab's reading, drawn as the slabs come in (n: how many there are). In the amounts' lavender (red is the light
 // itself, and only that); the formula's own curve is white, like the formula.
@@ -188,7 +198,7 @@ function whyNAt(t0) {
 }
 function WHY_DEFAULTS() { return {
   won: 0, wsel: 0, wfade: 0, wzoom: 0, wls: 0, wread: 0, wbr: 0, wpow: 1, wpowLoop: 0, wpowT0: 0, wsay: 0, wsayP: 0, wlab: 0, wn: 1, wfm: 0, wnLoop: 0, wnT0: 0,
-  wfe: 0, wpl: 0, wax: 0, wcur: 0, wdA: 0, wdB: 0, wlight: 1, wclump: 0, wfo: 0, bOut: 0,
+  wfe: 0, wpl: 0, wax: 0, wcur: 0, wdA: 0, wdB: 0, wlight: 1, wclump: 0, wfo: 0, wsp: 0, wnmL: 0, wnmR: 0, wgrey: 0, wlong: 0, wnL: 5, bOut: 0,
 }; }
 // 37: how far slab k's particles have moved into their clump: the first slab's first, then the others'
 const whyClumpAt = (c, k) => smooth(clamp((c - (k === 0 ? 0 : 0.3 + 0.07 * (k - 1))) / 0.42, 0, 1));   // (the last done as c reaches 1)
@@ -242,27 +252,49 @@ function whyMain(st) {
   return { yc, hh, slabs, parts, laserX, sensorX, laserA: l, sensorA: l, readA: smooth(clamp(st.wread, 0, 1)), power: clamp(st.wpow, 0, 1), light: clamp(st.wlight, 0, 1), fext: into ? 36 * WTK : 36,
     xL: lerp(s0.x0, laserX, l), xR: lerp(s0.x1, sensorX, l), sheet: into ? lerp(0.7, WHY.sheet, Z.e) : WHY.sheet, Z, into, T, pl };
 }
+// Δd under the slab: a small piece of the distance d, in d's blue; as slabs come and go it stretches under all of them,
+// reading 2Δd, 3Δd, … (the count changing halfway through each slab's coming or going)
+function whyBrace(ctx, V, n, br) {
+  const s0 = V.T.slabs[0]; if (br <= 0.003 || !s0) return;
+  const k = Math.round(n), by = V.yc + V.hh + 44, cx = s0.x0 + (n * WHY.w) / 2;
+  drawBrace(ctx, cx, by, n * WHY.w, 24, 6, hexRgb(LDCOL), br);
+  drawTex(ctx, k === 1 ? String.raw`\Delta d` : String.raw`${k}\,\Delta d`, cx, by + 56, 50, { alpha: br, color: LDCOL });
+}
+// 36 on: the plot under the picture, for a state S (the presentation's, or the left frame's own), its d axis m slabs long
+// and lined up with the slabs (slab k ends over d = kΔd): the continuous version, white, labelled e^{−σd} in the
+// formula's colours; the discrete version, the slabs' readings as lavender steps with a dot at each, drawn as each slab
+// comes in (placed at random, or clumped); a faint dashed line from where the slabs end down to it
+function whyPlot(ctx, S, V, n, m = WPL.n) {
+  const ax = smooth(clamp(S.wax, 0, 1)); if (ax <= 0.003) return;
+  const A = whyAxes(m), f = (x) => Math.pow(1 - WHY.f, x), cu = clamp(S.wcur, 0, 1);
+  drawAxes(ctx, A, { c: ax, nums: 0, lab: ax, xlColor: hexRgb(LDCOL) });
+  for (const [v, t] of [[1, '100%'], [0.5, '50%']]) drawTex(ctx, String.raw`\text{${t.replace('%', '\\%')}}`, A.ox - 22, A.Y(v), 28, { ax: 1, alpha: ax });
+  if (cu > 0.003) {
+    drawCurve(ctx, A, f, { p: cu, from: 0, to: m, color: COL.white, width: 4 });
+    drawTex(ctx, WCURVE, A.X(m) + 22, A.Y(f(m)), 46, { ax: 0, alpha: ax * smooth(clamp((cu - 0.85) / 0.15, 0, 1)) });
+  }
+  whySteps(ctx, A, WDOTA, S.wn, ax * smooth(clamp(S.wdA, 0, 1)));
+  whySteps(ctx, A, WDOTB, S.wn, ax * smooth(clamp(S.wdB, 0, 1)));
+  const la2 = ax * clamp(S.wlight, 0, 1) * smooth(clamp(cu * 3, 0, 1));
+  if (la2 > 0.003) { const px = A.X(n), yb = WPL.y + (WHY.hh + 36) * WTK; dashed(ctx, px, yb + 4, px, A.Y(whyLit(V.parts)) - 6, COL.greyC, 0.8 * la2, 2); }
+}
 function drawWhy(ctx, dt, st) {
   const on = clamp(st.won, 0, 1); if (on <= 0.003) return;
   if (!reduced) { if (st.wpowLoop) st.wpow = whyPowAt(st.wpowT0); if (st.wnLoop) st.wn = whyNAt(st.wnT0); }
-  const z = clamp(st.wzoom, 0, 1);
+  const z = clamp(st.wzoom, 0, 1), sp = smooth(clamp(st.wsp, 0, 1)), long = smooth(clamp(st.wlong, 0, 1)), grey = smooth(clamp(st.wgrey, 0, 1));
   ctx.save(); ctx.globalAlpha *= on;
   if (z < 1) whyBox(ctx, st, z);
   if (z > 0) {
     // the picture a fifth smaller (on the way in, it is on the stage already); from 36, moved up over the plot
     const V = whyMain(st), at = V.into ? [WDC[0], WDC[1], 1] : [WDC[0], lerp(WDC[1], WPL.y, V.pl), WTK], s0 = V.into ? null : V.T.slabs[0];
-    const la = smooth(clamp(st.wlab, 0, 1)), fm = clamp(st.wfm, 0, 1), n = clamp(st.wn, 1, WHY.NMAX);
+    const la = smooth(clamp(st.wlab, 0, 1)), fm = clamp(st.wfm, 0, 1), n = clamp(st.wn, 1, WHY.NLONG);
+    // 39: all of it, the picture and its plot, moves into the frame on the right; 40: and goes
+    const c5 = WPC(WPL.n), R = WFRAME.R, mk = lerp(1, WFRAME.k, sp);
+    ctx.save(); ctx.globalAlpha *= 1 - long; ctx.translate(lerp(c5[0], R[0] + R[2] / 2, sp), lerp(c5[1], R[1] + R[3] / 2, sp)); ctx.scale(mk, mk); ctx.translate(-c5[0], -c5[1]);
     whyAt(ctx, at, () => {
       if (V.into) whyZoomIn(ctx, V.Z);
       whyView(ctx, V);
-      // Δd under the slab: a small piece of the distance d, in d's blue; as slabs come and go it stretches under all of
-      // them, reading 2Δd, 3Δd, … (the count changing halfway through each slab's coming or going)
-      const br = smooth(clamp(st.wbr, 0, 1));
-      if (br > 0.003 && s0) {
-        const k = Math.round(n), by = V.yc + V.hh + 44, cx = s0.x0 + (n * WHY.w) / 2;
-        drawBrace(ctx, cx, by, n * WHY.w, 24, 6, hexRgb(LDCOL), br);
-        drawTex(ctx, k === 1 ? String.raw`\Delta d` : String.raw`${k}\,\Delta d`, cx, by + 56, 50, { alpha: br, color: LDCOL });
-      }
+      if (!V.into) whyBrace(ctx, V, n, smooth(clamp(st.wbr, 0, 1)));
       // 33b: what the slab says
       if (st.wsay > 0.003 && s0) drawThinking(ctx, (s0.x0 + s0.x1) / 2, 168, 1, 84, '', String.raw`whatever comes in, I take 10\%`, 1, st.wsayP, smooth(clamp(st.wsay, 0, 1)), [(s0.x0 + s0.x1) / 2, V.yc - V.hh - 42]);
       // 34–34c: × 0.9 over each slab
@@ -287,26 +319,27 @@ function drawWhy(ctx, dt, st) {
         drawMorph(ctx, wfePlans.get(key), fe, lf);
       }
     }
-    // 36–38: the plot under the picture, its d axis lined up with the slabs (slab k ends over d = kΔd): the continuous
-    // version, white, labelled e^{−σd} in the formula's colours; the discrete version, the slabs' readings as lavender
-    // steps with a dot at each, drawn as each slab comes in (placed at random, then clumped); a faint dashed line from
-    // where the slabs end down to it
-    const ax = smooth(clamp(st.wax, 0, 1));
-    if (ax > 0.003 && !V.into) {
-      const A = whyAxes(), f = (x) => Math.pow(1 - WHY.f, x), cu = clamp(st.wcur, 0, 1);
-      drawAxes(ctx, A, { c: ax, nums: 0, lab: ax, xlColor: hexRgb(LDCOL) });
-      for (const [v, t] of [[1, '100%'], [0.5, '50%']]) drawTex(ctx, String.raw`\text{${t.replace('%', '\\%')}}`, A.ox - 22, A.Y(v), 28, { ax: 1, alpha: ax });
-      if (cu > 0.003) {
-        drawCurve(ctx, A, f, { p: cu, from: 0, to: WPL.n, color: COL.white, width: 4 });
-        drawTex(ctx, WCURVE, A.X(WPL.n) + 22, A.Y(f(WPL.n)), 46, { ax: 0, alpha: ax * smooth(clamp((cu - 0.85) / 0.15, 0, 1)) });
-      }
-      whySteps(ctx, A, WDOTA, st.wn, ax * smooth(clamp(st.wdA, 0, 1)));
-      whySteps(ctx, A, WDOTB, st.wn, ax * smooth(clamp(st.wdB, 0, 1)));
-      const la2 = ax * clamp(st.wlight, 0, 1) * smooth(clamp(cu * 3, 0, 1));
-      if (la2 > 0.003) { const px = A.X(n), yb = WPL.y + (WHY.hh + 36) * WTK; dashed(ctx, px, yb + 4, px, A.Y(whyLit(V.parts)) - 6, COL.greyC, 0.8 * la2, 2); }
-    }
+    if (!V.into) whyPlot(ctx, st, V, n);
+    ctx.restore();
+  }
+  // 39: in a frame on the left, the same slabs with their particles placed at random, their steps on the curve; the two
+  // frames, and their names (39b, 39c). 40: the left frame grows longer, across the stage, and more slabs come in, the
+  // brace, the plot's axis, its curve and its steps with them
+  if (sp > 0.003) {
+    const nL = clamp(st.wnL, 1, WHY.NLONG), S = Object.assign(WHY_DEFAULTS(), { wzoom: 1, wls: 1, wread: 1, wpl: 1, wax: 1, wcur: 1, wdA: 1, wn: nL }), V = whyMain(S);
+    const F = lerpRect(WFRAME.L, WFRAME.long, long), c = WPC(nL), R = WFRAME.R, k = lerp(WFRAME.k, WFRAME.klong, long);
+    ctx.save(); ctx.globalAlpha *= sp; ctx.translate(F[0] + F[2] / 2, F[1] + F[3] / 2); ctx.scale(k, k); ctx.translate(-c[0], -c[1]);
+    whyAt(ctx, [WDC[0], WPL.y, WTK], () => { whyView(ctx, V); whyBrace(ctx, V, nL, 1); });
+    whyPlot(ctx, S, V, nL, Math.max(WPL.n, nL));
+    ctx.restore();
+    const frame = (Q, a) => { if (a > 0.003) { ctx.save(); ctx.strokeStyle = hexA(COL.greyC, a); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(Q[0], Q[1], Q[2], Q[3], 14); ctx.stroke(); ctx.restore(); } };
+    frame(F, sp); frame(R, sp * (1 - long));
+    if (st.wnmL > 0.003) drawTex(ctx, String.raw`\text{exponential media}`, F[0] + F[2] / 2, WFRAME.ty, WFRAME.tsize, { p: clamp(st.wnmL, 0, 1) });
+    if (st.wnmR > 0.003) drawTex(ctx, String.raw`\text{non-exponential media}`, R[0] + R[2] / 2, WFRAME.ty, WFRAME.tsize, { p: clamp(st.wnmR, 0, 1), alpha: 1 - long, color: mixRgb(WHITE_RGB, hexRgb(COL.greyC), grey) });
   }
   ctx.restore();
+  // 39d: the right one greys out: not for now
+  greyOut(ctx, WFRAME.R, grey * (1 - long) * on, 0.35 * grey * (1 - long) * on);
 }
 
 // ---- the beats ----
@@ -365,3 +398,11 @@ async function whyFlat() {
   await sleep(0.3, 'pres'); if (!labAlive(g)) return;
   await whyUpTo5(g);
 }
+// 39: the clumped picture and its plot move into a frame on the right, and the same slabs placed at random come in, in a
+// frame on the left. 39b, 39c: their names. 39d: the right one greys out
+function whyVersus() { return ptw('wsp', 1, 1.6); }
+function whyNameL() { return ptw('wnmL', 1, 0.8, { ease: linear }); }
+function whyNameR() { return ptw('wnmR', 1, 0.9, { ease: linear }); }
+function whyGrey() { return ptw('wgrey', 1, 0.9); }
+// 40: the greyed frame goes and the exponential one grows longer, across the stage; more slabs come in, up to ten
+function whyLong() { ptw('wlong', 1, 1.6); return ptw('wnL', WHY.NLONG, 2.6, { delay: 0.9, ease: linear }); }

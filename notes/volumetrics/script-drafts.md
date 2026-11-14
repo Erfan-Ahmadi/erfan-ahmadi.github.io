@@ -100,6 +100,13 @@ This is EXACTLY what I've been meaning to show you, that placement of the partic
 My point here is that these formulas where you see exponentials in them have a hidden assumption behind them, that the particles are placed randomly.  and that is the assumption we're going to make going forward which is still practical and has many usages in computer graphics but areas like astronomy. this is an assumption we can live with sometimes.
 ```
 
+Directions added after that draft, word for word:
+
+```text
+the non exponential thing moves to right and I still want the left and righ exponential vs non exponential thing synced with the transcript, forget about that paper, and when I talk about not caring about non expoenntials for now, that should grey out and then the exponential frame grows longer to prepare for next lesson:
+(prev lesson should end with something about still used in practice)
+```
+
 ## Notes from the flow discussions
 
 ```text

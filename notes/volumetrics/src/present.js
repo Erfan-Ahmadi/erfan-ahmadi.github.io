@@ -162,6 +162,11 @@ const BEATS = [
   { n: '36', name: 'it follows the curve', run: () => whyCurve() },
   { n: '37', name: 'placed some other way', run: () => whyClump() },
   { n: '38', name: 'hardly anything after the first', run: () => whyFlat() },
+  { n: '39', name: 'placement matters', run: () => whyVersus() },
+  { n: '39b', name: 'at random: exponential', run: () => whyNameL() },
+  { n: '39c', name: 'with a structure: non-exponential', run: () => whyNameR() },
+  { n: '39d', name: 'not for now', run: () => whyGrey() },
+  { n: '40', name: 'the assumption from here on', run: () => whyLong() },
 ];
 // A beat by its number in the script; a number between two beats opens the next one.
 function presIndex(label) {
