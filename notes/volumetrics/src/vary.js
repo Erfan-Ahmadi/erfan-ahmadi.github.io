@@ -121,7 +121,7 @@ function varyDraw(ctx, st, side, k, du) {
   if (fa > 0.003) dashed(ctx, L / 2, -VG.R * 0.94, L / 2, VG.R * 0.94, COL.greyA, 0.85 * fa, px(2.5));
   if (edges.length) { ctx.save(); ctx.lineWidth = px(1.6); for (const [u, a] of edges) { if (a * ch <= 0.01) continue; ctx.strokeStyle = hexA(COL.greyA, 0.5 * ch * a); ctx.beginPath(); ctx.moveTo((u / 2) * L, -VG.R * 0.72); ctx.lineTo((u / 2) * L, VG.R * 0.72); ctx.stroke(); } ctx.restore(); }
   // the light, the laser and the sensor
-  drawBeam(ctx, VG.laser, VG.sensor - 11, 0, SH.color, SH.I0, T, [0, L / 2, L], VARY.beam);
+  drawBeam(ctx, VG.laser, VG.sensor - 11, 0, SH.color, SH.I0, lieT(T), [0, L / 2, L], VARY.beam);   // (dimmer than it is, as in the lab: lab.js's lieT)
   ctx.save(); ctx.translate(VG.laser, 0); ctx.scale(VG.dev, VG.dev); drawLaser(ctx, 0, 0, SH.color, 1); ctx.restore();
   ctx.save(); ctx.translate(VG.sensor, 0); ctx.scale(VG.dev, VG.dev); drawSensor(ctx, 0, 0, SH.color, T(L) * SH.I0); ctx.restore();
   // the sensor's readout, over it; 56b: boxed, as the integral is

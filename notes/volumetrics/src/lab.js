@@ -139,6 +139,11 @@ const LHALF = String.raw`\textcolor{${COL.red}}{\times \tfrac{1}{2}}`, LRES = (v
 // One row: laser, c boxes, sensor, in the transform X. o: c, the readout (from, to, m, a), the scattering and glow;
 // myst hides what happens past the first box behind a row of "?" (the light past it is the question), and rev is how
 // far the beam has come back past the first box once the answer is shown.
+// From 21d the light past the stuff is drawn dimmer than it really is, and the readouts stay true: to the eye, half the
+// light hardly looks dimmer, so the beam shows about its square instead (floor: a little left over, so it never quite
+// goes out). PS.lie: how far that has come in.
+const LIE = { floor: 0.05 };
+const lieT = (T) => { const l = smooth(clamp(PS.lie || 0, 0, 1)); return l <= 0.001 ? T : (x) => { const t = T(x); return lerp(t, LIE.floor + (1 - LIE.floor) * t * t, l); }; };
 function drawLabRow(ctx, X, o, alpha) {
   if (alpha <= 0.003) return;
   const L = (o.drop ? labLayoutDrop : labLayout)(o.c, o.g, o.lg, o.sg), ln2 = Math.LN2 / LAB.BW;
@@ -157,8 +162,8 @@ function drawLabRow(ctx, X, o, alpha) {
   // cut: where the second box begins (the first box's end and the gap after it), past which the light is the question
   const power = SH.I0 * (1 - 0.45 * (o.glow || 0)), cut = L.boxes[0].x0 + LAB.BW + LAB.G, end = L.sensor - 18, myst = clamp(o.myst || 0, 0, 1);
   const front = lerp(cut, end, clamp(o.rev ?? 1, 0, 1)), past = 1 - smooth(myst);
-  drawBeam(ctx, L.laser, cut + 0.5, 0, SH.color, power, T, knots);   // through the first box, as we know it
-  if (front > cut + 1 && past > 0.003) drawBeam(ctx, cut, front, 0, SH.color, power * past, T, knots);
+  drawBeam(ctx, L.laser, cut + 0.5, 0, SH.color, power, lieT(T), knots);   // through the first box, as we know it
+  if (front > cut + 1 && past > 0.003) drawBeam(ctx, cut, front, 0, SH.color, power * past, lieT(T), knots);
   if (myst > 0.003) {   // past it, only questions, drifting a little
     const x0 = cut + 45, x1 = end - 30, n = Math.max(3, Math.round((x1 - x0) / 72));
     for (let i = 0; i <= n; i++) {
@@ -240,7 +245,7 @@ function drawLabPlot(ctx, st) {
   }
   const T = (x) => Math.exp(-sig * (clamp(x, X0, Xd) - X0) / A.sx), xs = Xd + 46;
   ctx.save(); ctx.globalAlpha = rest * bA;
-  drawBeam(ctx, X0 - 26, xs - 11, y, SH.color, SH.I0, T, [X0, Xd]);
+  drawBeam(ctx, X0 - 26, xs - 11, y, SH.color, SH.I0, lieT(T), [X0, Xd]);
   if (w > 1) { ctx.strokeStyle = COL.greyA; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(X0, LP.top, w, H, Math.min(12, w / 2)); ctx.stroke(); }
   if (Fo.c > 0.003 && w > 1 && (st.ind10 || 0) < 0.5) {   // option 1: a brace under the box, x in its blue, stretching with it; while σ changes, σ in the box instead, in its yellow (option 10 draws its own)
     const sF = clamp(st.sAct || 0, 0, 1), al = Fo.c * (0.7 + 0.3 * clamp(st.dAct || 0, 0, 1)) * (1 - sF), cx = X0 + w / 2;
@@ -476,14 +481,15 @@ function drawLabStage(ctx, dt, st) {
     if (sp > 0.003) {
       let o = { c: st.c2, from: st.r2From, to: st.r2, m: st.r2M, read: smooth(clamp(st.read2, 0, 1)), pop: true, myst: st.myst, rev: st.rev }, al = out * (1 - smooth(clamp(st.rowFade, 0, 1)));
       if (st.hvOn) {   // 25d–25f: the halving, a box per press (drawHalveRow), as the Halving tab's labels at the boxes' ends with × ½
-        const S = hvSchedule(HV_PRES), [b0, b1] = hvStepSpan(S, st.hvStep, true), Xb = mixXf(LABXF.full, LABXF.bot, sp), J = labJoinXf();
+        const S = hvSchedule(HV_PRES), [b0, b1] = st.hvAuto ? [0, S.steps[S.n - 1][1]] : hvStepSpan(S, st.hvStep, true), Xb = mixXf(LABXF.full, LABXF.bot, sp), J = labJoinXf();
         const e = smooth(clamp(st.merge || 0, 0, 1)), pb = smooth(clamp(st.pbox || 0, 0, 1)), ha = out * smooth(clamp(st.hvA, 0, 1));
         // 26: closing up into the plot's box; once that is drawn by the plot (pbox), this fades and the plot keeps the labels
         const Xm = { ox: lerp(Xb.ox, J.ox, e), oy: lerp(Xb.oy, J.oy, e), s: lerp(Xb.s, J.s, e), sy: lerp(Xb.s, J.sy, e), lk: lerp(Xb.s, 0.6, e), e, lg: J.lg, sg: J.sg };
-        drawHalveRow(ctx, Xm, S, HV_PRES, reduced ? b1 : clamp(b0 + TIME - st.hvT0, b0, b1), ha * (1 - pb), pb < 0.5 ? ha : 0);
+        drawHalveRow(ctx, Xm, S, HV_PRES, reduced ? b1 : clamp(b0 + (TIME - st.hvT0) * (st.hvAuto ? HVAUTO : 1), b0, b1), ha * (1 - pb), pb < 0.5 ? ha : 0);
       } else drawLabRow(ctx, mixXf(LABXF.full, LABXF.bot, sp), o, al);
     }
     drawLabNoLabels(ctx, st, X1);
+    drawLabMagnifier(ctx, st, X1);
     const hi = smooth(clamp(st.r1Hi || 0, 0, 1));
     if (hi > 0.003) {   // 22: the reading brought forward a moment: everything else dims, the readout grows a little
       ctx.save(); ctx.fillStyle = `rgba(28,27,24,${(0.62 * hi).toFixed(3)})`; ctx.fillRect(0, 0, W, H); ctx.restore();
@@ -499,6 +505,30 @@ function drawLabStage(ctx, dt, st) {
   drawEnd(ctx, dt, st);  // part 6, the ending (end.js)
 }
 
+// 21e: a ring on the beam in the box and, up to the right, a lens on it: light hitting a particle and taken in, the
+// particle warming (the absorption cell of beat 8, playing on). The lens grows out of the ring; two lines join them.
+const AMAG = { at: 120, r0: 24, c: [1590, 235], r: 165, k: 0.8 };   // at: where on the beam, in the box's own units; r0: the ring; c, r: the lens; k: the cell's scale in it
+function drawLabMagnifier(ctx, st, X) {
+  const m = clamp(st.amag, 0, 1); if (m <= 0.003) return;
+  const e = smooth(m), c1 = [X.ox + X.s * AMAG.at, X.oy], c2 = [lerp(c1[0], AMAG.c[0], e), lerp(c1[1], AMAG.c[1], e)], r = lerp(AMAG.r0, AMAG.r, e);
+  ctx.save(); ctx.globalAlpha *= smooth(clamp(m * 3, 0, 1));
+  ctx.strokeStyle = hexA(COL.white, 0.85); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(c1[0], c1[1], AMAG.r0, 0, Math.PI * 2); ctx.stroke();
+  const dx = c2[0] - c1[0], dy = c2[1] - c1[1], D = Math.hypot(dx, dy);
+  if (D > AMAG.r0 + r + 4) {   // the two outer tangents from the ring to the lens
+    const ux = dx / D, uy = dy / D, ca = (AMAG.r0 - r) / D, sa = Math.sqrt(Math.max(0, 1 - ca * ca));
+    ctx.strokeStyle = hexA(COL.greyA, 0.55); ctx.lineWidth = 2; ctx.beginPath();
+    for (const sg of [1, -1]) { const nx = ca * ux - sg * sa * uy, ny = ca * uy + sg * sa * ux; ctx.moveTo(c1[0] + AMAG.r0 * nx, c1[1] + AMAG.r0 * ny); ctx.lineTo(c2[0] + r * nx, c2[1] + r * ny); }
+    ctx.stroke();
+  }
+  ctx.save(); ctx.beginPath(); ctx.arc(c2[0], c2[1], r, 0, Math.PI * 2); ctx.clip();
+  ctx.fillStyle = hexA(BG, 0.95); ctx.fill();
+  const k = AMAG.k * (r / AMAG.r); ctx.translate(c2[0], c2[1]); ctx.scale(k, k); ctx.translate(-350, -165);
+  drawIACell(ctx, 0, fxAge(st.amagT), fxP(), smooth(clamp((m - 0.4) / 0.6, 0, 1)), SI.look);
+  ctx.restore();
+  ctx.strokeStyle = COL.greyA; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(c2[0], c2[1], r, 0, Math.PI * 2); ctx.stroke();
+  ctx.restore();
+}
+
 // ---- the beats ----
 // a sequence of steps that stops where it is if the presentation is rebuilt (a step back) in the middle of it
 const labAlive = (g) => g === PRES.gen;
@@ -509,9 +539,11 @@ function labScatter() { ptw('lbNS', 1, 0.8, { delay: 0.3, ease: linear }); retur
 // 21c: it stops scattering; every speck glows red, the beam a little dimmer so the glow shows
 function labGlow() { ptw('scat', 0, 0.6); ptw('lbNE', 1, 0.8, { delay: 0.4, ease: linear }); return ptw('glow', 1, 1.0, { delay: 0.4 }); }
 // 21d: the glow goes: only absorption
-function labAbsorb() { ptw('lbJA', 1, 1.2, { delay: 0.2 }); return ptw('glow', 0, 0.9); }
+function labAbsorb() { ptw('lbJA', 1, 1.2, { delay: 0.2 }); ptw('lie', 1, 1.4, { delay: 0.5 }); return ptw('glow', 0, 0.9); }
+// 21e: a magnifier on the beam in the box: in its lens, light hitting a particle and taken in, the particle warming
+function labHeat() { PS.amagT = labLoopStart('amT', TIME + 0.6); return ptw('amag', 1, 1.1); }
 // 22: the reading comes in already brought forward (the rest dims, the readout a little bigger); 22b: back to normal
-function labRead() { ptw('r1Hi', 1, 0.6); return ptw('read1', 1, 0.8); }
+function labRead() { ptw('amag', 0, 0.5); ptw('r1Hi', 1, 0.6); return ptw('read1', 1, 0.8); }
 function labReadDone() { return ptw('r1Hi', 0, 0.8); }
 function labRead2(text, dur, delay = 0) { PS.r2From = PS.r2; PS.r2 = text; PS.r2M = 0; return ptw('r2M', 1, dur, { delay, ease: linear }); }
 // 23: the whole setup is copied, without its readout, and the copy slides down. 23b: a second box slides in beside its
@@ -547,6 +579,14 @@ async function labHalve() {
   PS.hvOn = 1; PS.hvA = 0; ptw('hvA', 1, 0.4); return labHalveStep(1);
 }
 function labHalveStep(k) { PS.hvStep = k; PS.hvT0 = instant ? -1e9 : TIME; return Promise.resolve(); }
+// 25g: the bottom row starts over and plays the halving through by itself, box after box, a little quicker (HVAUTO)
+const HVAUTO = 1.3;
+async function labHalveAuto() {
+  const g = PRES.gen;
+  await ptw('hvA', 0, 0.35); if (!labAlive(g)) return;
+  PS.hvAuto = 1; PS.hvT0 = instant ? -1e9 : TIME + 0.2;
+  return ptw('hvA', 1, 0.35);
+}
 // 26: the one-box row goes and the bottom row's three boxes close up, end to end, where the plot's box will be, their
 // amounts over the joins; e^{−σx} writes in, plain: σ and x take their colours only once we know what they are.
 // 26b: the three boxes become one long box (its brace counting them: 3 boxes), and the plot sketches in above it, its

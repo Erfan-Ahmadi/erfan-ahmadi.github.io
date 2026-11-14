@@ -31,7 +31,8 @@ const qRect = (i, st) => (i < 2 ? lerpRect(QCRECT[i], QFINAL[i], smooth(clamp(st
 // bullet points (their wording is a placeholder). src is the part of the stage the aside shows.
 const SPEC = { L: [302, 330, 235, 188], R: [1383, 330, 235, 188], y: 560, src: [270, 270, 1380, 400], card: [380, 50, 1160, 400] };
 const GOALXY = [130, 560];   // the goals, under the aside on the left
-const GOALS = ['the physics and math behind the intimidating look', 'derive it yourself', 'a model, not a law: its assumptions and limits'];
+const GOALS = ['the physics and the math feel intuitive', 'you could derive it yourself', 'not a law of nature: a simplified model, with its own assumptions and limits'];   // in the narration's words
+const GOALT = [1.6, 1.4, 3.4];   // how long each takes to write in, about as long as it takes to say
 // me now and me later, side by side in the middle along the bottom while the goals are up
 // (feet at 960 keeps them and their labels clear of the bottom of a YouTube frame)
 const MIDFIG = 870, FUT = { x: 1460, y: 925 };   // me now sits one arm span clear of the goals' text
@@ -59,7 +60,7 @@ function useRect(i, st) {
 }
 const PS_DEFAULTS = () => ({
   orbit: 1, mag: 0, aside: 0, fig: 0, think: '', thinkFrom: '', thinkM: 1, writeP: 1, eq: 0, eqP: 0, corner: 0, braces: [], hi: {}, dim: 0,
-  cells: [0, 0, 0, 0], cellT: [0, 0, 0, 0], grid: 1,
+  cells: [0, 0, 0, 0], cellT: [0, 0, 0, 0], cm: [0, 0, 0, 0], grid: 1, wtf: 0, wtfT0: 0,
   qc: QCARDS.map(() => ({ box: 0, m: 0, title: 0, todo: 0 })), qcA: 1, qSide: 0,
   eqA: 1, eqTop: 0, spec: [0, 0], chalk: 0, code: 0, specT: 0, ptrX: 0, ptrA: 0, lineP: 0, wig: 0, wigT: 0, side: 0,
   goalsA: 0, figMid: 0, fut: 0, futW: 0, goals: [0, 0, 0], p15: 1, cap: 0,
@@ -67,7 +68,7 @@ const PS_DEFAULTS = () => ({
   fx: { show: [0, 0, 0, 0], clock: [0, 0, 0, 0], run: [0, 0, 0, 0], dim: [0, 0, 0, 0], grey: [0, 0, 0, 0], big: 0 },
   // part 3, the lab (lab.js): the box on the stage, its scattering and glow, the readings, the second row and its
   // boxes, me guessing; then the formula and its plot; then the bases
-  labOn: 0, labX: 0, scat: 0, glow: 0, read1: 0, read2: 0, split: 0, c2: 1, myst: 0, rev: 1, r2: '?', r2From: '', r2M: 1, lfig: 0, lthink: '', lthinkP: 1, lside: 0, wrong: 0, cross: 0, rowFade: 0,
+  labOn: 0, labX: 0, scat: 0, glow: 0, lie: 0, amag: 0, amagT: 0, hvAuto: 0, read1: 0, read2: 0, split: 0, c2: 1, myst: 0, rev: 1, r2: '?', r2From: '', r2M: 1, lfig: 0, lthink: '', lthinkP: 1, lside: 0, wrong: 0, cross: 0, rowFade: 0,
   rowsOut: 0, fml: 0, axC: 0, dotD: 0, curveTo: 0, sig: 1, sigHi: 0, eq1: 0, plotOut: 0, bStack: 0, bMorph: 0, ind1: 1, ind8: 1, ind10: 1, readDim: 1, dLoop: 0, dLoopT0: 0, sLoop: 0, sLoopT0: 0, hvOn: 0, hvA: 0, hvStep: 0, hvT0: 0, topDim: 0, topOut: 0, merge: 0, pbox: 0, rise: 0, marksOut: 0, dCont: 0, r1Hi: 0, colS: 0, colD: 0, sPin: 0, eq2: 0, lbNS: 0, lbNE: 0, lbJA: 0, lbOut: 0, eOnly: 0, eMove: 0, eBox: 0,
   ...WHY_DEFAULTS(),   // part 4 (why.js)
   ...VARY_DEFAULTS(),  // part 5 (vary.js)
@@ -103,12 +104,15 @@ const BEATS = [
     PS.eq = 1; PS.eqP = 0;
     ptw('corner', 1, 1.4); ptw('aside', 2, 1.4);
     presThink(THOUGHTS[2], 0.9);   // as soon as the formula starts coming in
+    PS.wtfT0 = labLoopStart('wtfT0', TIME + 1.1); ptw('wtf', 1, 0.5, { delay: 0.9 });   // and its ?! keeps going until the next press
     await ptw('eqP', 1, 2, { ease: linear, delay: 0.5 });
   } },
-  // all four effects in one press: the braces and the cells come in together, a little apart
-  { n: '8', name: 'the four effects', run: () => Promise.all(PFX.map(([term, label, color], i) => {
-    PS.cellT[i] = TIME + 0.4; return Promise.all([presBrace(term, label, color, 0.15 * i), ptwi(PS.cells, i, 1, 1.1, { delay: 0.15 * i })]);
-  })) },
+  // all four effects in one press: the braces first, a little apart; then a copy of each brace, its name with it, leaves
+  // the equation and turns into its effect's card, where the photons start playing
+  { n: '8', name: 'the four effects', run: () => { ptw('wtf', 0, 0.4); return Promise.all(PFX.map(([term, label, color], i) => {
+    const d = 0.15 * i; PS.cellT[i] = instant ? TIME : TIME + 2.0 + d;   // (stepped back to, it plays at once)
+    return Promise.all([presBrace(term, label, color, d), ptwi(PS.cm, i, 1, 1.0, { delay: 1.1 + d }), ptwi(PS.cells, i, 1, 0.7, { delay: 1.9 + d })]);
+  })); } },
   ...QCARDS.flatMap((q, i) => [{ n: String(12 + i), name: q.name, run: () => presQuestion(i) }, { n: `${12 + i}b`, name: 'into its card', run: () => presToCard(i) }]),
   { n: '15', name: 'not a shader tutorial', run: presSpecShader },
   { n: '15b', name: 'not a physics lecture', run: presSpecLecture },
@@ -126,6 +130,7 @@ const BEATS = [
   { n: '21b', name: "doesn't scatter", run: () => labScatter() },
   { n: '21c', name: "doesn't glow", run: () => labGlow() },
   { n: '21d', name: 'only absorbs', run: () => labAbsorb() },
+  { n: '21e', name: 'taken in, turned into heat', run: () => labHeat() },
   { n: '22', name: 'the sensor', run: () => labRead() },
   { n: '22b', name: 'the reading, back to normal', run: () => labReadDone() },
   { n: '23', name: 'the copy', run: () => labCopy() },
@@ -139,6 +144,7 @@ const BEATS = [
   { n: '25d', name: 'a fixed fraction, again and again', run: () => labHalve() },
   { n: '25e', name: 'again: a second box', run: () => labHalveStep(2) },
   { n: '25f', name: 'and again: a third', run: () => labHalveStep(3) },
+  { n: '25g', name: 'the halving again, by itself', run: () => labHalveAuto() },
   { n: '26', name: 'the formula', run: () => labFormula() },
   { n: '26b', name: 'the plot', run: () => labPlot() },
   { n: '26c', name: 'the boxes on the curve', run: () => labMarks() },
@@ -277,7 +283,7 @@ async function presAside() {
 }
 async function presGoal(i) {
   if (i === 1) { ptw('fut', 1, 2.2); ptw('futW', 1, 1.7, { ease: linear, delay: 0.35 }); }
-  await ptwi(PS.goals, i, 1, 1.2, { ease: linear });
+  await ptwi(PS.goals, i, 1, GOALT[i], { ease: linear });
 }
 // The figure's thought reshapes into the next one, after delay.
 function presThink(text, dur, delay = 0) {
@@ -409,6 +415,28 @@ function drawThinking(ctx, x, y, s, h, from, to, m, p, a, head, ink = null) {
   ctx.save(); ctx.translate(x, y + 3 * s); ctx.scale(s, s);
   if (from && m < 0.999) { if (m <= 0.001) drawSprites(ctx, thinkSp(from).sp, { alpha: a }); else drawReshape(ctx, thinkPlan(from, to), m, a); }
   else drawSprites(ctx, thinkSp(to).sp, { p, alpha: a, color: ink });
+  ctx.restore();
+}
+// Beat 7: "WTF?!" won't sit still: its marks pop in one at a time, "?!", "?!!", "?!!?", "?!!?!", bobbing, and start over,
+// in a bubble wide enough for all of them (amt: how far it has gone from the plain "WTF?!"; t: seconds since it began)
+const WTF = { marks: '?!!?!', step: 0.42, hold: 0.7 };
+function drawWtf(ctx, x, y, s, h, a, head, amt, t) {
+  const full = thinkSp('WTF' + WTF.marks), rest = thinkSp('WTF?!'), w = (lerp(rest.w, full.w, amt) + 2 * THINK.pad) * s;
+  drawThought(ctx, x, y, w, h, '', 1, a, head, COL.white);
+  const P = WTF.marks.length - 2, cyc = P * WTF.step + WTF.hold, u = ((t % cyc) + cyc) % cyc, dx = ((full.w - rest.w) / 2) * (1 - amt);
+  ctx.save(); ctx.translate(x, y + 3 * s); ctx.scale(s, s);
+  full.sp.forEach((q, i) => {
+    let al = a, k = 1, dy = 0, rot = 0;
+    if (i >= 3) {
+      const j = i - 3, at = j < 2 ? -1 : (j - 1) * WTF.step;   // when this mark comes in (the first two are always there)
+      const shown = j < 2 ? 1 : u < at ? 0 : smooth(clamp((u - at) / 0.16, 0, 1));
+      al *= j < 2 ? 1 : shown * amt; k = j < 2 ? 1 : lerp(0.3, 1, shown);
+      dy = -5 * amt * Math.sin(2 * Math.PI * (t * 1.7 - j * 0.18)); rot = 0.12 * amt * Math.sin(2 * Math.PI * (t * 1.3 + j * 0.27));
+    }
+    if (al <= 0.003) return;
+    const [l, r, tp, b] = inkBox(q), mx = (l + r) / 2 + dx, my = (tp + b) / 2;
+    ctx.save(); ctx.translate(mx, my + dy); ctx.rotate(rot); ctx.scale(k, k); ctx.translate(-mx, -my); drawSprite(ctx, shifted(q, dx, 0), q.alpha * al); ctx.restore();
+  });
   ctx.restore();
 }
 // The zoom panel over the beam: a ring on the beam marks the section, and a panel beside it shows that section the
@@ -642,6 +670,14 @@ function drawFx(ctx, dt, st) {
     drawTex(ctx, String.raw`\text{${PFX[i][1]}}`, r[0] + 22, r[1] + 18, i === 0 ? lerp(34, 44, big) : 34, { ax: 0, ay: 0, color: hexOf(ink), alpha: a });
   }
 }
+// A sprite laid out in the equation's own space, put on the stage through the transform the equation is drawn with
+function presXfSprite(q, ex, ey, ek) {
+  const X = (v) => ex + ek * (v - PEQ.x), Y = (v) => ey + ek * (v - PEQ.y), o = { ...q, x: X(q.x), y: Y(q.y), w: q.w * ek, h: q.h * ek, size: q.size * ek };
+  if (q.base != null) Object.assign(o, { base: Y(q.base), fpx: q.fpx * ek, iL: X(q.iL), iR: X(q.iR), iT: Y(q.iT), iB: Y(q.iB) });
+  if (q.sx != null) Object.assign(o, { sx: X(q.sx), sy: Y(q.sy), sw: q.sw * ek, sh: q.sh * ek });
+  return o;
+}
+const cmPlans = new Map();
 function drawPresent(ctx, dt) {
   const st = PS;
   // the effects' terms take their colour, or grey once their effect is set aside (beats 21g–h)
@@ -666,7 +702,9 @@ function drawPresent(ctx, dt) {
     // once a copy of me sets off for later (beat 15f), this one fades into the past: greyer, fainter
     const past = pastOf(st), ink = mixRgb(hexRgb(COL.white), hexRgb(COL.greyC), 0.75 * past);
     drawFigure(ctx, fx, fy, fs, fa * lerp(1, 0.7, past), hexOf(ink));
-    drawThinking(ctx, fx + 110, fy - lerp(410, 330, c), lerp(1, 0.8, c), lerp(100, 84, c), st.thinkFrom, st.think, st.thinkM, st.writeP, fa * lerp(1, 0.65, past), figHead(fx, fy, fs), past > 0.003 ? ink : null);
+    const tx = fx + 110, ty = fy - lerp(410, 330, c), ts = lerp(1, 0.8, c), th = lerp(100, 84, c), tA = fa * lerp(1, 0.65, past);
+    if (st.wtf > 0.003 && st.think === THOUGHTS[2] && st.thinkM >= 0.999 && past <= 0.003 && !reduced) drawWtf(ctx, tx, ty, ts, th, tA, figHead(fx, fy, fs), smooth(clamp(st.wtf, 0, 1)), TIME - st.wtfT0);
+    else drawThinking(ctx, tx, ty, ts, th, st.thinkFrom, st.think, st.thinkM, st.writeP, tA, figHead(fx, fy, fs), past > 0.003 ? ink : null);
   }
   drawFuture(ctx, st);
   drawAsideCard(ctx, st);
@@ -688,8 +726,23 @@ function drawPresent(ctx, dt) {
       ctx.save(); ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip(); ctx.translate(r[0], r[1]); ctx.scale(sc, r[3] / 330);
       drawIACell(ctx, i, fxAge(st.cellT[i]), fxP(), a, SI.look);
       ctx.restore();
-      ctx.save(); ctx.strokeStyle = hexA(PFX[i][2], 0.9 * a); ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.stroke(); ctx.restore();
-      drawTex(ctx, String.raw`\text{${PFX[i][1]}}`, r[0] + 22, r[1] + 18, 34, { ax: 0, ay: 0, color: PFX[i][2], alpha: a });
+    }
+    // beat 8: a copy of each brace leaves the equation and turns into its card (cm), its name moving into the card's corner
+    if (ga > 0.003) for (let i = 0; i < 4; i++) {
+      const cmi = clamp(st.cm[i], 0, 1); if (cmi <= 0.003) continue;
+      const r = PCELLS[i], col = PFX[i][2], e = smooth(cmi), b = st.braces.find((o) => o.term === PFX[i][0]), CL = place(tex(String.raw`\text{${PFX[i][1]}}`), { x: r[0] + 22, y: r[1] + 18, size: 34, ax: 0, ay: 0 });
+      if (e >= 0.999 || !b) {
+        ctx.save(); ctx.strokeStyle = hexA(col, 0.9 * ga); ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.stroke(); ctx.restore();
+        drawSprites(ctx, CL, { alpha: ga, color: hexRgb(col) });
+        continue;
+      }
+      const [ex, ey, ek] = eqXf(st), X = (v) => ex + ek * (v - PEQ.x), Y = (v) => ey + ek * (v - PEQ.y), bx = X(b.x0), bw = ek * (b.x1 - b.x0), bt = Y(b.top), bh = ek * b.h;
+      const R = lerpRect([bx, bt, bw, bh], r, e);
+      drawBrace(ctx, R[0] + R[2] / 2, R[1], R[2], bh * (1 - e), ek * b.th, b.color, ga * (1 - smooth(clamp(e * 1.6, 0, 1))));   // the brace, flattening into the card's top edge
+      ctx.save(); ctx.strokeStyle = hexA(col, 0.9 * ga * smooth(clamp(e * 1.4, 0, 1))); ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(R[0], R[1], R[2], R[3], 14 * e); ctx.stroke(); ctx.restore();
+      const from = b.lab.map((q) => presXfSprite(q, ex, ey, ek)), key = i + '|' + ex.toFixed(1) + '|' + ey.toFixed(1) + '|' + ek.toFixed(3);
+      if (!cmPlans.has(key)) cmPlans.set(key, matchPlan(from.map((q) => ({ ...q, color: hexRgb(col) })), CL.map((q) => ({ ...q, color: hexRgb(col) }))));
+      drawMorph(ctx, cmPlans.get(key), e, ga);
     }
     drawQCards(ctx, st);
   }
