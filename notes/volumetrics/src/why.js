@@ -183,8 +183,9 @@ function whyView(ctx, V) {
 // Drawn moved, the picture's middle at (x, y), scaled by k
 const whyAt = (ctx, [x, y, k], f) => { ctx.save(); ctx.translate(x, y); ctx.scale(k, k); ctx.translate(-WDC[0], -WDC[1]); f(); ctx.restore(); };
 const WMUL = String.raw`\textcolor{${COL.red}}{\times\,0.9}`, WPOW = (n) => String.raw`0.9^{\textcolor{${COL.blue}}{${n}}}`;
-// 35: the same with base e: ln 0.9 = −0.105, in σ's yellow (it is what σ will be, per slab), the count in blue
-const WEXP = (n) => String.raw`e^{\textcolor{${COL.yellow}}{-0.105}\times\textcolor{${COL.blue}}{${n}}}`;
+// 35: the same with base e: ln 0.9 = −0.105, in σ's yellow (it is what σ will be, per slab), and the distance in blue as
+// the brace has it, nΔx (a slab is Δx, one unit, thick)
+const WEXP = (n) => String.raw`e^{\textcolor{${COL.yellow}}{-0.105}\times\textcolor{${COL.blue}}{${n === 1 ? '' : n + String.raw`\,`}\Delta x}}`;   // the distance as the brace has it, nΔx
 const wfePlans = new Map();
 const WF = { y: 150, size: 86, ly: WHY.yc - WHY.hh - 58, lsize: 50 };
 let wfX = null, wfPlan = null;
@@ -328,13 +329,13 @@ function drawWhy(ctx, dt, st) {
   if (sp > 0.003) {
     const nL = clamp(st.wnL, 1, WHY.NLONG), S = Object.assign(WHY_DEFAULTS(), { wzoom: 1, wls: 1, wread: 1, wpl: 1, wax: 1, wcur: 1, wdA: 1, wn: nL }), V = whyMain(S);
     const F = lerpRect(WFRAME.L, WFRAME.long, long), c = WPC(nL), R = WFRAME.R, k = lerp(WFRAME.k, WFRAME.klong, long);
-    const vo = 1 - smooth(clamp((st.von || 0) * 2.2, 0, 1));   // 41: its slabs and plot make way for part 5's volume (vary.js); the frame stays
+    const vo = 1 - smooth(clamp((st.von || 0) * 2.2, 0, 1));   // 41: its slabs, its plot and the frame itself make way for part 5 (vary.js)
     ctx.save(); ctx.globalAlpha *= sp * vo; ctx.translate(F[0] + F[2] / 2, F[1] + F[3] / 2); ctx.scale(k, k); ctx.translate(-c[0], -c[1]);
     whyAt(ctx, [WDC[0], WPL.y, WTK], () => { whyView(ctx, V); whyBrace(ctx, V, nL, 1); });
     whyPlot(ctx, S, V, nL, Math.max(WPL.n, nL));
     ctx.restore();
     const frame = (Q, a) => { if (a > 0.003) { ctx.save(); ctx.strokeStyle = hexA(COL.greyC, a); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(Q[0], Q[1], Q[2], Q[3], 14); ctx.stroke(); ctx.restore(); } };
-    frame(F, sp); frame(R, sp * (1 - long));
+    frame(F, sp * vo); frame(R, sp * (1 - long));
     if (st.wnmL > 0.003) drawTex(ctx, String.raw`\text{exponential media}`, F[0] + F[2] / 2, WFRAME.ty, WFRAME.tsize, { p: clamp(st.wnmL, 0, 1), alpha: vo });
     if (st.wnmR > 0.003) drawTex(ctx, String.raw`\text{non-exponential media}`, R[0] + R[2] / 2, WFRAME.ty, WFRAME.tsize, { p: clamp(st.wnmR, 0, 1), alpha: 1 - long, color: mixRgb(WHITE_RGB, hexRgb(COL.greyC), grey) });
   }

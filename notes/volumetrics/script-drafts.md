@@ -148,6 +148,25 @@ as a sanity check look how it's consistent when our volume is uniform all across
 (ok I realized d_d is weird notation, let's fix everywhere and change d to x)
 ```
 
+## The ending, first draft (added later, word for word)
+
+After beat 57c:
+
+```text
+add somewhere and show on screen that this integral in shown with Tau and is called optical depth.
+
+and then:
+
+by now I hope you have understood the reason expoential shows up is our assumption about random placement of the particles 
+and the reason you see integrals in the exponent is because of the variable absorbtion coefficients across a ray.
+(each question with arrow to the right with the text and the animation about it)
+
+See you in the next video, where we'll cover emission and scattering and the nuances that we have skipped in this video.
+
+....
+then the same animations will keep on playing and playing until the video finishes
+```
+
 ## Notes from the flow discussions
 
 ```text

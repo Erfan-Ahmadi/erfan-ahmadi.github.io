@@ -71,6 +71,7 @@ const PS_DEFAULTS = () => ({
   rowsOut: 0, fml: 0, axC: 0, dotD: 0, curveTo: 0, sig: 1, sigHi: 0, eq1: 0, plotOut: 0, bStack: 0, bMorph: 0, ind1: 1, ind8: 1, ind10: 1, readDim: 1, dLoop: 0, dLoopT0: 0, sLoop: 0, sLoopT0: 0, hvOn: 0, hvA: 0, hvStep: 0, hvT0: 0, topDim: 0, topOut: 0, merge: 0, pbox: 0, rise: 0, marksOut: 0, dCont: 0, r1Hi: 0, colS: 0, colD: 0, sPin: 0, eq2: 0, lbNS: 0, lbNE: 0, lbJA: 0, lbOut: 0, eOnly: 0, eMove: 0, eBox: 0,
   ...WHY_DEFAULTS(),   // part 4 (why.js)
   ...VARY_DEFAULTS(),  // part 5 (vary.js)
+  ...END_DEFAULTS(),  // part 6 (end.js)
 });
 const PS = PS_DEFAULTS();
 // The equation, with its terms named: the four effects for the braces, and the parts the questions point at.
@@ -199,11 +200,15 @@ const BEATS = [
   { n: '53b', name: 'a factor each', run: () => varyProduct() },
   { n: '54', name: 'a sum', run: () => varySum() },
   { n: '55', name: 'an integral', run: () => varyIntegral() },
+  { n: '55b', name: 'tau, the optical depth', run: () => varyTauName() },
   { n: '56', name: 'any shape', run: () => varyShapes() },
   { n: '56b', name: 'same integral, same reading', run: () => varySame() },
   { n: '57', name: 'sanity check: uniform', run: () => varyUniform() },
   { n: '57b', name: 'sigma times x', run: () => varySigmaX() },
   { n: '57c', name: 'the area under the curve', run: () => varyArea() },
+  // part 6 (end.js): the questions again, each with an arrow to its answer and the animation that showed it, playing on
+  { n: '58', name: 'why exponentials: placed at random', run: () => endFirst() },
+  { n: '58b', name: 'why an integral: sigma changes along the ray', run: () => endSecond() },
 ];
 // A beat by its number in the script; a number between two beats opens the next one.
 function presIndex(label) {

@@ -96,7 +96,7 @@ The working script below has light edits; the original drafts, word for word, ar
 **34.–34d.** [The light settles and the slab's readout goes. Over the slab, "× 0.9", in the red of the boxes' "× ½". Next press, a second slab comes in beside the first with its own five particles and its own "× 0.9", the slabs staying centred (the laser and the sensor move out once they need the room), and the brace stretches under both: $2\,\Delta x$. The sensor reads 81%. Some of its particles sit partly in the first slab's shadows: the light there is already gone, so the slab takes ten percent of what is left. Next press, a third: $3\,\Delta x$, 72.9%. Next press, the three "× 0.9" come together into $0.9^{3}$ at the top (the count in blue), and slabs come and go, a handful, as many as fit without shrinking them (one to six), the count, the brace ($n\,\Delta x$) and the readout following, until the next press. Each slab's particles are placed at random, never shading each other within a slab, but so that the slab takes exactly ten percent of the light that reaches it; the readout is measured from the picture: the share of the sheet's height in no shadow.]
 > So going through this slab is just a multiplication: times ninety percent. [34b] Add another slab: times ninety percent again. [34c] And another: again. [34d] So what reaches the sensor is ninety percent, to the power of however many slabs there are.
 
-**35.** [The formula $0.9^{n}$ turns into $e^{-0.105 \times n}$, the same thing with base $e$ ($\ln 0.9 \approx -0.105$, in $\sigma$'s yellow; the count in blue), while the slabs keep coming and going, the count following them.]
+**35.** [The formula $0.9^{n}$ turns into $e^{-0.105 \times n\,\Delta x}$, the same thing with base $e$ ($\ln 0.9 \approx -0.105$, in $\sigma$'s yellow; the distance in blue, $n\,\Delta x$, as the brace under the slabs has it, a slab being $\Delta x$, one unit, thick), while the slabs keep coming and going, the count following them.]
 > And of course, now we know we can write the same exponential with $e$ as its base.
 
 **36.** [The slabs settle at one and the picture moves up, its slabs now lined up from the left, the formula smaller over it. Under it a plot comes in: what gets through against the distance $x$, its axis lined up with the slabs so that slab $k$ ends right over $x = k\,\Delta x$. The continuous version draws, a white curve, and its label writes in at its end: $e^{-\sigma x}$, in the formula's colours. Then the slabs come in one at a time, up to five, and the discrete version draws with them in the light's red (the formula's curve is white, like the formula): a step for each slab, level across it and dropping at its end, with a dot at each slab's reading, right on the curve. A faint dashed line runs from where the slabs end down to the steps.]
@@ -116,16 +116,16 @@ The working script below has light edits; the original drafts, word for word, ar
 
 ## Part 5: when the density changes along the path
 
-**41.–41c.** [The long frame stays, and what is in it makes way for a zoomed-out setup with no particles in it, as in the bench's "Optical depth is an area": the laser, the sensor, and between them a cloud, soft shapes of different densities along the laser's light, whiter where it is denser. The light dims as it goes through, most where the cloud is thickest. Next press, a circle on a dense part. Next press, a circle on a thin part.]
+**41.–41c.** [The long frame and what is in it make way for a zoomed-out setup with no particles in it, as in the bench's "Optical depth is an area": the laser, the sensor, and between them a cloud, soft shapes of different densities along the laser's light, whiter where it is denser. The light dims as it goes through, most where the cloud is thickest. Next press, a circle on a dense part. Next press, a circle on a thin part.]
 > But we're still far from what happens in practice, where the volume changes shape and density across our path. [41b] For example, our cloud might have a higher density here, [41c] but a lower density here.
 
 **42.–42d.** [The circles go, and the cloud turns into the simple case: one band of fog in two sections, a dense one and then a thin one, a dashed line between them. Next press, the picture moves down a little and a plot's axes come in over it: $\sigma$ against the distance $x$, lined up with the volume. Next press, "$\sigma = 0.4$" is written in the first section, and the plot's line draws across it, in $\sigma$'s yellow. Next press, the line drops and goes on across the second section, and "$\sigma = 0.2$" is written there.]
 > But let's keep it simple, and assume our volume starts at a high density and then suddenly switches to a low one midway. [42b] Actually, let me plot the absorption coefficient for you: [42c] it starts at 0.4, [42d] and then suddenly switches to 0.2.
 
-**43.–43b.** [The plots lose their colour: the sections are what matters now. The setup shrinks into the left half of the frame, named A, and a copy of it slides into the right half, B. Next press, B's two sections change places, the dense one going over the top, and its plot follows: 0.2, then 0.4.]
+**43.–43b.** [The plots lose their colour: the sections are what matters now. The setup shrinks into the left half of the stage, named A, and a copy of it slides into the right half, B; a thin line comes in between the two, and A fades as the copy lands, so the eye is on B. Next press, B's two sections change places, the dense one going over the top, and its plot follows: 0.2, then 0.4.]
 > Now, here is a question for you. [43b] I take these two sections and swap them. In which of the two cases does the light come out brighter on the other end?
 
-**44.–45b.** [B fades and loses its colour. A's plot takes its yellow back, and a point walks through A's first section: a dot on the plot, a dot on the beam, a dashed line between them. Next press, it goes on through the second. Next press, the same for B, with A faded: through its first section; next press, its second.]
+**44.–45b.** [A comes back, and B fades and loses its colour. A's plot takes its yellow back, and a point walks through A's first section: a dot on the plot, a dot on the beam, a dashed line between them. Next press, it goes on through the second. Next press, the same for B, with A faded: through its first section; next press, its second.]
 > In the first one, our light gets absorbed more, and faster, [44b] but then it gets absorbed less. [45] In the second one, our light doesn't get absorbed as much in the first half, [45b] but it gets absorbed more later.
 
 **46.** [Both as they were, and over the frame: "A or B?"]
@@ -155,8 +155,11 @@ The working script below has light edits; the original drafts, word for word, ar
 **54.** [The dashed lines go, and the factors come together into one: "$\times\, e^{-(\sigma_1 \Delta x\,+\,\sigma_2 \Delta x\,+\,\cdots\,+\,\sigma_n \Delta x)}$".]
 > And when you multiply all of these, it becomes a summation over all the different absorption coefficients, in tiny distances.
 
-**55.** [The sum turns into an integral: "$\times\, e^{-\int \sigma(x)\,dx}$". In the plot the bars' tops become the curve, and what is filled is the area under it. The thin lines in the volume go.]
+**55.** [The sum turns into an integral, "$\times\, e^{-\int \sigma(x)\,dx}$", the integral in the same yellow as the area, while the tiny sections get thinner and thinner, twice as many at each step, 20, 40, 80, in the plot and in the volume, until the bars are the area under the curve and the lines in the volume are gone.]
 > You've probably noticed by now that this is the exact definition of an integral.
+
+**55b.** [A copy of the integral goes up beside the plot and grows: "$\tau = \int \sigma(x)\,dx$", and under it, "optical depth". It stays there to the end of the part.]
+> This integral has its own name: it's written $\tau$, and it's called the optical depth.
 
 **56.–56b.** [The volume goes through other shapes, one after another until the next press (a ramp up, two bumps, a ramp down, the hump again): the plot, the fog and the dimming along the beam change together. Each has the same area under it, and the readout never changes. Next press, a box goes around the integral, and another around the readout.]
 > Your volume can change density and absorption all it wants, [56b] but as long as the integral remains the same, the sensor on the other end reads the same value.
@@ -164,7 +167,13 @@ The working script below has light edits; the original drafts, word for word, ar
 **57.–57c.** [The boxes go, and the shape settles into a flat line: the volume is the same all the way through. Next press, the integral turns into "$\times\, e^{-\sigma x}$". Next press, the area under the flat line, a rectangle $\sigma$ high and $x$ long, brightens.]
 > As a sanity check, look how it's consistent when our volume is uniform all across. [57b] It's the same formula we had before, sigma times $x$: [57c] that's the area under the curve.
 
-(The next parts are still to be written.)
+## Part 6: the ending
+
+**58.** [Everything goes. Two of the hook's question cards come back, in their colours, one above the other on the left. First the top one, "Why $e$? Why exponentials?": an arrow grows from it to the right, to its answer, "particles placed at random", and under the answer part 4's picture comes back, the slabs with their particles placed at random coming in one by one up to ten, the brace and the steps on the exponential curve following them, then going back down to one, over and over.]
+> By now I hope you've understood that the reason exponentials show up is our assumption that the particles are placed at random,
+
+**58b.** [The bottom card, "why an integral in the exponent?", its arrow, its answer, "$\sigma$ changes along the ray", and under it part 5's volume, its $\sigma$ going through one shape after another, the area under it, and the reading, staying the same; to its right, $e^{-\int \sigma(x)\,dx}$, the integral in the area's yellow. Both animations keep playing until the video ends.]
+> and that the reason you see integrals in the exponent is that the absorption coefficient changes along a ray. See you in the next video, where we'll cover emission and scattering, and the nuances we've skipped in this one.
 
 ## Open
 
@@ -174,6 +183,8 @@ The working script below has light edits; the original drafts, word for word, ar
 - The formula stays $e^{-\sigma x}$ throughout. The full form, and how it turns into the version with emission, comes at the very end of the video, as the lead into the next one.
 - The quiz's three readings aren't marked on the curve in beat 26. They could be: dots at one, two and three boxes, at 50%, 25% and 12.5%.
 - The distance is $x$ everywhere now, but the hook's formula (beats 7–14) still writes the path's length as $d$, in $\int_0^{d}$. Should it change too?
+- 55b's narration is mine; the draft only asks for $\tau$ and "optical depth" on screen. So are the ending's on-screen answers, "particles placed at random" and "$\sigma$ changes along the ray".
+- The hook's third card, "inside another integral?", doesn't come back at the end: this video doesn't answer it.
 - The integral at beat 55 is written without limits, $\int \sigma(x)\,dx$, so that $x$ can stay the distance and the uniform case reads $\sigma x$.
 - In part 5 each section is drawn two long, so the readouts say 30.1%, which is $e^{-0.6 \times 2}$. With sections one long they would say 54.9%, and the dimming along the beam would be hard to see.
 - 48c's narration says "from basic calculus"; adding the exponents of multiplied powers is algebra. The draft's exponents had no minus signs; the animation and the script have them.

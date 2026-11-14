@@ -1,14 +1,14 @@
-// ---------- presentation, part 5: when the density changes along the path (beats 41–57) ----------
-// In the long frame that part 4 ends with (why.js), but zoomed back out and with no particles, as the bench's "Optical
-// depth is an area" has it: the laser, a volume of fog that is whiter where it is denser, the light dimming through it,
+// ---------- presentation, part 5: when the density changes along the path (beats 41–57c) ----------
+// Where part 4 ends (why.js; its frame goes), but zoomed back out and with no particles, as the bench's "Optical depth
+// is an area" has it: the laser, a volume of fog that is whiter where it is denser, the light dimming through it,
 // the sensor, and over them the plot of σ along the path.
 // 41: a cloud, denser here and thinner there, a spot of each circled. 42: the simple case: two sections, dense then
 // thin, a dashed line between them, σ written in each and plotted on top. 43–47: the same setup again on the right with
 // its sections swapped: in which does more light come out? A point walks through each in turn; they read the same.
 // 48–50: why: under each section its factor, × e^{−σx}; the two become one, their exponents added, and a sum doesn't
 // care about the order. 51–55: the same when σ changes continuously: the path chopped into tiny sections, a factor for
-// each, their exponents adding up to a sum, and that sum an integral. 56–57: any shape with the same integral reads the
-// same; and a uniform volume gives back e^{−σx}, the area under a flat line.
+// each, their exponents adding up to a sum, and that sum an integral, written τ: the optical depth. 56–57: any shape
+// with the same integral reads the same; and a uniform volume gives back e^{−σx}, the area under a flat line.
 // Along the path u runs from 0 to 2: two sections. Every σ here has the same integral over it, 0.6 section lengths, and
 // a section is x = 2 long, so the sensor reads e^{−1.2}, 30.1%, all the way through (long enough for the dimming to
 // show along the beam); the reading is worked out from the σ that is drawn.
@@ -18,9 +18,11 @@ const VARY = { s1: 0.4, s2: 0.2, smax: 0.5, uni: 0.3, n: 10, tau: 0.6, x: 2, bea
 // dev of the bench's size. The plot over it: σ = 0 at plotB, σ = smax at plotT. c1, c2, cr: the two circles of 41, where
 // along the path, and their radius. fy: where the factors are written, under the volume. cx, cy: its middle.
 const VG = { L: 900, R: 150, arc: 62, laser: -70, sensor: 1010, dev: 0.75, plotB: -215, plotT: -395, ext: 30, c1: 0.385, c2: 0.655, cr: 100, fy: 206, cx: 441.5, cy: -110 };
-// On the stage, [x, y, scale] of its middle: one setup, then A on the left and B on the right; alone: how much bigger
-// the picture is until the plot comes in over it. half: each one's half of the frame
-const VPOS = { one: [960, 538, 0.92], A: [505, 538, 0.64], B: [1415, 538, 0.64], alone: 1.18 }, VHALF = { A: [60, 210, 890, 670], B: [970, 210, 890, 670] };
+// On the stage, [x, y, scale] of its middle: one setup, then A on the left and B on the right, each in the middle of its
+// half with room on either side of the line between them (sep: its top and bottom); alone: how much bigger the picture
+// is until the plot comes in over it; lab: where A and B are named. VHALF: each one's half of the stage, for greying it.
+const VPOS = { one: [960, 538, 0.92], A: [476.5, 528, 0.58], B: [1436.5, 528, 0.58], alone: 1.18, sep: [305, 775], lab: { A: [104, 292], B: [1064, 292] } };
+const VHALF = { A: [60, 210, 890, 670], B: [970, 210, 890, 670] };
 // The fog: how opaque for a σ, and how it fades across the band (o: 0 on the beam, 1 at the band's edge)
 const VFOG = { a: (s) => 1.3 * s, mask: (o) => 1 - smooth(clamp((o - 0.38) / 0.62, 0, 1)), rgb: '215,215,215' };
 // 41's cloud: soft puffs [where along the path (0 to 1), how far off the beam, radius, thickness]: a middling clump, a
@@ -43,7 +45,7 @@ const vLoopShape = (u, t) => { const n = VSHAPES.length, k = Math.floor(t), f = 
 function VARY_DEFAULTS() { return {
   von: 0, vc1: 0, vc2: 0, vsect: 0, vface: 0, vax: 0, vpl: 0, vs1: 0, vs2: 0, vdual: 0, vmute: 0, vswap: 0, vfA: 0, vfB: 0, vpA: 0, vpAa: 0, vpB: 0, vpBa: 0,
   vq: 0, vread: 0, va1: 0, va2: 0, va3: 0, va4: 0, vb1: 0, vb3: 0, vb4: 0, vfoc: 0, vone: 0, vcont: 0, vchop: 0, vprod: 0, vsum: 0, vint: 0,
-  vshLoop: 0, vshT0: 0, vshR: 0, vsame: 0, vuni: 0, vsx: 0, varea: 0,
+  vshLoop: 0, vshT0: 0, vshR: 0, vsame: 0, vuni: 0, vsx: 0, varea: 0, vtau: 0, vname: 0,
 }; }
 // σ along the path for one of the two setups, as the state has it. band: the volume's own σ (two sections; B's swapped;
 // then the hump, the shapes of 56, the uniform one); sig: what the light meets (41's cloud until the sections take over)
@@ -89,14 +91,24 @@ function varyCloud(ctx, a) {
 }
 let VAX = null;
 const varyAxes = () => VAX || (VAX = makeAxes({ L: 0, R: VG.L, T: VG.plotT, B: VG.plotB, xr: [0, 2, 1], yr: [0, VARY.smax, 0.2], ext: VG.ext, xl: '', yl: '', labSize: 50, numSize: 30 }));
-// The top of the plot's filled area at u: flat over each tiny section while the path is chopped (it = 0), the curve
-// itself once the sum is an integral (it = 1)
-const varyTop = (f, u, it) => { const w = 2 / VARY.n, m = (Math.min(VARY.n - 1, Math.floor(u / w + 1e-9)) + 0.5) * w; return lerp(f(m), f(u), it); };
+// 55: on the way to the integral the tiny sections get thinner and thinner, twice as many at each step (VREF), and past
+// the last step the bars' tops are the curve itself. r: how far along that is, 0 (VARY.n sections) to VREF.length.
+const VREF = [1, 2, 4, 8].map((m) => m * VARY.n);
+const vStepTop = (f, u, n) => { const w = 2 / n; return f((Math.min(n - 1, Math.floor(u / w + 1e-9)) + 0.5) * w); };
+const varyTop = (f, u, r) => { const k = Math.min(VREF.length - 1, Math.floor(r)), q = smooth(clamp(r - k, 0, 1)); return lerp(vStepTop(f, u, VREF[k]), k + 1 < VREF.length ? vStepTop(f, u, VREF[k + 1]) : f(u), q); };
+// The sections' ends at r, [u, how strongly drawn]: fainter the more of them there are, the next step's new ones coming
+// in, and all of them going on the way from the last step to the curve
+function varyEdges(r) {
+  const k = Math.min(VREF.length - 1, Math.floor(r)), q = smooth(clamp(r - k, 0, 1)), last = k === VREF.length - 1, n = VREF[k], g = (m) => Math.sqrt(VREF[0] / m), out = [];
+  for (let i = 0; i <= n; i++) out.push([(2 * i) / n, last ? g(n) * (1 - q) : lerp(g(n), g(2 * n), q)]);
+  if (!last) for (let i = 1; i < 2 * n; i += 2) out.push([i / n, g(2 * n) * q]);
+  return out;
+}
 // One setup, in its own units, drawn at k of its size (so that what is written in it keeps its size on the stage).
 // du: how far the stage has gone from one setup to two.
 function varyDraw(ctx, st, side, k, du) {
   const P = varyProfile(st, side), L = VG.L, tauAt = varyTau(P.sig), T = (x) => Math.exp(-VARY.x * tauAt((2 * x) / L)), px = (s) => s / k, f = P.band;
-  const ch = smooth(clamp(st.vchop, 0, 1)), it = smooth(clamp(st.vint, 0, 1)), cut = ch * (1 - it), isB = side === 'B', swapping = isB && P.sw > 0.003 && P.sw < 0.997;
+  const ch = smooth(clamp(st.vchop, 0, 1)), it = smooth(clamp(st.vint, 0, 1)), r = clamp(st.vint, 0, 1) * VREF.length, edges = ch > 0.003 ? varyEdges(r) : [], isB = side === 'B', swapping = isB && P.sw > 0.003 && P.sw < 0.997;
   const dxs = (L / 2) * P.sw, dys = VG.arc * Math.sin(Math.PI * P.sw);   // B's sections on their way past each other: the dense one over the top
   // 41's cloud, and the volume it is simplified to
   if (P.se < 0.997) varyCloud(ctx, 1 - P.se);
@@ -104,10 +116,10 @@ function varyDraw(ctx, st, side, k, du) {
     if (swapping) { varyBand(ctx, dxs, dxs + L / 2, -dys, VG.R, () => VFOG.a(VARY.s1) * P.se); varyBand(ctx, L / 2 - dxs, L - dxs, dys, VG.R, () => VFOG.a(VARY.s2) * P.se); }
     else varyBand(ctx, 0, L, 0, VG.R, (t) => VFOG.a(f(2 * t)) * P.se, P.co < 0.997 ? [0.5] : []);
   }
-  // 42: the dashed line between the two sections; 53: the tiny sections' ends, thin lines
+  // 42: the dashed line between the two sections; 53–55: the tiny sections' ends, thin lines
   const fa = smooth(clamp(st.vface, 0, 1)) * (1 - P.co);
   if (fa > 0.003) dashed(ctx, L / 2, -VG.R * 0.94, L / 2, VG.R * 0.94, COL.greyA, 0.85 * fa, px(2.5));
-  if (cut > 0.003) { ctx.save(); ctx.strokeStyle = hexA(COL.greyA, 0.5 * cut); ctx.lineWidth = px(1.6); ctx.beginPath(); for (let i = 0; i <= VARY.n; i++) { ctx.moveTo((i * L) / VARY.n, -VG.R * 0.72); ctx.lineTo((i * L) / VARY.n, VG.R * 0.72); } ctx.stroke(); ctx.restore(); }
+  if (edges.length) { ctx.save(); ctx.lineWidth = px(1.6); for (const [u, a] of edges) { if (a * ch <= 0.01) continue; ctx.strokeStyle = hexA(COL.greyA, 0.5 * ch * a); ctx.beginPath(); ctx.moveTo((u / 2) * L, -VG.R * 0.72); ctx.lineTo((u / 2) * L, VG.R * 0.72); ctx.stroke(); } ctx.restore(); }
   // the light, the laser and the sensor
   drawBeam(ctx, VG.laser, VG.sensor - 11, 0, SH.color, SH.I0, T, [0, L / 2, L], VARY.beam);
   ctx.save(); ctx.translate(VG.laser, 0); ctx.scale(VG.dev, VG.dev); drawLaser(ctx, 0, 0, SH.color, 1); ctx.restore();
@@ -139,17 +151,19 @@ function varyDraw(ctx, st, side, k, du) {
   const ax = smooth(clamp(st.vax, 0, 1));
   if (ax <= 0.003) return;
   const A = varyAxes(), pa = smooth(clamp(isB ? st.vpBa : st.vpAa, 0, 1)), mu = smooth(clamp(st.vmute, 0, 1)) * (1 - pa), col = mixRgb(hexRgb(COL.yellow), hexRgb(COL.greyB), mu), pl = clamp(st.vpl, 0, 1);
-  // 53: its area, a bar over each tiny section; 55: the bars' tops become the curve
-  const fillA = Math.max(ch, it) * lerp(0.24, 0.46, smooth(clamp(st.varea, 0, 1)));
+  // 53: its area, a bar over each tiny section; 55: thinner and thinner bars, then the area under the curve, in the
+  // yellow the integral is written in
+  const fillA = Math.max(ch, it) * lerp(0.3, 0.5, smooth(clamp(st.varea, 0, 1)));
   if (fillA > 0.003) {
-    const w = 2 / VARY.n, us = []; for (let i = 0; i <= 200; i++) us.push((2 * i) / 200);
-    for (let i = 1; i < VARY.n; i++) us.push(i * w - 1e-6);
+    const k = Math.min(VREF.length - 1, Math.floor(r)), us = []; for (let i = 0; i <= 240; i++) us.push((2 * i) / 240);
+    for (const m of [VREF[k], 2 * VREF[k]]) for (let i = 1; i < m; i++) us.push((2 * i) / m - 1e-6, (2 * i) / m);
     us.sort((p, q) => p - q);
-    const trace = () => { ctx.beginPath(); us.forEach((u, i) => { const x = A.X(Math.round(u * 1e4) / 1e4), y = A.Y(varyTop(f, u, it)); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); }); };
+    const top = (u) => varyTop(f, u, r), trace = () => { ctx.beginPath(); us.forEach((u, i) => { const x = A.X(Math.round(u * 1e4) / 1e4), y = A.Y(top(u)); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); }); };
     ctx.save(); trace(); ctx.lineTo(A.X(2), A.Y(0)); ctx.lineTo(A.X(0), A.Y(0)); ctx.closePath(); ctx.fillStyle = hexA(COL.yellow, fillA * ax); ctx.fill();
-    if (cut > 0.003) {   // the bars' outlines
-      ctx.strokeStyle = hexA(COL.yellow, 0.85 * cut * ax); ctx.lineWidth = px(2); ctx.lineJoin = 'round'; trace(); ctx.stroke();
-      ctx.beginPath(); for (let i = 0; i <= VARY.n; i++) { const u = i * w, y = A.Y(Math.max(i ? varyTop(f, u - 1e-6, it) : 0, i < VARY.n ? varyTop(f, u, it) : 0)); ctx.moveTo(A.X(u), A.Y(0)); ctx.lineTo(A.X(u), y); } ctx.stroke();
+    const oa = ch * (k === VREF.length - 1 ? 1 - smooth(clamp(r - k, 0, 1)) : 1);   // the bars' outlines, gone once they are the curve
+    if (oa > 0.003) {
+      ctx.strokeStyle = hexA(COL.yellow, 0.85 * oa * ax); ctx.lineWidth = px(2); ctx.lineJoin = 'round'; trace(); ctx.stroke();
+      for (const [u, a] of edges) { if (a <= 0.01) continue; ctx.strokeStyle = hexA(COL.yellow, 0.85 * a * ch * ax); ctx.beginPath(); ctx.moveTo(A.X(u), A.Y(0)); ctx.lineTo(A.X(u), A.Y(Math.max(u > 0 ? top(u - 1e-6) : 0, u < 2 ? top(u) : 0))); ctx.stroke(); }
     }
     ctx.restore();
   }
@@ -234,7 +248,7 @@ function varyProd() {
   const mid = (S) => { const [, , t, b] = inkSpan(S); return (t + b) / 2; };
   dots = vShift(dots, 0, mid(facs[0].filter((s) => s.a.ch === '×')) - mid(dots));
   const sum = at(vFac(String.raw`\htmlClass{t-vint}{(${term('1')}\,+\,${term('2')}\,+\,\cdots\,+\,${term('n')})}`), xm, VW.pbig);
-  const int = at(vFac(String.raw`\htmlClass{t-vint}{\int ${sg}(${vX})\,\textcolor{${COL.blue}}{dx}}`), xm, VW.pbig);
+  const int = at(vFac(String.raw`\htmlClass{t-vint}{\textcolor{${COL.yellow}}{\int \sigma(x)\,dx}}`), xm, VW.pbig);   // in the yellow of the area it is
   const uni = at(vFac(sg + String.raw`\,` + vX), xm, VW.pbig);
   const row = [...facs[0], ...facs[1], ...dots, ...facs[2]];
   return (vProd = { facs, dots, sum, int, uni, toSum: matchPlan(row, sum), toInt: matchPlan(sum, int), toUni: matchPlan(int, uni) });
@@ -260,8 +274,20 @@ function drawVaryProd(ctx, st, alpha) {
   if (um < 0.999) { drawMorph(ctx, F.toUni, um, alpha); return; }
   drawSprites(ctx, F.uni, { alpha });
 }
+// 55b: the integral has a name: a copy of it goes up beside the plot, τ = ∫σ(x)dx, and under it, "optical depth"
+const VTAU = { x: 1640, y: 330, size: 50, ny: 404, nsize: 40 };
+let vTau = null;
+function drawVaryTau(ctx, st) {
+  const m = clamp(st.vtau, 0, 1), nm = clamp(st.vname, 0, 1); if (m <= 0.003) return;
+  if (!vTau) {
+    const to = place(tex(String.raw`\textcolor{${COL.yellow}}{\tau} = \textcolor{${COL.yellow}}{\int \sigma(x)\,dx}`), { x: VTAU.x, y: VTAU.y, size: VTAU.size });
+    vTau = { to, plan: matchPlan(varyProd().int.filter((q) => q.a.terms.includes('t-vint')), to) };
+  }
+  if (m < 0.999) drawMorph(ctx, vTau.plan, m); else drawSprites(ctx, vTau.to);
+  if (nm > 0.003) drawTex(ctx, String.raw`\text{optical depth}`, VTAU.x, VTAU.ny, VTAU.nsize, { p: nm });
+}
 function drawVary(ctx, dt, st) {
-  const on = smooth(clamp((st.von - 0.35) / 0.65, 0, 1)); if (on <= 0.003) return;
+  const on = smooth(clamp((st.von - 0.35) / 0.65, 0, 1)) * (1 - smooth(clamp(st.eout || 0, 0, 1))); if (on <= 0.003) return;   // (58: it all goes, for the ending, end.js)
   // 51: B fades where it is, and then A comes back to the middle (one: how far that has gone, for B and for A)
   const one = smooth(clamp(st.vone * 2.5, 0, 1)), back = smooth(clamp((st.vone - 0.3) / 0.7, 0, 1)), dual = smooth(clamp(st.vdual, 0, 1)), du = dual * (1 - back);
   const fo = smooth(clamp(st.vfoc, 0, 1)), plotIn = smooth(clamp(st.vax, 0, 1));
@@ -274,9 +300,12 @@ function drawVary(ctx, dt, st) {
     const [X, Y, k0] = S.at, k = k0 * lerp(VPOS.alone, 1, plotIn);
     ctx.save(); ctx.globalAlpha *= lerp(1, 0.4, smooth(clamp(S.fade, 0, 1))) * S.a;
     ctx.save(); ctx.translate(X, Y + lift * k); ctx.scale(k, k); ctx.translate(-VG.cx, -VG.cy); varyDraw(ctx, st, S.name, k, S.du); ctx.restore();
-    if (S.du > 0.003) drawTex(ctx, String.raw`\text{${S.name}}`, VHALF[S.name][0] + 44, VHALF[S.name][1] + 44, 56, { alpha: S.du * (1 - one) });
+    if (S.du > 0.003) drawTex(ctx, String.raw`\text{${S.name}}`, VPOS.lab[S.name][0], VPOS.lab[S.name][1], 56, { alpha: S.du * (1 - one) });
     ctx.restore();
   }
+  // 43–50: a line between the two, once the copy is nearly in place
+  const sep = smooth(clamp((dual - 0.6) / 0.4, 0, 1)) * (1 - one);
+  if (sep > 0.003) { ctx.save(); ctx.strokeStyle = hexA(COL.greyC, 0.9 * sep); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(960, VPOS.sep[0]); ctx.lineTo(960, VPOS.sep[1]); ctx.stroke(); ctx.restore(); }
   // 50: both pictures lose their colour and dim; only the additions, drawn after this, keep theirs
   if (fo * (1 - one) > 0.003) for (const S of sides) greyOut(ctx, VHALF[S.name], fo * (1 - one) * on, 0.3 * fo * (1 - one) * on);
   // 46: the question
@@ -288,8 +317,9 @@ function drawVary(ctx, dt, st) {
     drawVaryPair(ctx, varyPair(VARY.s1, VARY.s2, VPOS.A), st.va1, st.va2, st.va3, st.va4, fo, pa * lerp(1, 0.4, smooth(clamp(st.vfA, 0, 1))));
     drawVaryPair(ctx, varyPair(VARY.s2, VARY.s1, VPOS.B), b * 2, b * 2 - 1, st.vb3, st.vb4, fo, pa * lerp(1, 0.4, smooth(clamp(st.vfB, 0, 1))));
   }
-  // 53b on: the tiny sections' factors
+  // 53b on: the tiny sections' factors; 55b: τ
   drawVaryProd(ctx, st, 1);
+  drawVaryTau(ctx, st);
   ctx.restore();
   // 44–49: the one we aren't talking about loses its colour
   for (const S of sides) { const f = smooth(clamp(S.fade, 0, 1)) * on * (1 - one); if (f > 0.003) greyOut(ctx, VHALF[S.name], f, 0); }
@@ -308,13 +338,13 @@ function varySections() { ptw('vc1', 0, 0.4); ptw('vc2', 0, 0.4); ptw('vface', 1
 function varyAxesIn() { return ptw('vax', 1, 1.2); }
 function varyPlot1() { ptw('vs1', 1, 0.6); return ptw('vpl', 1 / 2.25, 1.6, { delay: 0.2, ease: linear }); }
 function varyPlot2() { ptw('vs2', 1, 0.6, { delay: 0.5 }); return ptw('vpl', 1, 1.9, { ease: linear }); }
-// 43: the plots lose their colour; the setup shrinks to the left, A, and its copy goes to the right, B. 43b: B's two
-// sections change places
-function varyCopy() { ptw('vmute', 1, 0.6); return ptw('vdual', 1, 1.6); }
+// 43: the plots lose their colour; the setup shrinks to the left, A, and its copy goes to the right, B, which is where the
+// focus is: A fades as it goes. 43b: B's two sections change places
+function varyCopy() { ptw('vmute', 1, 0.6); ptw('vfA', 1, 0.7, { delay: 0.6 }); return ptw('vdual', 1, 1.6); }
 function varySwap() { return ptw('vswap', 1, 1.9); }
-// 44: B fades, and a point walks through A's first section, on its plot and on its beam. 44b: through its second.
-// 45, 45b: the same for B, A faded
-function varyWalkA1() { ptw('vfB', 1, 0.6); PS.vpA = 0; ptw('vpAa', 1, 0.4); return ptw('vpA', 1, 2.4, { delay: 0.5, ease: linear }); }
+// 44: A comes back and B fades, and a point walks through A's first section, on its plot and on its beam. 44b: through
+// its second. 45, 45b: the same for B, A faded
+function varyWalkA1() { ptw('vfA', 0, 0.6); ptw('vfB', 1, 0.6); PS.vpA = 0; ptw('vpAa', 1, 0.4); return ptw('vpA', 1, 2.4, { delay: 0.5, ease: linear }); }
 function varyWalkA2() { return ptw('vpA', 2, 2.4, { ease: linear }); }
 function varyWalkB1() { ptw('vfB', 0, 0.6); ptw('vfA', 1, 0.6); ptw('vpAa', 0, 0.4); PS.vpB = 0; ptw('vpBa', 1, 0.4); return ptw('vpB', 1, 2.4, { delay: 0.5, ease: linear }); }
 function varyWalkB2() { return ptw('vpB', 2, 2.4, { ease: linear }); }
@@ -347,9 +377,11 @@ function varyFall() { return ptw('vpA', 2, 2.6, { ease: linear }); }
 // each, written in turn, a dashed line from each to its tiny section
 function varyChop() { ptw('vpAa', 0, 0.4); return ptw('vchop', 1, 1.2); }
 function varyProduct() { return ptw('vprod', 1, 3.2, { ease: linear }); }
-// 54: multiplied, they are one factor, their exponents added. 55: the sum becomes an integral, the bars the area under the curve
+// 54: multiplied, they are one factor, their exponents added. 55: the sum becomes an integral while the bars get thinner
+// and thinner and become the area under the curve. 55b: the integral is written τ: the optical depth
 function varySum() { return ptw('vsum', 1, 1.7, { ease: linear }); }
-function varyIntegral() { return ptw('vint', 1, 1.9, { ease: linear }); }
+function varyIntegral() { return ptw('vint', 1, 4.0, { ease: linear }); }
+function varyTauName() { ptw('vtau', 1, 1.5); return ptw('vname', 1, 0.9, { delay: 1.3, ease: linear }); }
 // 56: the volume goes through other shapes, each with the same integral. 56b: the integral and the reading, boxed
 function varyShapes() { if (reduced) return ptw('vshR', 1, 1.6); PS.vshLoop = 1; PS.vshT0 = labLoopStart('vshT0', TIME); return Promise.resolve(); }
 function varySame() { return ptw('vsame', 1, 0.6); }
