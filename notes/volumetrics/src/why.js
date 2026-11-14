@@ -250,7 +250,7 @@ function whyNAt(t0) {
   return lerp(a, b, smooth(clamp((f - 0.45) / 0.55, 0, 1)));
 }
 function WHY_DEFAULTS() { return {
-  won: 0, wpart: 0, wshad: 0, weq: 0, weqW: 0, weqA: 0, wcard: 0, wcard2: 0, wsel: 0, wfade: 0, wzoom: 0, wls: 0, wread: 0, wbr: 0, wpow: 1, wpowLoop: 0, wpowT0: 0, wsay: 0, wsayP: 0, wlab: 0, wn: 1, wfm: 0, wnLoop: 0, wnT0: 0,
+  won: 0, wpart: 0, wshad: 0, weq: 0, weqW: 0, weqA: 0, wsel: 0, wfade: 0, wzoom: 0, wls: 0, wread: 0, wbr: 0, wpow: 1, wpowLoop: 0, wpowT0: 0, wsay: 0, wsayP: 0, wlab: 0, wn: 1, wfm: 0, wnLoop: 0, wnT0: 0,
   wfe: 0, wpl: 0, wax: 0, wcur: 0, wdA: 0, wdB: 0, wlight: 1, wclump: 0, wfo: 0, wsp: 0, wnmL: 0, wnmR: 0, wgrey: 0, wlong: 0, wnL: 5, bOut: 0,
 }; }
 // 37: how far slab k's particles have moved into their clump: the first slab's first, then the others'
@@ -386,7 +386,7 @@ function drawWhy(ctx, dt, st) {
     const nL = clamp(st.wnL, 1, WHY.NLONG), nD = (WDN.n * nL) / WPL.n;   // (12 thin slabs for every 5 of the others)
     const vo = 1 - smooth(clamp((st.von || 0) * 2.2, 0, 1));   // 41: its slabs, its plot and the frame itself make way for part 5 (vary.js)
     const eq = smooth(clamp(st.weq || 0, 0, 1)), Fl = lerpRect(WFRAME.L, WFRAME.long, long), F = lerpRect(Fl, WFRAME.low, eq), c = WPC(nL), R = WFRAME.R;
-    const k = lerp(WFRAME.k, WFRAME.klong, long) * (F[3] / Fl[3]), fa = vo * (1 - smooth(clamp(st.wcard || 0, 0, 1)));   // fa: until the cards take over (40c)
+    const k = lerp(WFRAME.k, WFRAME.klong, long) * (F[3] / Fl[3]), fa = vo;   // fa: until 41 clears the stage
     ctx.save(); ctx.globalAlpha *= sp * fa; ctx.translate(F[0] + F[2] / 2, F[1] + F[3] / 2); ctx.scale(k, k); ctx.translate(-c[0], -c[1]);
     whyDenseDraw(ctx, 'A', nD, Math.max(WDN.n, nD));
     ctx.restore();
@@ -399,7 +399,6 @@ function drawWhy(ctx, dt, st) {
     if (st.wnmL > 0.003) name('Exponential', 'Particles Placed Randomly', F[0] + F[2] / 2, F[1], clamp(st.wnmL, 0, 1), fa, null, mixRgb(hexRgb(COL.greyA), hexRgb(COL.gold), smooth(clamp(st.weqA || 0, 0, 1))));
     if (st.wnmR > 0.003) name('Non-Exponential', 'Particles Placed with a Structure', R[0] + R[2] / 2, R[1], clamp(st.wnmR, 0, 1), 1 - long, grey > 0.003 ? mixRgb(WHITE_RGB, hexRgb(COL.greyC), grey) : null);
     whyFormulaBack(ctx, st, F, fa);   // 40, 40b
-    whyCards(ctx, dt, st, vo);   // 40c, 40d
   }
   ctx.restore();
   // 39d: the right one greys out: not for now
@@ -506,12 +505,9 @@ function whyNameR() { return ptw('wnmR', 1, 1.7, { ease: linear }); }
 function whyGrey() { return ptw('wgrey', 1, 0.9); }
 // 40: the greyed frame goes and the exponential one grows longer, across the stage, more slabs coming in; it settles a
 // little lower, and the hook's formula writes in over it, its exponential boxed. 40b: an arrow from the box down to
-// "Particles Placed Randomly", which takes the box's orange. 40c: the formula and the frame give way to a card, computer
-// graphics (the cloud, rendered). 40d: a second card beside it, astronomy
+// "Particles Placed Randomly", which takes the box's orange. Both stay until 41 clears the stage
 function whyLong() { ptw('wlong', 1, 1.6); ptw('wnL', WHY.NLONG, 2.6, { delay: 0.9, ease: linear }); ptw('weq', 1, 1.2, { delay: 1.4 }); return ptw('weqW', 1, 1.8, { delay: 1.9, ease: linear }); }
 function whyAssume() { return ptw('weqA', 1, 0.9); }
-function whyCG() { return ptw('wcard', 1, 1.1); }
-function whyAstro() { return ptw('wcard2', 1, 0.9); }
 // 40: the hook's formula, at the top, and a box around its exponential; 40b: the arrow from it to the assumption
 const WEQ = { y: 112, w: 1560 };
 function whyFormulaBack(ctx, st, F, fa) {
@@ -528,21 +524,4 @@ function whyFormulaBack(ctx, st, F, fa) {
     ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1 - 14 * Math.cos(an), y1 - 14 * Math.sin(an)); ctx.stroke();
     ctx.translate(x1, y1); ctx.rotate(an); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-20, -10); ctx.lineTo(-20, 10); ctx.closePath(); ctx.fill(); ctx.restore();
   }
-}
-// 40c, 40d: where it's still used: computer graphics (the cloud, rendered as in the hook) and astronomy (beat 17's card)
-const WCARDS = [{ r: [150, 250, 790, 560], label: 'computer graphics', key: 'wcard' }, { r: [980, 250, 790, 560], label: 'astronomy', key: 'wcard2' }];
-function whyCards(ctx, dt, st, vo) {
-  WCARDS.forEach((c, i) => {
-    const a = smooth(clamp(st[c.key] || 0, 0, 1)) * vo, r = c.r; if (a <= 0.003) return;
-    ctx.save(); ctx.globalAlpha *= a; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip();
-    if (i === 0) {
-      if (!reduced) SK.yaw += dt * PRES_DRIFT;   // turning slowly, as in the hook
-      presCloudOffscreen(dt, false);
-      const ar = r[2] / r[3], sw = Math.min(W, H * ar), sh = Math.min(H, W / ar);
-      ctx.drawImage(presCv, ((W - sw) / 2) * K, ((H - sh) / 2) * K, sw * K, sh * K, r[0], r[1], r[2], r[3]);
-    } else { const s = r[2] / 700; ctx.translate(r[0], r[1]); ctx.scale(s, s); drawUseStars(ctx, dt, r[3] / s); }
-    ctx.restore();
-    ctx.save(); ctx.strokeStyle = hexA(COL.greyC, a); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.stroke(); ctx.restore();
-    drawTex(ctx, String.raw`\text{${c.label}}`, r[0] + 22, r[1] + 18, 32, { ax: 0, ay: 0, color: COL.greyA, alpha: a });
-  });
 }

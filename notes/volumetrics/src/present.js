@@ -181,8 +181,6 @@ const BEATS = [
   { n: '39d', name: 'not for now', run: () => whyGrey() },
   { n: '40', name: 'a hidden assumption', run: () => whyLong() },
   { n: '40b', name: 'placed randomly', run: () => whyAssume() },
-  { n: '40c', name: 'computer graphics', run: () => whyCG() },
-  { n: '40d', name: 'astronomy', run: () => whyAstro() },
   // part 5 (vary.js): the density changes along the path; dense then thin, or thin then dense: the same light gets out
   { n: '41', name: 'far from practice', run: () => varyStart() },
   { n: '41b', name: 'denser here', run: () => varyDense() },
