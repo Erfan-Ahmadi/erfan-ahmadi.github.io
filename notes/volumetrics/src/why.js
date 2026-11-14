@@ -436,13 +436,13 @@ function whyBright() { ptw('wpart', 0, 0.5); ptw('wshad', 0, 0.5); PS.wpowLoop =
 // 33b: what the slab says
 function whySays() { PS.wsayP = 0; ptw('wsay', 1, 0.5); return ptw('wsayP', 1, 2.6, { delay: 0.3, ease: linear }); }
 // 33b: what the slab says, in a readout over it like the figure's thoughts, word for word as it's said, on two lines
-const WSAYS = [String.raw`\text{I don't care where you've been, or how bright you are.}`, String.raw`\text{I'm taking ten percent.}`], WSZ = { size: 38, lh: 54, padX: 34, padY: 26 };
+const WSAYS = [String.raw`\text{I don't care where you've been, or how bright you are.}`, String.raw`\text{I'm taking 10\%.}`], WSZ = { size: 38, lh: 54, padX: 34, padY: 26 };
 function whySays2(ctx, x, y, p, a, head) {
   if (a <= 0.003) return;
   const L = WSAYS.map((src, i) => place(tex(src), { x, y: y + (i - (WSAYS.length - 1) / 2) * WSZ.lh, size: WSZ.size }));
   const w = Math.max(...L.map((S) => { const [l, r] = inkSpan(S); return r - l; })) + 2 * WSZ.padX, h = WSAYS.length * WSZ.lh + 2 * WSZ.padY - 14;
   drawThought(ctx, x, y, w, h, '', 1, a, head, COL.white);
-  L.forEach((S, i) => drawSprites(ctx, S, { p: clamp(p * 1.7 - i * 0.85, 0, 1), alpha: a }));
+  L.forEach((S, i) => drawSprites(ctx, S, { p: clamp(p * 1.7 - i * 0.7, 0, 1), alpha: a }));   // (each line written in full by p = 1)
 }
 // 34: the light settles and the slab has said its piece: × 0.9 over it. 34b, 34c: another slab, and another
 function whyTimes() {
