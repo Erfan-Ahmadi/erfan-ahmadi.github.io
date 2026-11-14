@@ -182,6 +182,8 @@ The working script below has light edits; the original drafts, word for word, ar
 **58b.** [A thin line comes in between the two rows. The bottom card, "why an integral in the exponent?", its arrow, its answer, "$\sigma$ changes along the ray", and under it part 5's volume, its $\sigma$ going through one shape after another, the area under it, and the reading, staying the same; to its right, $e^{-\int \sigma(x)\,dx}$, the integral in the area's yellow. Both animations keep playing until the video ends.]
 > and that the reason you see integrals in the exponent is that the absorption coefficient changes along a ray.
 
+> So the next time you see that formula, the $e$ and the integral in its exponent shouldn't look scary anymore: you know exactly where they come from.
+
 > See you in the next video, where we'll cover emission and scattering, and the nuances we've skipped in this one.
 
 ## Open
