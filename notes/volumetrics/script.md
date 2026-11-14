@@ -168,13 +168,13 @@ The working script below has light edits; the original drafts, word for word, ar
 **55.** [The sum turns into an integral, "$\times\, e^{-\int \sigma(x)\,dx}$", the integral in the same yellow as the area, while the tiny sections get thinner and thinner, twice as many at each step, 20, 40, 80, in the plot and in the volume, until the bars are the area under the curve and the lines in the volume are gone.]
 > You've probably noticed by now that this is the exact definition of an integral.
 
-**55b.** [A copy of the integral goes up beside the plot and grows: "$\tau = \int \sigma(x)\,dx$", and under it, "optical depth". It stays there to the end of the part.]
+**55b.** [A copy of the integral goes up beside the plot and grows: "$\tau = \int \sigma(x)\,dx$", and over it, "optical depth". It stays there until 57b.]
 > This integral has its own name: it's written $\tau$, and it's called the optical depth.
 
-**56.–56b.** [The volume goes through other shapes, one after another until the next press (a ramp up, two bumps, a ramp down, the hump again): the plot, the fog and the dimming along the beam change together. Each has the same area under it, and the readout never changes. Next press, a box goes around the integral, and another around the readout.]
+**56.–56b.** [The volume goes through other shapes, one after another until the next press, about a second to change from one to the next (a ramp up, high then low, two bumps, a dip in the middle, a ramp down, three bumps, low then high, the hump again): the plot, the fog and the dimming along the beam change together. Each has the same area under it, and the readout never changes. Next press, a box goes around the integral, and another around the readout.]
 > Your volume can change density and absorption all it wants, [56b] but as long as the integral remains the same, the sensor on the other end reads the same value.
 
-**57.–57c.** [The boxes go, and the shape settles into a flat line: the volume is the same all the way through. Next press, the integral turns into "$\times\, e^{-\sigma x}$". Next press, the area under the flat line, a rectangle $\sigma$ high and $x$ long, brightens.]
+**57.–57c.** [The boxes go, and the shape settles into a flat line: the volume is the same all the way through. Next press, the integral turns into "$\times\, e^{-\sigma x}$", $\tau$ and "optical depth" go, and inside the rectangle under the flat line "area $= \sigma \times x$" writes in. Next press, the area under the flat line, a rectangle $\sigma$ high and $x$ long, brightens.]
 > As a sanity check, look how it's consistent when our volume is uniform all across. [57b] It's the same formula we had before, sigma times $x$: [57c] that's the area under the curve.
 
 ## Part 6: the ending
@@ -182,7 +182,7 @@ The working script below has light edits; the original drafts, word for word, ar
 **58.** [Everything goes. Two of the hook's question cards come back, in their colours, one above the other on the left. First the top one, "Why $e$? Why exponentials?": an arrow grows from it to the right, to its answer, "particles placed at random", and under the answer part 4's picture comes back, the slabs with their particles placed at random coming in one by one up to ten, the brace and the steps on the exponential curve following them, then going back down to one, over and over.]
 > By now I hope you've understood that the reason exponentials show up is our assumption that the particles are placed at random,
 
-**58b.** [The bottom card, "why an integral in the exponent?", its arrow, its answer, "$\sigma$ changes along the ray", and under it part 5's volume, its $\sigma$ going through one shape after another, the area under it, and the reading, staying the same; to its right, $e^{-\int \sigma(x)\,dx}$, the integral in the area's yellow. Both animations keep playing until the video ends.]
+**58b.** [A thin line comes in between the two rows. The bottom card, "why an integral in the exponent?", its arrow, its answer, "$\sigma$ changes along the ray", and under it part 5's volume, its $\sigma$ going through one shape after another, the area under it, and the reading, staying the same; to its right, $e^{-\int \sigma(x)\,dx}$, the integral in the area's yellow. Both animations keep playing until the video ends.]
 > and that the reason you see integrals in the exponent is that the absorption coefficient changes along a ray.
 
 > See you in the next video, where we'll cover emission and scattering, and the nuances we've skipped in this one.

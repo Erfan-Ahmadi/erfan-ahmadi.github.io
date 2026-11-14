@@ -6,12 +6,13 @@
 // integral, and the reading, staying the same).
 // rows: which card, and the row's middle. card: its left, width, height, title size and line spacing. arrow: where it
 // starts and ends, its head. ans: the answer's left, its text's height and size, and the animation's box (top, width,
-// height), each against the row's middle.
+// height), each against the row's middle. sep: the line between the rows (its height, its left and right ends)
 const END = {
-  rows: [{ q: 2, cy: 330 }, { q: 0, cy: 772 }],
+  rows: [{ q: 2, cy: 300 }, { q: 0, cy: 790 }],
   card: { x: 70, w: 440, h: 150, size: 36, gap: 46 },
   arrow: { x0: 530, x1: 632, head: 20 },
-  ans: { x: 668, ty: -215, size: 42, top: -185, w: 1190, h: 370 },
+  ans: { x: 668, ty: -215, size: 42, top: -185, w: 1190, h: 360 },
+  sep: { y: 515, x0: 70, x1: 1858 },
 };
 const ENDTXT = [String.raw`\text{particles placed at random}`, String.raw`\textcolor{${COL.yellow}}{\sigma}\text{ changes along the ray}`];
 const ENDFML = String.raw`e^{-\textcolor{${COL.yellow}}{\int \sigma(x)\,dx}}`;
@@ -52,6 +53,9 @@ function endArrow(ctx, x0, x1, y, a) {
   ctx.restore();
 }
 function drawEnd(ctx, dt, st) {
+  // 58b: a thin line between the two rows, coming in with the second card
+  const sa = smooth(clamp(st.endQ2, 0, 1)), S = END.sep;
+  if (sa > 0.003) { ctx.save(); ctx.strokeStyle = hexA(COL.greyC, 0.9 * sa); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(S.x0, S.y); ctx.lineTo(S.x1, S.y); ctx.stroke(); ctx.restore(); }
   END.rows.forEach((R, i) => {
     const j = i + 1, qa = smooth(clamp(st['endQ' + j], 0, 1)); if (qa <= 0.003) return;
     const q = QCARDS[R.q], C = END.card, mx = C.x + C.w / 2, pop = lerp(0.85, 1, qa), A = END.ans;
