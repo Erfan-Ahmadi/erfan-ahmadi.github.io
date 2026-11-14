@@ -53,7 +53,7 @@ The working script below has light edits; the original drafts, word for word, ar
 > and that it doesn't glow, or give off any light of its own. I'll get to them in the next video.
 
 **21d.** [The glow goes: plain stuff again, the beam dimmer past the box. The two lines turn into one, the letters they share moving over: "Just Absorption". It goes when the setup is copied, at 23.]
-> For now, our particles only absorb light: whatever light hits one is taken in, turned into a little heat, and is gone from the beam.
+> For now, our particles only absorb light: whenever light hits one particle, it's is taken in and turned into a little heat.
 
 **22.–22b.** [The sensor's reading appears for the first time, 50%, already brought forward: everything else dims and the readout is a little bigger. Next press, everything goes back as it was.]
 > So they take some of the laser's light, and less of it makes it to the other end. How much less? That's what the sensor is for. Here it reads fifty percent: half the light made it through. [22b]
