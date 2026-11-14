@@ -132,22 +132,21 @@ The working script below has light edits; the original drafts, word for word, ar
 > But we're still far from what happens in practice, where the volume changes shape and density across our path. [41b] For example, our cloud might have a higher density here, [41c] but a lower density here.
 
 **42.–42d.** [The circles go, and the cloud turns into the simple case: one band of fog in two sections, a dense one and then a thin one, a dashed line between them. Next press, the picture moves down a little and a plot's axes come in over it: $\sigma$ against the distance $x$, lined up with the volume. Next press, "$\sigma = 0.4$" is written in the first section, and the plot's line draws across it, in $\sigma$'s yellow. Next press, the line drops and goes on across the second section, and "$\sigma = 0.2$" is written there.]
-> But let's keep it simple, and assume our volume starts at a high density and then suddenly switches to a low one midway. [42b] Actually, let me plot the absorption coefficient for you: [42c] it starts at 0.4, [42d] and then suddenly switches to 0.2.
+> But let's keep it simple, and assume our volume starts at a high density and then suddenly switches to a low density midway. [42b] Actually, let me plot the absorption coefficient for you: [42c] it starts at 0.4, [42d] and then suddenly switches to 0.2.
 
 **43.–43b.** [The plots lose their colour: the sections are what matters now. The setup shrinks into the left half of the stage, named A, and a copy of it slides into the right half, B; a thin line comes in between the two, and A fades as the copy lands, so the eye is on B. Next press, B's two sections change places, the dense one going over the top, and its plot follows: 0.2, then 0.4.]
-> Now, here is a question for you. [43b] I take these two sections and swap them. In which of the two cases does the light come out brighter on the other end?
+> Now, here is a question for you. [43b] I take these two sections and swap them around. Does it make the light brighter or dimmer on the other side?
 
-**44.–45b.** [A comes back, and B fades and loses its colour. A's plot takes its yellow back, and a point walks through A's first section: a dot on the plot, a dot on the beam, a dashed line between them. Next press, it goes on through the second. Next press, the same for B, with A faded: through its first section; next press, its second.]
-> In the first one, our light gets absorbed more, and faster, [44b] but then it gets absorbed less. [45] In the second one, our light doesn't get absorbed as much in the first half, [45b] but it gets absorbed more later.
+(remove beats here, remove the animation the audience is not dumb, they get the question by now, no need to walk it over again)
 
 **46.** [Both as they were, and over the frame: "A or B?"]
-> Pause here if you want.
+> Pause here if you want and try to answer In which of the two cases does the light come out brighter on the other end?
 
 **47.** [The question goes, and a readout comes in over each sensor: 30.1%, and 30.1%.]
 > OK, that was a trick question: both end up with the same amount of light on the other end, and the sensor reads the same value.
 
 **48.–48d.** [B fades. Directly under A's first section: "$\times\, e^{-0.4\,x}$", the 0.4 in $\sigma$'s yellow and $x$ in its blue. Next press, under its second section: "$\times\, e^{-0.2\,x}$". Next press, the two come together under the middle of the volume and become one: "$\times\, e^{-(0.4+0.2)\,x}$". Next press, the brackets turn into their sum: "$\times\, e^{-0.6\,x}$".]
-> Let's walk through the first one. The first section's effect is to multiply by $e^{-0.4x}$. [48b] The second section's effect is to multiply by $e^{-0.2x}$. [48c] And from basic calculus we know the exponents get added, and you end up with $e^{-(0.4+0.2)x}$. [48d]
+> [I need you to read the math for me here, not show equations, I will use it to speak] Let's walk through the first one. The first section's effect is to multiply by $e^{-0.4x}$. [48b] The second section's effect is to multiply by $e^{-0.2x}$. [48c] And from basic calculus we know the exponents get added, and you end up with $e^{-(0.4+0.2)x}$. [48d]
 
 **49.–49b.** [A fades and B comes back. Under B's sections: "$\times\, e^{-0.2\,x}$" and "$\times\, e^{-0.4\,x}$", which then become one, "$\times\, e^{-(0.2+0.4)\,x}$". Next press, its brackets turn into 0.6 too, and A comes back: both say "$\times\, e^{-0.6\,x}$".]
 > If you do the same thing on the other one, [49b] you end up with the same value.
