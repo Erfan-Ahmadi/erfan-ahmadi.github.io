@@ -137,16 +137,14 @@ The working script below has light edits; the original drafts, word for word, ar
 **43.–43b.** [The plots lose their colour: the sections are what matters now. The setup shrinks into the left half of the stage, named A, and a copy of it slides into the right half, B; a thin line comes in between the two, and A fades as the copy lands, so the eye is on B. Next press, B's two sections change places, the dense one going over the top, and its plot follows: 0.2, then 0.4.]
 > Now, here is a question for you. [43b] I take these two sections and swap them around. Does it make the light brighter or dimmer on the other side?
 
-(remove beats here, remove the animation the audience is not dumb, they get the question by now, no need to walk it over again)
-
-**46.** [Both as they were, and over the frame: "A or B?"]
+**46.** [A comes back, both as they were, and over the frame: "A or B?"]
 > Pause here if you want and try to answer In which of the two cases does the light come out brighter on the other end?
 
 **47.** [The question goes, and a readout comes in over each sensor: 30.1%, and 30.1%.]
 > OK, that was a trick question: both end up with the same amount of light on the other end, and the sensor reads the same value.
 
 **48.–48d.** [B fades. Directly under A's first section: "$\times\, e^{-0.4\,x}$", the 0.4 in $\sigma$'s yellow and $x$ in its blue. Next press, under its second section: "$\times\, e^{-0.2\,x}$". Next press, the two come together under the middle of the volume and become one: "$\times\, e^{-(0.4+0.2)\,x}$". Next press, the brackets turn into their sum: "$\times\, e^{-0.6\,x}$".]
-> [I need you to read the math for me here, not show equations, I will use it to speak] Let's walk through the first one. The first section's effect is to multiply by $e^{-0.4x}$. [48b] The second section's effect is to multiply by $e^{-0.2x}$. [48c] And from basic calculus we know the exponents get added, and you end up with $e^{-(0.4+0.2)x}$. [48d]
+> Let's walk through the first one. The first section's effect is to multiply by e to the minus 0.4 x. [48b] The second section's effect is to multiply by e to the minus 0.2 x. [48c] And from basic calculus we know the exponents get added, and you end up with e to the minus, 0.4 plus 0.2, times x. [48d]
 
 **49.–49b.** [A fades and B comes back. Under B's sections: "$\times\, e^{-0.2\,x}$" and "$\times\, e^{-0.4\,x}$", which then become one, "$\times\, e^{-(0.2+0.4)\,x}$". Next press, its brackets turn into 0.6 too, and A comes back: both say "$\times\, e^{-0.6\,x}$".]
 > If you do the same thing on the other one, [49b] you end up with the same value.

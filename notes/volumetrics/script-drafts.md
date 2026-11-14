@@ -187,6 +187,18 @@ Added in script.md after beat 28c, word for word:
 Here add a new thing (with focus on sigma): That is controlled by our absorbtion coefficient displayed by the letter sigma. 
 ```
 
+Inline requests in script.md, word for word. In place of beats 44–45b (the walk-throughs, now removed):
+
+```text
+(remove beats here, remove the animation the audience is not dumb, they get the question by now, no need to walk it over again)
+```
+
+At the start of beat 48's narration (its math now written out as it's said):
+
+```text
+[I need you to read the math for me here, not show equations, I will use it to speak]
+```
+
 ## Notes from the flow discussions
 
 ```text

@@ -4890,10 +4890,6 @@ const BEATS = [
   { n: '42d', name: 'then 0.2', run: () => varyPlot2() },
   { n: '43', name: 'a question', run: () => varyCopy() },
   { n: '43b', name: 'swap them', run: () => varySwap() },
-  { n: '44', name: 'the first one: more, and faster', run: () => varyWalkA1() },
-  { n: '44b', name: 'then less', run: () => varyWalkA2() },
-  { n: '45', name: 'the second one: not as much', run: () => varyWalkB1() },
-  { n: '45b', name: 'more later', run: () => varyWalkB2() },
   { n: '46', name: 'A or B?', run: () => varyAsk() },
   { n: '47', name: 'a trick question', run: () => varyReveal() },
   { n: '48', name: "the first section's effect", run: () => varyA1() },
@@ -6857,7 +6853,7 @@ function whyCards(ctx, dt, st, vo) {
 // the sensor, and over them the plot of σ along the path.
 // 41: a cloud, denser here and thinner there, a spot of each circled. 42: the simple case: two sections, dense then
 // thin, a dashed line between them, σ written in each and plotted on top. 43–47: the same setup again on the right with
-// its sections swapped: in which does more light come out? A point walks through each in turn; they read the same.
+// its sections swapped: in which does more light come out? They read the same.
 // 48–50: why: under each section its factor, × e^{−σx}; the two become one, their exponents added, and a sum doesn't
 // care about the order. 51–55: the same when σ changes continuously: the path chopped into tiny sections, a factor for
 // each, their exponents adding up to a sum, and that sum an integral, written τ: the optical depth. 56–57: any shape
@@ -6896,7 +6892,7 @@ const vHump = (u) => 0.15 * Math.PI * Math.sin((Math.PI * u) / 2);
 const VSHAPES = [vHump, (u) => 0.1 + 0.2 * u, (u) => 0.3 - 0.15 * Math.cos(2 * Math.PI * u), (u) => 0.5 - 0.2 * u], VSH = { P: 2.8, hold: 0.3 };   // P: seconds a shape; hold: the part of it spent at rest
 const vLoopShape = (u, t) => { const n = VSHAPES.length, k = Math.floor(t), f = smooth(clamp((t - k - VSH.hold) / (1 - VSH.hold), 0, 1)); return lerp(VSHAPES[k % n](u), VSHAPES[(k + 1) % n](u), f); };
 function VARY_DEFAULTS() { return {
-  von: 0, vc1: 0, vc2: 0, vsect: 0, vface: 0, vax: 0, vpl: 0, vs1: 0, vs2: 0, vdual: 0, vmute: 0, vswap: 0, vfA: 0, vfB: 0, vpA: 0, vpAa: 0, vpB: 0, vpBa: 0,
+  von: 0, vc1: 0, vc2: 0, vsect: 0, vface: 0, vax: 0, vpl: 0, vs1: 0, vs2: 0, vdual: 0, vmute: 0, vswap: 0, vfA: 0, vfB: 0, vpA: 0, vpAa: 0,
   vq: 0, vread: 0, va1: 0, va2: 0, va3: 0, va4: 0, vb1: 0, vb3: 0, vb4: 0, vfoc: 0, vone: 0, vcont: 0, vchop: 0, vprod: 0, vsum: 0, vint: 0,
   vshLoop: 0, vshT0: 0, vshR: 0, vsame: 0, vuni: 0, vsx: 0, varea: 0, vtau: 0, vname: 0,
 }; }
@@ -7003,7 +6999,7 @@ function varyDraw(ctx, st, side, k, du) {
   // the plot of σ along the path, over the volume
   const ax = smooth(clamp(st.vax, 0, 1));
   if (ax <= 0.003) return;
-  const A = varyAxes(), pa = smooth(clamp(isB ? st.vpBa : st.vpAa, 0, 1)), mu = smooth(clamp(st.vmute, 0, 1)) * (1 - pa), col = mixRgb(hexRgb(COL.yellow), hexRgb(COL.greyB), mu), pl = clamp(st.vpl, 0, 1);
+  const A = varyAxes(), pa = isB ? 0 : smooth(clamp(st.vpAa, 0, 1)), mu = smooth(clamp(st.vmute, 0, 1)) * (1 - pa), col = mixRgb(hexRgb(COL.yellow), hexRgb(COL.greyB), mu), pl = clamp(st.vpl, 0, 1);
   // 53: its area, a bar over each tiny section; 55: thinner and thinner bars, then the area under the curve, in the
   // yellow the integral is written in
   const fillA = Math.max(ch, it) * lerp(0.3, 0.5, smooth(clamp(st.varea, 0, 1)));
@@ -7039,9 +7035,9 @@ function varyDraw(ctx, st, side, k, du) {
     }
     ctx.stroke(); ctx.restore();
   }
-  // 44–45, 52: the synced point: on the plot, on the beam, and a dashed line between them
+  // 52: the synced point: on the plot, on the beam, and a dashed line between them
   if (pa > 0.003) {
-    const u = clamp(isB ? st.vpB : st.vpA, 0, 2), jump = P.co < 0.997 && Math.abs(u - 1) < 0.03, x = A.X(u), y = A.Y(jump ? lerp(f(1 - 1e-6), f(1), smooth((u - 0.97) / 0.06)) : f(u));
+    const u = clamp(st.vpA, 0, 2), jump = P.co < 0.997 && Math.abs(u - 1) < 0.03, x = A.X(u), y = A.Y(jump ? lerp(f(1 - 1e-6), f(1), smooth((u - 0.97) / 0.06)) : f(u));
     dashed(ctx, x, y + px(13), x, -px(9), COL.greyA, 0.85 * pa, px(2.5));
     dot(ctx, x, y, px(11), COL.white, pa); dot(ctx, x, 0, px(7.5), COL.white, pa);
   }
@@ -7195,14 +7191,9 @@ function varyPlot2() { ptw('vs2', 1, 0.6, { delay: 0.5 }); return ptw('vpl', 1, 
 // focus is: A fades as it goes. 43b: B's two sections change places
 function varyCopy() { ptw('vmute', 1, 0.6); ptw('vfA', 1, 0.7, { delay: 0.6 }); return ptw('vdual', 1, 1.6); }
 function varySwap() { return ptw('vswap', 1, 1.9); }
-// 44: A comes back and B fades, and a point walks through A's first section, on its plot and on its beam. 44b: through
-// its second. 45, 45b: the same for B, A faded
-function varyWalkA1() { ptw('vfA', 0, 0.6); ptw('vfB', 1, 0.6); PS.vpA = 0; ptw('vpAa', 1, 0.4); return ptw('vpA', 1, 2.4, { delay: 0.5, ease: linear }); }
-function varyWalkA2() { return ptw('vpA', 2, 2.4, { ease: linear }); }
-function varyWalkB1() { ptw('vfB', 0, 0.6); ptw('vfA', 1, 0.6); ptw('vpAa', 0, 0.4); PS.vpB = 0; ptw('vpBa', 1, 0.4); return ptw('vpB', 1, 2.4, { delay: 0.5, ease: linear }); }
-function varyWalkB2() { return ptw('vpB', 2, 2.4, { ease: linear }); }
-// 46: both as they were, and the question. 47: the answer: both sensors read the same
-function varyAsk() { ptw('vfA', 0, 0.6); ptw('vpBa', 0, 0.4); return ptw('vq', 1, 0.6, { delay: 0.3 }); }
+// 46: A comes back, both as they were, and the question (no walk through them first: by now the question is clear).
+// 47: the answer: both sensors read the same
+function varyAsk() { ptw('vfA', 0, 0.6); return ptw('vq', 1, 0.6, { delay: 0.3 }); }
 function varyReveal() { ptw('vq', 0, 0.4); return ptw('vread', 1, 0.5, { delay: 0.4 }); }
 // 48–48d: A's sections, B faded: × e^{−0.4x} under the first; × e^{−0.2x} under the second; the two become one,
 // × e^{−(0.4+0.2)x}; its brackets become 0.6
