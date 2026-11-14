@@ -6440,11 +6440,14 @@ function whySteps(ctx, A, T, n, a) {
 const WCURVE = String.raw`e^{-\textcolor{${COL.yellow}}{\sigma}\,\textcolor{${COL.blue}}{x}}`;   // the continuous version, in the formula's colours
 // 39–40 and the ending: the two frames, denser and alive while they're talked over: twelve thin slabs (as wide as five
 // of the others), six particles in each, every particle wobbling, and the readings measured from the picture as they go,
-// the steps with them (as in the bench's shadows scene). At random (A) the steps stay around the exponential; in a
-// lattice (B) every slab's particles sit in one column, spread evenly over the whole height in rows that line up from slab
-// to slab, the whole lattice bobbing up and down together, so after the first slab nothing more is taken. max: as many as the long frame grows to (40). ax, av: how far a
-// particle wobbles across and up and down (av in the beam's height).
-const WDN = { n: 12, max: 24, m: 6, D: 0.02, ax: 6, av: 0.008, seed: 4242 };
+// the steps with them (as in the bench's shadows scene). At random (A) the steps stay around the exponential. B, with a
+// structure, is the power law of the bunny renders, T = (1 + σx)^{−1} (a = 1): rows tiling the whole height, lined up
+// from slab to slab and bobbing up and down together, row i holding a particle in a slab with chance 1 − e^{−σ_i}, the
+// σ_i spread as that power law needs (exponentially, mean σ̄: a few dense rows, in three bands, many sparse ones), about
+// as many particles in all as A; the rays in the sparse rows get far, so the light falls off slower and slower. max: as
+// many as the long frame grows to (40). ax, av: how far a particle wobbles across and up and down (av in the beam's height).
+// WDB: B's rows, its seed (picked so the steps keep close to the power law), and σ̄ (A's first slab takes the same 12%).
+const WDN = { n: 12, max: 24, m: 6, D: 0.02, ax: 6, av: 0.008, seed: 4242 }, WDB = { rows: 50, seed: 16862, sb: 0.12 / 0.88 };
 const WDW = (WHY.w * WPL.n) / WDN.n, WDA = (WPA.w * WPL.n) / WDN.n;   // a thin slab's width: in the picture, on the plot
 const WDENSE = (() => {
   const r = rng32(WDN.seed), lo = WDN.D / 2 + 0.02, hi = 1 - WDN.D / 2 - 0.02, A = [], B = [];
@@ -6453,7 +6456,12 @@ const WDENSE = (() => {
     A.push(Array.from({ length: WDN.m }, () => ({ xi: lerp(0.15, 0.85, r()), v: lerp(lo, hi, r()), ...wob() })));
     B.push(Array.from({ length: WDN.m }, (_, j) => ({ xi: lerp(0.38, 0.62, r()), v: 0.07 + j * WDN.D * 0.98, ...wob() })));
   }
-  B.forEach((col) => col.forEach((p, j) => { p.xi = 0.5; p.v = (j + 0.5) / WDN.m; }));   // the lattice: rows across the whole height (drawn as before, so A stays as it was)
+  // B, the power law, in place of what the loop built for it (the loop still draws it, so A's numbers stay as they were)
+  const rb = rng32(WDB.seed), rw = rng32(WDB.seed + 1), R = WDB.rows, pr = new Array(R);
+  Array.from({ length: R }, (_, i) => [-Math.cos(6 * Math.PI * ((i + 0.5) / R)) + 1e-6 * i, i]).sort((p, q) => p[0] - q[0]).forEach(([, row], rank) => { pr[row] = 1 - Math.pow(1 - (rank + 0.5) / R, WDB.sb); });
+  const occ = Array.from({ length: WDN.max }, () => pr.flatMap((p, i) => (rb() < p ? [i] : [])));   // which rows hold a particle, slab by slab
+  const wobB = () => ({ ph: [rw() * 2 * Math.PI, rw() * 2 * Math.PI], fr: [lerp(0.4, 0.85, rw()), lerp(0.35, 0.8, rw())] });
+  B.length = 0; occ.forEach((rows) => B.push(rows.map((i) => ({ xi: 0.5, v: (i + 0.5) / R, ...wobB() }))));
   return { A, B };
 })();
 // the picture for kind A or B with n thin slabs (fractional while one comes in), its particles where they are at time t
