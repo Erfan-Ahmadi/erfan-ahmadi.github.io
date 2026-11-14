@@ -106,7 +106,7 @@ function whyAxes(m = WPL.n) {
 // 39–40: the frames. The picture over its plot, with n slabs, has its middle at WPC(n) on the stage; in a frame it is
 // drawn k as large, its middle at the frame's.
 const WPC = (n) => [978.5 + 0.5 * WPA.w * (n - WPL.n), 541];
-const WFRAME = { L: [50, 200, 890, 690], R: [980, 200, 890, 690], long: [50, 200, 1820, 690], k: 0.675, klong: 0.76, ty: 150, tsize: 44 };   // (klong: a little larger in the long frame)
+const WFRAME = { L: [50, 200, 890, 690], R: [980, 200, 890, 690], long: [50, 200, 1820, 690], k: 0.675, klong: 0.76, ty: 150, tsize: 44, ssize: 30 };   // ty: the names' middle; tsize, ssize: the name, and the line under it   // (klong: a little larger in the long frame)
 // The discrete version: what gets through after each whole slab, level across a slab and dropping at its end, with a dot
 // at each slab's reading, drawn as the slabs come in (n: how many there are). In the light's red: it is what the light
 // does; the formula's own curve is white, like the formula.
@@ -123,6 +123,53 @@ function whySteps(ctx, A, T, n, a) {
   for (let k = 0; k < T.length && k <= n + 1e-6; k++) dot(ctx, A.X(k), A.Y(T[k]), 8, SH.color, a * (k === 0 ? 1 : smooth(clamp((n - (k - 0.12)) / 0.12, 0, 1))));
 }
 const WCURVE = String.raw`e^{-\textcolor{${COL.yellow}}{\sigma}\,\textcolor{${COL.blue}}{x}}`;   // the continuous version, in the formula's colours
+// 39–40 and the ending: the two frames, denser and alive while they're talked over: twelve thin slabs (as wide as five
+// of the others), six particles in each, every particle wobbling, and the readings measured from the picture as they go,
+// the steps with them (as in the bench's shadows scene). At random (A) the steps stay around the exponential; clumped
+// (B) every slab's particles sit in one column at the top of the beam, all the columns bobbing up and down together, so
+// after the first slab hardly anything more is taken. max: as many as the long frame grows to (40). ax, av: how far a
+// particle wobbles across and up and down (av in the beam's height).
+const WDN = { n: 12, max: 24, m: 6, D: 0.02, ax: 6, av: 0.008, seed: 4242 };
+const WDW = (WHY.w * WPL.n) / WDN.n, WDA = (WPA.w * WPL.n) / WDN.n;   // a thin slab's width: in the picture, on the plot
+const WDENSE = (() => {
+  const r = rng32(WDN.seed), lo = WDN.D / 2 + 0.02, hi = 1 - WDN.D / 2 - 0.02, A = [], B = [];
+  const wob = () => ({ ph: [r() * 2 * Math.PI, r() * 2 * Math.PI], fr: [lerp(0.4, 0.85, r()), lerp(0.35, 0.8, r())] });
+  for (let k = 0; k < WDN.max; k++) {
+    A.push(Array.from({ length: WDN.m }, () => ({ xi: lerp(0.15, 0.85, r()), v: lerp(lo, hi, r()), ...wob() })));
+    B.push(Array.from({ length: WDN.m }, (_, j) => ({ xi: lerp(0.38, 0.62, r()), v: 0.07 + j * WDN.D * 0.98, ...wob() })));
+  }
+  return { A, B };
+})();
+// the picture for kind A or B with n thin slabs (fractional while one comes in), its particles where they are at time t
+function whyDenseV(kind, n, t) {
+  const S = WDENSE[kind], w = reduced ? 0 : 1, N = Math.max(1, Math.ceil(n - 1e-6)), slabs = [], parts = [], col = kind === 'B' ? WDN.av * Math.sin(2 * Math.PI * 0.45 * t) : 0;
+  for (let k = 0; k < Math.min(N, WDN.max); k++) {
+    const a = smooth(clamp(n - k, 0, 1)), x0 = WXA + k * WDW, x1 = x0 + WDW; slabs.push({ x0, x1, a });
+    for (const p of S[k]) parts.push({ x: lerp(x0, x1, p.xi) + w * WDN.ax * Math.sin(2 * Math.PI * p.fr[0] * t + p.ph[0]), v: p.v + w * (kind === 'B' ? col : WDN.av * Math.sin(2 * Math.PI * p.fr[1] * t + p.ph[1])), D: WDN.D, a, k });
+  }
+  const laserX = WXA - WHY.gap, sensorX = WXA + clamp(n, 1, WDN.max) * WDW + WHY.gap;
+  return { yc: WHY.yc, hh: WHY.hh, slabs, parts, laserX, sensorX, laserA: 1, sensorA: 1, readA: 1, power: 1, light: 1, xL: laserX, xR: sensorX, sheet: WHY.sheet, fext: 36 };
+}
+const WDT = (() => { const P = WDENSE.A.flat(); return Math.pow(whyLitOf(P.map((p) => [p.v - WDN.D / 2, p.v + WDN.D / 2])), 1 / WDN.max); })();   // A's light per slab, at rest
+// One frame's content, drawn where the old one was (the picture over its plot, plot slabs as wide as the picture's): the
+// picture with its brace counting the slabs, the plot m slabs long with the curve and the live steps
+function whyDenseDraw(ctx, kind, n, m, t = TIME) {
+  const V = whyDenseV(kind, n, t), s0 = V.slabs[0], k = Math.round(n);
+  whyAt(ctx, [WDC[0], WPL.y, WTK], () => {
+    whyView(ctx, V);
+    const by = V.yc + V.hh + 44, cx = s0.x0 + (n * WDW) / 2;
+    drawBrace(ctx, cx, by, n * WDW, 24, 6, hexRgb(LDCOL), 1); drawTex(ctx, String(k), cx, by + 56, 50, { color: LDCOL });
+  });
+  const A = makeAxes({ L: WPA.x0, R: WPA.x0 + m * WDA, T: WPA.T, B: WPA.B, xr: [0, m, 1], yr: [0, 1, 0.5], ext: 40, xl: 'x', yl: '', labSize: 54, numSize: 28 }), f = (x) => Math.pow(WDT, x);
+  drawAxes(ctx, A, { c: 1, nums: 0, lab: 1, xlColor: hexRgb(LDCOL) });
+  for (const [v, s] of [[1, '100%'], [0.5, '50%']]) drawTex(ctx, String.raw`\text{${s.replace('%', '\\%')}}`, A.ox - 22, A.Y(v), 28, { ax: 1 });
+  drawCurve(ctx, A, f, { from: 0, to: m, color: COL.white, width: 4 });
+  drawTex(ctx, WCURVE, A.X(m) + 22, Math.min(A.Y(f(m)), A.oy - 48), 46, { ax: 0 });   // (kept clear of the axis's x)
+  const T = [1], N = Math.min(Math.ceil(n - 1e-6), WDN.max);
+  for (let j = 1; j <= N; j++) T.push(whyLitOf(V.parts.filter((p) => p.k < j).map((p) => [p.v - p.D / 2, p.v + p.D / 2])));
+  whySteps(ctx, A, T, n, 1);
+  const px = A.X(n), yb = WPL.y + (WHY.hh + 36) * WTK; dashed(ctx, px, yb + 4, px, A.Y(T[Math.min(T.length - 1, Math.max(0, Math.round(n)))]) - 6, COL.greyC, 0.8, 2);
+}
 // The zoom (32c), on the stage: from the lab's row, around the slice where it crosses the beam, the same in every
 // direction, until the beam is the sheet of the (smaller) picture and the slice its slab. X, Y: a point in the lab's
 // units, on the stage now.
@@ -197,7 +244,7 @@ function whyNAt(t0) {
   return lerp(a, b, smooth(clamp((f - 0.45) / 0.55, 0, 1)));
 }
 function WHY_DEFAULTS() { return {
-  won: 0, wsel: 0, wfade: 0, wzoom: 0, wls: 0, wread: 0, wbr: 0, wpow: 1, wpowLoop: 0, wpowT0: 0, wsay: 0, wsayP: 0, wlab: 0, wn: 1, wfm: 0, wnLoop: 0, wnT0: 0,
+  won: 0, wpart: 0, wshad: 0, wsel: 0, wfade: 0, wzoom: 0, wls: 0, wread: 0, wbr: 0, wpow: 1, wpowLoop: 0, wpowT0: 0, wsay: 0, wsayP: 0, wlab: 0, wn: 1, wfm: 0, wnLoop: 0, wnT0: 0,
   wfe: 0, wpl: 0, wax: 0, wcur: 0, wdA: 0, wdB: 0, wlight: 1, wclump: 0, wfo: 0, wsp: 0, wnmL: 0, wnmR: 0, wgrey: 0, wlong: 0, wnL: 5, bOut: 0,
 }; }
 // 37: how far slab k's particles have moved into their clump: the first slab's first, then the others'
@@ -289,12 +336,15 @@ function drawWhy(ctx, dt, st) {
     const V = whyMain(st), at = V.into ? [WDC[0], WDC[1], 1] : [WDC[0], lerp(WDC[1], WPL.y, V.pl), WTK], s0 = V.into ? null : V.T.slabs[0];
     const la = smooth(clamp(st.wlab, 0, 1)), fm = clamp(st.wfm, 0, 1), n = clamp(st.wn, 1, WHY.NLONG);
     // 39: all of it, the picture and its plot, moves into the frame on the right; 40: and goes
-    const c5 = WPC(WPL.n), R = WFRAME.R, mk = lerp(1, WFRAME.k, sp);
+    const c5 = WPC(WPL.n), R = WFRAME.R, mk = lerp(1, WFRAME.k, sp), dz = smooth(clamp((sp - 0.35) / 0.65, 0, 1));   // dz: 39, the denser picture taking over
     ctx.save(); ctx.globalAlpha *= 1 - long; ctx.translate(lerp(c5[0], R[0] + R[2] / 2, sp), lerp(c5[1], R[1] + R[3] / 2, sp)); ctx.scale(mk, mk); ctx.translate(-c5[0], -c5[1]);
+    if (dz > 0.003) { ctx.save(); ctx.globalAlpha *= dz; whyDenseDraw(ctx, 'B', WDN.n, WDN.n); ctx.restore(); }
+    ctx.save(); ctx.globalAlpha *= 1 - dz;
     whyAt(ctx, at, () => {
       if (V.into) whyZoomIn(ctx, V.Z);
       whyView(ctx, V);
       if (!V.into) whyBrace(ctx, V, n, smooth(clamp(st.wbr, 0, 1)));
+      if (!V.into) whyHighlight(ctx, V, st);
       // 33b: what the slab says
       if (st.wsay > 0.003 && s0) drawThinking(ctx, (s0.x0 + s0.x1) / 2, 168, 1, 84, '', String.raw`whatever comes in, I take 10\%`, 1, st.wsayP, smooth(clamp(st.wsay, 0, 1)), [(s0.x0 + s0.x1) / 2, V.yc - V.hh - 42]);
       // 34–34c: × 0.9 over each slab
@@ -320,23 +370,26 @@ function drawWhy(ctx, dt, st) {
       }
     }
     if (!V.into) whyPlot(ctx, st, V, n);
-    ctx.restore();
+    ctx.restore(); ctx.restore();
   }
   // 39: in a frame on the left, the same slabs with their particles placed at random, their steps on the curve; the two
   // frames, and their names (39b, 39c). 40: the left frame grows longer, across the stage, and more slabs come in, the
   // brace, the plot's axis, its curve and its steps with them
   if (sp > 0.003) {
-    const nL = clamp(st.wnL, 1, WHY.NLONG), S = Object.assign(WHY_DEFAULTS(), { wzoom: 1, wls: 1, wread: 1, wpl: 1, wax: 1, wcur: 1, wdA: 1, wn: nL }), V = whyMain(S);
+    const nL = clamp(st.wnL, 1, WHY.NLONG), nD = (WDN.n * nL) / WPL.n;   // (12 thin slabs for every 5 of the others)
     const F = lerpRect(WFRAME.L, WFRAME.long, long), c = WPC(nL), R = WFRAME.R, k = lerp(WFRAME.k, WFRAME.klong, long);
     const vo = 1 - smooth(clamp((st.von || 0) * 2.2, 0, 1));   // 41: its slabs, its plot and the frame itself make way for part 5 (vary.js)
     ctx.save(); ctx.globalAlpha *= sp * vo; ctx.translate(F[0] + F[2] / 2, F[1] + F[3] / 2); ctx.scale(k, k); ctx.translate(-c[0], -c[1]);
-    whyAt(ctx, [WDC[0], WPL.y, WTK], () => { whyView(ctx, V); whyBrace(ctx, V, nL, 1); });
-    whyPlot(ctx, S, V, nL, Math.max(WPL.n, nL));
+    whyDenseDraw(ctx, 'A', nD, Math.max(WDN.n, nD));
     ctx.restore();
     const frame = (Q, a) => { if (a > 0.003) { ctx.save(); ctx.strokeStyle = hexA(COL.greyC, a); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(Q[0], Q[1], Q[2], Q[3], 14); ctx.stroke(); ctx.restore(); } };
     frame(F, sp * vo); frame(R, sp * (1 - long));
-    if (st.wnmL > 0.003) drawTex(ctx, String.raw`\text{exponential media}`, F[0] + F[2] / 2, WFRAME.ty, WFRAME.tsize, { p: clamp(st.wnmL, 0, 1), alpha: vo });
-    if (st.wnmR > 0.003) drawTex(ctx, String.raw`\text{non-exponential media}`, R[0] + R[2] / 2, WFRAME.ty, WFRAME.tsize, { p: clamp(st.wnmR, 0, 1), alpha: 1 - long, color: mixRgb(WHITE_RGB, hexRgb(COL.greyC), grey) });
+    const name = (top, sub, x, w, alpha, color) => {   // the name, and under it what makes it so, written one after the other
+      drawTex(ctx, String.raw`\text{${top}}`, x, WFRAME.ty - 24, WFRAME.tsize, { p: clamp(w * 1.8, 0, 1), alpha, color });
+      drawTex(ctx, String.raw`\text{${sub}}`, x, WFRAME.ty + 22, WFRAME.ssize, { p: clamp(w * 1.8 - 0.8, 0, 1), alpha, color: color || hexRgb(COL.greyA) });
+    };
+    if (st.wnmL > 0.003) name('Exponential', 'Particles Placed Randomly', F[0] + F[2] / 2, clamp(st.wnmL, 0, 1), vo);
+    if (st.wnmR > 0.003) name('Non-Exponential', 'Particles Placed with a Structure', R[0] + R[2] / 2, clamp(st.wnmR, 0, 1), 1 - long, grey > 0.003 ? mixRgb(WHITE_RGB, hexRgb(COL.greyC), grey) : null);
   }
   ctx.restore();
   // 39d: the right one greys out: not for now
@@ -352,8 +405,28 @@ function whySelect() { ptw('wsel', 1, 1.4); return ptw('wfade', 1, 0.8, { delay:
 function whyZoom() { ptw('wls', 1, 0.8, { delay: 2.5 }); ptw('wbr', 1, 0.6, { delay: 3.0 }); return ptw('wzoom', 1, 2.4); }
 // 32d: the sensor reads 90%
 function whyRead() { return ptw('wread', 1, 0.45); }
+// 32e: the particles, each in a pulsing ring. 32f: the shadows behind them, outlined, and one of them pointed out
+function whyParts() { return ptw('wpart', 1, 0.6); }
+function whyShadows() { ptw('wpart', 0, 0.6); return ptw('wshad', 1, 0.8); }
+const WHL = { ring: 5, lab: 46 };   // the rings, in particle radii; the label's size
+function whyHighlight(ctx, V, st) {
+  const pa = smooth(clamp(st.wpart || 0, 0, 1)), sa = smooth(clamp(st.wshad || 0, 0, 1)); if (pa <= 0.003 && sa <= 0.003) return;
+  const top = V.yc - V.hh, t = reduced ? 0 : TIME, gold = COL.gold, live = V.parts.filter((p) => p.a > 0.003);
+  live.forEach((p, i) => {
+    const y = top + p.v * 2 * V.hh, r = (p.D / 2) * 2 * V.hh;
+    if (sa > 0.003) { ctx.save(); ctx.fillStyle = hexA(gold, 0.18 * sa); ctx.fillRect(p.x, y - r, V.xR - p.x, 2 * r); ctx.strokeStyle = hexA(gold, 0.9 * sa); ctx.lineWidth = 2.5; ctx.strokeRect(p.x, y - r, V.xR - p.x, 2 * r); ctx.restore(); }
+    if (pa > 0.003) { const R = r * (WHL.ring + 0.6 * Math.sin(2 * Math.PI * 1.1 * t + i * 1.3)); ctx.save(); ctx.strokeStyle = hexA(gold, 0.9 * pa); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(p.x, y, R, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); }
+  });
+  if (sa > 0.003 && live.length) {   // the top one, pointed out from over the beam
+    const p = live.reduce((m, q) => (q.v < m.v ? q : m)), r = (p.D / 2) * 2 * V.hh, y = top + p.v * 2 * V.hh - r - 8, x = lerp(p.x, V.xR, 0.55), ly = top - 78;
+    ctx.save(); ctx.globalAlpha *= sa; ctx.strokeStyle = gold; ctx.fillStyle = gold; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x, ly + 30); ctx.lineTo(x, y - 14); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 9, y - 18); ctx.lineTo(x + 9, y - 18); ctx.closePath(); ctx.fill(); ctx.restore();
+    drawTex(ctx, String.raw`\text{shadow}`, x, ly, WHL.lab, { alpha: sa, color: gold });
+  }
+}
 // 33: the light goes brighter and dimmer, over and over, until the next press; the reading stays (dimmer once, if motion is reduced)
-function whyBright() { PS.wpowLoop = 1; PS.wpowT0 = labLoopStart('wpT0', TIME + 0.2); return reduced ? ptw('wpow', 0.45, 1.2) : Promise.resolve(); }
+function whyBright() { ptw('wpart', 0, 0.5); ptw('wshad', 0, 0.5); PS.wpowLoop = 1; PS.wpowT0 = labLoopStart('wpT0', TIME + 0.2); return reduced ? ptw('wpow', 0.45, 1.2) : Promise.resolve(); }
 // 33b: what the slab says
 function whySays() { PS.wsayP = 0; ptw('wsay', 1, 0.5); return ptw('wsayP', 1, 1.1, { delay: 0.3, ease: linear }); }
 // 34: the light settles and the slab has said its piece: × 0.9 over it. 34b, 34c: another slab, and another
@@ -401,8 +474,8 @@ function whyFlatAdd(k) { return ptw('wn', k, 0.8); }
 // 39: the clumped picture and its plot move into a frame on the right, and the same slabs placed at random come in, in a
 // frame on the left. 39b, 39c: their names. 39d: the right one greys out
 function whyVersus() { return ptw('wsp', 1, 1.6); }
-function whyNameL() { return ptw('wnmL', 1, 0.8, { ease: linear }); }
-function whyNameR() { return ptw('wnmR', 1, 0.9, { ease: linear }); }
+function whyNameL() { return ptw('wnmL', 1, 1.5, { ease: linear }); }
+function whyNameR() { return ptw('wnmR', 1, 1.7, { ease: linear }); }
 function whyGrey() { return ptw('wgrey', 1, 0.9); }
 // 40: the greyed frame goes and the exponential one grows longer, across the stage; more slabs come in, up to ten
 function whyLong() { ptw('wlong', 1, 1.6); return ptw('wnL', WHY.NLONG, 2.6, { delay: 0.9, ease: linear }); }

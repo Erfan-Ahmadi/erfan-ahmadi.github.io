@@ -31,11 +31,10 @@ function endN(t) {
 }
 // part 4's slabs, their particles placed at random, the brace, and the plot with its steps on the curve, fitted in r
 function endExp(ctx, r, t0) {
-  const n = reduced ? WHY.NLONG : endN(TIME - t0), S = Object.assign(WHY_DEFAULTS(), { wzoom: 1, wls: 1, wread: 1, wpl: 1, wax: 1, wcur: 1, wdA: 1, wn: n }), V = whyMain(S);
+  const n = reduced ? WDN.max : 1 + ((endN(TIME - t0) - 1) * (WDN.max - 1)) / (WHY.NLONG - 1);   // part 4's denser slabs, wobbling, coming and going
   const c = WPC(WHY.NLONG), k = Math.min(r[2] / ENDBOX.exp[0], r[3] / ENDBOX.exp[1]);
   ctx.save(); ctx.translate(r[0] + (ENDBOX.exp[0] * k) / 2, r[1] + r[3] / 2); ctx.scale(k, k); ctx.translate(-c[0], -c[1]);
-  whyAt(ctx, [WDC[0], WPL.y, WTK], () => { whyView(ctx, V); whyBrace(ctx, V, n, 1); });
-  whyPlot(ctx, S, V, n, WHY.NLONG);
+  whyDenseDraw(ctx, 'A', n, WDN.max);
   ctx.restore();
 }
 // part 5's setup, its σ going through shapes with the same area, fitted in r; to its right, the formula with the integral

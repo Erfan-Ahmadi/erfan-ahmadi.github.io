@@ -662,7 +662,7 @@ function runAction(sc, a) {
 const RESET = { id: 'reset', label: 'Reset', run: (st, alive, sc) => resetScene(sc) };
 
 // ---------- shared: the laser and the medium, the same in every scene that shows them ----------
-const SH = { __tag: 'shared', color: '#FF3B30', I0: 1, beamLook: 'solid', beamW: 8, container: 'tank', look: 'beer', custom: '#6FC08E' };
+const SH = { __tag: 'shared', color: '#35D36A', I0: 1, beamLook: 'solid', beamW: 8, container: 'tank', look: 'beer', custom: '#6FC08E' };
 const SHARED = { id: 'shared', st: SH, params: [
   { type: 'chips', key: 'color', label: 'Laser colour', options: ['#FF3B30', '#35D36A', '#3B7BFF', '#FFFFFF'] },
   { type: 'range', key: 'I0', label: 'Intensity I₀', min: 0, max: 1, step: 0.01, fmt: (v) => `${Math.round(v * 100)} %` },

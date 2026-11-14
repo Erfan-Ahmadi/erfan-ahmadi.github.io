@@ -68,7 +68,7 @@ const PS_DEFAULTS = () => ({
   fx: { show: [0, 0, 0, 0], clock: [0, 0, 0, 0], run: [0, 0, 0, 0], dim: [0, 0, 0, 0], grey: [0, 0, 0, 0], big: 0 },
   // part 3, the lab (lab.js): the box on the stage, its scattering and glow, the readings, the second row and its
   // boxes, me guessing; then the formula and its plot; then the bases
-  labOn: 0, labX: 0, scat: 0, glow: 0, blW: 0, blOut: 0, lie: 0, amag: 0, amagT: 0, hvAuto: 0, read1: 0, read2: 0, split: 0, c2: 1, myst: 0, rev: 1, r2: '?', r2From: '', r2M: 1, lfig: 0, lthink: '', lthinkP: 1, lside: 0, wrong: 0, cross: 0, rowFade: 0,
+  labOn: 0, labX: 0, scat: 0, glow: 0, blW: 0, blOut: 0, lie: 0, amag: 0, amagT: 0, hvAuto: 0, read1: 0, read2: 0, split: 0, c2: 1, myst: 0, rev: 1, r2: '?', r2From: '', r2M: 1, lfig: 0, lthink: '', lthinkP: 1, lthinkFrom: '', lthinkM: 1, lside: 0, wrong: 0, cross: 0, rowFade: 0,
   rowsOut: 0, fml: 0, axC: 0, dotD: 0, curveTo: 0, sig: 1, sigHi: 0, eq1: 0, plotOut: 0, bStack: 0, bMorph: 0, ind1: 1, ind8: 1, ind10: 1, readDim: 1, dLoop: 0, dLoopT0: 0, sLoop: 0, sLoopT0: 0, hvOn: 0, hvA: 0, hvStep: 0, hvT0: 0, topDim: 0, topOut: 0, merge: 0, pbox: 0, rise: 0, marksOut: 0, dCont: 0, r1Hi: 0, colS: 0, colD: 0, sPin: 0, eq2: 0, lbNS: 0, lbNE: 0, lbJA: 0, lbOut: 0, eOnly: 0, eMove: 0, eBox: 0,
   ...WHY_DEFAULTS(),   // part 4 (why.js)
   ...VARY_DEFAULTS(),  // part 5 (vary.js)
@@ -156,12 +156,15 @@ const BEATS = [
   { n: '29b', name: 'why e?', run: () => labE() },
   { n: '30', name: 'any base', run: () => labBases() },
   { n: '30b', name: 'all with base e', run: () => labBasesE() },
-  { n: '31', name: 'but why exponential?', run: () => labWhy() },
+  { n: '31', name: 'ok, fine', run: () => labWhy() },
+  { n: '31b', name: 'but why exponential?', run: () => labWhyBut() },
   // part 4 (why.js): into one thin slab and its shadows; 0.9 again and again; with base e, on a plot; clumped, it isn't exponential
   { n: '32', name: 'a closer look', run: () => whyBox32() },
   { n: '32b', name: 'one thin slice', run: () => whySelect() },
   { n: '32c', name: 'a tiny slab', run: () => whyZoom() },
   { n: '32d', name: 'ninety percent', run: () => whyRead() },
+  { n: '32e', name: 'the particles', run: () => whyParts() },
+  { n: '32f', name: 'their shadows', run: () => whyShadows() },
   { n: '33', name: 'brighter or dimmer', run: () => whyBright() },
   { n: '33b', name: 'what the slab says', run: () => whySays() },
   { n: '34', name: 'times 0.9', run: () => whyTimes() },

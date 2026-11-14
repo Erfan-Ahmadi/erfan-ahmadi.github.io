@@ -89,9 +89,9 @@ function drawScatter(ctx, B, a) {
   if (a <= 0.003) return;
   // the red haze along the beam: light scattered out of it, lighting up the stuff around it
   const g = ctx.createLinearGradient(0, -160, 0, 160);
-  g.addColorStop(0, 'rgba(255,59,48,0)'); g.addColorStop(0.5, `rgba(255,59,48,${(0.1 * a).toFixed(3)})`); g.addColorStop(1, 'rgba(255,59,48,0)');
+  const lc = hexRgb(SH.color); g.addColorStop(0, rgba(lc, 0)); g.addColorStop(0.5, rgba(lc, 0.1 * a)); g.addColorStop(1, rgba(lc, 0));
   ctx.fillStyle = g; ctx.fillRect(B.x0, -160, B.x1 - B.x0, 320);
-  const t = reduced ? 0 : TIME, red = (al) => `rgba(255,70,58,${clamp(al, 0, 1).toFixed(3)})`;
+  const t = reduced ? 0 : TIME, red = (al) => rgba(hexRgb(SH.color), clamp(al, 0, 1));   // (the laser's own colour)
   ctx.save(); ctx.lineCap = 'round';
   SCHIT.forEach((h) => {
     const [hx, hy] = speckAt(B, h), R = 16, gg = ctx.createRadialGradient(hx, hy, 0, hx, hy, R);   // the speck lit where the beam hits it
@@ -454,7 +454,7 @@ function drawLabFigure(ctx, st) {
   const a = smooth(clamp(st.lfig, 0, 1)); if (a <= 0.003) return;
   const fx = 1500, fy = 840, fs = 1.24;
   drawFigure(ctx, fx, fy, fs, a);
-  drawThinking(ctx, fx + 110, fy - 410, 1, 100, '', st.lthink, 1, st.lthinkP, a, figHead(fx, fy, fs));
+  drawThinking(ctx, fx + 110, fy - 410, 1, 100, st.lthinkFrom || '', st.lthink, st.lthinkM ?? 1, st.lthinkP, a, figHead(fx, fy, fs));
   const w = clamp(st.wrong, 0, 2); if (w <= 0.003) return;   // a line per press: one box (24b), then two (24c)
   let x1 = 0;
   LWRONG.forEach((src, i) => { const sp = drawTex(ctx, src, LW.x, LW.y[i], LW.size, { ax: 0, p: clamp(w - i, 0, 1), alpha: a }); for (const q of sp) x1 = Math.max(x1, inkBox(q)[1]); });
@@ -647,9 +647,11 @@ function labBasesE() { return ptw('bMorph', 1.1, 2.64, { ease: linear }); }
 function labWhy() {
   Object.assign(PS, { sig: 1, pS: 1, sPin: 0, eq1: 0, eq2: 0, eOnly: 0, eMove: 0, eBox: 0 });
   ptw('bOut', 1, 0.6); ptw('plotOut', 0, 0.9, { delay: 0.5 });
-  PS.lthink = 'but why exponential?'; PS.lthinkP = 0; ptw('lside', 1, 1.4); ptw('lfig', 1, 1.0, { delay: 0.8 });
-  return ptw('lthinkP', 1, 1.0, { delay: 1.7, ease: linear });
+  PS.lthink = 'ok, fine,'; PS.lthinkFrom = ''; PS.lthinkM = 1; PS.lthinkP = 0; ptw('lside', 1, 1.4); ptw('lfig', 1, 1.0, { delay: 0.8 });
+  return ptw('lthinkP', 1, 0.7, { delay: 1.7, ease: linear });
 }
+// 31b: the readout reshapes into "but why exponential?"
+function labWhyBut() { PS.lthinkFrom = PS.lthink; PS.lthink = 'but why exponential?'; PS.lthinkM = 0; return ptw('lthinkM', 1, 1.0, { ease: linear }); }
 
 // ---------- σ or x? (the bench) ----------
 // Beats 26–29's formula, plot and box, to try the ways above of showing which of σ and x is changing, alone or
@@ -795,7 +797,7 @@ function drawHalveRow(ctx, X, S, o, u, alpha = 1, labelAlpha = alpha) {
   for (const Lb of labels) { const dyl = 14 * k * (Lb.lift || 0); hvLabel(ctx, { ...Lb, a: Lb.a * labelAlpha }, at(Lb.x), top - 66 * k + dyl, top - 10 * k, k, false); }
   if (travel && travel.a > 0.003) {
     const tx = at(travel.x), ta = travel.a * labelAlpha, gl = ctx.createRadialGradient(tx, X.oy, 0, tx, X.oy, 30 * k);   // the light it rides with, on the beam
-    gl.addColorStop(0, `rgba(255,96,72,${(0.55 * ta).toFixed(3)})`); gl.addColorStop(1, 'rgba(255,96,72,0)');
+    gl.addColorStop(0, rgba(hexRgb(SH.color), 0.55 * ta)); gl.addColorStop(1, rgba(hexRgb(SH.color), 0));
     ctx.fillStyle = gl; ctx.fillRect(tx - 30 * k, X.oy - 30 * k, 60 * k, 60 * k);
     if (o.place === 'beam') hvLabel(ctx, { ...travel, a: ta }, tx, X.oy - 78 * k, X.oy - 14 * k, k, true);
     else hvLabel(ctx, { ...travel, a: ta }, tx, top - 66 * k, top - 10 * k, k, false);
