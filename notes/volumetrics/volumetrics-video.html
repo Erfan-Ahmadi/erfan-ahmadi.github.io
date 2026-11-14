@@ -4866,7 +4866,8 @@ const BEATS = [
   { n: '35', name: 'with e as the base', run: () => whyE() },
   { n: '36', name: 'it follows the curve', run: () => whyCurve() },
   { n: '37', name: 'placed some other way', run: () => whyClump() },
-  { n: '38', name: 'hardly anything after the first', run: () => whyFlat() },
+  { n: '38', name: 'same as before', run: () => whyFlat() },
+  ...[2, 3, 4, 5].map((k) => ({ n: `38${'bcde'[k - 2]}`, name: `slab ${k}`, run: () => whyFlatAdd(k) })),
   { n: '39', name: 'placement matters', run: () => whyVersus() },
   { n: '39b', name: 'at random: exponential', run: () => whyNameL() },
   { n: '39c', name: 'with a structure: non-exponential', run: () => whyNameR() },
@@ -5654,15 +5655,18 @@ function drawLabRow(ctx, X, o, alpha) {
 const LP = { L: 520, R: 1440, T: 250, B: 560, top: 690, bot: 870, beam: 780, size: 100, y: 150 }, LPD = 3;   // LPD: the plot's length, in boxes
 let LPA = null;
 const lpAxes = () => LPA || (LPA = makeAxes({ L: LP.L, R: LP.R, T: LP.T, B: LP.B, xr: [0, LPD, 1], yr: [0, 1, 0.5], ext: 40, xl: 'x', yl: '', labSize: 54, numSize: 28 }));
-// at 29, with σ gone to zero: "= e^0" after it, then "= 1"
-const PFML = String.raw`e^{-\htmlClass{t-sig}{\sigma}\,\htmlClass{t-ld}{x}}`, PFML1 = PFML + String.raw`\mathrel{\htmlClass{t-eq1}{=}}\mathord{\htmlClass{t-eq1}{e^{0}}}\mathrel{\htmlClass{t-eq2}{=}}\mathord{\htmlClass{t-eq2}{1}}`;
+// at 29, with σ gone to zero, σ itself turns into a 0, in its yellow (e^{−0x}), and then "= 1" comes after it
+const PFML = String.raw`e^{-\htmlClass{t-sig}{\sigma}\,\htmlClass{t-ld}{x}}`, PFMLZ = String.raw`e^{-\htmlClass{t-sig}{0}\,\htmlClass{t-ld}{x}}\mathrel{\htmlClass{t-eq2}{=}}\mathord{\htmlClass{t-eq2}{1}}`;
 let lpFml = null;
-function lpFormula() {   // laid out once: e^{−σx} centred, "= e^0 = 1" after it, so it doesn't move when that comes in
+function lpFormula() {   // laid out once: e^{−σx} centred; e^{−0x} = 1 from the same e, so nothing moves but what changes
   if (lpFml) return lpFml;
-  const sp = place(tex(PFML1), { x: 960 - (tex(PFML).w * LP.size) / 2, y: LP.y, size: LP.size, ax: 0 }), has = (s, t) => s.a.terms.includes(t);
-  const main = sp.filter((s) => !has(s, 't-eq1') && !has(s, 't-eq2')), [l, r, t, b] = inkSpan(main);
-  // c: the middle of e^{−σx}'s ink, for 29b; e: its e, the first thing in it
-  return (lpFml = { main, eq1: sp.filter((s) => has(s, 't-eq1')), eq2: sp.filter((s) => has(s, 't-eq2')), c: [(l + r) / 2, (t + b) / 2], e: main.reduce((m, s) => (s.x < m.x ? s : m)) });
+  const has = (s, t) => s.a.terms.includes(t), first = (S) => S.reduce((m, s) => (s.x < m.x ? s : m));
+  const main = place(tex(PFML), { x: 960 - (tex(PFML).w * LP.size) / 2, y: LP.y, size: LP.size, ax: 0 }), [l, r, t, b] = inkSpan(main), e = first(main);
+  let zs = place(tex(PFMLZ), { x: 0, y: LP.y, size: LP.size, ax: 0 }); const ze = first(zs); zs = zs.map((s) => shifted(s, e.x - ze.x, e.base - ze.base));
+  const col = (S) => S.map((s) => ({ ...s, color: has(s, 't-sig') ? hexRgb(COL.yellow) : has(s, 't-ld') ? hexRgb(LDCOL) : s.color }));   // as they look by then
+  const zero = col(zs.filter((s) => !has(s, 't-eq2')));
+  // c: the middle of e^{−σx}'s ink, for 29b; e: its e, the first thing in it; zero, zplan: e^{−0x}, and σ turning into its 0
+  return (lpFml = { main, eq2: zs.filter((s) => has(s, 't-eq2')), zero, zplan: matchPlan(col(main), zero), c: [(l + r) / 2, (t + b) / 2], e });
 }
 const inkSpan = (S) => S.reduce(([l, r, t, b], s) => { const [q0, q1, q2, q3] = inkBox(s); return [Math.min(l, q0), Math.max(r, q1), Math.min(t, q2), Math.max(b, q3)]; }, [Infinity, -Infinity, Infinity, -Infinity]);
 // 29b: everything but e^{−σx} goes (eOnly), the formula comes down to the middle of the stage (eMove, its ink's middle
@@ -5683,8 +5687,7 @@ function drawLabPlot(ctx, st) {
   const rest = a * (1 - smooth(clamp(st.eOnly || 0, 0, 1))), em = smooth(clamp(st.eMove || 0, 0, 1)), eb = smooth(clamp(st.eBox || 0, 0, 1));   // 29b: all but e^{−σx} goes (rest)
   ctx.save(); if (em > 0.001) ctx.translate((960 - F.c[0]) * em, (LE.y - F.c[1]) * em);
   drawLabFormula(ctx, F, st, a);
-  if (st.eq1 > 0.003) drawSprites(ctx, F.eq1, { alpha: rest * smooth(clamp(st.eq1, 0, 1)) });
-  if (st.eq2 > 0.003) drawSprites(ctx, F.eq2, { alpha: rest * smooth(clamp(st.eq2, 0, 1)) });
+  if (st.eq2 > 0.003) drawSprites(ctx, F.eq2, { alpha: rest * smooth(clamp(st.eq2, 0, 1)) });   // 29: "= 1" (eq1: σ turning into 0, in drawLabFormula)
   if (eb > 0.003) drawLabE(ctx, F, a, eb);
   ctx.restore();
   const bw = clamp(st.blW || 0, 0, 1), bo = 1 - smooth(clamp(st.blOut || 0, 0, 1));   // 26b: its name, for a moment
@@ -5823,7 +5826,9 @@ function drawLabFormula(ctx, F, st, a) {
     if (m9 >= 0.998) drawSprites(ctx, N, { alpha: sym }); else drawMorph(ctx, matchPlan(M, N), m9, sym);
     return;
   }
-  if (sym > 0.003) {
+  const z = smooth(clamp(st.eq1 || 0, 0, 1)) * (1 - smooth(clamp(st.eOnly || 0, 0, 1)));   // 29: σ turns into a 0 (and back at 29b)
+  if (z > 0.003 && sym > 0.003 && st.fml >= 1) { if (z >= 0.999) drawSprites(ctx, F.zero, { alpha: sym }); else drawMorph(ctx, F.zplan, z, sym); }
+  else if (sym > 0.003) {
     TERM_COL['t-ld'] = hexRgb(LDCOL);   // while it writes in, already in the colours it keeps
     if (Fo.c <= 0.003 || st.fml < 1) drawSprites(ctx, F.main, { p: st.fml, alpha: sym, hi: { 't-sig': Math.max(hiS, Fo.cs), 't-ld': Fo.cd } });
     else for (const s of F.main) {
@@ -6094,8 +6099,8 @@ const LFIX = 1.4;
 function labFix() { if (PS.dLoop && !reduced) PS.dotD = labDAt(PS.dLoopT0); PS.dLoop = 0; return ptw('dotD', LFIX, 1.0); }
 function labMore() { ptw('sigHi', 1, 0.5); PS.sPin = 1; return ptw('sig', 2, 1.8); }
 function labLess() { return ptw('sig', 0.5, 2.2); }
-// 29: σ to zero: a vacuum; "= e^0", then "= 1"
-function labVacuum() { PS.dLoop = 0; PS.sLoop = 0; PS.sPin = 1; ptw('eq1', 1, 0.7, { delay: 1.4 }); ptw('eq2', 1, 0.7, { delay: 2.3 }); return ptw('sig', 0, 1.8); }
+// 29: σ to zero: a vacuum; as it gets there σ in the formula turns into a 0, in its yellow, and then "= 1"
+function labVacuum() { PS.dLoop = 0; PS.sLoop = 0; PS.sPin = 1; ptw('eq1', 1, 0.8, { delay: 1.6 }); ptw('eq2', 1, 0.6, { delay: 2.5 }); return ptw('sig', 0, 1.8); }
 // 29b: only e^{−σx}, in the middle of the stage, a box around its e
 function labE() { ptw('eOnly', 1, 0.7); ptw('eMove', 1, 1.1, { delay: 0.35 }); return ptw('eBox', 1, 0.6, { delay: 1.4 }); }
 // 30: it goes, and 2, 3, 10 … write in. 30b: each becomes the same thing with base e (bMorph runs past 1 so the last
@@ -6479,9 +6484,8 @@ function whyView(ctx, V) {
 // Drawn moved, the picture's middle at (x, y), scaled by k
 const whyAt = (ctx, [x, y, k], f) => { ctx.save(); ctx.translate(x, y); ctx.scale(k, k); ctx.translate(-WDC[0], -WDC[1]); f(); ctx.restore(); };
 const WMUL = String.raw`\textcolor{${COL.red}}{\times\,0.9}`, WPOW = (n) => String.raw`0.9^{\textcolor{${COL.blue}}{${n}}}`;
-// 35: the same with base e: ln 0.9 = −0.105, in σ's yellow (it is what σ will be, per slab), and the distance in blue as
-// the brace has it, nΔx (a slab is Δx, one unit, thick)
-const WEXP = (n) => String.raw`e^{\textcolor{${COL.yellow}}{-0.105}\times\textcolor{${COL.blue}}{${n === 1 ? '' : n + String.raw`\,`}\Delta x}}`;   // the distance as the brace has it, nΔx
+// 35: the same with base e: ln 0.9 = −0.105, in σ's yellow (it is what σ will be, per slab), the count in blue, as the brace has it
+const WEXP = (n) => String.raw`e^{\textcolor{${COL.yellow}}{-0.105}\times\textcolor{${COL.blue}}{${n}}}`;
 const wfePlans = new Map();
 const WF = { y: 150, size: 86, ly: WHY.yc - WHY.hh - 58, lsize: 50 };
 let wfX = null, wfPlan = null;
@@ -6549,13 +6553,13 @@ function whyMain(st) {
   return { yc, hh, slabs, parts, laserX, sensorX, laserA: l, sensorA: l, readA: smooth(clamp(st.wread, 0, 1)), power: clamp(st.wpow, 0, 1), light: clamp(st.wlight, 0, 1), fext: into ? 36 * WTK : 36,
     xL: lerp(s0.x0, laserX, l), xR: lerp(s0.x1, sensorX, l), sheet: into ? lerp(0.7, WHY.sheet, Z.e) : WHY.sheet, Z, into, T, pl };
 }
-// Δx under the slab: a small piece of the distance x, in x's blue; as slabs come and go it stretches under all of them,
-// reading 2Δx, 3Δx, … (the count changing halfway through each slab's coming or going)
+// A brace under the slabs, in x's blue, counting them: 1, 2, 3, …; as slabs come and go it stretches under all of them
+// (the count changing halfway through each slab's coming or going)
 function whyBrace(ctx, V, n, br) {
   const s0 = V.T.slabs[0]; if (br <= 0.003 || !s0) return;
   const k = Math.round(n), by = V.yc + V.hh + 44, cx = s0.x0 + (n * WHY.w) / 2;
   drawBrace(ctx, cx, by, n * WHY.w, 24, 6, hexRgb(LDCOL), br);
-  drawTex(ctx, k === 1 ? String.raw`\Delta x` : String.raw`${k}\,\Delta x`, cx, by + 56, 50, { alpha: br, color: LDCOL });
+  drawTex(ctx, String(k), cx, by + 56, 50, { alpha: br, color: LDCOL });
 }
 // 36 on: the plot under the picture, for a state S (the presentation's, or the left frame's own), its x axis m slabs long
 // and lined up with the slabs (slab k ends over x = kΔx): the continuous version, white, labelled e^{−σx} in the
@@ -6687,15 +6691,14 @@ async function whyCurve() {
 // 37: the formula goes, the light goes off, and the particles move into a clump at the top of the beam: the first slab's,
 // then the others'
 function whyClump() { ptw('wfo', 1, 0.6); ptw('wlight', 0, 0.6); return ptw('wclump', 1, 2.6, { delay: 0.7 }); }
-// 38: the same again: the dots go, back to one slab, the light on, and the slabs come in one at a time up to five, each
-// one's reading a dot: the first takes 10%, the rest hardly anything
+// 38: the same again: the dots go, back to one slab, the light on, its reading a step on the plot: it takes 10%.
+// 38b–38e: one more slab per press, up to five, each one's reading a step: hardly anything after the first
 async function whyFlat() {
   const g = PRES.gen;
   ptw('wdA', 0, 0.5); await ptw('wn', 1, 0.9); if (!labAlive(g)) return;
-  ptw('wdB', 1, 0.4); await ptw('wlight', 1, 0.6); if (!labAlive(g)) return;
-  await sleep(0.3, 'pres'); if (!labAlive(g)) return;
-  await whyUpTo5(g);
+  ptw('wdB', 1, 0.4); await ptw('wlight', 1, 0.6);
 }
+function whyFlatAdd(k) { return ptw('wn', k, 0.8); }
 // 39: the clumped picture and its plot move into a frame on the right, and the same slabs placed at random come in, in a
 // frame on the left. 39b, 39c: their names. 39d: the right one greys out
 function whyVersus() { return ptw('wsp', 1, 1.6); }

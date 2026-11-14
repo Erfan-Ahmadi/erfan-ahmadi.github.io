@@ -183,9 +183,8 @@ function whyView(ctx, V) {
 // Drawn moved, the picture's middle at (x, y), scaled by k
 const whyAt = (ctx, [x, y, k], f) => { ctx.save(); ctx.translate(x, y); ctx.scale(k, k); ctx.translate(-WDC[0], -WDC[1]); f(); ctx.restore(); };
 const WMUL = String.raw`\textcolor{${COL.red}}{\times\,0.9}`, WPOW = (n) => String.raw`0.9^{\textcolor{${COL.blue}}{${n}}}`;
-// 35: the same with base e: ln 0.9 = −0.105, in σ's yellow (it is what σ will be, per slab), and the distance in blue as
-// the brace has it, nΔx (a slab is Δx, one unit, thick)
-const WEXP = (n) => String.raw`e^{\textcolor{${COL.yellow}}{-0.105}\times\textcolor{${COL.blue}}{${n === 1 ? '' : n + String.raw`\,`}\Delta x}}`;   // the distance as the brace has it, nΔx
+// 35: the same with base e: ln 0.9 = −0.105, in σ's yellow (it is what σ will be, per slab), the count in blue, as the brace has it
+const WEXP = (n) => String.raw`e^{\textcolor{${COL.yellow}}{-0.105}\times\textcolor{${COL.blue}}{${n}}}`;
 const wfePlans = new Map();
 const WF = { y: 150, size: 86, ly: WHY.yc - WHY.hh - 58, lsize: 50 };
 let wfX = null, wfPlan = null;
@@ -253,13 +252,13 @@ function whyMain(st) {
   return { yc, hh, slabs, parts, laserX, sensorX, laserA: l, sensorA: l, readA: smooth(clamp(st.wread, 0, 1)), power: clamp(st.wpow, 0, 1), light: clamp(st.wlight, 0, 1), fext: into ? 36 * WTK : 36,
     xL: lerp(s0.x0, laserX, l), xR: lerp(s0.x1, sensorX, l), sheet: into ? lerp(0.7, WHY.sheet, Z.e) : WHY.sheet, Z, into, T, pl };
 }
-// Δx under the slab: a small piece of the distance x, in x's blue; as slabs come and go it stretches under all of them,
-// reading 2Δx, 3Δx, … (the count changing halfway through each slab's coming or going)
+// A brace under the slabs, in x's blue, counting them: 1, 2, 3, …; as slabs come and go it stretches under all of them
+// (the count changing halfway through each slab's coming or going)
 function whyBrace(ctx, V, n, br) {
   const s0 = V.T.slabs[0]; if (br <= 0.003 || !s0) return;
   const k = Math.round(n), by = V.yc + V.hh + 44, cx = s0.x0 + (n * WHY.w) / 2;
   drawBrace(ctx, cx, by, n * WHY.w, 24, 6, hexRgb(LDCOL), br);
-  drawTex(ctx, k === 1 ? String.raw`\Delta x` : String.raw`${k}\,\Delta x`, cx, by + 56, 50, { alpha: br, color: LDCOL });
+  drawTex(ctx, String(k), cx, by + 56, 50, { alpha: br, color: LDCOL });
 }
 // 36 on: the plot under the picture, for a state S (the presentation's, or the left frame's own), its x axis m slabs long
 // and lined up with the slabs (slab k ends over x = kΔx): the continuous version, white, labelled e^{−σx} in the
@@ -391,15 +390,14 @@ async function whyCurve() {
 // 37: the formula goes, the light goes off, and the particles move into a clump at the top of the beam: the first slab's,
 // then the others'
 function whyClump() { ptw('wfo', 1, 0.6); ptw('wlight', 0, 0.6); return ptw('wclump', 1, 2.6, { delay: 0.7 }); }
-// 38: the same again: the dots go, back to one slab, the light on, and the slabs come in one at a time up to five, each
-// one's reading a dot: the first takes 10%, the rest hardly anything
+// 38: the same again: the dots go, back to one slab, the light on, its reading a step on the plot: it takes 10%.
+// 38b–38e: one more slab per press, up to five, each one's reading a step: hardly anything after the first
 async function whyFlat() {
   const g = PRES.gen;
   ptw('wdA', 0, 0.5); await ptw('wn', 1, 0.9); if (!labAlive(g)) return;
-  ptw('wdB', 1, 0.4); await ptw('wlight', 1, 0.6); if (!labAlive(g)) return;
-  await sleep(0.3, 'pres'); if (!labAlive(g)) return;
-  await whyUpTo5(g);
+  ptw('wdB', 1, 0.4); await ptw('wlight', 1, 0.6);
 }
+function whyFlatAdd(k) { return ptw('wn', k, 0.8); }
 // 39: the clumped picture and its plot move into a frame on the right, and the same slabs placed at random come in, in a
 // frame on the left. 39b, 39c: their names. 39d: the right one greys out
 function whyVersus() { return ptw('wsp', 1, 1.6); }

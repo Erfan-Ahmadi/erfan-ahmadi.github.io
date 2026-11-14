@@ -188,15 +188,18 @@ function drawLabRow(ctx, X, o, alpha) {
 const LP = { L: 520, R: 1440, T: 250, B: 560, top: 690, bot: 870, beam: 780, size: 100, y: 150 }, LPD = 3;   // LPD: the plot's length, in boxes
 let LPA = null;
 const lpAxes = () => LPA || (LPA = makeAxes({ L: LP.L, R: LP.R, T: LP.T, B: LP.B, xr: [0, LPD, 1], yr: [0, 1, 0.5], ext: 40, xl: 'x', yl: '', labSize: 54, numSize: 28 }));
-// at 29, with σ gone to zero: "= e^0" after it, then "= 1"
-const PFML = String.raw`e^{-\htmlClass{t-sig}{\sigma}\,\htmlClass{t-ld}{x}}`, PFML1 = PFML + String.raw`\mathrel{\htmlClass{t-eq1}{=}}\mathord{\htmlClass{t-eq1}{e^{0}}}\mathrel{\htmlClass{t-eq2}{=}}\mathord{\htmlClass{t-eq2}{1}}`;
+// at 29, with σ gone to zero, σ itself turns into a 0, in its yellow (e^{−0x}), and then "= 1" comes after it
+const PFML = String.raw`e^{-\htmlClass{t-sig}{\sigma}\,\htmlClass{t-ld}{x}}`, PFMLZ = String.raw`e^{-\htmlClass{t-sig}{0}\,\htmlClass{t-ld}{x}}\mathrel{\htmlClass{t-eq2}{=}}\mathord{\htmlClass{t-eq2}{1}}`;
 let lpFml = null;
-function lpFormula() {   // laid out once: e^{−σx} centred, "= e^0 = 1" after it, so it doesn't move when that comes in
+function lpFormula() {   // laid out once: e^{−σx} centred; e^{−0x} = 1 from the same e, so nothing moves but what changes
   if (lpFml) return lpFml;
-  const sp = place(tex(PFML1), { x: 960 - (tex(PFML).w * LP.size) / 2, y: LP.y, size: LP.size, ax: 0 }), has = (s, t) => s.a.terms.includes(t);
-  const main = sp.filter((s) => !has(s, 't-eq1') && !has(s, 't-eq2')), [l, r, t, b] = inkSpan(main);
-  // c: the middle of e^{−σx}'s ink, for 29b; e: its e, the first thing in it
-  return (lpFml = { main, eq1: sp.filter((s) => has(s, 't-eq1')), eq2: sp.filter((s) => has(s, 't-eq2')), c: [(l + r) / 2, (t + b) / 2], e: main.reduce((m, s) => (s.x < m.x ? s : m)) });
+  const has = (s, t) => s.a.terms.includes(t), first = (S) => S.reduce((m, s) => (s.x < m.x ? s : m));
+  const main = place(tex(PFML), { x: 960 - (tex(PFML).w * LP.size) / 2, y: LP.y, size: LP.size, ax: 0 }), [l, r, t, b] = inkSpan(main), e = first(main);
+  let zs = place(tex(PFMLZ), { x: 0, y: LP.y, size: LP.size, ax: 0 }); const ze = first(zs); zs = zs.map((s) => shifted(s, e.x - ze.x, e.base - ze.base));
+  const col = (S) => S.map((s) => ({ ...s, color: has(s, 't-sig') ? hexRgb(COL.yellow) : has(s, 't-ld') ? hexRgb(LDCOL) : s.color }));   // as they look by then
+  const zero = col(zs.filter((s) => !has(s, 't-eq2')));
+  // c: the middle of e^{−σx}'s ink, for 29b; e: its e, the first thing in it; zero, zplan: e^{−0x}, and σ turning into its 0
+  return (lpFml = { main, eq2: zs.filter((s) => has(s, 't-eq2')), zero, zplan: matchPlan(col(main), zero), c: [(l + r) / 2, (t + b) / 2], e });
 }
 const inkSpan = (S) => S.reduce(([l, r, t, b], s) => { const [q0, q1, q2, q3] = inkBox(s); return [Math.min(l, q0), Math.max(r, q1), Math.min(t, q2), Math.max(b, q3)]; }, [Infinity, -Infinity, Infinity, -Infinity]);
 // 29b: everything but e^{−σx} goes (eOnly), the formula comes down to the middle of the stage (eMove, its ink's middle
@@ -217,8 +220,7 @@ function drawLabPlot(ctx, st) {
   const rest = a * (1 - smooth(clamp(st.eOnly || 0, 0, 1))), em = smooth(clamp(st.eMove || 0, 0, 1)), eb = smooth(clamp(st.eBox || 0, 0, 1));   // 29b: all but e^{−σx} goes (rest)
   ctx.save(); if (em > 0.001) ctx.translate((960 - F.c[0]) * em, (LE.y - F.c[1]) * em);
   drawLabFormula(ctx, F, st, a);
-  if (st.eq1 > 0.003) drawSprites(ctx, F.eq1, { alpha: rest * smooth(clamp(st.eq1, 0, 1)) });
-  if (st.eq2 > 0.003) drawSprites(ctx, F.eq2, { alpha: rest * smooth(clamp(st.eq2, 0, 1)) });
+  if (st.eq2 > 0.003) drawSprites(ctx, F.eq2, { alpha: rest * smooth(clamp(st.eq2, 0, 1)) });   // 29: "= 1" (eq1: σ turning into 0, in drawLabFormula)
   if (eb > 0.003) drawLabE(ctx, F, a, eb);
   ctx.restore();
   const bw = clamp(st.blW || 0, 0, 1), bo = 1 - smooth(clamp(st.blOut || 0, 0, 1));   // 26b: its name, for a moment
@@ -357,7 +359,9 @@ function drawLabFormula(ctx, F, st, a) {
     if (m9 >= 0.998) drawSprites(ctx, N, { alpha: sym }); else drawMorph(ctx, matchPlan(M, N), m9, sym);
     return;
   }
-  if (sym > 0.003) {
+  const z = smooth(clamp(st.eq1 || 0, 0, 1)) * (1 - smooth(clamp(st.eOnly || 0, 0, 1)));   // 29: σ turns into a 0 (and back at 29b)
+  if (z > 0.003 && sym > 0.003 && st.fml >= 1) { if (z >= 0.999) drawSprites(ctx, F.zero, { alpha: sym }); else drawMorph(ctx, F.zplan, z, sym); }
+  else if (sym > 0.003) {
     TERM_COL['t-ld'] = hexRgb(LDCOL);   // while it writes in, already in the colours it keeps
     if (Fo.c <= 0.003 || st.fml < 1) drawSprites(ctx, F.main, { p: st.fml, alpha: sym, hi: { 't-sig': Math.max(hiS, Fo.cs), 't-ld': Fo.cd } });
     else for (const s of F.main) {
@@ -628,8 +632,8 @@ const LFIX = 1.4;
 function labFix() { if (PS.dLoop && !reduced) PS.dotD = labDAt(PS.dLoopT0); PS.dLoop = 0; return ptw('dotD', LFIX, 1.0); }
 function labMore() { ptw('sigHi', 1, 0.5); PS.sPin = 1; return ptw('sig', 2, 1.8); }
 function labLess() { return ptw('sig', 0.5, 2.2); }
-// 29: σ to zero: a vacuum; "= e^0", then "= 1"
-function labVacuum() { PS.dLoop = 0; PS.sLoop = 0; PS.sPin = 1; ptw('eq1', 1, 0.7, { delay: 1.4 }); ptw('eq2', 1, 0.7, { delay: 2.3 }); return ptw('sig', 0, 1.8); }
+// 29: σ to zero: a vacuum; as it gets there σ in the formula turns into a 0, in its yellow, and then "= 1"
+function labVacuum() { PS.dLoop = 0; PS.sLoop = 0; PS.sPin = 1; ptw('eq1', 1, 0.8, { delay: 1.6 }); ptw('eq2', 1, 0.6, { delay: 2.5 }); return ptw('sig', 0, 1.8); }
 // 29b: only e^{−σx}, in the middle of the stage, a box around its e
 function labE() { ptw('eOnly', 1, 0.7); ptw('eMove', 1, 1.1, { delay: 0.35 }); return ptw('eBox', 1, 0.6, { delay: 1.4 }); }
 // 30: it goes, and 2, 3, 10 … write in. 30b: each becomes the same thing with base e (bMorph runs past 1 so the last
