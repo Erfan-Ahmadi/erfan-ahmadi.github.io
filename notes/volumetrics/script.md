@@ -135,10 +135,10 @@ The working script below has light edits; the original drafts, word for word, ar
 > But let's keep it simple, and assume our volume starts at a high density and then suddenly switches to a low density midway. [42b] Actually, let me plot the absorption coefficient for you: [42c] it starts at 0.4, [42d] and then suddenly switches to 0.2.
 
 **43.–43b.** [The plots lose their colour: the sections are what matters now. The setup shrinks into the left half of the stage, named A, and a copy of it slides into the right half, B; a thin line comes in between the two, and A fades as the copy lands, so the eye is on B. Next press, B's two sections change places, the dense one going over the top, and its plot follows: 0.2, then 0.4.]
-> Now, here is a question for you. [43b] I take these two sections and swap them around. Does it make the light brighter or dimmer on the other side?
+> Now, I have a question for you. [43b] I take these two sections and swap them around. Does it make the light brighter or dimmer on the other side?
 
 **46.** [A comes back, both as they were, and over the frame: "A or B?"]
-> Pause here if you want and try to answer In which of the two cases does the light come out brighter on the other end?
+> Pause here if you want and try to answer, In which of the two cases does the light come out brighter on the other end?
 
 **47.** [The question goes, and a readout comes in over each sensor: 30.1%, and 30.1%.]
 > OK, that was a trick question: both end up with the same amount of light on the other end, and the sensor reads the same value.
@@ -150,10 +150,11 @@ The working script below has light edits; the original drafts, word for word, ar
 > If you do the same thing on the other one, [49b] you end up with the same value.
 
 **50.** [Both sums go back into their brackets. Then everything else loses its colour and dims, and on both sides only the addition keeps its colour, in a box of the hook's orange, its plus sign in that orange and a little bigger.]
-> What I want you to pay attention to here is the addition.
+> I want you to pay attention to the addition here.
 
 **51.–51b.** [B goes, and so does what is written under the two; A comes to the middle of the frame, bigger, in its colours again. Next press, its two sections become one smooth hump: the plot's line and the fog change together, and the $\sigma$ labels and the dashed line go. The readout doesn't change.]
-> You could apply the same thinking [51b] when your absorption changes continuously.
+> And see what happens when your absorbtion changes continuously
+
 
 **52.–52b.** [The synced point climbs the hump, from zero up to its top, on the plot and on the beam. Next press, it comes down the other side, to zero.]
 > For example, here the absorption starts to pick up, and gets higher and higher, [52b] and then it begins decreasing smoothly, until it reaches zero.
@@ -182,7 +183,9 @@ The working script below has light edits; the original drafts, word for word, ar
 > By now I hope you've understood that the reason exponentials show up is our assumption that the particles are placed at random,
 
 **58b.** [The bottom card, "why an integral in the exponent?", its arrow, its answer, "$\sigma$ changes along the ray", and under it part 5's volume, its $\sigma$ going through one shape after another, the area under it, and the reading, staying the same; to its right, $e^{-\int \sigma(x)\,dx}$, the integral in the area's yellow. Both animations keep playing until the video ends.]
-> and that the reason you see integrals in the exponent is that the absorption coefficient changes along a ray. See you in the next video, where we'll cover emission and scattering, and the nuances we've skipped in this one.
+> and that the reason you see integrals in the exponent is that the absorption coefficient changes along a ray.
+
+> See you in the next video, where we'll cover emission and scattering, and the nuances we've skipped in this one.
 
 ## Open
 
