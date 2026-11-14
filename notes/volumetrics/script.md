@@ -132,10 +132,10 @@ The working script below has light edits; the original drafts, word for word, ar
 > But let's keep it simple, and assume our volume starts at a high density [42b] and then suddenly switches to a low density midway. [42c] Actually, let me plot the absorption coefficient for you: [42d] it starts at 0.4, [42e] and then suddenly switches to 0.2.
 
 **43.–43b.** [The plots lose their colour: the sections are what matters now. The setup shrinks into the left half of the stage, named A, and a copy of it slides into the right half, B; a thin line comes in between the two, and A fades as the copy lands, so the eye is on B. Next press, B's two sections change places, the dense one going over the top, and its plot follows: 0.2, then 0.4.]
-> Now, I have a question for you. [43b] I take these two sections and swap them around.
+> Now, I have a question for you. [43b] I take these two sections and swap them around. Now the light goes through the thin part first and then the dense one.
 
 **46.** [A comes back, both as they were, and over the frame the question is written: "More light reaches sensor in A or B?"]
-> On the left hand side, A, light goes through the dense part first and then the thin part. In B, light goes through the thin part first and then the dense part. Pause here and guess: which sensor reads more light, A or B?
+> Pause here and guess: which sensor reads more light, A or B?
 
 **47.** [The question goes, and a readout comes in over each sensor: 30.1%, and 30.1%.]
 > OK, that was a trick question: both end up with the same amount of light on the other end, and the sensor reads the same value.

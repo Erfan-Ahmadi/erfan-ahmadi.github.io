@@ -208,4 +208,5 @@ At the start of beat 48's narration (its math now written out as it's said):
 - After the hook: the equation, the four effects highlighted briefly, then the questions about it; "why e?" is one of them.
 - What I want to teach: e is not that scary; the exponential, a short answer and a long answer; what an exponential means (fractions, slabs: a slab says "I don't care about the other slabs, I take 10%"); then why does each slab not care → uniform distribution, a hint at probability; a few uses of the radiative transfer equation outside graphics (astronomy and so on).
 - The A or B question, reworded (instead of "Does it make the light brighter or dimmer on the other side?"): "On the left hand side, A, light goes through the dense part first and then the think part. in B light goes through the thin part first and then the dense part" Pause here and guess, which sensor reads more light, A or B?" on screen it reads "More light reaches sensor in A or B?
+- Then, instead of the two sentences on what A and B are: "now the light goes through the thin part first and then the dense one
 ```
