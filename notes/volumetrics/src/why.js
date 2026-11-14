@@ -97,19 +97,20 @@ function whyAnch(n) {
 }
 let WPAX = null;
 const whyAxes = () => WPAX || (WPAX = makeAxes({ L: WPA.x0, R: WPA.x0 + WPL.n * WPA.w, T: WPA.T, B: WPA.B, xr: [0, WPL.n, 1], yr: [0, 1, 0.5], ext: 40, xl: 'd', yl: '', labSize: 54, numSize: 28 }));
-// The discrete version: what gets through after each whole slab, level across a slab and dropping at its end, drawn as
-// the slabs come in (n: how many there are). In the light's red, as the plot's curve is at 26–29: on a plot, red is what
-// the light does; the formula's own curve is white, like the formula.
+// The discrete version: what gets through after each whole slab, level across a slab and dropping at its end, with a dot
+// at each slab's reading, drawn as the slabs come in (n: how many there are). In the amounts' lavender (red is the light
+// itself, and only that); the formula's own curve is white, like the formula.
 function whySteps(ctx, A, T, n, a) {
   if (a <= 0.003) return;
-  ctx.save(); ctx.strokeStyle = hexA(SH.color, a); ctx.lineWidth = 5; ctx.lineJoin = 'miter'; ctx.lineCap = 'butt'; ctx.beginPath(); ctx.moveTo(A.X(0), A.Y(T[0]));
-  for (let k = 1; k <= WPL.n; k++) {
+  ctx.save(); ctx.strokeStyle = hexA(AMTCOL, a); ctx.lineWidth = 5; ctx.lineJoin = 'miter'; ctx.lineCap = 'butt'; ctx.beginPath(); ctx.moveTo(A.X(0), A.Y(T[0]));
+  for (let k = 1; k < T.length; k++) {
     const p = clamp(n - (k - 1), 0, 1); if (p <= 0) break;
     ctx.lineTo(A.X(k - 1 + clamp(p / 0.7, 0, 1)), A.Y(T[k - 1]));
     if (p > 0.7) ctx.lineTo(A.X(k), A.Y(lerp(T[k - 1], T[k], (p - 0.7) / 0.3)));
     if (p < 1) break;
   }
   ctx.stroke(); ctx.restore();
+  for (let k = 0; k < T.length && k <= n + 1e-6; k++) dot(ctx, A.X(k), A.Y(T[k]), 8, AMTCOL, a * (k === 0 ? 1 : smooth(clamp((n - (k - 0.12)) / 0.12, 0, 1))));
 }
 const WCURVE = String.raw`e^{-\textcolor{${COL.yellow}}{\sigma}\,\textcolor{${COL.blue}}{d}}`;   // the continuous version, in the formula's colours
 // The zoom (32c), on the stage: from the lab's row, around the slice where it crosses the beam, the same in every
@@ -287,8 +288,9 @@ function drawWhy(ctx, dt, st) {
       }
     }
     // 36–38: the plot under the picture, its d axis lined up with the slabs (slab k ends over d = kΔd): the continuous
-    // version, white, labelled e^{−σd} in the formula's colours; the discrete version, the slabs' readings as red steps,
-    // drawn as each slab comes in (placed at random, then clumped); a faint dashed line from where the slabs end down to it
+    // version, white, labelled e^{−σd} in the formula's colours; the discrete version, the slabs' readings as lavender
+    // steps with a dot at each, drawn as each slab comes in (placed at random, then clumped); a faint dashed line from
+    // where the slabs end down to it
     const ax = smooth(clamp(st.wax, 0, 1));
     if (ax > 0.003 && !V.into) {
       const A = whyAxes(), f = (x) => Math.pow(1 - WHY.f, x), cu = clamp(st.wcur, 0, 1);
