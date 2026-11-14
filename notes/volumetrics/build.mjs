@@ -38,7 +38,9 @@ const SCRIPT_NOTES = [];
   }
   if (SCRIPT_NOTES.length < 10) throw new Error('script.md: no beats found for the notes window');
 }
-const later = `const SCRIPT_NOTES = ${JSON.stringify(SCRIPT_NOTES)};\n` + ['volume.js', 'million.js', 'sheets.js', 'bases.js', 'average.js', 'pictures.js', 'present.js', 'lab.js', 'why.js', 'vary.js', 'end.js', 'cards.js', 'notes.js'].map((f) => fs.readFileSync(path.join(here, 'src', f), 'utf8')).join('\n');
+// Erfan's Mitsuba renders for beat 39 (assets/): the glass bunny with the exponential and the power-law medium inside
+const RENDERS = Object.fromEntries([['exp', 'bunny-exponential.webp'], ['pl', 'bunny-powerlaw.webp']].map(([k, f]) => [k, 'data:image/webp;base64,' + fs.readFileSync(path.join(here, 'assets', f)).toString('base64')]));
+const later = `const SCRIPT_NOTES = ${JSON.stringify(SCRIPT_NOTES)};\nconst RENDERS = ${JSON.stringify(RENDERS)};\n` + ['volume.js', 'million.js', 'sheets.js', 'bases.js', 'average.js', 'pictures.js', 'present.js', 'lab.js', 'why.js', 'vary.js', 'end.js', 'cards.js', 'notes.js'].map((f) => fs.readFileSync(path.join(here, 'src', f), 'utf8')).join('\n');
 const app = fs.readFileSync(path.join(here, 'src/app.js'), 'utf8').replace('//@@SCENES@@', () => later + '\n//@@SCENES@@');
 if (!app.includes('function g3draw') || !app.includes('function drawPresent')) throw new Error('app.js is missing the //@@SCENES@@ marker');
 const shell = fs.readFileSync(path.join(here, 'src/shell.html'), 'utf8');

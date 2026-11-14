@@ -106,7 +106,29 @@ function whyAxes(m = WPL.n) {
 // 39–40: the frames. The picture over its plot, with n slabs, has its middle at WPC(n) on the stage; in a frame it is
 // drawn k as large, its middle at the frame's.
 const WPC = (n) => [978.5 + 0.5 * WPA.w * (n - WPL.n), 541];
-const WFRAME = { L: [50, 200, 890, 690], R: [980, 200, 890, 690], long: [50, 200, 1820, 690], low: [110, 300, 1700, 640], k: 0.675, klong: 0.76, tsize: 44, ssize: 30 };   // low: the long frame with the formula over it (40)   // tsize, ssize: the name, and the line under it   // (klong: a little larger in the long frame)
+const WFRAME = { L: [50, 200, 890, 770], R: [980, 200, 890, 770], long: [50, 200, 1820, 690], low: [110, 300, 1700, 640], k: 0.675, klong: 0.76, tsize: 44, ssize: 30 };   // low: the long frame with the formula over it (40)   // tsize, ssize: the name, and the line under it   // (klong: a little larger in the long frame)
+// 39: under each frame's picture, a band with Erfan's Mitsuba render of the same idea, the glass bunny filled with the
+// exponential medium (left) or the power-law one (right); h: the band's height, g: how much smaller the picture and the
+// plot are above it. crop: the part of the 1920 × 1080 render around the bunny; its edges fade into the stage.
+const WRB = { h: 330, g: 0.7, crop: [440, 90, 1040, 860] };
+const whyRenders = {};
+function whyRenderImg(key) {   // the render, cropped and its edges faded, once it has loaded
+  let r = whyRenders[key];
+  if (!r) { r = whyRenders[key] = { img: new Image(), cv: null }; r.img.src = RENDERS[key]; }
+  if (r.cv || !r.img.complete || !r.img.naturalWidth) return r.cv;
+  const [cx, cy, cw, ch] = WRB.crop, w = Math.round(cw / 2), h = Math.round(ch / 2), cv = document.createElement('canvas'), c = cv.getContext('2d');
+  cv.width = w; cv.height = h; c.drawImage(r.img, cx, cy, cw, ch, 0, 0, w, h);
+  c.globalCompositeOperation = 'destination-in';
+  const g = c.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, Math.max(w, h) / 2); g.addColorStop(0.72, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  c.save(); c.translate(w / 2, h / 2); c.scale(w / Math.max(w, h), h / Math.max(w, h)); c.translate(-w / 2, -h / 2); c.fillStyle = g; c.fillRect(0, 0, w, h); c.restore();
+  return (r.cv = cv);
+}
+function whyRender(ctx, key, B, a) {
+  if (a <= 0.003 || B[3] < 4) return;
+  const cv = whyRenderImg(key); if (!cv) return;
+  const h = B[3] - 16, w = (h * cv.width) / cv.height;
+  ctx.save(); ctx.globalAlpha *= a; ctx.drawImage(cv, B[0] + (B[2] - w) / 2, B[1] + 4, w, h); ctx.restore();
+}
 // The discrete version: what gets through after each whole slab, level across a slab and dropping at its end, with a dot
 // at each slab's reading, drawn as the slabs come in (n: how many there are). In the light's red: it is what the light
 // does; the formula's own curve is white, like the formula.
@@ -131,11 +153,12 @@ const WCURVE = String.raw`e^{-\textcolor{${COL.yellow}}{\sigma}\,\textcolor{${CO
 // σ_i spread as that power law needs (exponentially, mean σ̄: a few dense rows, in three bands, many sparse ones), about
 // as many particles in all as A; the rays in the sparse rows get far, so the light falls off slower and slower. max: as
 // many as the long frame grows to (40). ax, av: how far a particle wobbles across and up and down (av in the beam's height).
-// WDB: B's rows, its seed (picked so the steps keep close to the power law), and σ̄ (A's first slab takes the same 12%).
-const WDN = { n: 12, max: 24, m: 6, D: 0.02, ax: 6, av: 0.008, seed: 4242 }, WDB = { rows: 50, seed: 16862, sb: 0.12 / 0.88 };
+// WDB: B's rows (as tall as a particle), its seed (picked so the steps keep close to the power law: about 27% after
+// twelve slabs where the exponential is at 9%), and σ̄ (A's first slab takes the same 18%).
+const WDN = { n: 12, max: 24, m: 6, D: 0.03, ax: 6, av: 0.008, seed: 4242 }, WDB = { rows: 33, seed: 19288, sb: 0.18 / 0.82 };
 const WDW = (WHY.w * WPL.n) / WDN.n, WDA = (WPA.w * WPL.n) / WDN.n;   // a thin slab's width: in the picture, on the plot
 const WDENSE = (() => {
-  const r = rng32(WDN.seed), lo = WDN.D / 2 + 0.02, hi = 1 - WDN.D / 2 - 0.02, A = [], B = [];
+  const r = rng32(WDN.seed), lo = WDN.D / 2, hi = 1 - WDN.D / 2, A = [], B = [];   // (all of the beam's height in reach, so no sliver of it always gets through)
   const wob = () => ({ ph: [r() * 2 * Math.PI, r() * 2 * Math.PI], fr: [lerp(0.4, 0.85, r()), lerp(0.35, 0.8, r())] });
   for (let k = 0; k < WDN.max; k++) {
     A.push(Array.from({ length: WDN.m }, () => ({ xi: lerp(0.15, 0.85, r()), v: lerp(lo, hi, r()), ...wob() })));
@@ -159,7 +182,7 @@ function whyDenseV(kind, n, t) {
   const laserX = WXA - WHY.gap, sensorX = WXA + clamp(n, 1, WDN.max) * WDW + WHY.gap;
   return { yc: WHY.yc, hh: WHY.hh, slabs, parts, laserX, sensorX, laserA: 1, sensorA: 1, readA: 1, power: 1, light: 1, xL: laserX, xR: sensorX, sheet: WHY.sheet, fext: 36 };
 }
-const WDT = (() => { const P = WDENSE.A.flat(); return Math.pow(whyLitOf(P.map((p) => [p.v - WDN.D / 2, p.v + WDN.D / 2])), 1 / WDN.max); })();   // A's light per slab, at rest
+const WDT = (() => { const P = WDENSE.A.slice(0, WDN.n).flat(); return Math.pow(whyLitOf(P.map((p) => [p.v - WDN.D / 2, p.v + WDN.D / 2])), 1 / WDN.n); })();   // A's light per slab, at rest, over the twelve slabs 39 shows
 // One frame's content, drawn where the old one was (the picture over its plot, plot slabs as wide as the picture's): the
 // picture, and the plot m slabs long with the curve and the live steps
 function whyDenseDraw(ctx, kind, n, m, t = TIME) {
@@ -343,8 +366,8 @@ function drawWhy(ctx, dt, st) {
     const V = whyMain(st), at = V.into ? [WDC[0], WDC[1], 1] : [WDC[0], lerp(WDC[1], WPL.y, V.pl), WTK], s0 = V.into ? null : V.T.slabs[0];
     const la = smooth(clamp(st.wlab, 0, 1)), fm = clamp(st.wfm, 0, 1), n = clamp(st.wn, 1, WHY.NLONG);
     // 39: all of it, the picture and its plot, moves into the frame on the right; 40: and goes
-    const c5 = WPC(WPL.n), R = WFRAME.R, mk = lerp(1, WFRAME.k, sp), dz = smooth(clamp((sp - 0.35) / 0.65, 0, 1));   // dz: 39, the denser picture taking over
-    ctx.save(); ctx.globalAlpha *= 1 - long; ctx.translate(lerp(c5[0], R[0] + R[2] / 2, sp), lerp(c5[1], R[1] + R[3] / 2, sp)); ctx.scale(mk, mk); ctx.translate(-c5[0], -c5[1]);
+    const c5 = WPC(WPL.n), R = WFRAME.R, mk = lerp(1, WFRAME.k * WRB.g, sp), dz = smooth(clamp((sp - 0.35) / 0.65, 0, 1));   // dz: 39, the denser picture taking over
+    ctx.save(); ctx.globalAlpha *= 1 - long; ctx.translate(lerp(c5[0], R[0] + R[2] / 2, sp), lerp(c5[1], R[1] + (R[3] - WRB.h) / 2, sp)); ctx.scale(mk, mk); ctx.translate(-c5[0], -c5[1]);
     if (dz > 0.003) { ctx.save(); ctx.globalAlpha *= dz; whyDenseDraw(ctx, 'B', WDN.n, WDN.n); ctx.restore(); }
     ctx.save(); ctx.globalAlpha *= 1 - dz;
     whyAt(ctx, at, () => {
@@ -386,8 +409,9 @@ function drawWhy(ctx, dt, st) {
     const nL = clamp(st.wnL, 1, WHY.NLONG), nD = (WDN.n * nL) / WPL.n;   // (12 thin slabs for every 5 of the others)
     const vo = 1 - smooth(clamp((st.von || 0) * 2.2, 0, 1));   // 41: its slabs, its plot and the frame itself make way for part 5 (vary.js)
     const eq = smooth(clamp(st.weq || 0, 0, 1)), Fl = lerpRect(WFRAME.L, WFRAME.long, long), F = lerpRect(Fl, WFRAME.low, eq), c = WPC(nL), R = WFRAME.R;
-    const k = lerp(WFRAME.k, WFRAME.klong, long) * (F[3] / Fl[3]), fa = vo;   // fa: until 41 clears the stage
-    ctx.save(); ctx.globalAlpha *= sp * fa; ctx.translate(F[0] + F[2] / 2, F[1] + F[3] / 2); ctx.scale(k, k); ctx.translate(-c[0], -c[1]);
+    const rb = 1 - long, rbH = WRB.h * rb;   // the render's band at the frame's bottom, until the frame grows long (40)
+    const k = lerp(WFRAME.k, WFRAME.klong, long) * (F[3] / Fl[3]) * lerp(1, WRB.g, rb), fa = vo;   // fa: until 41 clears the stage
+    ctx.save(); ctx.globalAlpha *= sp * fa; ctx.translate(F[0] + F[2] / 2, F[1] + (F[3] - rbH) / 2); ctx.scale(k, k); ctx.translate(-c[0], -c[1]);
     whyDenseDraw(ctx, 'A', nD, Math.max(WDN.n, nD));
     ctx.restore();
     const frame = (Q, a) => { if (a > 0.003) { ctx.save(); ctx.strokeStyle = hexA(COL.greyC, a); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(Q[0], Q[1], Q[2], Q[3], 14); ctx.stroke(); ctx.restore(); } };
@@ -398,6 +422,8 @@ function drawWhy(ctx, dt, st) {
     };
     if (st.wnmL > 0.003) name('Exponential', 'Particles Placed Randomly', F[0] + F[2] / 2, F[1], clamp(st.wnmL, 0, 1), fa, null, mixRgb(hexRgb(COL.greyA), hexRgb(COL.gold), smooth(clamp(st.weqA || 0, 0, 1))));
     if (st.wnmR > 0.003) name('Non-Exponential', 'Particles Placed with a Structure', R[0] + R[2] / 2, R[1], clamp(st.wnmR, 0, 1), 1 - long, grey > 0.003 ? mixRgb(WHITE_RGB, hexRgb(COL.greyC), grey) : null);
+    whyRender(ctx, 'exp', [F[0], F[1] + F[3] - rbH, F[2], rbH], sp * fa * rb * smooth(clamp(st.wnmL || 0, 0, 1)));   // 39b on: the renders under the frames
+    whyRender(ctx, 'pl', [R[0], R[1] + R[3] - WRB.h, R[2], WRB.h], sp * (1 - long) * smooth(clamp(st.wnmR || 0, 0, 1)));
     whyFormulaBack(ctx, st, F, fa);   // 40, 40b
   }
   ctx.restore();
