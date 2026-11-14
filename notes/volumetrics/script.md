@@ -77,7 +77,7 @@ The working script below has light edits; the original drafts, word for word, ar
 > In physics, this is called the Beer–Lambert law.
 
 **27.** [The dot runs back and forth along the curve, from three boxes down to almost nothing and back, over and over until the next press, never stopping on its own; the box grows and shrinks with it, and the sensor reads what the curve says. It's $x$ that's changing, so $x$ is the one lit in the formula, a thin box around it, and the brace under the box counts.]
-> The longer the path, the less light gets through.
+> Now see how changing the distance the light travels changes how much of it makes it through. The longer the path, the less light gets through.
 
 **28.–28c.** [The dot stops, from wherever it was, and settles at 1.4 box lengths: $x = 1.4$, the sensor reading 37.9%. Next press, the constant in the exponent takes the specks' yellow and goes up to twice what it was, and stays there (the brace and its $x = 1.4$ under the box go as it starts, and stay out while $\sigma$ is the one changing, until 31): the stuff looks denser, the curve drops faster, the sensor reads 14.4%; its value is written in the box, among the specks, $\sigma = 1.39$, and stays written there from here on. Next press, it goes down to half the usual: the stuff thins out, the curve flattens, $\sigma = 0.35$, 61.6%. The box stays still for this; only the stuff and the curve change.]
 > And notice: [28b] the more absorbing the stuff is, the more it takes from the light, [28c] and the less absorbing the stuff, the less it takes.
