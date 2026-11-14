@@ -330,7 +330,7 @@ function drawVary(ctx, dt, st) {
 // thinner there, the sensor. 41b: a dense spot, circled. 41c: and a thin one
 function varyStart() { return ptw('von', 1, 1.8); }
 function varyDense() { return ptw('vc1', 1, 0.6); }
-function varyThin() { return ptw('vc2', 1, 0.6); }
+function varyThin() { ptw('vc1', 0, 0.5); return ptw('vc2', 1, 0.6); }   // (the dense spot's circle goes as this one comes)
 // 42: the circles go, and the cloud becomes the simple case: two sections, dense then thin, a dashed line between them
 function varySections() { ptw('vc1', 0, 0.4); ptw('vc2', 0, 0.4); ptw('vface', 1, 0.7, { delay: 1.4 }); return ptw('vsect', 1, 1.8, { delay: 0.2 }); }
 // 42b: the picture moves down and the plot's axes come in over it. 42c: σ = 0.4 written in the first section, and the

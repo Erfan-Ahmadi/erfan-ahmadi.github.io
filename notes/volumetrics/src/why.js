@@ -106,7 +106,7 @@ function whyAxes(m = WPL.n) {
 // 39–40: the frames. The picture over its plot, with n slabs, has its middle at WPC(n) on the stage; in a frame it is
 // drawn k as large, its middle at the frame's.
 const WPC = (n) => [978.5 + 0.5 * WPA.w * (n - WPL.n), 541];
-const WFRAME = { L: [50, 200, 890, 690], R: [980, 200, 890, 690], long: [50, 200, 1820, 690], k: 0.675, klong: 0.76, ty: 150, tsize: 44, ssize: 30 };   // ty: the names' middle; tsize, ssize: the name, and the line under it   // (klong: a little larger in the long frame)
+const WFRAME = { L: [50, 200, 890, 690], R: [980, 200, 890, 690], long: [50, 200, 1820, 690], low: [110, 300, 1700, 640], k: 0.675, klong: 0.76, tsize: 44, ssize: 30 };   // low: the long frame with the formula over it (40)   // tsize, ssize: the name, and the line under it   // (klong: a little larger in the long frame)
 // The discrete version: what gets through after each whole slab, level across a slab and dropping at its end, with a dot
 // at each slab's reading, drawn as the slabs come in (n: how many there are). In the light's red: it is what the light
 // does; the formula's own curve is white, like the formula.
@@ -153,14 +153,10 @@ function whyDenseV(kind, n, t) {
 }
 const WDT = (() => { const P = WDENSE.A.flat(); return Math.pow(whyLitOf(P.map((p) => [p.v - WDN.D / 2, p.v + WDN.D / 2])), 1 / WDN.max); })();   // A's light per slab, at rest
 // One frame's content, drawn where the old one was (the picture over its plot, plot slabs as wide as the picture's): the
-// picture with its brace counting the slabs, the plot m slabs long with the curve and the live steps
+// picture, and the plot m slabs long with the curve and the live steps
 function whyDenseDraw(ctx, kind, n, m, t = TIME) {
   const V = whyDenseV(kind, n, t), s0 = V.slabs[0], k = Math.round(n);
-  whyAt(ctx, [WDC[0], WPL.y, WTK], () => {
-    whyView(ctx, V);
-    const by = V.yc + V.hh + 44, cx = s0.x0 + (n * WDW) / 2;
-    drawBrace(ctx, cx, by, n * WDW, 24, 6, hexRgb(LDCOL), 1); drawTex(ctx, String(k), cx, by + 56, 50, { color: LDCOL });
-  });
+  whyAt(ctx, [WDC[0], WPL.y, WTK], () => whyView(ctx, V));   // (no brace counting them here)
   const A = makeAxes({ L: WPA.x0, R: WPA.x0 + m * WDA, T: WPA.T, B: WPA.B, xr: [0, m, 1], yr: [0, 1, 0.5], ext: 40, xl: 'x', yl: '', labSize: 54, numSize: 28 }), f = (x) => Math.pow(WDT, x);
   drawAxes(ctx, A, { c: 1, nums: 0, lab: 1, xlColor: hexRgb(LDCOL) });
   for (const [v, s] of [[1, '100%'], [0.5, '50%']]) drawTex(ctx, String.raw`\text{${s.replace('%', '\\%')}}`, A.ox - 22, A.Y(v), 28, { ax: 1 });
@@ -245,7 +241,7 @@ function whyNAt(t0) {
   return lerp(a, b, smooth(clamp((f - 0.45) / 0.55, 0, 1)));
 }
 function WHY_DEFAULTS() { return {
-  won: 0, wpart: 0, wshad: 0, wsel: 0, wfade: 0, wzoom: 0, wls: 0, wread: 0, wbr: 0, wpow: 1, wpowLoop: 0, wpowT0: 0, wsay: 0, wsayP: 0, wlab: 0, wn: 1, wfm: 0, wnLoop: 0, wnT0: 0,
+  won: 0, wpart: 0, wshad: 0, weq: 0, weqW: 0, weqA: 0, wcard: 0, wcard2: 0, wsel: 0, wfade: 0, wzoom: 0, wls: 0, wread: 0, wbr: 0, wpow: 1, wpowLoop: 0, wpowT0: 0, wsay: 0, wsayP: 0, wlab: 0, wn: 1, wfm: 0, wnLoop: 0, wnT0: 0,
   wfe: 0, wpl: 0, wax: 0, wcur: 0, wdA: 0, wdB: 0, wlight: 1, wclump: 0, wfo: 0, wsp: 0, wnmL: 0, wnmR: 0, wgrey: 0, wlong: 0, wnL: 5, bOut: 0,
 }; }
 // 37: how far slab k's particles have moved into their clump: the first slab's first, then the others'
@@ -378,19 +374,22 @@ function drawWhy(ctx, dt, st) {
   // brace, the plot's axis, its curve and its steps with them
   if (sp > 0.003) {
     const nL = clamp(st.wnL, 1, WHY.NLONG), nD = (WDN.n * nL) / WPL.n;   // (12 thin slabs for every 5 of the others)
-    const F = lerpRect(WFRAME.L, WFRAME.long, long), c = WPC(nL), R = WFRAME.R, k = lerp(WFRAME.k, WFRAME.klong, long);
     const vo = 1 - smooth(clamp((st.von || 0) * 2.2, 0, 1));   // 41: its slabs, its plot and the frame itself make way for part 5 (vary.js)
-    ctx.save(); ctx.globalAlpha *= sp * vo; ctx.translate(F[0] + F[2] / 2, F[1] + F[3] / 2); ctx.scale(k, k); ctx.translate(-c[0], -c[1]);
+    const eq = smooth(clamp(st.weq || 0, 0, 1)), Fl = lerpRect(WFRAME.L, WFRAME.long, long), F = lerpRect(Fl, WFRAME.low, eq), c = WPC(nL), R = WFRAME.R;
+    const k = lerp(WFRAME.k, WFRAME.klong, long) * (F[3] / Fl[3]), fa = vo * (1 - smooth(clamp(st.wcard || 0, 0, 1)));   // fa: until the cards take over (40c)
+    ctx.save(); ctx.globalAlpha *= sp * fa; ctx.translate(F[0] + F[2] / 2, F[1] + F[3] / 2); ctx.scale(k, k); ctx.translate(-c[0], -c[1]);
     whyDenseDraw(ctx, 'A', nD, Math.max(WDN.n, nD));
     ctx.restore();
     const frame = (Q, a) => { if (a > 0.003) { ctx.save(); ctx.strokeStyle = hexA(COL.greyC, a); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(Q[0], Q[1], Q[2], Q[3], 14); ctx.stroke(); ctx.restore(); } };
-    frame(F, sp * vo); frame(R, sp * (1 - long));
-    const name = (top, sub, x, w, alpha, color) => {   // the name, and under it what makes it so, written one after the other
-      drawTex(ctx, String.raw`\text{${top}}`, x, WFRAME.ty - 24, WFRAME.tsize, { p: clamp(w * 1.8, 0, 1), alpha, color });
-      drawTex(ctx, String.raw`\text{${sub}}`, x, WFRAME.ty + 22, WFRAME.ssize, { p: clamp(w * 1.8 - 0.8, 0, 1), alpha, color: color || hexRgb(COL.greyA) });
+    frame(F, sp * fa); frame(R, sp * (1 - long));
+    const name = (top, sub, x, y, w, alpha, color, subCol) => {   // the name, and under it what makes it so, written one after the other (y: the frame's top)
+      drawTex(ctx, String.raw`\text{${top}}`, x, y - 74, WFRAME.tsize, { p: clamp(w * 1.8, 0, 1), alpha, color });
+      drawTex(ctx, String.raw`\text{${sub}}`, x, y - 28, WFRAME.ssize, { p: clamp(w * 1.8 - 0.8, 0, 1), alpha, color: subCol || color || hexRgb(COL.greyA) });
     };
-    if (st.wnmL > 0.003) name('Exponential', 'Particles Placed Randomly', F[0] + F[2] / 2, clamp(st.wnmL, 0, 1), vo);
-    if (st.wnmR > 0.003) name('Non-Exponential', 'Particles Placed with a Structure', R[0] + R[2] / 2, clamp(st.wnmR, 0, 1), 1 - long, grey > 0.003 ? mixRgb(WHITE_RGB, hexRgb(COL.greyC), grey) : null);
+    if (st.wnmL > 0.003) name('Exponential', 'Particles Placed Randomly', F[0] + F[2] / 2, F[1], clamp(st.wnmL, 0, 1), fa, null, mixRgb(hexRgb(COL.greyA), hexRgb(COL.gold), smooth(clamp(st.weqA || 0, 0, 1))));
+    if (st.wnmR > 0.003) name('Non-Exponential', 'Particles Placed with a Structure', R[0] + R[2] / 2, R[1], clamp(st.wnmR, 0, 1), 1 - long, grey > 0.003 ? mixRgb(WHITE_RGB, hexRgb(COL.greyC), grey) : null);
+    whyFormulaBack(ctx, st, F, fa);   // 40, 40b
+    whyCards(ctx, dt, st, vo);   // 40c, 40d
   }
   ctx.restore();
   // 39d: the right one greys out: not for now
@@ -493,5 +492,45 @@ function whyVersus() { return ptw('wsp', 1, 1.6); }
 function whyNameL() { return ptw('wnmL', 1, 1.5, { ease: linear }); }
 function whyNameR() { return ptw('wnmR', 1, 1.7, { ease: linear }); }
 function whyGrey() { return ptw('wgrey', 1, 0.9); }
-// 40: the greyed frame goes and the exponential one grows longer, across the stage; more slabs come in, up to ten
-function whyLong() { ptw('wlong', 1, 1.6); return ptw('wnL', WHY.NLONG, 2.6, { delay: 0.9, ease: linear }); }
+// 40: the greyed frame goes and the exponential one grows longer, across the stage, more slabs coming in; it settles a
+// little lower, and the hook's formula writes in over it, its exponential boxed. 40b: an arrow from the box down to
+// "Particles Placed Randomly", which takes the box's orange. 40c: the formula and the frame give way to a card, computer
+// graphics (the cloud, rendered). 40d: a second card beside it, astronomy
+function whyLong() { ptw('wlong', 1, 1.6); ptw('wnL', WHY.NLONG, 2.6, { delay: 0.9, ease: linear }); ptw('weq', 1, 1.2, { delay: 1.4 }); return ptw('weqW', 1, 1.8, { delay: 1.9, ease: linear }); }
+function whyAssume() { return ptw('weqA', 1, 0.9); }
+function whyCG() { return ptw('wcard', 1, 1.1); }
+function whyAstro() { return ptw('wcard2', 1, 0.9); }
+// 40: the hook's formula, at the top, and a box around its exponential; 40b: the arrow from it to the assumption
+const WEQ = { y: 112, w: 1560 };
+function whyFormulaBack(ctx, st, F, fa) {
+  const a = smooth(clamp(st.weq || 0, 0, 1)) * fa; if (a <= 0.003) return;
+  const E = peq(), [l, r, t, b] = inkSpan(E), k = WEQ.w / (r - l), cx = (l + r) / 2, cy = (t + b) / 2, X = (x) => 960 + (x - cx) * k, Y = (y) => WEQ.y + (y - cy) * k;
+  ctx.save(); ctx.translate(960, WEQ.y); ctx.scale(k, k); ctx.translate(-cx, -cy); drawSprites(ctx, E, { p: clamp(st.weqW || 0, 0, 1), alpha: a }); ctx.restore();
+  const S = E.filter((q) => q.a.terms.includes('t-qe') || q.a.terms.includes('t-qexp')), [bl, br, bt, bb] = inkSpan(S), ba = a * smooth(clamp(((st.weqW || 0) - 0.6) / 0.4, 0, 1));
+  const rx = X(bl) - 10, ry = Y(bt) - 10, rw = (br - bl) * k + 20, rh = (bb - bt) * k + 20;
+  if (ba > 0.003) { ctx.save(); ctx.strokeStyle = hexA(COL.gold, ba); ctx.lineWidth = 3.5; ctx.beginPath(); ctx.roundRect(rx, ry, rw, rh, 10); ctx.stroke(); ctx.restore(); }
+  const aa = smooth(clamp(st.weqA || 0, 0, 1)) * fa;
+  if (aa > 0.003) {   // drawn from the box toward the line under the frame's name, as far as aa
+    const x0 = rx + rw / 2, y0 = ry + rh + 8, xe = F[0] + F[2] / 2 - 236, ye = F[1] - 30, x1 = lerp(x0, xe, aa), y1 = lerp(y0, ye, aa), an = Math.atan2(ye - y0, xe - x0);
+    ctx.save(); ctx.strokeStyle = COL.gold; ctx.fillStyle = COL.gold; ctx.lineWidth = 3.5; ctx.lineCap = 'round'; ctx.globalAlpha *= fa;
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1 - 14 * Math.cos(an), y1 - 14 * Math.sin(an)); ctx.stroke();
+    ctx.translate(x1, y1); ctx.rotate(an); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-20, -10); ctx.lineTo(-20, 10); ctx.closePath(); ctx.fill(); ctx.restore();
+  }
+}
+// 40c, 40d: where it's still used: computer graphics (the cloud, rendered as in the hook) and astronomy (beat 17's card)
+const WCARDS = [{ r: [150, 250, 790, 560], label: 'computer graphics', key: 'wcard' }, { r: [980, 250, 790, 560], label: 'astronomy', key: 'wcard2' }];
+function whyCards(ctx, dt, st, vo) {
+  WCARDS.forEach((c, i) => {
+    const a = smooth(clamp(st[c.key] || 0, 0, 1)) * vo, r = c.r; if (a <= 0.003) return;
+    ctx.save(); ctx.globalAlpha *= a; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.clip();
+    if (i === 0) {
+      if (!reduced) SK.yaw += dt * PRES_DRIFT;   // turning slowly, as in the hook
+      presCloudOffscreen(dt, false);
+      const ar = r[2] / r[3], sw = Math.min(W, H * ar), sh = Math.min(H, W / ar);
+      ctx.drawImage(presCv, ((W - sw) / 2) * K, ((H - sh) / 2) * K, sw * K, sh * K, r[0], r[1], r[2], r[3]);
+    } else { const s = r[2] / 700; ctx.translate(r[0], r[1]); ctx.scale(s, s); drawUseStars(ctx, dt, r[3] / s); }
+    ctx.restore();
+    ctx.save(); ctx.strokeStyle = hexA(COL.greyC, a); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 14); ctx.stroke(); ctx.restore();
+    drawTex(ctx, String.raw`\text{${c.label}}`, r[0] + 22, r[1] + 18, 32, { ax: 0, ay: 0, color: COL.greyA, alpha: a });
+  });
+}
