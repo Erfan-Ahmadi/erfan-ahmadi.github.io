@@ -9,25 +9,27 @@
 // care about the order. 51–55: the same when σ changes continuously: the path chopped into tiny sections, a factor for
 // each, their exponents adding up to a sum, and that sum an integral. 56–57: any shape with the same integral reads the
 // same; and a uniform volume gives back e^{−σx}, the area under a flat line.
-// Along the path u runs from 0 to 2: two sections, each one long. Every σ here has the same integral over it, 0.6, so
-// the sensor reads e^{−0.6}, 54.9%, all the way through; the reading is worked out from the σ that is drawn.
-const VARY = { s1: 0.4, s2: 0.2, smax: 0.5, uni: 0.3, n: 10, tau: 0.6 };   // n: the tiny sections of 53
+// Along the path u runs from 0 to 2: two sections. Every σ here has the same integral over it, 0.6 section lengths, and
+// a section is x = 2 long, so the sensor reads e^{−1.2}, 30.1%, all the way through (long enough for the dimming to
+// show along the beam); the reading is worked out from the σ that is drawn.
+const VARY = { s1: 0.4, s2: 0.2, smax: 0.5, uni: 0.3, n: 10, tau: 0.6, x: 2, beam: 12 };   // n: the tiny sections of 53; beam: the beam's width
 // One setup, in its own units: the volume from x = 0 to L along the beam, y = 0; its fog fades out toward ±R; arc: how
 // far the two sections rise and dip as they change places. laser, sensor: the nozzle's tip and the sensor, drawn at
 // dev of the bench's size. The plot over it: σ = 0 at plotB, σ = smax at plotT. c1, c2, cr: the two circles of 41, where
 // along the path, and their radius. fy: where the factors are written, under the volume. cx, cy: its middle.
-const VG = { L: 900, R: 150, arc: 80, laser: -70, sensor: 1010, dev: 0.75, plotB: -215, plotT: -395, ext: 30, c1: 0.385, c2: 0.655, cr: 80, fy: 196, cx: 441.5, cy: -110 };
-// On the stage, [x, y, scale] of its middle: alone, then A on the left and B on the right. half: each one's half of the frame
-const VPOS = { one: [960, 545, 0.92], A: [505, 545, 0.64], B: [1415, 545, 0.64] }, VHALF = { A: [60, 210, 890, 670], B: [970, 210, 890, 670] };
+const VG = { L: 900, R: 150, arc: 62, laser: -70, sensor: 1010, dev: 0.75, plotB: -215, plotT: -395, ext: 30, c1: 0.385, c2: 0.655, cr: 100, fy: 206, cx: 441.5, cy: -110 };
+// On the stage, [x, y, scale] of its middle: one setup, then A on the left and B on the right; alone: how much bigger
+// the picture is until the plot comes in over it. half: each one's half of the frame
+const VPOS = { one: [960, 538, 0.92], A: [505, 538, 0.64], B: [1415, 538, 0.64], alone: 1.18 }, VHALF = { A: [60, 210, 890, 670], B: [970, 210, 890, 670] };
 // The fog: how opaque for a σ, and how it fades across the band (o: 0 on the beam, 1 at the band's edge)
 const VFOG = { a: (s) => 1.3 * s, mask: (o) => 1 - smooth(clamp((o - 0.38) / 0.62, 0, 1)), rgb: '215,215,215' };
 // 41's cloud: soft puffs [where along the path (0 to 1), how far off the beam, radius, thickness]: a middling clump, a
 // big dense one, a thin wisp, a middling one again
 const VCLOUD = [
-  [0.07, 10, 70, 0.2], [0.13, -25, 85, 0.26], [0.19, 20, 75, 0.22],
-  [0.29, -10, 95, 0.42], [0.35, 30, 110, 0.5], [0.4, -35, 115, 0.55], [0.46, 15, 95, 0.45], [0.375, 0, 70, 0.4],
-  [0.56, -15, 80, 0.12], [0.64, 20, 95, 0.1], [0.72, -10, 85, 0.12],
-  [0.8, 20, 85, 0.3], [0.86, -25, 100, 0.38], [0.92, 15, 80, 0.3], [0.96, -5, 60, 0.2],
+  [0.06, 20, 95, 0.3], [0.13, -30, 115, 0.36], [0.2, 25, 100, 0.3],
+  [0.3, -15, 130, 0.55], [0.36, 40, 140, 0.62], [0.41, -45, 150, 0.68], [0.47, 20, 125, 0.55], [0.385, 0, 95, 0.5],
+  [0.57, -20, 110, 0.16], [0.655, 25, 125, 0.14], [0.73, -15, 110, 0.16],
+  [0.81, 25, 115, 0.38], [0.87, -35, 135, 0.46], [0.93, 20, 105, 0.38], [0.97, -5, 80, 0.26],
 ];
 const vPuff = (q) => Math.max(0, (Math.exp(-((1.9 * q) ** 2)) - Math.exp(-3.61)) / (1 - Math.exp(-3.61)));   // a puff's thickness, q of its radius from its middle
 // σ along the beam through that cloud: the puffs' thickness where the beam crosses them, scaled to the same integral
@@ -93,7 +95,7 @@ const varyTop = (f, u, it) => { const w = 2 / VARY.n, m = (Math.min(VARY.n - 1, 
 // One setup, in its own units, drawn at k of its size (so that what is written in it keeps its size on the stage).
 // du: how far the stage has gone from one setup to two.
 function varyDraw(ctx, st, side, k, du) {
-  const P = varyProfile(st, side), L = VG.L, tauAt = varyTau(P.sig), T = (x) => Math.exp(-tauAt((2 * x) / L)), px = (s) => s / k, f = P.band;
+  const P = varyProfile(st, side), L = VG.L, tauAt = varyTau(P.sig), T = (x) => Math.exp(-VARY.x * tauAt((2 * x) / L)), px = (s) => s / k, f = P.band;
   const ch = smooth(clamp(st.vchop, 0, 1)), it = smooth(clamp(st.vint, 0, 1)), cut = ch * (1 - it), isB = side === 'B', swapping = isB && P.sw > 0.003 && P.sw < 0.997;
   const dxs = (L / 2) * P.sw, dys = VG.arc * Math.sin(Math.PI * P.sw);   // B's sections on their way past each other: the dense one over the top
   // 41's cloud, and the volume it is simplified to
@@ -102,12 +104,12 @@ function varyDraw(ctx, st, side, k, du) {
     if (swapping) { varyBand(ctx, dxs, dxs + L / 2, -dys, VG.R, () => VFOG.a(VARY.s1) * P.se); varyBand(ctx, L / 2 - dxs, L - dxs, dys, VG.R, () => VFOG.a(VARY.s2) * P.se); }
     else varyBand(ctx, 0, L, 0, VG.R, (t) => VFOG.a(f(2 * t)) * P.se, P.co < 0.997 ? [0.5] : []);
   }
-  // 42: the dashed line between the two sections; 53: the tiny sections' ends
+  // 42: the dashed line between the two sections; 53: the tiny sections' ends, thin lines
   const fa = smooth(clamp(st.vface, 0, 1)) * (1 - P.co);
   if (fa > 0.003) dashed(ctx, L / 2, -VG.R * 0.94, L / 2, VG.R * 0.94, COL.greyA, 0.85 * fa, px(2.5));
-  if (cut > 0.003) for (let i = 0; i <= VARY.n; i++) dashed(ctx, (i * L) / VARY.n, -VG.R * 0.8, (i * L) / VARY.n, VG.R * 0.8, COL.greyA, 0.6 * cut, px(2));
+  if (cut > 0.003) { ctx.save(); ctx.strokeStyle = hexA(COL.greyA, 0.5 * cut); ctx.lineWidth = px(1.6); ctx.beginPath(); for (let i = 0; i <= VARY.n; i++) { ctx.moveTo((i * L) / VARY.n, -VG.R * 0.72); ctx.lineTo((i * L) / VARY.n, VG.R * 0.72); } ctx.stroke(); ctx.restore(); }
   // the light, the laser and the sensor
-  drawBeam(ctx, VG.laser, VG.sensor - 11, 0, SH.color, SH.I0, T, [0, L / 2, L]);
+  drawBeam(ctx, VG.laser, VG.sensor - 11, 0, SH.color, SH.I0, T, [0, L / 2, L], VARY.beam);
   ctx.save(); ctx.translate(VG.laser, 0); ctx.scale(VG.dev, VG.dev); drawLaser(ctx, 0, 0, SH.color, 1); ctx.restore();
   ctx.save(); ctx.translate(VG.sensor, 0); ctx.scale(VG.dev, VG.dev); drawSensor(ctx, 0, 0, SH.color, T(L) * SH.I0); ctx.restore();
   // the sensor's readout, over it; 56b: boxed, as the integral is
@@ -118,7 +120,7 @@ function varyDraw(ctx, st, side, k, du) {
     ctx.strokeStyle = COL.greyB; ctx.lineWidth = px(2.5); ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, by + bh); ctx.stroke();
     ctx.fillStyle = BG; ctx.beginPath(); ctx.roundRect(x - bw / 2, by, bw, bh, px(12)); ctx.fill(); ctx.stroke();
     if (hi > 0.003) { ctx.strokeStyle = hexA(COL.gold, hi); ctx.lineWidth = px(3.5); ctx.beginPath(); ctx.roundRect(x - bw / 2 - px(9), by - px(9), bw + px(18), bh + px(18), px(16)); ctx.stroke(); }
-    drawNumber(ctx, 100 * Math.exp(-tauAt(2)), x, by + bh / 2 + px(lerp(16, 15, du)), { size: px(lerp(46, 42, du)), dec: 1, suffix: '%', align: 'center' });
+    drawNumber(ctx, 100 * Math.exp(-VARY.x * tauAt(2)), x, by + bh / 2 + px(lerp(16, 15, du)), { size: px(lerp(46, 42, du)), dec: 1, suffix: '%', align: 'center' });
     ctx.restore();
   }
   // 41b, 41c: a dense spot and a thin one, circled
@@ -182,12 +184,12 @@ const vNum = (v) => String.raw`{{\textcolor{${COL.yellow}}{${v}}}}`, vX = String
 const vShift = (S, dx, dy) => S.map((s) => shifted(s, dx, dy));
 const vBaseTo = (S, y) => { const e = S.find((s) => s.a.ch === 'e'); return e ? vShift(S, 0, y - e.base) : S; };   // its e's baseline to y
 const vStage = ([X, Y, k], x, y) => [X + (x - VG.cx) * k, Y + (y - VG.cy) * k];   // a setup's own (x, y), on the stage
-const VW = { size: 48, big: 56, psize: 42, pbig: 60, slots: [-40, 140, 320, 505, 790] };   // sizes: a section's factor, the two as one; 53b's factors, and as one. slots: where those are written (the three first, the dots, the last)
+const VW = { size: 48, big: 56, psize: 44, pbig: 60, slots: [-75, 190, 455, 790], drop: 14 };   // sizes: a section's factor, the two as one; 53b's factors, and as one. slots: where those are written (the first two, the dots, the last); drop: how much lower the two sections' factors sit, clear of the fog
 // 48–50: a factor under each section, × e^{−0.4x} and × e^{−0.2x}; the two as one, × e^{−(0.4+0.2)x}; and × e^{−0.6x}
 const vpCache = new Map();
 function varyPair(a, b, pos) {
   const key = a + '|' + b + '|' + pos.join(); if (vpCache.has(key)) return vpCache.get(key);
-  const [x1, y] = vStage(pos, VG.L / 4, VG.fy), [x2] = vStage(pos, (3 * VG.L) / 4, VG.fy), [xm] = vStage(pos, VG.L / 2, VG.fy), yb = y + 16;
+  const [x1, y0] = vStage(pos, VG.L / 4, VG.fy), [x2] = vStage(pos, (3 * VG.L) / 4, VG.fy), [xm] = vStage(pos, VG.L / 2, VG.fy), y = y0 + VW.drop, yb = y + 16;
   const at = (src, x, size) => vBaseTo(place(tex(src), { x, y, size }), yb);
   const f1 = at(vFac(vNum(a) + String.raw`\,` + vX), x1, VW.size), f2 = at(vFac(vNum(b) + String.raw`\,` + vX), x2, VW.size);
   const both = at(vFac(String.raw`\htmlClass{t-vsum}{(${vNum(a)}\htmlClass{t-vplus}{+}${vNum(b)})}\,` + vX), xm, VW.big);
@@ -211,7 +213,7 @@ function drawVaryPair(ctx, F, p1, p2, m, s, foc, alpha) {
     const [l, r, t, b] = inkBox(q), x = (l + r) / 2, y = (t + b) / 2, g = 1 + 0.3 * fo;
     ctx.save(); ctx.translate(x, y); ctx.scale(g, g); ctx.translate(-x, -y); drawSprite(ctx, q, al, col); ctx.restore();
   }
-  if (fo > 0.003) varyBox(ctx, F.both.filter((q) => has(q, 't-vsum')), fo * alpha);
+  if (fo > 0.003) varyBox(ctx, F.both.filter((q) => has(q, 't-vsum')), fo * alpha, 8);
 }
 // A box around some of a formula, in the orange and the style of the hook's question boxes
 function varyBox(ctx, S, a, pad = 10) {
@@ -219,22 +221,22 @@ function varyBox(ctx, S, a, pad = 10) {
   const [l, r, t, b] = inkSpan(S);
   ctx.save(); ctx.strokeStyle = hexA(COL.gold, a); ctx.lineWidth = 3.5; ctx.beginPath(); ctx.roundRect(l - pad, t - pad, r - l + 2 * pad, b - t + 2 * pad, 10); ctx.stroke(); ctx.restore();
 }
-// 53b–57b: a factor for each tiny section, × e^{−σ₁Δx}, × e^{−σ₂Δx}, × e^{−σ₃Δx}, ⋯, × e^{−σₙΔx}; then all of them as
+// 53b–57b: a factor for each tiny section, × e^{−σ₁Δx}, × e^{−σ₂Δx}, ⋯, × e^{−σₙΔx}; then all of them as
 // one, their exponents added; that sum as an integral; and, for a uniform volume, × e^{−σx}
 let vProd = null;
 function varyProd() {
   if (vProd) return vProd;
   const pos = VPOS.one, [xm, y] = vStage(pos, VG.L / 2, VG.fy), yb = y + 16, sg = String.raw`\textcolor{${COL.yellow}}{\sigma}`;
   const term = (j) => String.raw`{{\textcolor{${COL.yellow}}{\sigma_{${j}}}\,\textcolor{${COL.blue}}{\Delta x}}}`, at = (src, x, size) => vBaseTo(place(tex(src), { x, y, size }), yb);
-  const facs = ['1', '2', '3', 'n'].map((j, i) => at(vFac(term(j)), vStage(pos, VW.slots[i < 3 ? i : 4], 0)[0], VW.psize));
+  const facs = ['1', '2', 'n'].map((j, i) => at(vFac(term(j)), vStage(pos, VW.slots[i < 2 ? i : 3], 0)[0], VW.psize));
   // the dots between them, level with the factors' multiplication signs
-  let dots = place(tex(String.raw`\cdots`), { x: vStage(pos, VW.slots[3], 0)[0], y, size: VW.psize });
+  let dots = place(tex(String.raw`\cdots`), { x: vStage(pos, VW.slots[2], 0)[0], y, size: VW.psize });
   const mid = (S) => { const [, , t, b] = inkSpan(S); return (t + b) / 2; };
   dots = vShift(dots, 0, mid(facs[0].filter((s) => s.a.ch === '×')) - mid(dots));
-  const sum = at(vFac(String.raw`\htmlClass{t-vint}{(${term('1')}+${term('2')}+${term('3')}+\cdots+${term('n')})}`), xm, VW.pbig);
+  const sum = at(vFac(String.raw`\htmlClass{t-vint}{(${term('1')}\,+\,${term('2')}\,+\,\cdots\,+\,${term('n')})}`), xm, VW.pbig);
   const int = at(vFac(String.raw`\htmlClass{t-vint}{\int ${sg}(${vX})\,\textcolor{${COL.blue}}{dx}}`), xm, VW.pbig);
   const uni = at(vFac(sg + String.raw`\,` + vX), xm, VW.pbig);
-  const row = [...facs[0], ...facs[1], ...facs[2], ...dots, ...facs[3]];
+  const row = [...facs[0], ...facs[1], ...dots, ...facs[2]];
   return (vProd = { facs, dots, sum, int, uni, toSum: matchPlan(row, sum), toInt: matchPlan(sum, int), toUni: matchPlan(int, uni) });
 }
 function drawVaryProd(ctx, st, alpha) {
@@ -242,13 +244,13 @@ function drawVaryProd(ctx, st, alpha) {
   const F = varyProd(), sm = clamp(st.vsum, 0, 1), im = clamp(st.vint, 0, 1), um = clamp(st.vsx, 0, 1), pos = VPOS.one, A = varyAxes(), P = varyProfile(st, 'A');
   if (sm <= 0.001) {
     // written in one after the other; from each, a dashed line to its tiny section: up through the volume to its bar in the plot
-    [0, 1, 2, 4].forEach((slot, i) => {
-      const p = clamp(pr * 5 - slot, 0, 1); if (p <= 0.003) return;
+    [0, 1, 3].forEach((slot, i) => {
+      const p = clamp(pr * 4 - slot, 0, 1); if (p <= 0.003) return;
       drawSprites(ctx, F.facs[i], { p, alpha });
-      const sec = i < 3 ? i : VARY.n - 1, u = ((sec + 0.5) * 2) / VARY.n, [l, r, t] = inkSpan(F.facs[i]), [sx, sy0] = vStage(pos, (u / 2) * VG.L, VG.R * 0.84), [, sy1] = vStage(pos, 0, A.Y(P.band(u)));
-      ctx.save(); ctx.setLineDash([9, 8]); ctx.strokeStyle = hexA(COL.greyA, 0.8 * smooth(p) * alpha); ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo((l + r) / 2, t - 10); ctx.lineTo(sx, sy0); ctx.lineTo(sx, sy1); ctx.stroke(); ctx.restore();
+      const sec = i < 2 ? i : VARY.n - 1, u = ((sec + 0.5) * 2) / VARY.n, [l, r, t] = inkSpan(F.facs[i]), [sx, sy0] = vStage(pos, (u / 2) * VG.L, VG.R * 0.9), [, sy1] = vStage(pos, 0, A.Y(P.band(u)));
+      ctx.save(); ctx.setLineDash([10, 8]); ctx.strokeStyle = hexA(COL.white, 0.9 * smooth(p) * alpha); ctx.lineWidth = 2.5; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo((l + r) / 2, t - 10); ctx.lineTo(sx, sy0); ctx.lineTo(sx, sy1); ctx.stroke(); ctx.restore();
     });
-    const pd = clamp(pr * 5 - 3, 0, 1); if (pd > 0.003) drawSprites(ctx, F.dots, { p: pd, alpha });
+    const pd = clamp(pr * 4 - 2, 0, 1); if (pd > 0.003) drawSprites(ctx, F.dots, { p: pd, alpha });
     return;
   }
   if (sm < 0.999) { drawMorph(ctx, F.toSum, sm, alpha); return; }
@@ -260,17 +262,19 @@ function drawVaryProd(ctx, st, alpha) {
 }
 function drawVary(ctx, dt, st) {
   const on = smooth(clamp((st.von - 0.35) / 0.65, 0, 1)); if (on <= 0.003) return;
-  const one = smooth(clamp(st.vone, 0, 1)), du = smooth(clamp(st.vdual, 0, 1)) * (1 - one), fo = smooth(clamp(st.vfoc, 0, 1)), plotIn = smooth(clamp(st.vax, 0, 1));
-  // (until the plot comes in, the picture alone is in the middle)
-  const at = (to) => VPOS.one.map((v, i) => lerp(v, to[i], du)), lift = (1 - plotIn) * VG.cy;
-  const sides = [{ name: 'A', at: at(VPOS.A), fade: st.vfA, a: 1 }, { name: 'B', at: at(VPOS.B), fade: st.vfB, a: 1 - one }];
+  // 51: B fades where it is, and then A comes back to the middle (one: how far that has gone, for B and for A)
+  const one = smooth(clamp(st.vone * 2.5, 0, 1)), back = smooth(clamp((st.vone - 0.3) / 0.7, 0, 1)), dual = smooth(clamp(st.vdual, 0, 1)), du = dual * (1 - back);
+  const fo = smooth(clamp(st.vfoc, 0, 1)), plotIn = smooth(clamp(st.vax, 0, 1));
+  // (until the plot comes in, the picture alone is in the middle, and bigger)
+  const at = (to, d) => VPOS.one.map((v, i) => lerp(v, to[i], d)), lift = (1 - plotIn) * VG.cy;
+  const sides = [{ name: 'A', at: at(VPOS.A, du), du, fade: st.vfA, a: 1 }, { name: 'B', at: at(VPOS.B, dual), du: dual, fade: st.vfB, a: 1 - one }];
   ctx.save(); ctx.globalAlpha *= on;
   for (const S of sides) {
     if (S.name === 'B' && (st.vdual <= 0.003 || S.a <= 0.003)) continue;   // (until it's copied, the second is right under the first)
-    const [X, Y, k] = S.at;
+    const [X, Y, k0] = S.at, k = k0 * lerp(VPOS.alone, 1, plotIn);
     ctx.save(); ctx.globalAlpha *= lerp(1, 0.4, smooth(clamp(S.fade, 0, 1))) * S.a;
-    ctx.save(); ctx.translate(X, Y + lift * k); ctx.scale(k, k); ctx.translate(-VG.cx, -VG.cy); varyDraw(ctx, st, S.name, k, du); ctx.restore();
-    if (du > 0.003) drawTex(ctx, String.raw`\text{${S.name}}`, VHALF[S.name][0] + 44, VHALF[S.name][1] + 44, 56, { alpha: du });
+    ctx.save(); ctx.translate(X, Y + lift * k); ctx.scale(k, k); ctx.translate(-VG.cx, -VG.cy); varyDraw(ctx, st, S.name, k, S.du); ctx.restore();
+    if (S.du > 0.003) drawTex(ctx, String.raw`\text{${S.name}}`, VHALF[S.name][0] + 44, VHALF[S.name][1] + 44, 56, { alpha: S.du * (1 - one) });
     ctx.restore();
   }
   // 50: both pictures lose their colour and dim; only the additions, drawn after this, keep theirs
@@ -278,7 +282,7 @@ function drawVary(ctx, dt, st) {
   // 46: the question
   if (st.vq > 0.003) drawTex(ctx, String.raw`\text{A or B?}`, 960, 140, 64, { alpha: smooth(clamp(st.vq, 0, 1)) });
   // 48–50: under each section its factor; 51: they go
-  const pa = 1 - smooth(clamp(st.vone * 3, 0, 1));
+  const pa = 1 - one;
   if (pa > 0.003) {
     const b = clamp(st.vb1, 0, 1);
     drawVaryPair(ctx, varyPair(VARY.s1, VARY.s2, VPOS.A), st.va1, st.va2, st.va3, st.va4, fo, pa * lerp(1, 0.4, smooth(clamp(st.vfA, 0, 1))));

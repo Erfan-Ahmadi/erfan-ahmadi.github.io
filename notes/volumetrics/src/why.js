@@ -100,7 +100,7 @@ function whyAnch(n) {
 // the plot's axes, m slabs long (five; growing with the slabs in the long frame at 40)
 let WPAX = null;
 function whyAxes(m = WPL.n) {
-  const make = () => makeAxes({ L: WPA.x0, R: WPA.x0 + m * WPA.w, T: WPA.T, B: WPA.B, xr: [0, m, 1], yr: [0, 1, 0.5], ext: 40, xl: 'd', yl: '', labSize: 54, numSize: 28 });
+  const make = () => makeAxes({ L: WPA.x0, R: WPA.x0 + m * WPA.w, T: WPA.T, B: WPA.B, xr: [0, m, 1], yr: [0, 1, 0.5], ext: 40, xl: 'x', yl: '', labSize: 54, numSize: 28 });
   return m === WPL.n ? WPAX || (WPAX = make()) : make();
 }
 // 39–40: the frames. The picture over its plot, with n slabs, has its middle at WPC(n) on the stage; in a frame it is
@@ -122,7 +122,7 @@ function whySteps(ctx, A, T, n, a) {
   ctx.stroke(); ctx.restore();
   for (let k = 0; k < T.length && k <= n + 1e-6; k++) dot(ctx, A.X(k), A.Y(T[k]), 8, SH.color, a * (k === 0 ? 1 : smooth(clamp((n - (k - 0.12)) / 0.12, 0, 1))));
 }
-const WCURVE = String.raw`e^{-\textcolor{${COL.yellow}}{\sigma}\,\textcolor{${COL.blue}}{d}}`;   // the continuous version, in the formula's colours
+const WCURVE = String.raw`e^{-\textcolor{${COL.yellow}}{\sigma}\,\textcolor{${COL.blue}}{x}}`;   // the continuous version, in the formula's colours
 // The zoom (32c), on the stage: from the lab's row, around the slice where it crosses the beam, the same in every
 // direction, until the beam is the sheet of the (smaller) picture and the slice its slab. X, Y: a point in the lab's
 // units, on the stage now.
@@ -252,16 +252,16 @@ function whyMain(st) {
   return { yc, hh, slabs, parts, laserX, sensorX, laserA: l, sensorA: l, readA: smooth(clamp(st.wread, 0, 1)), power: clamp(st.wpow, 0, 1), light: clamp(st.wlight, 0, 1), fext: into ? 36 * WTK : 36,
     xL: lerp(s0.x0, laserX, l), xR: lerp(s0.x1, sensorX, l), sheet: into ? lerp(0.7, WHY.sheet, Z.e) : WHY.sheet, Z, into, T, pl };
 }
-// Δd under the slab: a small piece of the distance d, in d's blue; as slabs come and go it stretches under all of them,
-// reading 2Δd, 3Δd, … (the count changing halfway through each slab's coming or going)
+// Δx under the slab: a small piece of the distance x, in x's blue; as slabs come and go it stretches under all of them,
+// reading 2Δx, 3Δx, … (the count changing halfway through each slab's coming or going)
 function whyBrace(ctx, V, n, br) {
   const s0 = V.T.slabs[0]; if (br <= 0.003 || !s0) return;
   const k = Math.round(n), by = V.yc + V.hh + 44, cx = s0.x0 + (n * WHY.w) / 2;
   drawBrace(ctx, cx, by, n * WHY.w, 24, 6, hexRgb(LDCOL), br);
-  drawTex(ctx, k === 1 ? String.raw`\Delta d` : String.raw`${k}\,\Delta d`, cx, by + 56, 50, { alpha: br, color: LDCOL });
+  drawTex(ctx, k === 1 ? String.raw`\Delta x` : String.raw`${k}\,\Delta x`, cx, by + 56, 50, { alpha: br, color: LDCOL });
 }
-// 36 on: the plot under the picture, for a state S (the presentation's, or the left frame's own), its d axis m slabs long
-// and lined up with the slabs (slab k ends over d = kΔd): the continuous version, white, labelled e^{−σd} in the
+// 36 on: the plot under the picture, for a state S (the presentation's, or the left frame's own), its x axis m slabs long
+// and lined up with the slabs (slab k ends over x = kΔx): the continuous version, white, labelled e^{−σx} in the
 // formula's colours; the discrete version, the slabs' readings as red steps with a dot at each, drawn as each slab
 // comes in (placed at random, or clumped); a faint dashed line from where the slabs end down to it
 function whyPlot(ctx, S, V, n, m = WPL.n) {
@@ -348,7 +348,7 @@ function drawWhy(ctx, dt, st) {
 function whyBox32() { ptw('lfig', 0, 0.5); ptw('bOut', 1, 0.5); ptw('plotOut', 1, 0.5); ptw('lside', 0, 1.2, { delay: 0.2 }); return ptw('won', 1, 0.9, { delay: 0.4 }); }
 // 32b: two fronts sweep in from the box's ends and meet at a thin slice of it; then all but the slice fades away
 function whySelect() { ptw('wsel', 1, 1.4); return ptw('wfade', 1, 0.8, { delay: 1.8 }); }
-// 32c: the zoom; once in, the light runs from the laser, which comes back, to the sensor; then Δd under the slab
+// 32c: the zoom; once in, the light runs from the laser, which comes back, to the sensor; then Δx under the slab
 function whyZoom() { ptw('wls', 1, 0.8, { delay: 2.5 }); ptw('wbr', 1, 0.6, { delay: 3.0 }); return ptw('wzoom', 1, 2.4); }
 // 32d: the sensor reads 90%
 function whyRead() { return ptw('wread', 1, 0.45); }
