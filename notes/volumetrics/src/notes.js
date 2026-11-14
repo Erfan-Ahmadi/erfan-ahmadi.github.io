@@ -2,11 +2,12 @@
 // A second window that follows the presentation, for reading the narration while recording. It shows the narration of
 // the current beat's heading in script.md: what to say now large and lit, what was said dimmed, what comes later in
 // grey, and the press markers where they fall in it, the next one in orange: press there. Under it, what the press after
-// that leads to; over it, the beat, where it is in the video, and the time (in all, and on this beat; T resets it).
+// that leads to; over it, the beat, where it is in the video, whether it's paused (Space), and the time (in all, and on
+// this beat; T resets it). (The stage shows none of this: it's for recording.)
 // It's written from here and updated on every beat, and keys pressed in it go to the presentation, so either window can
 // have the focus. Its words come from script.md (SCRIPT_NOTES, put in by build.mjs), so it always reads the current
 // script. N again, or closing it, closes it.
-const NOTES = { win: null, beat: -1, t0: 0, tb: 0, tick: 0 };
+const NOTES = { win: null, beat: -1, paused: null, t0: 0, tb: 0, tick: 0 };
 const notesOpen = () => !!(NOTES.win && !NOTES.win.closed);
 let notesGroups = null;
 function notesData() {   // each heading's beats as indices into BEATS, and its narration cut at the press markers
@@ -31,7 +32,7 @@ html,body{margin:0;background:#1C1B18;color:#EEEAE2;font:400 26px/1.5 Inter,syst
 header{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:14px 32px;background:#1C1B18;border-bottom:1px solid #2E2C27}
 #beat b{font-size:42px;color:#F0784F;margin-right:14px;font-variant-numeric:tabular-nums}#beat span{color:#DCD7CC;font-size:22px}
 #beat i{display:block;font-style:normal;color:#6F6A60;font-size:15px}
-#count{color:#948E82;font-size:20px;font-variant-numeric:tabular-nums}
+#count{color:#948E82;font-size:20px;font-variant-numeric:tabular-nums}#count b{margin-left:12px;padding:4px 12px;border-radius:999px;background:#F0784F;color:#1C1B18;font-size:17px;font-weight:600}
 #clock{text-align:right;font-variant-numeric:tabular-nums}#clock b{font-size:30px;font-weight:500}#clock span{display:block;color:#948E82;font-size:15px}
 main{padding:30px 40px 36px;max-width:1150px}
 .past{color:#A59F94}.later{color:#CFC9BD}
@@ -59,16 +60,21 @@ function notesTick(force = false) {
   if (NOTES.win.closed) { NOTES.win = null; return; }
   const now = performance.now();
   if (PRES.beat !== NOTES.beat) { NOTES.beat = PRES.beat; NOTES.tb = now; notesRender(NOTES.win.document); }
+  if (PRES.paused !== NOTES.paused) notesCount(NOTES.win.document);
   if (force || now - NOTES.tick > 250) {
     NOTES.tick = now; const c = NOTES.win.document.getElementById('clock');
     if (c) c.innerHTML = `<b>${notesTime(now - NOTES.t0)}</b><span>this beat ${notesTime(now - NOTES.tb)}</span>`;
   }
 }
+function notesCount(d) {   // where it is in the video, and a mark while it's paused
+  const c = d.getElementById('count'); NOTES.paused = PRES.paused;
+  if (c) c.innerHTML = `${clamp(PRES.beat, 0, BEATS.length - 1) + 1} / ${BEATS.length}${PRES.paused ? '<b>paused</b>' : ''}`;
+}
 function notesRender(d) {
   const i = clamp(PRES.beat, 0, BEATS.length - 1), B = BEATS[i], G = notesGroupOf(i), N = BEATS[i + 1], el = (id) => d.getElementById(id);
   if (!el('words')) return;
   el('beat').innerHTML = `<i>${notesText(G ? G.part : '')}</i><b>${B.n}</b><span>${notesText(B.name)}</span>`;
-  el('count').textContent = `${i + 1} / ${BEATS.length}`;
+  notesCount(d);
   let html = '';
   if (!G) html = `<p class="note">This beat has no heading in script.md.</p>`;
   else {

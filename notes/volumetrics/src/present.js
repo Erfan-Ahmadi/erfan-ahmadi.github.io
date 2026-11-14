@@ -765,11 +765,5 @@ function drawPresent(ctx, dt) {
   drawCaption(ctx, st);
   drawLab(ctx, dt, st);
   drawFx(ctx, dt, st);
-  // a small counter after each press, and a pause mark while paused
-  const ta = PRES.paused ? 1 : clamp(1.8 - (TIME - PRES.toast), 0, 1);
-  if (ta > 0.003) {
-    const b = BEATS[PRES.beat];
-    ctx.save(); ctx.globalAlpha = ta; ctx.font = '500 22px ' + 'Inter, system-ui, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = COL.grey;
-    ctx.fillText(`${b.n} · ${b.name}${PRES.paused ? ' · paused' : ''}   (${PRES.beat + 1} / ${BEATS.length})`, 28, H - 26); ctx.restore();
-  }
+  // (nothing else on the stage: which beat this is, and whether it's paused, is in the notes window, notes.js)
 }
