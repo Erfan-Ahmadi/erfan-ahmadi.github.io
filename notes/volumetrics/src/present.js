@@ -61,7 +61,7 @@ function useRect(i, st) {
 const PS_DEFAULTS = () => ({
   orbit: 1, mag: 0, aside: 0, fig: 0, think: '', thinkFrom: '', thinkM: 1, writeP: 1, eq: 0, eqP: 0, corner: 0, braces: [], hi: {}, dim: 0,
   cells: [0, 0, 0, 0], cellT: [0, 0, 0, 0], cm: [0, 0, 0, 0], grid: 1, wtf: 0, wtfT0: 0,
-  qc: QCARDS.map(() => ({ box: 0, m: 0, title: 0, todo: 0 })), qcA: 1, qSide: 0,
+  qc: QCARDS.map(() => ({ box: 0, m: 0, title: 0, todo: 0, t0: 0 })), qcA: 1, qSide: 0,
   eqA: 1, eqTop: 0, spec: [0, 0], chalk: 0, code: 0, specT: 0, ptrX: 0, ptrA: 0, lineP: 0, wig: 0, wigT: 0, side: 0,
   goalsA: 0, figMid: 0, fut: 0, futW: 0, goals: [0, 0, 0], p15: 1, cap: 0,
   uses: [0, 0, 0, 0], useX: [0, 0, 0], useT: 0, useOn: [-1e9, -1e9, -1e9], grow: 0, usesOut: 0, capOut: 0, boxQ: 0, lines: 0,
@@ -259,6 +259,7 @@ async function presToCard(i) {
   if (i === 2) ptw('qSide', 1, 1.3);
   // the writing happens on the way, inside the moving box, done as it lands
   ptwi(c, 'title', 1, 0.75, { delay: 0.55, ease: linear }); ptwi(c, 'todo', 1, 0.5, { delay: 0.8 });
+  c.t0 = labLoopStart('qcT' + i, TIME + 0.8);   // its animation's loop (cards.js) starts as it comes in
   await ptwi(c, 'm', 1, 1.3);
 }
 // Beat 15: the cards and the equation go; the shader tutorial comes in at the left end, its code typing, the arrow
