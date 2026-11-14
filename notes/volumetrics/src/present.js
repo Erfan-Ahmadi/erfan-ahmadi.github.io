@@ -29,7 +29,7 @@ const qRect = (i, st) => (i < 2 ? lerpRect(QCRECT[i], QFINAL[i], smooth(clamp(st
 // Beat 15: the spectrum from a physics lecture to a shader tutorial, and the arrow that walks along it. For the goals
 // it shrinks into an aside (card); outside it, me now and me later along the bottom, and the goals on the right as
 // bullet points (their wording is a placeholder). src is the part of the stage the aside shows.
-const SPEC = { L: [302, 330, 235, 188], R: [1383, 330, 235, 188], y: 560, src: [270, 270, 1380, 400], card: [380, 50, 1160, 400] };
+const SPEC = { L: [302, 330, 235, 188], R: [1383, 330, 235, 188], y: 560, src: [270, 270, 1380, 400], card: [380, 50, 1160, 400], eqY: 424, eqW: 790 };   // eqY, eqW: the equation in the aside, between the two ends
 const GOALXY = [130, 560];   // the goals, under the aside on the left
 const GOALS = ['the physics and the math feel intuitive', 'you could derive it yourself', 'not a law of nature: a simplified model, with its own assumptions and limits'];   // in the narration's words
 const GOALT = [1.6, 1.4, 3.4];   // how long each takes to write in, about as long as it takes to say
@@ -68,7 +68,7 @@ const PS_DEFAULTS = () => ({
   fx: { show: [0, 0, 0, 0], clock: [0, 0, 0, 0], run: [0, 0, 0, 0], dim: [0, 0, 0, 0], grey: [0, 0, 0, 0], big: 0 },
   // part 3, the lab (lab.js): the box on the stage, its scattering and glow, the readings, the second row and its
   // boxes, me guessing; then the formula and its plot; then the bases
-  labOn: 0, labX: 0, scat: 0, glow: 0, lie: 0, amag: 0, amagT: 0, hvAuto: 0, read1: 0, read2: 0, split: 0, c2: 1, myst: 0, rev: 1, r2: '?', r2From: '', r2M: 1, lfig: 0, lthink: '', lthinkP: 1, lside: 0, wrong: 0, cross: 0, rowFade: 0,
+  labOn: 0, labX: 0, scat: 0, glow: 0, blW: 0, blOut: 0, lie: 0, amag: 0, amagT: 0, hvAuto: 0, read1: 0, read2: 0, split: 0, c2: 1, myst: 0, rev: 1, r2: '?', r2From: '', r2M: 1, lfig: 0, lthink: '', lthinkP: 1, lside: 0, wrong: 0, cross: 0, rowFade: 0,
   rowsOut: 0, fml: 0, axC: 0, dotD: 0, curveTo: 0, sig: 1, sigHi: 0, eq1: 0, plotOut: 0, bStack: 0, bMorph: 0, ind1: 1, ind8: 1, ind10: 1, readDim: 1, dLoop: 0, dLoopT0: 0, sLoop: 0, sLoopT0: 0, hvOn: 0, hvA: 0, hvStep: 0, hvT0: 0, topDim: 0, topOut: 0, merge: 0, pbox: 0, rise: 0, marksOut: 0, dCont: 0, r1Hi: 0, colS: 0, colD: 0, sPin: 0, eq2: 0, lbNS: 0, lbNE: 0, lbJA: 0, lbOut: 0, eOnly: 0, eMove: 0, eBox: 0,
   ...WHY_DEFAULTS(),   // part 4 (why.js)
   ...VARY_DEFAULTS(),  // part 5 (vary.js)
@@ -145,11 +145,12 @@ const BEATS = [
   { n: '25e', name: 'again: a second box', run: () => labHalveStep(2) },
   { n: '25f', name: 'and again: a third', run: () => labHalveStep(3) },
   { n: '25g', name: 'the halving again, by itself', run: () => labHalveAuto() },
-  { n: '26', name: 'the formula', run: () => labFormula() },
-  { n: '26b', name: 'the plot', run: () => labPlot() },
-  { n: '26c', name: 'the boxes on the curve', run: () => labMarks() },
+  { n: '26', name: 'an exponential formula', run: () => labFormula() },
+  { n: '26b', name: 'the Beer–Lambert law', run: () => labName() },
   { n: '27', name: 'distance', run: () => labDistance() },
-  { n: '28', name: 'more or less absorbing', run: () => labSigma() },
+  { n: '28', name: 'and notice', run: () => labFix() },
+  { n: '28b', name: 'more absorbing', run: () => labMore() },
+  { n: '28c', name: 'less absorbing', run: () => labLess() },
   { n: '29', name: 'a vacuum', run: () => labVacuum() },
   { n: '29b', name: 'why e?', run: () => labE() },
   { n: '30', name: 'any base', run: () => labBases() },
@@ -273,7 +274,7 @@ async function presSpecMiddle() {
   await ptw('ptrX', 960, 1.3);
   PS.wigT = TIME; await ptw('wig', 1, 0.6);
 }
-// Beat 15d: all of it moves into an aside at the top, the arrow still swaying there for the rest of the section (the
+// Beat 15d: all of it moves into an aside at the top, the equation coming back into it between the two ends, the arrow still swaying there for the rest of the section (the
 // equation stays away: this part is about the goals, not the formula); under it "Goals:" comes in on the left, and I
 // walk over to the right. 15e: the first goal. 15f: the second, while a copy of me walks out along a growing arrow,
 // its "WTF?!" turning into "I understand it now" on the way. 15g: the third.
@@ -543,6 +544,12 @@ function drawSpectrum(ctx, st) {
   drawRaymarch(ctx, [L[0], L[1], L[2], L[3] * 0.52], l * ga, t);
   drawCodePanel(ctx, [L[0], L[1] + L[3] * 0.56, L[2], L[3] * 0.44], l * ga, st.code, t);
   drawChalkboard(ctx, R, r * ga);
+  // 15d: the equation comes back into the aside, between the two ends and over the arrow: the part in between is about it
+  const ea = side * ga;
+  if (ea > 0.003) {
+    const E = peq(), [el, er] = inkSpan(E), k = SPEC.eqW / (er - el);
+    ctx.save(); ctx.translate(960, SPEC.eqY); ctx.scale(k, k); ctx.translate(-(el + er) / 2, -PEQ.y); drawSprites(ctx, E, { alpha: ea }); ctx.restore();
+  }
   // the arrow under the line
   const sway = reduced ? 0 : smooth(clamp(st.wig, 0, 1)) * 16 * Math.sin(2 * Math.PI * 0.8 * (TIME - st.wigT));
   drawPointer(ctx, st.ptrX + sway, y + 16, ga * smooth(clamp(st.ptrA, 0, 1)), 0);

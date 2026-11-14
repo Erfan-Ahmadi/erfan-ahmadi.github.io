@@ -19,7 +19,8 @@ const ENDFML = String.raw`e^{-\textcolor{${COL.yellow}}{\int \sigma(x)\,dx}}`;
 // with its plot and readout (its middle)
 const ENDBOX = { exp: [1800, 860], vary: [1420, 660, 462, -140] };
 END.vk = 1.45;   // how much smaller part 5's labels and readout are here than on their own
-function END_DEFAULTS() { return { eout: 0, eq1: 0, ea1: 0, et1: 0, en1: 0, eT1: 0, eq2: 0, ea2: 0, et2: 0, en2: 0, eT2: 0 }; }
+// (each row's card, arrow, words and animation, and when its animation started; named apart from the lab's eq1 and eq2)
+function END_DEFAULTS() { return { endOut: 0, endQ1: 0, endA1: 0, endW1: 0, endN1: 0, endS1: 0, endQ2: 0, endA2: 0, endW2: 0, endN2: 0, endS2: 0 }; }
 // The slabs: one by one up to ten, a while at ten, back down to one, a while at one; again and again
 function endN(t) {
   const P = 15, u = ((t % P) + P) % P;
@@ -53,7 +54,7 @@ function endArrow(ctx, x0, x1, y, a) {
 }
 function drawEnd(ctx, dt, st) {
   END.rows.forEach((R, i) => {
-    const j = i + 1, qa = smooth(clamp(st['eq' + j], 0, 1)); if (qa <= 0.003) return;
+    const j = i + 1, qa = smooth(clamp(st['endQ' + j], 0, 1)); if (qa <= 0.003) return;
     const q = QCARDS[R.q], C = END.card, mx = C.x + C.w / 2, pop = lerp(0.85, 1, qa), A = END.ans;
     // the card, as the hook left it: its colour, its question
     ctx.save(); ctx.globalAlpha *= qa; ctx.translate(mx, R.cy); ctx.scale(pop, pop); ctx.translate(-mx, -R.cy);
@@ -61,10 +62,10 @@ function drawEnd(ctx, dt, st) {
     q.title.forEach((src, l) => drawTex(ctx, src, mx, R.cy + (l - (q.title.length - 1) / 2) * C.gap, C.size, { color: q.col }));
     ctx.restore();
     // the arrow to its answer, the answer, and under it the animation
-    const aa = smooth(clamp(st['ea' + j], 0, 1)), ta = clamp(st['et' + j], 0, 1), na = smooth(clamp(st['en' + j], 0, 1));
+    const aa = smooth(clamp(st['endA' + j], 0, 1)), ta = clamp(st['endW' + j], 0, 1), na = smooth(clamp(st['endN' + j], 0, 1));
     if (aa > 0.003) endArrow(ctx, END.arrow.x0, lerp(END.arrow.x0, END.arrow.x1, aa), R.cy, aa);
     if (ta > 0.003) drawTex(ctx, ENDTXT[i], A.x, R.cy + A.ty, A.size, { ax: 0, p: ta });
-    if (na > 0.003) { ctx.save(); ctx.globalAlpha *= na; (i === 0 ? endExp : endVary)(ctx, [A.x, R.cy + A.top, A.w, A.h], st['eT' + j]); ctx.restore(); }
+    if (na > 0.003) { ctx.save(); ctx.globalAlpha *= na; (i === 0 ? endExp : endVary)(ctx, [A.x, R.cy + A.top, A.w, A.h], st['endS' + j]); ctx.restore(); }
   });
 }
 
@@ -72,11 +73,11 @@ function drawEnd(ctx, dt, st) {
 // 58: part 5 goes; "Why e? Why exponentials?" comes back as a card, an arrow grows from it to its answer, "particles
 // placed at random" writes in, and under it part 4's slabs come in, coming and going from then on
 function endFirst() {
-  ptw('eout', 1, 0.8); ptw('eq1', 1, 0.7, { delay: 0.6 }); ptw('ea1', 1, 0.6, { delay: 1.2 }); ptw('et1', 1, 0.9, { delay: 1.6, ease: linear });
-  PS.eT1 = labLoopStart('eT1', TIME + 1.9); return ptw('en1', 1, 0.8, { delay: 1.9 });
+  ptw('endOut', 1, 0.8); ptw('endQ1', 1, 0.7, { delay: 0.6 }); ptw('endA1', 1, 0.6, { delay: 1.2 }); ptw('endW1', 1, 0.9, { delay: 1.6, ease: linear });
+  PS.endS1 = labLoopStart('endS1', TIME + 1.9); return ptw('endN1', 1, 0.8, { delay: 1.9 });
 }
 // 58b: the same for "why an integral in the exponent?": "σ changes along the ray", and part 5's volume changing shape
 function endSecond() {
-  ptw('eq2', 1, 0.7); ptw('ea2', 1, 0.6, { delay: 0.6 }); ptw('et2', 1, 1.0, { delay: 1.0, ease: linear });
-  PS.eT2 = labLoopStart('eT2', TIME + 1.3); return ptw('en2', 1, 0.8, { delay: 1.3 });
+  ptw('endQ2', 1, 0.7); ptw('endA2', 1, 0.6, { delay: 0.6 }); ptw('endW2', 1, 1.0, { delay: 1.0, ease: linear });
+  PS.endS2 = labLoopStart('endS2', TIME + 1.3); return ptw('endN2', 1, 0.8, { delay: 1.3 });
 }

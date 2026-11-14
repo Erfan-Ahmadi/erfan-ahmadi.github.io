@@ -287,7 +287,7 @@ function drawVaryTau(ctx, st) {
   if (nm > 0.003) drawTex(ctx, String.raw`\text{optical depth}`, VTAU.x, VTAU.ny, VTAU.nsize, { p: nm });
 }
 function drawVary(ctx, dt, st) {
-  const on = smooth(clamp((st.von - 0.35) / 0.65, 0, 1)) * (1 - smooth(clamp(st.eout || 0, 0, 1))); if (on <= 0.003) return;   // (58: it all goes, for the ending, end.js)
+  const on = smooth(clamp((st.von - 0.35) / 0.65, 0, 1)) * (1 - smooth(clamp(st.endOut || 0, 0, 1))); if (on <= 0.003) return;   // (58: it all goes, for the ending, end.js)
   // 51: B fades where it is, and then A comes back to the middle (one: how far that has gone, for B and for A)
   const one = smooth(clamp(st.vone * 2.5, 0, 1)), back = smooth(clamp((st.vone - 0.3) / 0.7, 0, 1)), dual = smooth(clamp(st.vdual, 0, 1)), du = dual * (1 - back);
   const fo = smooth(clamp(st.vfoc, 0, 1)), plotIn = smooth(clamp(st.vax, 0, 1));

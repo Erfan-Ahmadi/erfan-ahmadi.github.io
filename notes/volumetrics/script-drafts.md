@@ -167,6 +167,20 @@ See you in the next video, where we'll cover emission and scattering and the nua
 then the same animations will keep on playing and playing until the video finishes
 ```
 
+## Beats 26–29, second draft (added later, word for word)
+
+```text
+after "Add a third box: twelve and a half. Each box halves the light that enters it." the transcript needs a touchup and get more in sync with the visuals:
+ 
+This behaviour can be described with an exponential formula (the formula and the plot come and the percentages go, so up to 26c happens back to back)
+You might've already heard it's name as Beer-Lambert's law (the beer-lamber will write briefly and disappear while i'm talking on it.)
+Notice how the changing the distance travelled effect the light making it through.
+and notice (gets fixed to 1.4), the more absorbing the stuff is (goes sigma increases) the more it takes from the light
+and the less absorbing the stuff the less it takes (sigma decreases)
+
+and when this coefficient is 0 (sigma goes to 0 and the e^0 = 1 shows up ), we get constant 1, everything gets through. Nothing is absorbed. There is no stuff: it's a vacuum.
+```
+
 ## Notes from the flow discussions
 
 ```text

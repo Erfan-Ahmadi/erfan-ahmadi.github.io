@@ -221,6 +221,8 @@ function drawLabPlot(ctx, st) {
   if (st.eq2 > 0.003) drawSprites(ctx, F.eq2, { alpha: rest * smooth(clamp(st.eq2, 0, 1)) });
   if (eb > 0.003) drawLabE(ctx, F, a, eb);
   ctx.restore();
+  const bw = clamp(st.blW || 0, 0, 1), bo = 1 - smooth(clamp(st.blOut || 0, 0, 1));   // 26b: its name, for a moment
+  if (bw > 0.003 && bo > 0.003) drawTex(ctx, String.raw`\text{the Beer–Lambert law}`, inkSpan(F.main)[1] + 80, LP.y + 8, 54, { ax: 0, p: bw, alpha: rest * bo, color: COL.greyA });
   const bA = st.pbox != null ? smooth(clamp(st.pbox, 0, 1)) : ax;   // the box, the light and the sensor: with the axes (the bench), or from the joined boxes (beat 26)
   if ((ax <= 0.003 && bA <= 0.003) || rest <= 0.003) return;
   ctx.save(); ctx.globalAlpha = rest;
@@ -587,17 +589,20 @@ async function labHalveAuto() {
   PS.hvAuto = 1; PS.hvT0 = instant ? -1e9 : TIME + 0.2;
   return ptw('hvA', 1, 0.35);
 }
-// 26: the one-box row goes and the bottom row's three boxes close up, end to end, where the plot's box will be, their
-// amounts over the joins; e^{−σx} writes in, plain: σ and x take their colours only once we know what they are.
-// 26b: the three boxes become one long box (its brace counting them: 3 boxes), and the plot sketches in above it, its
-// dot at the end. 26c: the amounts rise to their places on the curve; 3 boxes becomes x = 3.0, and x takes its blue.
+// 26, all of it back to back on one press: the one-box row goes and the bottom row's three boxes close up, end to end,
+// where the plot's box will be, their amounts over the joins; e^{−σx} writes in, plain (σ and x take their colours only
+// once we know what they are); the three boxes become one long box (its brace counting them: 3 boxes) and the plot
+// sketches in above it, its dot at the end; the amounts rise to their places on the curve, 3 boxes becomes x = 3.0 and
+// x takes its blue; and then the amounts go.
 function labFormula() {
   PS.dotD = LPD; PS.curveTo = 0; PS.dCont = 0;
-  ptw('topOut', 1, 0.6); ptw('merge', 1, 1.6, { delay: 0.3 });
-  return ptw('fml', 1, 1.2, { delay: 1.0, ease: linear });
+  ptw('topOut', 1, 0.6); ptw('merge', 1, 1.3, { delay: 0.2 }); ptw('fml', 1, 1.0, { delay: 0.8, ease: linear });
+  ptw('pbox', 1, 0.5, { delay: 1.6 }); ptw('axC', 1, 0.9, { delay: 1.7 }); ptw('curveTo', LPD, 2.4, { delay: 2.3 });
+  ptw('rise', 1, 1.8, { delay: 4.8 }); ptw('dCont', 1, 0.8, { delay: 6.0 }); ptw('colD', 1, 0.8, { delay: 6.0 });
+  return ptw('marksOut', 1, 0.6, { delay: 7.2 });
 }
-async function labPlot() { ptw('pbox', 1, 0.5); ptw('axC', 1, 1.0, { delay: 0.2 }); await ptw('curveTo', LPD, 3.2, { delay: 1.0 }); }
-function labMarks() { ptw('dCont', 1, 0.8, { delay: 1.6 }); ptw('colD', 1, 0.8, { delay: 1.6 }); return ptw('rise', 1, 2.2); }
+// 26b: its name, "the Beer–Lambert law", writes in beside the formula for a moment and goes
+function labName() { ptw('blW', 1, 1.0, { ease: linear }); return ptw('blOut', 1, 0.6, { delay: 2.8 }); }
 // 27 and 28 play back and forth until the next press, never stopping on their own: a cycle worked out from the clock
 // (as the halving's steps are), so a press stops it wherever it is and the next beat carries on from there. 27: the dot from three
 // boxes down to 0.4 and back; 28: σ up to twice the usual and down to half (even steps in log2). Both 30% slower than
@@ -615,18 +620,14 @@ function labLoops(st) {
 const labLoopStart = (key, t) => (instant && PRES[key] != null ? PRES[key] : (PRES[key] = t));
 // 27: the dot runs back and forth along the curve, the box with it, until the next press (still at two boxes if motion is reduced)
 function labDistance() { ptw('marksOut', 1, 0.6); PS.dLoop = 1; PS.dLoopT0 = labLoopStart('dT0', TIME); return reduced ? ptw('dotD', 2, 1.2) : Promise.resolve(); }
-// 28: the dot settles at two boxes, then σ goes up to twice the usual and down to half, over and over, until the next press
-// (from where the dot is; σ takes its yellow as it starts to move)
-function labSigma() {
-  if (PS.dLoop && !reduced) PS.dotD = labDAt(PS.dLoopT0);
-  PS.dLoop = 0; ptw('sigHi', 1, 0.5, { delay: 0.9 }); PS.sLoop = 1; PS.sLoopT0 = labLoopStart('sT0', TIME + 0.9);
-  return ptw('dotD', 2, 0.9);
-}
-// 29: σ to zero from wherever it is: a vacuum, and "= 1"
-function labVacuum() {
-  if (PS.sLoop && !reduced) PS.sig = labSAt(PS.sLoopT0);
-  PS.dLoop = 0; PS.sLoop = 0; PS.sPin = 1; ptw('dotD', 2, 0.6); ptw('eq1', 1, 0.7, { delay: 1.4 }); ptw('eq2', 1, 0.7, { delay: 2.3 }); return ptw('sig', 0, 1.8);
-}
+// 28: the dot stops, from wherever it is, and settles at 1.4 box lengths. 28b: σ goes up, to twice the usual (it takes its
+// yellow as it starts, and its value stays written in the box from here on). 28c: σ goes down, to half the usual
+const LFIX = 1.4;
+function labFix() { if (PS.dLoop && !reduced) PS.dotD = labDAt(PS.dLoopT0); PS.dLoop = 0; return ptw('dotD', LFIX, 1.0); }
+function labMore() { ptw('sigHi', 1, 0.5); PS.sPin = 1; return ptw('sig', 2, 1.8); }
+function labLess() { return ptw('sig', 0.5, 2.2); }
+// 29: σ to zero: a vacuum; "= e^0", then "= 1"
+function labVacuum() { PS.dLoop = 0; PS.sLoop = 0; PS.sPin = 1; ptw('eq1', 1, 0.7, { delay: 1.4 }); ptw('eq2', 1, 0.7, { delay: 2.3 }); return ptw('sig', 0, 1.8); }
 // 29b: only e^{−σx}, in the middle of the stage, a box around its e
 function labE() { ptw('eOnly', 1, 0.7); ptw('eMove', 1, 1.1, { delay: 0.35 }); return ptw('eBox', 1, 0.6, { delay: 1.4 }); }
 // 30: it goes, and 2, 3, 10 … write in. 30b: each becomes the same thing with base e (bMorph runs past 1 so the last
