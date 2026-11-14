@@ -5730,7 +5730,7 @@ function drawLabPlot(ctx, st) {
   drawBeam(ctx, X0 - 26, xs - 11, y, SH.color, SH.I0, lieT(T), [X0, Xd]);
   if (w > 1) { ctx.strokeStyle = COL.greyA; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(X0, LP.top, w, H, Math.min(12, w / 2)); ctx.stroke(); }
   if (Fo.c > 0.003 && w > 1 && (st.ind10 || 0) < 0.5) {   // option 1: a brace under the box, x in its blue, stretching with it; while σ changes, σ in the box instead, in its yellow (option 10 draws its own)
-    const sF = clamp(st.sAct || 0, 0, 1), al = Fo.c * (0.7 + 0.3 * clamp(st.dAct || 0, 0, 1)) * (1 - sF), cx = X0 + w / 2;
+    const sF = clamp(st.sAct || 0, 0, 1), al = Fo.c * (0.7 + 0.3 * clamp(st.dAct || 0, 0, 1)) * (1 - sF) * (1 - smooth(clamp(st.sPin || 0, 0, 1))), cx = X0 + w / 2;
     if (al > 0.003) { drawBrace(ctx, cx, LP.bot + 16, w, 24, 6, hexRgb(LDCOL), al); drawTex(ctx, 'x', cx, LP.bot + 84, 60, { alpha: al, color: LDCOL }); }
     if (Fo.s > 0.003) {   // in the upper half, over the specks, on a little shade so it reads among them
       const sy = LP.top + 46, sg = ctx.createRadialGradient(cx, sy, 0, cx, sy, 42);
@@ -5741,8 +5741,9 @@ function drawLabPlot(ctx, st) {
   }
   const n10 = smooth(clamp(st.ind10 || 0, 0, 1));
   if (n10 > 0.003 && w > 1) {   // option 10, as option 1 shows them but with their values: x = … on the brace under the box, which gives way, while σ changes, to σ = … in the box, on a little shade
-    // sPin (beat 29): σ's value stays written in the box once it has stopped, σ = 0 in the emptied box
-    const cx = X0 + w / 2, as = n10 * Math.max(clamp(st.sAct || 0, 0, 1), smooth(clamp(st.sPin || 0, 0, 1))), ad = n10 * (0.7 + 0.3 * clamp(st.dAct || 0, 0, 1)) * (1 - clamp(st.sAct || 0, 0, 1)), dcol = mixRgb(WHITE_RGB, hexRgb(LDCOL), Fo.c);
+    // sPin (from 28b, σ the one being changed): σ's value stays written in the box once it has stopped (σ = 0 in the emptied box
+    // at 29), and the brace with x = … stays out, not coming back between σ's moves
+    const cx = X0 + w / 2, pin = smooth(clamp(st.sPin || 0, 0, 1)), as = n10 * Math.max(clamp(st.sAct || 0, 0, 1), pin), ad = n10 * (0.7 + 0.3 * clamp(st.dAct || 0, 0, 1)) * (1 - clamp(st.sAct || 0, 0, 1)) * (1 - pin), dcol = mixRgb(WHITE_RGB, hexRgb(LDCOL), Fo.c);
     if (ad > 0.003) {
       drawBrace(ctx, cx, LP.bot + 16, w, 24, 6, dcol, ad);
       const dc = smooth(clamp(st.dCont ?? 1, 0, 1)), dl = `x = ${d.toFixed(1)}`;   // beat 26: first the count, 3 boxes; 26b: it becomes x = 3.0
@@ -6114,12 +6115,19 @@ function labDistance() { ptw('marksOut', 1, 0.6); PS.dLoop = 1; PS.dLoopT0 = lab
 // yellow as it starts, and its value stays written in the box from here on). 28c: σ goes down, to half the usual
 const LFIX = 1.4;
 function labFix() { if (PS.dLoop && !reduced) PS.dotD = labDAt(PS.dLoopT0); PS.dLoop = 0; return ptw('dotD', LFIX, 1.0); }
-function labMore() { ptw('sigHi', 1, 0.5); PS.sPin = 1; return ptw('sig', 2, 1.8); }
+function labMore() { ptw('sigHi', 1, 0.5); ptw('sPin', 1, 0.5); return ptw('sig', 2, 1.8); }
 function labLess() { return ptw('sig', 0.5, 2.2); }
-// 28d: the focus on σ: the rest dims, and σ in the formula grows a little in an orange box
-function labSigFocus() { return ptw('sFoc', 1, 0.8); }
+// 28d: the focus on σ: the rest dims, and σ in the formula grows a little in an orange box; σ goes up and down (half to
+// twice the usual) until the next press, carrying on from where 28c left it (on its way down)
+function labSigFocus() {
+  if (!reduced) {
+    const l = clamp(Math.log2(Math.max(PS.sig, 1e-3)), -1, 1), ph = Math.PI - Math.asin(l);   // the loop's phase where σ is now, falling
+    ptw('sig', PS.sig, 0); PS.sLoop = 1; PS.sLoopT0 = labLoopStart('sT0', TIME - (ph / (2 * Math.PI)) * LSL.P);   // (28c's move, if still going, gives way)
+  }
+  return ptw('sFoc', 1, 0.8);
+}
 // 29: σ to zero: a vacuum; as it gets there σ in the formula turns into a 0, in its yellow, and then "= 1"
-function labVacuum() { ptw('sFoc', 0, 0.6); PS.dLoop = 0; PS.sLoop = 0; PS.sPin = 1; ptw('eq1', 1, 0.8, { delay: 1.6 }); ptw('eq2', 1, 0.6, { delay: 2.5 }); return ptw('sig', 0, 1.8); }
+function labVacuum() { if (PS.sLoop && !reduced) PS.sig = labSAt(PS.sLoopT0); ptw('sFoc', 0, 0.6); PS.dLoop = 0; PS.sLoop = 0; PS.sPin = 1; ptw('eq1', 1, 0.8, { delay: 1.6 }); ptw('eq2', 1, 0.6, { delay: 2.5 }); return ptw('sig', 0, 1.8); }
 // 29b: only e^{−σx}, in the middle of the stage, a box around its e
 function labE() { ptw('eOnly', 1, 0.7); ptw('eMove', 1, 1.1, { delay: 0.35 }); return ptw('eBox', 1, 0.6, { delay: 1.4 }); }
 // 30: it goes, and 2, 3, 10 … write in. 30b: each becomes the same thing with base e (bMorph runs past 1 so the last
