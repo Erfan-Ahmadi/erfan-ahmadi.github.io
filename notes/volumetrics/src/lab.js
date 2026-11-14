@@ -231,6 +231,7 @@ function drawLabPlot(ctx, st) {
   if (ax > 0.003) {
     drawAxes(ctx, A, { c: ax, nums: 0, lab: ax, xlColor: Fo.cd > 0.003 ? mixRgb(WHITE_RGB, hexRgb(LDCOL), Fo.cd) : null });
     for (const [v, s] of [[1, '100%'], [0.5, '50%']]) drawTex(ctx, String.raw`\text{${s.replace('%', '\\%')}}`, A.ox - 22, A.Y(v), 28, { ax: 1, alpha: ax });
+    drawPctTitle(ctx, A, ax);
   }
   const d = clamp(st.dotD, 0, LPD), X0 = A.X(0), Xd = A.X(d), y = LP.beam, H = LP.bot - LP.top;
   if (ax > 0.003) drawCurve(ctx, A, f, { p: clamp(st.curveTo, 0, LPD) / LPD, from: 0, to: LPD, color: SH.color, width: 6 });

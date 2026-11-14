@@ -987,6 +987,9 @@ function drawAxes(ctx, A, st) {
     if (A.yl) drawTex(ctx, A.yl, A.ox + 26, ye + 14, A.labSize, { ax: 0, ay: 0.8, p: lab });
   }
 }
+// A quiet title for a y axis in percent, over its 100% and lined up with it: "% light", small and grey, there for whoever
+// looks for it.
+function drawPctTitle(ctx, A, alpha = 1) { if (alpha > 0.003) drawTex(ctx, String.raw`\text{\% light}`, A.ox - 22, A.Y(1) - 36, 22, { ax: 1, color: COL.grey, alpha: 0.9 * alpha }); }
 // A curve drawn from `from` to `to` in x; p < 1 draws only its first part (manim's Create on a graph).
 function drawCurve(ctx, A, f, { p = 1, from = A.xr[0], to = A.xr[1], color = COL.blue, width = 6, alpha = 1 } = {}) {
   if (p <= 0.0005 || alpha <= 0.003) return null;

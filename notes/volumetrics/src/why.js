@@ -168,6 +168,7 @@ function whyDenseDraw(ctx, kind, n, m, t = TIME) {
   const A = makeAxes({ L: WPA.x0, R: WPA.x0 + m * WDA, T: WPA.T, B: WPA.B, xr: [0, m, 1], yr: [0, 1, 0.5], ext: 40, xl: 'x', yl: '', labSize: 54, numSize: 28 }), f = (x) => Math.pow(WDT, x);
   drawAxes(ctx, A, { c: 1, nums: 0, lab: 1, xlColor: hexRgb(LDCOL) });
   for (const [v, s] of [[1, '100%'], [0.5, '50%']]) drawTex(ctx, String.raw`\text{${s.replace('%', '\\%')}}`, A.ox - 22, A.Y(v), 28, { ax: 1 });
+  drawPctTitle(ctx, A);
   drawCurve(ctx, A, f, { from: 0, to: m, color: COL.white, width: 4 });
   drawTex(ctx, WCURVE, A.X(m) + 22, Math.min(A.Y(f(m)), A.oy - 48), 46, { ax: 0 });   // (kept clear of the axis's x)
   const T = [1], N = Math.min(Math.ceil(n - 1e-6), WDN.max);
@@ -321,6 +322,7 @@ function whyPlot(ctx, S, V, n, m = WPL.n) {
   const A = whyAxes(m), f = (x) => Math.pow(1 - WHY.f, x), cu = clamp(S.wcur, 0, 1);
   drawAxes(ctx, A, { c: ax, nums: 0, lab: ax, xlColor: hexRgb(LDCOL) });
   for (const [v, t] of [[1, '100%'], [0.5, '50%']]) drawTex(ctx, String.raw`\text{${t.replace('%', '\\%')}}`, A.ox - 22, A.Y(v), 28, { ax: 1, alpha: ax });
+  drawPctTitle(ctx, A, ax);
   if (cu > 0.003) {
     drawCurve(ctx, A, f, { p: cu, from: 0, to: m, color: COL.white, width: 4 });
     drawTex(ctx, WCURVE, A.X(m) + 22, A.Y(f(m)), 46, { ax: 0, alpha: ax * smooth(clamp((cu - 0.85) / 0.15, 0, 1)) });
