@@ -413,7 +413,7 @@ function whyBox32() { ptw('lfig', 0, 0.5); ptw('bOut', 1, 0.5); ptw('plotOut', 1
 function whySelect() { ptw('wsel', 1, 1.4); return ptw('wfade', 1, 0.8, { delay: 1.8 }); }
 // 32c: the zoom; once in, the light runs from the laser, which comes back, to the sensor (no brace under one slab: it
 // starts counting at 34b)
-function whyZoom() { ptw('wls', 1, 0.35, { delay: 2.4 }); return ptw('wzoom', 1, 2.4); }   // (the laser and the sensor as soon as the zoom lands)
+function whyZoom() { ptw('wls', 1, 0.3, { delay: 2.4 }); return ptw('wzoom', 1, 2.4, { ease: linear }); }   // (linear: whyZoomGeo eases it already, and easing twice left it crawling at the end, a pause before the laser and the sensor; they come as it lands)
 // 32d: the sensor reads 90%
 function whyRead() { return ptw('wread', 1, 0.45); }
 // 32e: the particles, each in a pulsing ring. 32f: the shadows behind them, outlined, and one of them pointed out
