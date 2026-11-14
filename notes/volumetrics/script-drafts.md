@@ -181,6 +181,12 @@ and the less absorbing the stuff the less it takes (sigma decreases)
 and when this coefficient is 0 (sigma goes to 0 and the e^0 = 1 shows up ), we get constant 1, everything gets through. Nothing is absorbed. There is no stuff: it's a vacuum.
 ```
 
+Added in script.md after beat 28c, word for word:
+
+```text
+Here add a new thing (with focus on sigma): That is controlled by our absorbtion coefficient displayed by the letter sigma. 
+```
+
 ## Notes from the flow discussions
 
 ```text

@@ -227,7 +227,7 @@ function drawLabPlot(ctx, st) {
   if (bw > 0.003 && bo > 0.003) drawTex(ctx, String.raw`\text{the Beer–Lambert law}`, inkSpan(F.main)[1] + 80, LP.y + 8, 54, { ax: 0, p: bw, alpha: rest * bo, color: COL.greyA });
   const bA = st.pbox != null ? smooth(clamp(st.pbox, 0, 1)) : ax;   // the box, the light and the sensor: with the axes (the bench), or from the joined boxes (beat 26)
   if ((ax <= 0.003 && bA <= 0.003) || rest <= 0.003) return;
-  ctx.save(); ctx.globalAlpha = rest;
+  ctx.save(); ctx.globalAlpha = rest * (1 - 0.6 * smooth(clamp(st.sFoc || 0, 0, 1)));   // (28d: dimmed, the focus on σ)
   if (ax > 0.003) {
     drawAxes(ctx, A, { c: ax, nums: 0, lab: ax, xlColor: Fo.cd > 0.003 ? mixRgb(WHITE_RGB, hexRgb(LDCOL), Fo.cd) : null });
     for (const [v, s] of [[1, '100%'], [0.5, '50%']]) drawTex(ctx, String.raw`\text{${s.replace('%', '\\%')}}`, A.ox - 22, A.Y(v), 28, { ax: 1, alpha: ax });
@@ -350,7 +350,7 @@ function labTrack(st, dt) {
 // 26c, σ at 28 with sigHi; the bench has both on).
 const labFocus = (st) => { const c = smooth(clamp(st.ind1 || 0, 0, 1)); return { c, s: c * clamp(st.sAct || 0, 0, 1), d: c * clamp(st.dAct || 0, 0, 1), cs: c * smooth(clamp(st.colS ?? 1, 0, 1)), cd: c * smooth(clamp(st.colD ?? 1, 0, 1)) }; };
 function drawLabFormula(ctx, F, st, a) {
-  const hiS = smooth(clamp(st.sigHi, 0, 1)), num = smooth(clamp(st.ind3 || 0, 0, 1)), Fo = labFocus(st), sym = a * (1 - num);
+  const hiS = smooth(clamp(st.sigHi, 0, 1)), num = smooth(clamp(st.ind3 || 0, 0, 1)), Fo = labFocus(st), sym = a * (1 - num), sf = smooth(clamp(st.sFoc || 0, 0, 1));   // sf: 28d, the focus on σ
   const eb = smooth(clamp(st.eBox || 0, 0, 1));   // 29b: the e a little bigger, the exponent a little greyed
   const m9 = smooth(clamp(st.ind9 || 0, 0, 1) * clamp(st.mv9 || 0, 0, 1));
   if (m9 > 0.002 && sym > 0.003 && st.fml >= 1) {   // option 9: on its way to the dot, or riding it, as its numbers (manim's TransformMatchingTex)
@@ -367,13 +367,13 @@ function drawLabFormula(ctx, F, st, a) {
     else for (const s of F.main) {
       const isS = s.a.terms.includes('t-sig'), isD = s.a.terms.includes('t-ld'), isE = s === F.e, base = ink(s.color);
       let col = isS ? mixRgb(base, hexRgb(COL.yellow), Math.max(hiS, Fo.cs)) : isD ? mixRgb(base, hexRgb(LDCOL), Fo.cd) : base;
-      let al = s.alpha * sym * (isS ? 1 - 0.65 * Fo.d : isD ? 1 - 0.65 * Fo.s : 1 - 0.35 * Math.max(Fo.s, Fo.d));
+      let al = s.alpha * sym * (isS ? 1 - 0.65 * Fo.d : isD ? 1 - 0.65 * Fo.s : 1 - 0.35 * Math.max(Fo.s, Fo.d)) * (isS ? 1 : 1 - 0.6 * sf);
       if (eb > 0.003 && !isE) { col = mixRgb(col, hexRgb(COL.grey), LE.grey * eb); al *= 1 - 0.2 * eb; }
       if (eb > 0.003 && isE) {   // grown from its right edge, so it keeps clear of the exponent
         const [, r, t, b] = inkBox(s), cy = (t + b) / 2, ke = 1 + LE.grow * eb;
         ctx.save(); ctx.translate(r, cy); ctx.scale(ke, ke); ctx.translate(-r, -cy); drawSprite(ctx, s, al, col); ctx.restore(); continue;
       }
-      const k = 1 + 0.22 * (isS ? Fo.s : isD ? Fo.d : 0), dx = LE.shift * eb;   // 29b: the exponent moves over a little, making room for the e
+      const k = Math.max(1 + 0.22 * (isS ? Fo.s : isD ? Fo.d : 0), isS ? 1 + 0.3 * sf : 1), dx = LE.shift * eb;   // 29b: the exponent moves over a little, making room for the e (28d: σ a little bigger)
       if (k < 1.001 && dx < 0.01) { drawSprite(ctx, s, al, col); continue; }
       const [l, r, t, b] = inkBox(s), cx = (l + r) / 2, cy = (t + b) / 2;
       ctx.save(); ctx.translate(dx, 0); ctx.translate(cx, cy); ctx.scale(k, k); ctx.translate(-cx, -cy); drawSprite(ctx, s, al, col); ctx.restore();
@@ -386,6 +386,10 @@ function drawLabFormula(ctx, F, st, a) {
     for (const q of S) { const [q0, q1, q2, q3] = inkBox(q); l = Math.min(l, q0); r = Math.max(r, q1); tp = Math.min(tp, q2); b = Math.max(b, q3); }
     const k = 1 + 0.22 * f, cx = (l + r) / 2, cy = (tp + b) / 2, hw = ((r - l) / 2) * k + 12, hh = ((b - tp) / 2) * k + 12;   // around the symbol as option 1 grows it
     ctx.save(); ctx.strokeStyle = hexA(COL.greyA, al); ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(cx - hw, cy - hh, 2 * hw, 2 * hh, 8); ctx.stroke(); ctx.restore();
+  }
+  if (sf > 0.003 && sym > 0.003 && st.fml >= 1) {   // 28d: a box around σ, in the orange of the hook's question boxes
+    const S = F.main.filter((q) => q.a.terms.includes('t-sig'));
+    if (S.length) { const [l, r, t, b] = inkSpan(S), cx = (l + r) / 2, cy = (t + b) / 2, k = 1 + 0.3 * sf, hw = ((r - l) / 2) * k + 14, hh = ((b - t) / 2) * k + 14; ctx.save(); ctx.strokeStyle = hexA(COL.gold, sf * sym); ctx.lineWidth = 3.5; ctx.beginPath(); ctx.roundRect(cx - hw, cy - hh, 2 * hw, 2 * hh, 10); ctx.stroke(); ctx.restore(); }
   }
   if (num > 0.003) drawLabNumbers(ctx, st, a * num);
 }
@@ -632,8 +636,10 @@ const LFIX = 1.4;
 function labFix() { if (PS.dLoop && !reduced) PS.dotD = labDAt(PS.dLoopT0); PS.dLoop = 0; return ptw('dotD', LFIX, 1.0); }
 function labMore() { ptw('sigHi', 1, 0.5); PS.sPin = 1; return ptw('sig', 2, 1.8); }
 function labLess() { return ptw('sig', 0.5, 2.2); }
+// 28d: the focus on σ: the rest dims, and σ in the formula grows a little in an orange box
+function labSigFocus() { return ptw('sFoc', 1, 0.8); }
 // 29: σ to zero: a vacuum; as it gets there σ in the formula turns into a 0, in its yellow, and then "= 1"
-function labVacuum() { PS.dLoop = 0; PS.sLoop = 0; PS.sPin = 1; ptw('eq1', 1, 0.8, { delay: 1.6 }); ptw('eq2', 1, 0.6, { delay: 2.5 }); return ptw('sig', 0, 1.8); }
+function labVacuum() { ptw('sFoc', 0, 0.6); PS.dLoop = 0; PS.sLoop = 0; PS.sPin = 1; ptw('eq1', 1, 0.8, { delay: 1.6 }); ptw('eq2', 1, 0.6, { delay: 2.5 }); return ptw('sig', 0, 1.8); }
 // 29b: only e^{−σx}, in the middle of the stage, a box around its e
 function labE() { ptw('eOnly', 1, 0.7); ptw('eMove', 1, 1.1, { delay: 0.35 }); return ptw('eBox', 1, 0.6, { delay: 1.4 }); }
 // 30: it goes, and 2, 3, 10 … write in. 30b: each becomes the same thing with base e (bMorph runs past 1 so the last

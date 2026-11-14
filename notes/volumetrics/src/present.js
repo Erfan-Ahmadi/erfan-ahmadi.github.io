@@ -68,7 +68,7 @@ const PS_DEFAULTS = () => ({
   fx: { show: [0, 0, 0, 0], clock: [0, 0, 0, 0], run: [0, 0, 0, 0], dim: [0, 0, 0, 0], grey: [0, 0, 0, 0], big: 0 },
   // part 3, the lab (lab.js): the box on the stage, its scattering and glow, the readings, the second row and its
   // boxes, me guessing; then the formula and its plot; then the bases
-  labOn: 0, labX: 0, scat: 0, glow: 0, blW: 0, blOut: 0, lie: 0, amag: 0, amagT: 0, hvAuto: 0, read1: 0, read2: 0, split: 0, c2: 1, myst: 0, rev: 1, r2: '?', r2From: '', r2M: 1, lfig: 0, lthink: '', lthinkP: 1, lthinkFrom: '', lthinkM: 1, lside: 0, wrong: 0, cross: 0, rowFade: 0,
+  labOn: 0, labX: 0, scat: 0, glow: 0, sFoc: 0, blW: 0, blOut: 0, lie: 0, amag: 0, amagT: 0, hvAuto: 0, read1: 0, read2: 0, split: 0, c2: 1, myst: 0, rev: 1, r2: '?', r2From: '', r2M: 1, lfig: 0, lthink: '', lthinkP: 1, lthinkFrom: '', lthinkM: 1, lside: 0, wrong: 0, cross: 0, rowFade: 0,
   rowsOut: 0, fml: 0, axC: 0, dotD: 0, curveTo: 0, sig: 1, sigHi: 0, eq1: 0, plotOut: 0, bStack: 0, bMorph: 0, ind1: 1, ind8: 1, ind10: 1, readDim: 1, dLoop: 0, dLoopT0: 0, sLoop: 0, sLoopT0: 0, hvOn: 0, hvA: 0, hvStep: 0, hvT0: 0, topDim: 0, topOut: 0, merge: 0, pbox: 0, rise: 0, marksOut: 0, dCont: 0, r1Hi: 0, colS: 0, colD: 0, sPin: 0, eq2: 0, lbNS: 0, lbNE: 0, lbJA: 0, lbOut: 0, eOnly: 0, eMove: 0, eBox: 0,
   ...WHY_DEFAULTS(),   // part 4 (why.js)
   ...VARY_DEFAULTS(),  // part 5 (vary.js)
@@ -152,6 +152,7 @@ const BEATS = [
   { n: '28', name: 'and notice', run: () => labFix() },
   { n: '28b', name: 'more absorbing', run: () => labMore() },
   { n: '28c', name: 'less absorbing', run: () => labLess() },
+  { n: '28d', name: 'the letter sigma', run: () => labSigFocus() },
   { n: '29', name: 'a vacuum', run: () => labVacuum() },
   { n: '29b', name: 'why e?', run: () => labE() },
   { n: '30', name: 'any base', run: () => labBases() },
