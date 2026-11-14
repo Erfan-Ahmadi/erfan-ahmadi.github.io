@@ -34,12 +34,12 @@ header{position:sticky;top:0;display:flex;align-items:center;justify-content:spa
 #count{color:#948E82;font-size:20px;font-variant-numeric:tabular-nums}
 #clock{text-align:right;font-variant-numeric:tabular-nums}#clock b{font-size:30px;font-weight:500}#clock span{display:block;color:#948E82;font-size:15px}
 main{padding:30px 40px 36px;max-width:1150px}
-.past{color:#5E5A52}.later{color:#948E82}
+.past{color:#A59F94}.later{color:#CFC9BD}
 .now{color:#FFFDF9;font-size:34px;background:rgba(240,120,79,.11);border-radius:6px;padding:2px 5px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 .mark{display:inline-block;font-size:15px;line-height:1;padding:5px 9px;margin:0 6px;border-radius:999px;border:1px solid #47443D;color:#948E82;vertical-align:middle;font-variant-numeric:tabular-nums}
 .mark.next{background:#F0784F;border-color:#F0784F;color:#1C1B18;font-weight:600}
-.note{color:#948E82;font-style:italic;font-size:21px;margin:0 0 18px}
-footer{margin:0 40px;padding:16px 0 10px;border-top:1px solid #2E2C27;color:#6F6A60;font-size:21px;max-width:1150px}footer b{color:#948E82;font-weight:500}
+.note{color:#A59F94;font-style:italic;font-size:21px;margin:0 0 18px}
+footer{margin:0 40px;padding:16px 0 10px;border-top:1px solid #2E2C27;color:#A59F94;font-size:22px;max-width:1150px}footer b{color:#CFC9BD;font-weight:500}
 .keys{color:#47443D;font-size:14px;padding:6px 40px 18px}
 </style></head><body><header><div id="beat"></div><div id="count"></div><div id="clock"></div></header><main id="words"></main><footer id="next"></footer>
 <div class="keys">→ ← step &nbsp;·&nbsp; Space pause &nbsp;·&nbsp; T reset the time &nbsp;·&nbsp; N close</div></body></html>`;
@@ -72,13 +72,15 @@ function notesRender(d) {
   let html = '';
   if (!G) html = `<p class="note">This beat has no heading in script.md.</p>`;
   else {
-    const mine = G.segs.find((s) => s.n === B.n && s.text.trim());
-    if (!mine) html += `<p class="note">No lines of its own for this press${G.segs.some((s) => s.n === B.n) ? '' : ' (no marker for it in the script)'}: press again when it has played.</p>`;
+    // what to say now: this beat's words; if the script has no marker for it, the words it falls in (the latest before it)
+    const marked = G.segs.some((s) => s.n === B.n), now = G.segs.find((s) => s.n === B.n && s.text.trim()) || (marked ? null : [...G.segs].reverse().find((s) => s.i >= 0 && s.i <= i && s.text.trim()));
+    if (!marked) html += `<p class="note">The script has no marker for this press: it falls somewhere in the lit words.</p>`;
+    else if (!now) html += `<p class="note">No words for this press: press again when it has played.</p>`;
     const nextMark = G.segs.find((s) => s.i > i);
     html += '<p>';
     G.segs.forEach((s, k) => {
       if (k > 0) html += `<span class="mark${s === nextMark ? ' next' : ''}">${s === nextMark ? '▶ ' : ''}${s.n}</span>`;
-      if (s.text.trim()) html += `<span class="${s.n === B.n ? 'now' : s.i >= 0 && s.i < i ? 'past' : 'later'}"${s.n === B.n ? ' id="now"' : ''}>${notesText(s.text)}</span> `;
+      if (s.text.trim()) html += `<span class="${s === now ? 'now' : s.i >= 0 && s.i < i ? 'past' : 'later'}"${s === now ? ' id="now"' : ''}>${notesText(s.text)}</span> `;
     });
     if (!nextMark && N) html += `<span class="mark next">▶ ${N.n}</span>`;   // the next press is after the last words here
     html += '</p>';
