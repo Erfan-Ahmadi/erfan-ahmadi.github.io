@@ -55,7 +55,7 @@ The working script below has light edits; the original drafts, word for word, ar
 **21d.–21e.** [The glow goes: plain stuff again. The two lines turn into one, the letters they share moving over: "Just Absorption" (it goes when the setup is copied, at 23); and the light past the box goes dimmer than it really is: from here on the beam is drawn about as bright as the square of what gets through, with a little left over, so the drop shows to the eye (half the light hardly looks dimmer), while the readouts stay true. Next press, a ring on the beam in the box, and up to the right a lens grows out of it, two lines joining them: in the lens, light hits a particle and is taken in, the particle warming, over and over (beat 8's absorption cell).]
 > For now, our particles only absorb light: [21e] whenever light hits one particle, it's is taken in and turned into heat.
 
-**21f.** [The lens shrinks back into its ring, and the ring goes: the setup as it was, the light dimmer past the box.]
+**21f.** [The lens stays open, the photon still being taken in and turned into heat, while the light past the box is talked about; it shrinks back into its ring, and the ring goes, as 22 starts.]
 > So they take some of the laser's light, and less of it makes it to the other end.
 
 **22.–22b.** [The sensor's reading appears for the first time, 50%, already brought forward: everything else dims and the readout is a little bigger. Next press, everything goes back as it was.]
