@@ -6377,9 +6377,14 @@ function drawWhy(ctx, dt, st) {
     whyAt(ctx, at, () => {
       if (V.into) whyZoomIn(ctx, V.Z);
       whyView(ctx, V);
-      // Δd under the slab: a small piece of the distance d, in d's blue
+      // Δd under the slab: a small piece of the distance d, in d's blue; as slabs come and go it stretches under all of
+      // them, reading 2Δd, 3Δd, … (the count changing halfway through each slab's coming or going)
       const br = smooth(clamp(st.wbr, 0, 1)) * V.tinyA;
-      if (br > 0.003 && s0) { const cx = (s0.x0 + s0.x1) / 2, by = V.yc + V.hh + 44; drawBrace(ctx, cx, by, s0.x1 - s0.x0, 24, 6, hexRgb(LDCOL), br); drawTex(ctx, String.raw`\Delta d`, cx, by + 56, 50, { alpha: br, color: LDCOL }); }
+      if (br > 0.003 && s0) {
+        const n = clamp(st.wn, 1, WHY.NMAX), k = Math.round(n), by = V.yc + V.hh + 44;
+        drawBrace(ctx, WHY.cx, by, n * WHY.w, 24, 6, hexRgb(LDCOL), br);
+        drawTex(ctx, k === 1 ? String.raw`\Delta d` : String.raw`${k}\,\Delta d`, WHY.cx, by + 56, 50, { alpha: br, color: LDCOL });
+      }
       // 33b: what the slab says
       if (st.wsay > 0.003 && s0) drawThinking(ctx, (s0.x0 + s0.x1) / 2, 168, 1, 84, '', String.raw`whatever comes in, I take 10\%`, 1, st.wsayP, smooth(clamp(st.wsay, 0, 1)) * V.tinyA, [(s0.x0 + s0.x1) / 2, V.yc - V.hh - 42]);
       // 34–34c: × 0.9 over each slab
@@ -6437,7 +6442,7 @@ function whyAdd(n) { return ptw('wn', n, 1.2); }
 // 34d: the three × 0.9 become 0.9^3; then slabs come and go, the count with them, until the next press (once up to six,
 // if motion is reduced)
 function whyPower() {
-  ptw('wbr', 0, 0.4); PS.wnLoop = 1; PS.wnT0 = labLoopStart('wnT0', TIME + 1.6);
+  PS.wnLoop = 1; PS.wnT0 = labLoopStart('wnT0', TIME + 1.6);
   if (reduced) ptw('wn', WHY.NMAX, 1.5, { delay: 1.4 });
   return ptw('wfm', 1, 1.3);
 }
