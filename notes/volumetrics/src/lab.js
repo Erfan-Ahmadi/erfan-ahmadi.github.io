@@ -306,9 +306,9 @@ function drawLabNoLabels(ctx, st, X) {
   if (m <= 0.001) { drawSprites(ctx, A1, { p: ns, alpha: a }); if (ne > 0.003) drawSprites(ctx, A2, { p: ne, alpha: a }); }
   else { const B = at('Just Absorption', top - 106 * k); if (m >= 0.999) drawSprites(ctx, B, { alpha: a }); else drawMorph(ctx, matchPlan([...A1, ...A2], B), m, a); }
 }
-// Beats 26–26b: the halving's amounts (100% where the light goes in, then 50%, 25% and 12.5% where each box ended),
-// over the joined box at 0, 1, 2 and 3 box lengths; at 26b they rise along dashed lines to their places on the curve,
-// each a dot there with its amount beside it. They go at 27.
+// Beat 26: the halving's amounts (100% where the light goes in, then 50%, 25% and 12.5% where each box ended), over the
+// joined box at 0, 1, 2 and 3 box lengths; they rise along dashed lines to their places on the curve, each a dot there
+// with its amount beside it and a dashed line in their purple across to its height on the y axis; then they go.
 function drawLabMarks(ctx, st, A, f, a) {
   if (st.pbox == null) return;
   const al = a * (smooth(clamp(st.pbox, 0, 1)) >= 0.5 ? 1 : 0) * (1 - smooth(clamp(st.marksOut || 0, 0, 1))), rise = clamp(st.rise || 0, 0, 1), k = 0.6;
@@ -317,6 +317,8 @@ function drawLabMarks(ctx, st, A, f, a) {
     const x = A.X(i), py = A.Y(f(i)), p = smooth(clamp((rise - 0.12 * i) / 0.64, 0, 1)), src = hvAmt(100 / Math.pow(2, i)), tw = tex(src).w * HV.size * k;
     if (p > 0.003) dashed(ctx, x, LP.top - 2, x, lerp(LP.top - 2, py + 9, p), COL.greyC, 0.8 * al, 2);
     if (p > 0.85) dot(ctx, x, py, 7, AMTCOL, al * smooth((p - 0.85) / 0.15));
+    const q = i > 0 ? smooth(clamp((p - 0.8) / 0.2, 0, 1)) : 0;   // its line across to the y axis, drawn as it lands
+    if (q > 0.003) dashed(ctx, x - 9, py, lerp(x - 9, A.X(0), q), py, AMTCOL, 0.85 * al, 2.5);
     hvLabel(ctx, { src, a: al, pa: 1 - p }, lerp(x, x + 18 + tw / 2, p), lerp(LP.top - 66 * k, py - 24, p), LP.top - 10 * k, k, false);
   }
 }
