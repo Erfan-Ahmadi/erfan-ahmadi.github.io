@@ -107,6 +107,47 @@ the non exponential thing moves to right and I still want the left and righ expo
 (prev lesson should end with something about still used in practice)
 ```
 
+## Variable density, first draft (added later, word for word)
+
+After beat 40 (the exponential frame grown longer):
+
+```text
+next sections (variable density):
+But we're still far from what happens in practice, where the volume changes shape and density  across our path. for example our cloud might have a higher density here, but a lower density here (circles pointing it out, and inside the circle more compact or less dense particles, all in the same laser + sensor setup btw). but let's keep it simple and assume our volume changes starts from high density then suddenly switches to low density mid way (the volume with a dashed line in between hinting at the change) actually, let me plot the absorbtion coefficient for you, it starts at 0.4 and then suddenly switches to 0.2 (sigma = written inside the volume sections, the plot on the top gets drawn gradually as I'm speaking) 
+now here is a question for you.
+now I take these two sections and swap them (duplicates to the right with the same setup and plot on top, the plots shouldn't be that colorful right now, focus is on the sections themselves)
+In which of the two cases does the light come out brighter on the other end. 
+in the first one (synced point moves across the volume) our light gets absorbed more and faster, but then it gets absorbed less
+in the second one (same thing as above, our light doesn't get absorbed as much in the first half, but it gets absorbed more later) (wherever I'm speaking about the other should decolor of fade away)
+both get back to normal state and I say: Pause here if you want.
+(A or B?) 
+
+Ok that was a trick question, both end up the same amount of light on the other end and the sensor reads the same value.
+let's walk through the first one, the first section's effect is multiply e^0.4*d the second section's effect is multiply by e^0.2*d, and from basic calculus we know the exponents get added and you end up with e^(0.4+0.2)*d (the parans morph into 0.6
+if you do the same thing on the other end you'll end up with the same value (0.2+0.4) morphs into (0.6)
+What I want you to pay attention to here is the addition (focus, highlight the plus sign, morph back into parans, the other shit gets decolored and only the additions in the exponent gets highlighted on both sides)
+```
+
+Its continuation, sent while the animations for the above were being built, word for word:
+
+```text
+(one of them becomes in focus and the quiz scenario goes in 1 of the setups)
+you could apply the same thinking when your absorbtion changes continously (morphs into a continous situation and changes shape) 
+for example here, we absorbtion starts to pick and gets higher and higher, and then it begins decreasing smoothly until it reaches zero (a kind of sin shape thing and the synced point as I'm speaking)
+
+doing the same thing here, (chops up into multiple small sections and `x e^..*delta_x` and each of those exponential point with a dashed line to their tiny section in the plot, with a ... between them until the last one)
+and when you multiply all of these it becomes a summation over all the different absorbtion coefficients in tiny distances. 
+you probably have noticed by now that this is the exact definition of an integral (the sums morph into the integral)
+
+your volume can change density and absorbtion all it wants (morph into different things)
+but as long as the integral remains the same, the sensor on the other end reads the same value.
+
+as a sanity check look how it's consistent when our volume is uniform all across. It's the same formula as we had before sigma * x, that's the area under the curve.
+
+
+(ok I realized d_d is weird notation, let's fix everywhere and change d to x)
+```
+
 ## Notes from the flow discussions
 
 ```text

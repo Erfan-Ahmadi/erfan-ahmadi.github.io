@@ -495,6 +495,7 @@ function drawLabStage(ctx, dt, st) {
   labLoops(st); labTrack(st, dt); drawLabPlot(ctx, st);
   drawLabBases(ctx, st);
   drawWhy(ctx, dt, st);   // part 4, from beat 32 (why.js)
+  drawVary(ctx, dt, st);  // part 5, from beat 41 (vary.js)
 }
 
 // ---- the beats ----

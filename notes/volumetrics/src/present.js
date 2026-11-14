@@ -70,6 +70,7 @@ const PS_DEFAULTS = () => ({
   labOn: 0, labX: 0, scat: 0, glow: 0, read1: 0, read2: 0, split: 0, c2: 1, myst: 0, rev: 1, r2: '?', r2From: '', r2M: 1, lfig: 0, lthink: '', lthinkP: 1, lside: 0, wrong: 0, cross: 0, rowFade: 0,
   rowsOut: 0, fml: 0, axC: 0, dotD: 0, curveTo: 0, sig: 1, sigHi: 0, eq1: 0, plotOut: 0, bStack: 0, bMorph: 0, ind1: 1, ind8: 1, ind10: 1, readDim: 1, dLoop: 0, dLoopT0: 0, sLoop: 0, sLoopT0: 0, hvOn: 0, hvA: 0, hvStep: 0, hvT0: 0, topDim: 0, topOut: 0, merge: 0, pbox: 0, rise: 0, marksOut: 0, dCont: 0, r1Hi: 0, colS: 0, colD: 0, sPin: 0, eq2: 0, lbNS: 0, lbNE: 0, lbJA: 0, lbOut: 0, eOnly: 0, eMove: 0, eBox: 0,
   ...WHY_DEFAULTS(),   // part 4 (why.js)
+  ...VARY_DEFAULTS(),  // part 5 (vary.js)
 });
 const PS = PS_DEFAULTS();
 // The equation, with its terms named: the four effects for the braces, and the parts the questions point at.
@@ -167,6 +168,24 @@ const BEATS = [
   { n: '39c', name: 'with a structure: non-exponential', run: () => whyNameR() },
   { n: '39d', name: 'not for now', run: () => whyGrey() },
   { n: '40', name: 'the assumption from here on', run: () => whyLong() },
+  // part 5 (vary.js): the density changes along the path; dense then thin, or thin then dense: the same light gets out
+  { n: '41', name: 'far from practice', run: () => varyStart() },
+  { n: '41b', name: 'denser here', run: () => varyDense() },
+  { n: '41c', name: 'thinner here', run: () => varyThin() },
+  { n: '42', name: 'dense, then thin', run: () => varySections() },
+  { n: '42b', name: 'the absorption coefficient', run: () => varySigma() },
+  { n: '43', name: 'swap them', run: () => varySwap() },
+  { n: '44', name: 'the first one', run: () => varyWalkA() },
+  { n: '45', name: 'the second one', run: () => varyWalkB() },
+  { n: '46', name: 'A or B?', run: () => varyAsk() },
+  { n: '47', name: 'a trick question', run: () => varyReveal() },
+  { n: '48', name: "the first section's share", run: () => varyA1() },
+  { n: '48b', name: "times the second's", run: () => varyA2() },
+  { n: '48c', name: 'the exponents add', run: () => varyA3() },
+  { n: '48d', name: 'point six', run: () => varyA4() },
+  { n: '49', name: 'the same the other way round', run: () => varyB3() },
+  { n: '49b', name: 'the same value', run: () => varyB4() },
+  { n: '50', name: 'the addition', run: () => varyPlus() },
 ];
 // A beat by its number in the script; a number between two beats opens the next one.
 function presIndex(label) {
