@@ -1,0 +1,212 @@
+# Volumetrics video: original drafts
+
+Erfan's drafts exactly as written, kept for reference. The edited working version is in script.md.
+
+## The hook (first draft)
+
+```text
+not long after I started learning how to make things with computers, I got super excited when I learned people could simulate the looks of clouds with actual physics; and being able to render clouds became one of my biggest goals in my career and partly why I kept going my way in computer graphics, but ironically I procrastinated learning about it just until very recently, myabe it was too important for me
+(first animation is the 3d cloud and in the same cloud viz, we show a section with like a magnifier effect that inside it shows the wobbling of the particles and the discrete version of the effect then we aside this while the animation is still playing a sticky figure with a readout that writes some of my thoughts as I'm speaking about myself, for now it's)
+extra notes: space pauses all animations, controls  for navigation like the prev tutorial
+
+but more likely because the first things i encountered was formulas that looked super complex that made me feel... not smart... (sticky figure still there, formula shows up)
+
+This time I started yet again, it made a little bit of sense this time, like how different terms meant different physical interactions of light and medium. (the four brackets under equations and the 4 effects showing up, color coded so things that take light away are red and things that contribute positively is green.
+
+but nobody explained to me, Why does e and exponentials show up? Why is there an integral inside an exponent, inside another integral? (each one navigatble and highlighted with rect and outside greyed out)
+```
+
+## The goals (added later, word for word)
+
+```text
+By the end of this series I want the physics and math to feel so natural that you can derive the formula yourself and see behind these intimidating looking formulas
+We'll build it up gradually and I'll never ask you to just take a formula on pure faith as law of nature
+Different stuff, same story.
+```
+
+## The body, first draft (added later, word for word)
+
+After beat 20h ("Different stuff, same story."):
+
+(we get rid of the 3 other examples here)
+
+ And for the remainder of this video I'm going be slightly dishonest and assume our "stuff" doesn't scatter light (show the same setup laser hitting those particles in the last "stuff" and scattering in rays and making the volume more reddish) or glow or emit light itself (red glow for each particle, laser light a bit dimmed so the effect of the emission is more visible). I'll come back to emission and scattering in a separate video. for now, our partices only absorb light. 
+
+and here after they absorb the laser light, less of it makes the other end, how much? well that's why have a sensor, here it reads 50%, that means half the light made it through. now let me ask you a question, what if I put a second identical tank right next to this one? (we duplicate the same thing and bring it to the bottom) what would our sensor read now? pause and try to answer it if you want (the sensor reads ? instead of 50%, now you see two setups, above with 1 box and 50, below with 2 and ?)
+
+It's natural to say 0% (sticky figure with 0% readout, the question one goes away), because 1 box took half the light , so two should take all of it away (slide tank to from the right and move laser and sensor outwards for it to fit). but that's not what happens here. our sensor reads 25%. add a third box, it's 12.5%. each box halfs the light entering it. that's exactly what exponential means. multiplication by a fixed fraction.
+
+and this behaviour is described by this formula, you might've heard about the beer-lambert formula. let's see it in action (show the plot, while it's growing from left to write with a dot, the volume under it grows as well)
+
+notice how the more light has to travel through our stuff (a dot and the the box growing and shrinking, ) the less of it makes the other end. and notice how when the stuff becomes more absorbtive it dims light quicker?
+
+this absorbitvity is controlled by [whatever we chose to be in the exponent of e^..*x].  show stationary animamtion increasing and decreasing that value and seeing the stuff change look and the sensor read less
+
+(remember everything on screen should serve a purpose, specially with 2 synced views where viewer can easily get confused)
+
+It's easy to see that when that value is 0, we get a constant 1, that means no light is being absorbed. a.k.a there is no stuff, it's a vaccum. 
+
+For those of you a little bit rusty with calculus and wondering why we have the number e here which is roughly 2 point ..., I'd have to say there is nothing special about it. you can have any base you want, 2^..*x, 3^...*x, .... (shown in a vertical stack) we just rewrite all these different exponential with a base of e (an arrow to the right, all bases change to e). the reason we choose e is that it makes it a little easierworking with integrals and differentual equations but you don't have to worry about them here.
+
+Now you might still be asking. Ok, there is nothing special about e, but why do we have exponential behaviour here?
+(aside with sticky figures everytime we play with "you  might be asking")
+
+.... (I'll write the next parts soon)
+
+## Why exponential, first draft (added later, word for word)
+
+to answer that question we should take a look at how light passes through a tiny slab of volume (the zoom in animation, everything else disappears but only a tiny slab remains and we see the shadowing effect with no rays just a sheet, and the length delta_x shows up hinting that it's a delta in distance)
+[again remember, every animation or visual component needs to serve a purpose for learning]
+
+here we see that 99% of the particles make it through, the other 1% get absorbed and cause shadows on the other end, that's why the light dims out. 
+
+and notice it doesn't matter how bright or dim the light is (animation of changing light intensity), the particles always absorb 1% and let 99% pass.
+in other word this tiny slab of volume says [readout]: I don't care where you come from or how much energy you have, I'm going to take 1% of it.
+
+what the tiny slab does is equivalent to multiplication by 99%, add another, multiply by 99%, add another multiply by 99%. so the percentage of light that gets detected on the other end is 99% to the power of how many slabs you have. (animation that the power of 99% changes in the exponent, and the numbers get added or removed slabs)
+
+[write me better transcripts here.]
+
+but there is still a problem, we're assuming each slab acts independantly as if it doesn't care, but is that true at all? let's assume two slabs with particles placed in a way that block all light (not tiny slabs anymore, but a specific structure that first does 50% and the other does 100% of remainig)
+here the first one takes 50% of incoming light, and the other takes 100% of remaining
+(or another case where first one does 50% and the second one is hiding behind it absorbing nothing) 
+or you might bring up another case where the first slab absorbs 50% the light, and the second slab absorbs nothing, because it sits in the shadow of the first one.
+
+and yes you're correct! and that's why particles being placed like this break our equation! you've now learned that this equation we've been talking about is not a nature of law, it assumes particles are placed randomly (show randomly) not like this or that (the two other versions)
+
+[split screen, left is exponential media, right is non exponential and everything in the next paragraph appears there]
+as a matter of fact, particles placed like thos is called non-exponential media and there is research in that field. see for example here in this paper, how assumptions about particle placement change the look of the dragon. [show the image of the dragon on the right side] (https://graphics.unizar.es/projects/Jarabo2018radiative/) 
+[btw can I use this in my youtube video with proper attribution?]
+
+but for the sake of this video going forward, we're going to assume exponential media
+[pause]
+...
+we've dicovered .... but real world is rarely like that, a volume changes density and particles and absorbtivity changes as light passes through a volume. [example of cloud or something] ... intro to next quiz about A or B
+
+## Why exponential, second draft: after beat 34 (added later, word for word)
+
+```text
+New script ideas and visual directions after 34:
+
+and of course now we know that we could rewrite the same exponential with e as the base. (the same back and forth animation but with e and the negative power in yellow in the exponent)
+
+ and notice how it follows the exponential curve  (the continous version draw and from 1 slabs to 5 in sync with the plot below it, the discrete version draws as each slab get added)
+
+Now I know some of you aren't still satisfied, because what if the particles are placed in a certain way? for example like this (light is off particles move to a structure where they are clumped up and in an area on top, and the same happens for the rest of slabs)
+
+the same sync situation as above. here the first slab takes away some light but the rest of it barely take anything, it becomes constant after a point. and doesn't map to any exponential.
+
+This is EXACTLY what I've been meaning to show you, that placement of the particles matter, and you get exponentials, only when your particles are placed randomly. as soon as you start placing it with a specific structure, you get non exponential media which is a rabbit hole we don't want to get into here.
+My point here is that these formulas where you see exponentials in them have a hidden assumption behind them, that the particles are placed randomly.  and that is the assumption we're going to make going forward which is still practical and has many usages in computer graphics but areas like astronomy. this is an assumption we can live with sometimes.
+```
+
+Directions added after that draft, word for word:
+
+```text
+the non exponential thing moves to right and I still want the left and righ exponential vs non exponential thing synced with the transcript, forget about that paper, and when I talk about not caring about non expoenntials for now, that should grey out and then the exponential frame grows longer to prepare for next lesson:
+(prev lesson should end with something about still used in practice)
+```
+
+## Variable density, first draft (added later, word for word)
+
+After beat 40 (the exponential frame grown longer):
+
+```text
+next sections (variable density):
+But we're still far from what happens in practice, where the volume changes shape and density  across our path. for example our cloud might have a higher density here, but a lower density here (circles pointing it out, and inside the circle more compact or less dense particles, all in the same laser + sensor setup btw). but let's keep it simple and assume our volume changes starts from high density then suddenly switches to low density mid way (the volume with a dashed line in between hinting at the change) actually, let me plot the absorbtion coefficient for you, it starts at 0.4 and then suddenly switches to 0.2 (sigma = written inside the volume sections, the plot on the top gets drawn gradually as I'm speaking) 
+now here is a question for you.
+now I take these two sections and swap them (duplicates to the right with the same setup and plot on top, the plots shouldn't be that colorful right now, focus is on the sections themselves)
+In which of the two cases does the light come out brighter on the other end. 
+in the first one (synced point moves across the volume) our light gets absorbed more and faster, but then it gets absorbed less
+in the second one (same thing as above, our light doesn't get absorbed as much in the first half, but it gets absorbed more later) (wherever I'm speaking about the other should decolor of fade away)
+both get back to normal state and I say: Pause here if you want.
+(A or B?) 
+
+Ok that was a trick question, both end up the same amount of light on the other end and the sensor reads the same value.
+let's walk through the first one, the first section's effect is multiply e^0.4*d the second section's effect is multiply by e^0.2*d, and from basic calculus we know the exponents get added and you end up with e^(0.4+0.2)*d (the parans morph into 0.6
+if you do the same thing on the other end you'll end up with the same value (0.2+0.4) morphs into (0.6)
+What I want you to pay attention to here is the addition (focus, highlight the plus sign, morph back into parans, the other shit gets decolored and only the additions in the exponent gets highlighted on both sides)
+```
+
+Its continuation, sent while the animations for the above were being built, word for word:
+
+```text
+(one of them becomes in focus and the quiz scenario goes in 1 of the setups)
+you could apply the same thinking when your absorbtion changes continously (morphs into a continous situation and changes shape) 
+for example here, we absorbtion starts to pick and gets higher and higher, and then it begins decreasing smoothly until it reaches zero (a kind of sin shape thing and the synced point as I'm speaking)
+
+doing the same thing here, (chops up into multiple small sections and `x e^..*delta_x` and each of those exponential point with a dashed line to their tiny section in the plot, with a ... between them until the last one)
+and when you multiply all of these it becomes a summation over all the different absorbtion coefficients in tiny distances. 
+you probably have noticed by now that this is the exact definition of an integral (the sums morph into the integral)
+
+your volume can change density and absorbtion all it wants (morph into different things)
+but as long as the integral remains the same, the sensor on the other end reads the same value.
+
+as a sanity check look how it's consistent when our volume is uniform all across. It's the same formula as we had before sigma * x, that's the area under the curve.
+
+
+(ok I realized d_d is weird notation, let's fix everywhere and change d to x)
+```
+
+## The ending, first draft (added later, word for word)
+
+After beat 57c:
+
+```text
+add somewhere and show on screen that this integral in shown with Tau and is called optical depth.
+
+and then:
+
+by now I hope you have understood the reason expoential shows up is our assumption about random placement of the particles 
+and the reason you see integrals in the exponent is because of the variable absorbtion coefficients across a ray.
+(each question with arrow to the right with the text and the animation about it)
+
+See you in the next video, where we'll cover emission and scattering and the nuances that we have skipped in this video.
+
+....
+then the same animations will keep on playing and playing until the video finishes
+```
+
+## Beats 26–29, second draft (added later, word for word)
+
+```text
+after "Add a third box: twelve and a half. Each box halves the light that enters it." the transcript needs a touchup and get more in sync with the visuals:
+ 
+This behaviour can be described with an exponential formula (the formula and the plot come and the percentages go, so up to 26c happens back to back)
+You might've already heard it's name as Beer-Lambert's law (the beer-lamber will write briefly and disappear while i'm talking on it.)
+Notice how the changing the distance travelled effect the light making it through.
+and notice (gets fixed to 1.4), the more absorbing the stuff is (goes sigma increases) the more it takes from the light
+and the less absorbing the stuff the less it takes (sigma decreases)
+
+and when this coefficient is 0 (sigma goes to 0 and the e^0 = 1 shows up ), we get constant 1, everything gets through. Nothing is absorbed. There is no stuff: it's a vacuum.
+```
+
+Added in script.md after beat 28c, word for word:
+
+```text
+Here add a new thing (with focus on sigma): That is controlled by our absorbtion coefficient displayed by the letter sigma. 
+```
+
+Inline requests in script.md, word for word. In place of beats 44–45b (the walk-throughs, now removed):
+
+```text
+(remove beats here, remove the animation the audience is not dumb, they get the question by now, no need to walk it over again)
+```
+
+At the start of beat 48's narration (its math now written out as it's said):
+
+```text
+[I need you to read the math for me here, not show equations, I will use it to speak]
+```
+
+## Notes from the flow discussions
+
+```text
+- The beer bar intro is dropped: too long. Its second-tank question (50% → 25%, not 0%) is kept for after the equation, where "let me show you what I mean" needs an example.
+- No quiz in the hook: it looks like a pop quiz and people might drop out. Quizzes come once people are interested.
+- Radiance invariance is dropped.
+- After the hook: the equation, the four effects highlighted briefly, then the questions about it; "why e?" is one of them.
+- What I want to teach: e is not that scary; the exponential, a short answer and a long answer; what an exponential means (fractions, slabs: a slab says "I don't care about the other slabs, I take 10%"); then why does each slab not care → uniform distribution, a hint at probability; a few uses of the radiative transfer equation outside graphics (astronomy and so on).
+- The A or B question, reworded (instead of "Does it make the light brighter or dimmer on the other side?"): "On the left hand side, A, light goes through the dense part first and then the think part. in B light goes through the thin part first and then the dense part" Pause here and guess, which sensor reads more light, A or B?" on screen it reads "More light reaches sensor in A or B?
+- Then, instead of the two sentences on what A and B are: "now the light goes through the thin part first and then the dense one
+```

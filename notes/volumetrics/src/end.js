@@ -1,0 +1,86 @@
+// ---------- presentation, part 6: the ending (beats 58–58b) ----------
+// Two of the hook's questions come back as cards (present.js's QCARDS), each with an arrow to its answer and, under the
+// answer, the animation that showed it, which keeps playing until the video ends: "Why e? Why exponentials?" →
+// particles placed at random (part 4's slabs coming in one by one and going again, their steps on the exponential);
+// "why an integral in the exponent?" → σ changes along the ray (part 5's volume changing shape, the area under σ, the
+// integral, and the reading, staying the same).
+// rows: which card, and the row's middle. card: its left, width, height, title size and line spacing. arrow: where it
+// starts and ends, its head. ans: the answer's left, its text's height and size, and the animation's box (top, width,
+// height), each against the row's middle. sep: the line between the rows (its height, its left and right ends)
+const END = {
+  rows: [{ q: 2, cy: 300 }, { q: 0, cy: 790 }],
+  card: { x: 70, w: 440, h: 150, size: 36, gap: 46 },
+  arrow: { x0: 530, x1: 632, head: 20 },
+  ans: { x: 668, ty: -215, size: 42, top: -185, w: 1190, h: 360 },
+  sep: { y: 515, x0: 70, x1: 1858 },
+};
+const ENDTXT = [String.raw`\text{particles placed at random}`, String.raw`\textcolor{${COL.yellow}}{\sigma}\text{ changes along the ray}`];
+const ENDFML = String.raw`e^{-\textcolor{${COL.yellow}}{\int \sigma(x)\,dx}}`;
+// the two animations' extents in their own units: part 4's long frame at ten slabs (its middle WPC(10)); part 5's setup,
+// with its plot and readout (its middle)
+const ENDBOX = { exp: [1800, 860], vary: [1420, 660, 462, -140] };
+END.vk = 1.45;   // how much smaller part 5's labels and readout are here than on their own
+// (each row's card, arrow, words and animation, and when its animation started; named apart from the lab's eq1 and eq2)
+function END_DEFAULTS() { return { endOut: 0, endQ1: 0, endA1: 0, endW1: 0, endN1: 0, endS1: 0, endQ2: 0, endA2: 0, endW2: 0, endN2: 0, endS2: 0 }; }
+// The slabs: one by one up to ten, a while at ten, back down to one, a while at one; again and again
+function endN(t) {
+  const P = 15, u = ((t % P) + P) % P;
+  if (u < 8) { const s = u / 0.8, i = Math.floor(s); return Math.min(WHY.NLONG, 1 + i + smooth(clamp((s - i - 0.35) / 0.65, 0, 1))); }
+  if (u < 10.5) return WHY.NLONG;
+  if (u < 13) return lerp(WHY.NLONG, 1, smooth((u - 10.5) / 2.5));
+  return 1;
+}
+// part 4's slabs, their particles placed at random, the brace, and the plot with its steps on the curve, fitted in r
+function endExp(ctx, r, t0) {
+  const n = reduced ? WDN.max : 1 + ((endN(TIME - t0) - 1) * (WDN.max - 1)) / (WHY.NLONG - 1);   // part 4's denser slabs, wobbling, coming and going
+  const c = WPC(WHY.NLONG), k = Math.min(r[2] / ENDBOX.exp[0], r[3] / ENDBOX.exp[1]);
+  ctx.save(); ctx.translate(r[0] + (ENDBOX.exp[0] * k) / 2, r[1] + r[3] / 2); ctx.scale(k, k); ctx.translate(-c[0], -c[1]);
+  whyDenseDraw(ctx, 'A', n, WDN.max);
+  ctx.restore();
+}
+// part 5's setup, its σ going through shapes with the same area, fitted in r; to its right, the formula with the integral
+function endVary(ctx, r, t0) {
+  const S = Object.assign(VARY_DEFAULTS(), { von: 1, vsect: 1, vax: 1, vpl: 1, vcont: 1, vchop: 1, vint: 1, vread: 1, vshLoop: 1, vshT0: t0 });
+  const [w, h, cx, cy] = ENDBOX.vary, k = Math.min(r[2] / w, r[3] / h);
+  ctx.save(); ctx.translate(r[0] + (w * k) / 2, r[1] + r[3] / 2); ctx.scale(k, k); ctx.translate(-cx, -cy); varyDraw(ctx, S, 'A', k * END.vk, 0); ctx.restore();   // (its labels and readout smaller, to suit)
+  drawTex(ctx, ENDFML, r[0] + w * k + (r[2] - w * k) / 2, r[1] + r[3] / 2 + 30, 62);
+}
+function endArrow(ctx, x0, x1, y, a) {
+  const h = END.arrow.head, hd = clamp((x1 - x0) / h - 0.5, 0, 1);
+  ctx.save(); ctx.globalAlpha *= a; ctx.strokeStyle = COL.greyA; ctx.fillStyle = COL.greyA; ctx.lineWidth = 4; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(Math.max(x0, x1 - h * 0.8 * hd), y); ctx.stroke();
+  if (hd > 0.003) { ctx.globalAlpha *= hd; ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x1 - h, y - h * 0.55); ctx.lineTo(x1 - h, y + h * 0.55); ctx.closePath(); ctx.fill(); }
+  ctx.restore();
+}
+function drawEnd(ctx, dt, st) {
+  // 58b: a thin line between the two rows, coming in with the second card
+  const sa = smooth(clamp(st.endQ2, 0, 1)), S = END.sep;
+  if (sa > 0.003) { ctx.save(); ctx.strokeStyle = hexA(COL.greyC, 0.9 * sa); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(S.x0, S.y); ctx.lineTo(S.x1, S.y); ctx.stroke(); ctx.restore(); }
+  END.rows.forEach((R, i) => {
+    const j = i + 1, qa = smooth(clamp(st['endQ' + j], 0, 1)); if (qa <= 0.003) return;
+    const q = QCARDS[R.q], C = END.card, mx = C.x + C.w / 2, pop = lerp(0.85, 1, qa), A = END.ans;
+    // the card, as the hook left it: its colour, its question
+    ctx.save(); ctx.globalAlpha *= qa; ctx.translate(mx, R.cy); ctx.scale(pop, pop); ctx.translate(-mx, -R.cy);
+    ctx.strokeStyle = hexA(q.col, 0.8); ctx.lineWidth = 3.5; ctx.beginPath(); ctx.roundRect(C.x, R.cy - C.h / 2, C.w, C.h, 16); ctx.stroke();
+    q.title.forEach((src, l) => drawTex(ctx, src, mx, R.cy + (l - (q.title.length - 1) / 2) * C.gap, C.size, { color: q.col }));
+    ctx.restore();
+    // the arrow to its answer, the answer, and under it the animation
+    const aa = smooth(clamp(st['endA' + j], 0, 1)), ta = clamp(st['endW' + j], 0, 1), na = smooth(clamp(st['endN' + j], 0, 1));
+    if (aa > 0.003) endArrow(ctx, END.arrow.x0, lerp(END.arrow.x0, END.arrow.x1, aa), R.cy, aa);
+    if (ta > 0.003) drawTex(ctx, ENDTXT[i], A.x, R.cy + A.ty, A.size, { ax: 0, p: ta });
+    if (na > 0.003) { ctx.save(); ctx.globalAlpha *= na; (i === 0 ? endExp : endVary)(ctx, [A.x, R.cy + A.top, A.w, A.h], st['endS' + j]); ctx.restore(); }
+  });
+}
+
+// ---- the beats ----
+// 58: part 5 goes; "Why e? Why exponentials?" comes back as a card, an arrow grows from it to its answer, "particles
+// placed at random" writes in, and under it part 4's slabs come in, coming and going from then on
+function endFirst() {
+  ptw('endOut', 1, 0.8); ptw('endQ1', 1, 0.7, { delay: 0.6 }); ptw('endA1', 1, 0.6, { delay: 1.2 }); ptw('endW1', 1, 0.9, { delay: 1.6, ease: linear });
+  PS.endS1 = labLoopStart('endS1', TIME + 1.9); return ptw('endN1', 1, 0.8, { delay: 1.9 });
+}
+// 58b: the same for "why an integral in the exponent?": "σ changes along the ray", and part 5's volume changing shape
+function endSecond() {
+  ptw('endQ2', 1, 0.7); ptw('endA2', 1, 0.6, { delay: 0.6 }); ptw('endW2', 1, 1.0, { delay: 1.0, ease: linear });
+  PS.endS2 = labLoopStart('endS2', TIME + 1.3); return ptw('endN2', 1, 0.8, { delay: 1.3 });
+}
