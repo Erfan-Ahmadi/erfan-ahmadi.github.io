@@ -36,13 +36,9 @@ The chapter names and times are Erfan's, from the final video (with "Absorbtion"
 ## LinkedIn (with the clip attached)
 
 ```text
-For a long time I was trying to understand one thing about volumetric rendering: why is there an e in the formula?
+For a long time, the math behind volumetric rendering scared me. Every time I tried to learn it, I ran into formulas I couldn't make sense of, and I put it off.
 
-Every resource showed me the same scary-looking formula, an integral inside an exponent, inside another integral, and moved on. Nobody explained where it comes from.
-
-So I made a video about just that question. It starts from nothing, with a laser, a sensor and a box of fog, and builds the formula up until the e and the integral in its exponent stop looking scary.
-
-The clip is where it starts: one box of fog lets half the light through. What happens when you add a second one?
+I finally understood it. So I made the video I needed back then.
 
 Full video in the first comment.
 ```
@@ -52,11 +48,9 @@ First comment: https://youtu.be/mHIJVclRZ18 (LinkedIn shows posts with a link in
 ## X / Twitter (same clip)
 
 ```text
-I was trying to understand one thing about volumetric rendering: why is there an e in the formula?
+For a long time, the math behind volumetric rendering scared me.
 
-Nobody explained it, so I made a video that builds it up from a laser, a sensor and a box of fog.
-
-It starts with this question:
+I finally understood it, so I made the video I needed back then.
 ```
 
 Reply to it with: `Full video: https://youtu.be/mHIJVclRZ18`
