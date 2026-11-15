@@ -2597,9 +2597,12 @@ function drawIntegral(ctx, dt, st) {
 // ---------- the stage ----------
 const stageEl = $('stage'), cv = $('cv'), ctx = cv.getContext('2d');
 let K = 1, cssW = 0, cssH = 0, DPR = 0;
+// Fast drawing, for recording the screen on a machine that can't keep up: the stage is drawn at the screen's own
+// pixels, a quarter of the usual work, and the 3D cloud a step coarser. On with ?fast in the address, or Q while presenting.
+let FAST = /[?&]fast\b/.test(location.search);
 function fitCanvas() {
   // At least 2× the CSS size (3× on dense screens), so curves and edges stay smooth when the stage is small.
-  const w = stageEl.clientWidth, h = stageEl.clientHeight, dpr = Math.min(3, Math.max(2, window.devicePixelRatio || 1));
+  const w = stageEl.clientWidth, h = stageEl.clientHeight, dpr = FAST ? window.devicePixelRatio || 1 : Math.min(3, Math.max(2, window.devicePixelRatio || 1));
   if (w === cssW && h === cssH && dpr === DPR) return;
   cssW = w; cssH = h; DPR = dpr;
   cv.width = Math.max(1, Math.round(w * dpr)); cv.height = Math.max(1, Math.round(h * dpr));

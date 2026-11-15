@@ -7,7 +7,7 @@
 // It's written from here and updated on every beat, and keys pressed in it go to the presentation, so either window can
 // have the focus. Its words come from script.md (SCRIPT_NOTES, put in by build.mjs), so it always reads the current
 // script. N again, or closing it, closes it.
-const NOTES = { win: null, beat: -1, paused: null, t0: 0, tb: 0, tick: 0 };
+const NOTES = { win: null, beat: -1, paused: null, fast: null, t0: 0, tb: 0, tick: 0 };
 const notesOpen = () => !!(NOTES.win && !NOTES.win.closed);
 let notesGroups = null;
 function notesData() {   // each heading's beats as indices into BEATS, and its narration cut at the press markers
@@ -32,7 +32,7 @@ html,body{margin:0;background:#1C1B18;color:#EEEAE2;font:400 26px/1.5 Inter,syst
 header{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:14px 32px;background:#1C1B18;border-bottom:1px solid #2E2C27}
 #beat b{font-size:42px;color:#F0784F;margin-right:14px;font-variant-numeric:tabular-nums}#beat span{color:#DCD7CC;font-size:22px}
 #beat i{display:block;font-style:normal;color:#6F6A60;font-size:15px}
-#count{color:#948E82;font-size:20px;font-variant-numeric:tabular-nums}#count b{margin-left:12px;padding:4px 12px;border-radius:999px;background:#F0784F;color:#1C1B18;font-size:17px;font-weight:600}
+#count{color:#948E82;font-size:20px;font-variant-numeric:tabular-nums}#count i{margin-left:12px;font-style:normal;color:#F0784F}#count b{margin-left:12px;padding:4px 12px;border-radius:999px;background:#F0784F;color:#1C1B18;font-size:17px;font-weight:600}
 #clock{text-align:right;font-variant-numeric:tabular-nums}#clock b{font-size:30px;font-weight:500}#clock span{display:block;color:#948E82;font-size:15px}
 main{padding:30px 40px 36px;max-width:1150px}
 .past{color:#A59F94}.later{color:#CFC9BD}
@@ -43,7 +43,7 @@ main{padding:30px 40px 36px;max-width:1150px}
 footer{margin:0 40px;padding:16px 0 10px;border-top:1px solid #2E2C27;color:#A59F94;font-size:22px;max-width:1150px}footer b{color:#CFC9BD;font-weight:500}
 .keys{color:#47443D;font-size:14px;padding:6px 40px 18px}
 </style></head><body><header><div id="beat"></div><div id="count"></div><div id="clock"></div></header><main id="words"></main><footer id="next"></footer>
-<div class="keys">→ ← step &nbsp;·&nbsp; Space pause &nbsp;·&nbsp; T reset the time &nbsp;·&nbsp; N close</div></body></html>`;
+<div class="keys">→ ← step &nbsp;·&nbsp; Space pause &nbsp;·&nbsp; T reset the time &nbsp;·&nbsp; Q fast drawing &nbsp;·&nbsp; N close</div></body></html>`;
 function notesToggle() {
   if (notesOpen()) { NOTES.win.close(); NOTES.win = null; return; }
   const w = window.open('', 'volnotes', 'popup,width=1040,height=700');
@@ -60,15 +60,15 @@ function notesTick(force = false) {
   if (NOTES.win.closed) { NOTES.win = null; return; }
   const now = performance.now();
   if (PRES.beat !== NOTES.beat) { NOTES.beat = PRES.beat; NOTES.tb = now; notesRender(NOTES.win.document); }
-  if (PRES.paused !== NOTES.paused) notesCount(NOTES.win.document);
+  if (PRES.paused !== NOTES.paused || FAST !== NOTES.fast) notesCount(NOTES.win.document);
   if (force || now - NOTES.tick > 250) {
     NOTES.tick = now; const c = NOTES.win.document.getElementById('clock');
     if (c) c.innerHTML = `<b>${notesTime(now - NOTES.t0)}</b><span>this beat ${notesTime(now - NOTES.tb)}</span>`;
   }
 }
 function notesCount(d) {   // where it is in the video, and a mark while it's paused
-  const c = d.getElementById('count'); NOTES.paused = PRES.paused;
-  if (c) c.innerHTML = `${clamp(PRES.beat, 0, BEATS.length - 1) + 1} / ${BEATS.length}${PRES.paused ? '<b>paused</b>' : ''}`;
+  const c = d.getElementById('count'); NOTES.paused = PRES.paused; NOTES.fast = FAST;
+  if (c) c.innerHTML = `${clamp(PRES.beat, 0, BEATS.length - 1) + 1} / ${BEATS.length}${PRES.paused ? '<b>paused</b>' : ''}${FAST ? '<i>fast drawing</i>' : ''}`;
 }
 function notesRender(d) {
   const i = clamp(PRES.beat, 0, BEATS.length - 1), B = BEATS[i], G = notesGroupOf(i), N = BEATS[i + 1], el = (id) => d.getElementById(id);

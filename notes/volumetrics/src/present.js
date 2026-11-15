@@ -348,7 +348,7 @@ function setPresent(on, beat = 0) {
   if (on) {
     PRES.saved = {}; for (const k of Object.keys(PRES_CLOUD)) PRES.saved[k] = SK[k];
     Object.assign(SK, PRES_CLOUD);
-    if (SK.quality !== 'high') { PRES.saved.quality = SK.quality; SK.quality = 'high'; }   // the camera moves, so the frames can't average: render finer instead
+    PRES.saved.quality = SK.quality; SK.quality = FAST ? 'medium' : 'high';   // the camera moves, so the frames can't average: render finer instead (a step coarser when drawing fast)
     try { document.fonts.load('500 18px "JetBrains Mono"'); } catch (e) { /* the code falls back to any monospace */ }
     PRES.beat = -1; presGo(beat, true);
   } else { stopTweens('pres'); if (PRES.saved) { Object.assign(SK, PRES.saved); PRES.saved = null; } }
@@ -364,6 +364,7 @@ function presKey(e) {
   else if (k === 'r' || k === 'R') presGo(PRES.beat, true);
   else if (k === 'f' || k === 'F') toggleFull();
   else if (k === 'Escape') setPresent(false);
+  else if (k === 'q' || k === 'Q') { FAST = !FAST; SK.quality = FAST ? 'medium' : 'high'; }   // fast drawing, for recording (app.js)
   else if (k === 'n' || k === 'N') notesToggle();   // the notes window (notes.js)
   else if ((k === 't' || k === 'T') && notesOpen()) notesResetTimer();
   else return;
