@@ -1,0 +1,9 @@
+{
+  "name": "volumetrics-video-tools",
+  "private": true,
+  "type": "module",
+  "description": "Renders the volumetrics presentation to a video from press times (see README.md)",
+  "dependencies": {
+    "playwright": "^1.48.0"
+  }
+}

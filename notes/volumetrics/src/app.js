@@ -2763,8 +2763,12 @@ function drawInto(i, sc, dt) {
 }
 let raf = 0, last = 0;
 function frame(now) {
+  if (RENDER.on) return;   // a render to a file steps the frames itself (below)
   raf = requestAnimationFrame(frame);
   const dt = PRES.on && PRES.paused ? 0 : Math.min(0.1, Math.max(0, (now - last) / 1000)) * SPEED; last = now;
+  step(dt);
+}
+function step(dt) {
   tick(dt); TIME += dt;
   fitCanvas();
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
@@ -2781,9 +2785,35 @@ function frame(now) {
   if (visSig() !== dockSig) buildDock();
 }
 document.addEventListener('visibilitychange', () => {
+  if (RENDER.on) return;
   if (document.hidden) cancelAnimationFrame(raf);
   else { last = performance.now(); raf = requestAnimationFrame(frame); }
 });
+// ---------- rendering the presentation to a file (tools/render.mjs) ----------
+// The live loop stops, and the presentation is stepped a frame at a time, each exactly 1/fps long whatever the machine
+// can keep up with: renderInit(timeline) takes the beats and when each is pressed ({ fps, beats: [{ n: '2', t: 3.4 }, …] },
+// t in seconds; the first beat shows from 0), and each renderFrame() fires the presses that are due, draws one frame,
+// and gives its picture back (or only steps, for the frames before the stretch that is wanted).
+const RENDER = { on: false, fps: 60, f: 0, k: 0, beats: [] };
+async function renderInit(tl) {
+  const beats = (tl.beats || []).map((b) => ({ n: String(b.n), i: BEATS.findIndex((q) => q.n === String(b.n)), t: +b.t }));
+  const bad = beats.filter((b) => b.i < 0 || !Number.isFinite(b.t));
+  if (!beats.length || bad.length) throw new Error('timeline: ' + (beats.length ? 'no such beat or no time: ' + bad.map((b) => b.n).join(', ') : 'no beats'));
+  cancelAnimationFrame(raf);
+  Object.assign(RENDER, { on: true, fps: tl.fps || 60, f: 0, k: 1, beats });
+  if (!PRES.on) setScene('cloud');
+  setPresent(true, beats[0].i);
+  await new Promise((r) => setTimeout(r, 0));
+  fitCanvas();
+  return { width: cv.width, height: cv.height, beats: beats.length, last: beats[beats.length - 1].t };
+}
+async function renderFrame(grab = true, type = 'image/png', quality) {
+  const R = RENDER, t = R.f / R.fps;
+  while (R.k < R.beats.length && R.beats[R.k].t <= t + 1e-9) await presGo(R.beats[R.k++].i, true);
+  step(R.f ? 1 / R.fps : 0); R.f++;
+  await new Promise((r) => setTimeout(r, 0));   // the beats' own steps (awaits on tweens) go on before the next frame
+  return grab ? cv.toDataURL(type, quality) : null;
+}
 async function boot() {
   const faces = ['400 40px KaTeX_Main', 'italic 400 40px KaTeX_Main', '700 40px KaTeX_Main', 'italic 400 40px KaTeX_Math', '400 40px KaTeX_Size1', '400 40px KaTeX_Size2', '400 40px KaTeX_Size3', '400 40px KaTeX_Size4', '400 40px KaTeX_AMS', '400 40px KaTeX_Caligraphic'];
   try { await Promise.all(faces.map((f) => document.fonts.load(f))); } catch (e) { /* fall back to whatever loaded */ }
