@@ -5,15 +5,11 @@ Texts to paste, for the video "The Hidden Assumption in Every Volume Renderer" (
 ## YouTube description
 
 ```text
-Every volume renderer has the same term in it: e to the minus an integral. Every resource I found handed it to me and wanted me to accept it. This video builds it from scratch, with a laser, a sensor and a box of fog.
+For a long time I wanted to understand the math and physics behind volumetric rendering, and the first thing I ran into was a scary-looking formula: an integral inside an exponent, inside another integral. Every resource I found just handed it to me and wanted me to accept it. Nobody explained why there is an e in it at all.
 
-You'll see:
-• why two boxes that each absorb half the light leave 25%, not 0%
-• why that turns into an exponential (the Beer–Lambert law)
-• the assumption about the particles that the exponential rests on, and what it looks like when it doesn't hold
-• why the density ends up as an integral in the exponent
+This is the video I needed back then. It starts from nothing, with a laser, a sensor and a box of fog, and builds that formula up until the e and the integral in its exponent stop looking scary.
 
-This isn't a shader tutorial, and it isn't a physics lecture either. It's the part in between. This one is only about absorption; scattering and emission come in the next video.
+This one covers absorption only. Scattering and emission come next.
 
 Chapters
 0:00 Intro & Motivation
