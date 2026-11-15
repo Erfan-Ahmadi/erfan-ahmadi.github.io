@@ -1,6 +1,6 @@
 # Publishing the volumetrics video
 
-Texts to paste, for the video "The Hidden Assumption in Every Volume Renderer" (A/B title: "Why Is There an "e" in Every Cloud Renderer?"). Still to fill in: the video's link, the chapter times, and the music credit.
+Texts to paste, for the video "The Hidden Assumption in Every Volume Renderer" (A/B title: "Why Is There an "e" in Every Cloud Renderer?"). Still to fill in: the video's link and the music credit.
 
 ## YouTube description
 
@@ -16,16 +16,16 @@ You'll see:
 This isn't a shader tutorial, and it isn't a physics lecture either. It's the part in between. This one is only about absorption; scattering and emission come in the next video.
 
 Chapters
-0:00 The formula nobody explained
-0:00 What this video is, and isn't
-0:00 Light through "stuff"
-0:00 Only absorption
-0:00 Two boxes: why not zero?
-0:00 The exponential
-0:00 Why exponential?
-0:00 When the density changes
-0:00 From a sum to an integral
-0:00 Where the e and the integral come from
+0:00 Intro & Motivation
+1:28 Goals
+2:29 Light & The Stuff
+2:50 Absorption Only
+3:32 Another Box?
+4:19 Exponential Behaviour
+5:46 But Why Exponentials?
+7:31 Non-exponentials
+8:28 Variable Absorption Coefficient
+11:42 Wrap up
 
 Blog post: https://erfan-ahmadi.github.io/blog/the-hidden-assumption-in-every-volume-renderer/
 
@@ -36,22 +36,7 @@ Music: [track and artist]
 #computergraphics #rendering #volumetrics
 ```
 
-Where each chapter starts, by what is said there:
-
-| Chapter | Starts at |
-|---|---|
-| The formula nobody explained | the start |
-| What this video is, and isn't | "This video isn't a shader tutorial…" |
-| Light through "stuff" | "In plain words, all of this is about one thing…" |
-| Only absorption | "For the rest of this video I'm going to be slightly dishonest…" |
-| Two boxes: why not zero? | "How much less? That's what the sensor is for…" |
-| The exponential | "This behaviour can be described with an exponential." |
-| Why exponential? | the zoom into the thin slab, after the "but why exponential?" aside |
-| When the density changes | "But we're still far from what happens in practice…" |
-| From a sum to an integral | "And see what happens when your absorption changes continuously" |
-| Where the e and the integral come from | "By now I hope you've understood…" |
-
-YouTube needs the first chapter at 0:00, at least three chapters, and each at least 10 seconds long.
+The chapter names and times are Erfan's, from the final video (with "Absorbtion" spelled "Absorption").
 
 ## LinkedIn (with the clip attached)
 
