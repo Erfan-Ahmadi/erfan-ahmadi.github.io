@@ -1,0 +1,26 @@
+---
+title: "The Hidden Assumption in Every Volume Renderer"
+description: "Why is there an e, with an integral in its exponent, in every volume renderer? A laser, a sensor and a box of fog build that term from scratch, and show the assumption about the particles that it rests on."
+date: 2026-11-15
+# youtube: VIDEO_ID         # The part of the YouTube link after "v=". Uncomment once the video is up: it then shows at the top of the post.
+thumbnail: ./thumbnail.webp
+tags: ["Volumetrics", "Rendering", "Math"]
+draft: true                 # Live at its link for proofreading, but not listed anywhere. Delete this line to publish.
+---
+
+When I first wanted to learn how clouds are rendered, the first thing I ran into was a formula with an integral inside an exponent, inside another integral. Every resource I found handed it to me and wanted me to accept it. Nobody explained why there is an $e$ in it at all.
+
+This video isn't a shader tutorial, and it isn't a physics lecture either. It's the part in between. With a laser, a sensor and a box of fog, it builds the absorption term $e^{-\int \sigma\,dx}$ from scratch: why two boxes that each take half the light leave a quarter of it and not nothing, why that turns into an exponential, and why the density ends up as an integral in the exponent.
+
+The exponential turns out not to be a law of nature. It rests on an assumption about how the particles are placed, and that is the one in the title.
+
+Scattering and emission are for the next video.
+
+{/* Chapters, once the video is up: a list like the one in the "GPU-Driven Anything" post, one line per part with its time:
+- [0:00](https://www.youtube.com/watch?v=VIDEO_ID&t=0s) The formula
+- What this is about
+- Only absorption
+- Why exponential
+- When the density changes
+- Where the e and the integral come from
+*/}
