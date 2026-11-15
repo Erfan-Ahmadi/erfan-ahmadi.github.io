@@ -7,7 +7,7 @@ Texts to paste, for the video "The Hidden Assumption in Every Volume Renderer" (
 ```text
 For a long time I wanted to understand the math and physics behind volumetric rendering, and the first thing I ran into was a scary-looking formula: an integral inside an exponent, inside another integral. Every resource I found just handed it to me and wanted me to accept it. Nobody explained why there is an e in it at all.
 
-This is the video I needed back then. It starts from nothing, with a laser, a sensor and a box of fog, and builds that formula up until the e and the integral in its exponent stop looking scary.
+This is the video I needed back then: the intuition behind some of the questions we usually skip over. It starts from nothing, with a laser, a sensor and a box of fog, and builds that formula up until the e and the integral in its exponent stop looking scary.
 
 This one covers absorption only. Scattering and emission come next.
 
