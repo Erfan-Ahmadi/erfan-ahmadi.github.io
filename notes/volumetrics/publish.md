@@ -1,6 +1,6 @@
 # Publishing the volumetrics video
 
-Texts to paste, for the video "The Hidden Assumption in Every Volume Renderer" (A/B title: "Why Is There an "e" in Every Cloud Renderer?"). Still to fill in: the video's link and the music credit.
+Texts to paste, for the video "The Hidden Assumption in Every Volume Renderer" (A/B title: "Why Is There an "e" in Every Cloud Renderer?"). The video: https://youtu.be/mHIJVclRZ18
 
 ## YouTube description
 
@@ -27,51 +27,44 @@ Blog post: https://erfan-ahmadi.github.io/blog/the-hidden-assumption-in-every-vo
 
 Credits
 Bunny renders: Mitsuba 3. Model: the Stanford Bunny, Stanford Computer Graphics Laboratory.
-Music: [track and artist]
-
-#computergraphics #rendering #volumetrics
 ```
+
+This is the description as posted.
 
 The chapter names and times are Erfan's, from the final video (with "Absorbtion" spelled "Absorption").
 
 ## LinkedIn (with the clip attached)
 
 ```text
-Rendering clouds is a big part of why I kept going in computer graphics. And for years I delayed learning how it actually works.
+For a long time I was trying to understand one thing about volumetric rendering: why is there an e in the formula?
 
-The first thing I ran into was a formula with an integral inside an exponent, inside another integral. Every resource I found handed it to me and wanted me to accept it. Nobody explained why there is an "e" in it at all.
+Every resource showed me the same scary-looking formula, an integral inside an exponent, inside another integral, and moved on. Nobody explained where it comes from.
 
-So I made the video I needed back then. With a laser, a sensor and a box of fog, it builds that term from scratch:
-→ why two boxes that each absorb half the light leave 25%, not 0%
-→ why that turns into an exponential
-→ the assumption about the particles hiding behind it
-→ why the density ends up as an integral in the exponent
+So I made a video about just that question. It starts from nothing, with a laser, a sensor and a box of fog, and builds the formula up until the e and the integral in its exponent stop looking scary.
 
-It isn't a shader tutorial, and it isn't a physics lecture. It's the part in between.
+The clip is where it starts: one box of fog lets half the light through. What happens when you add a second one?
 
-Full video: link in the first comment.
-
-#computergraphics #rendering #gamedev
+Full video in the first comment.
 ```
 
-First comment: the YouTube link. (LinkedIn shows posts with a link in the body to fewer people.)
+First comment: https://youtu.be/mHIJVclRZ18 (LinkedIn shows posts with a link in the body to fewer people.)
 
 ## X / Twitter (same clip)
 
 ```text
-Every volume renderer multiplies light by e^(−∫σ dx).
+I was trying to understand one thing about volumetric rendering: why is there an e in the formula?
 
-Nobody explained to me why there's an e in it. So I made a video that builds it from a laser and a box of fog.
+Nobody explained it, so I made a video that builds it up from a laser, a sensor and a box of fog.
 
-It starts here: two boxes that each absorb half the light leave 25%, not 0%.
+It starts with this question:
 ```
 
-Reply to it with: `Full video: [link]`
+Reply to it with: `Full video: https://youtu.be/mHIJVclRZ18`
 
 ## The clip
 
-The two-box question stands on its own and ends on a surprise: from "Now, I've got a question for you. What if I put a second, identical box right next to this one?" to "Each box halves the light that enters it." About half a minute.
+The chapter "Another Box?", 3:32 to 4:19: the second box, and the sensor reading 25% and not 0%.
 
 ## The blog post
 
-`src/content/posts/2026-11-15-the-hidden-assumption-in-every-volume-renderer/index.mdx`, a draft. Once the video is up: put its id in `youtube:`, add the chapters, set the date, delete the `draft` line.
+`src/content/posts/2026-11-15-the-hidden-assumption-in-every-volume-renderer/index.mdx`: the video at the top, the description's three paragraphs, and the chapters.

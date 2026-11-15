@@ -1,33 +1,27 @@
 ---
 title: "The Hidden Assumption in Every Volume Renderer"
-description: "Why is there an e, with an integral in its exponent, in every volume renderer? A laser, a sensor and a box of fog build that term from scratch, and show the assumption about the particles that it rests on."
+description: "For a long time I wanted to understand the math and physics behind volumetric rendering, and the first thing I ran into was a scary-looking formula. This video builds it up from nothing, with a laser, a sensor and a box of fog."
 date: 2026-11-15
-# youtube: VIDEO_ID         # The part of the YouTube link after "v=". Uncomment once the video is up: it then shows at the top of the post.
+youtube: mHIJVclRZ18
 thumbnail: ./thumbnail.webp
 tags: ["Volumetrics", "Rendering", "Math"]
-draft: true                 # Live at its link for proofreading, but not listed anywhere. Delete this line to publish.
 ---
 
-When I first wanted to learn how clouds are rendered, the first thing I ran into was a formula with an integral inside an exponent, inside another integral. Every resource I found handed it to me and wanted me to accept it. Nobody explained why there is an $e$ in it at all.
+For a long time I wanted to understand the math and physics behind volumetric rendering, and the first thing I ran into was a scary-looking formula: an integral inside an exponent, inside another integral. Every resource I found just handed it to me and wanted me to accept it. Nobody explained why there is an $e$ in it at all.
 
-This video isn't a shader tutorial, and it isn't a physics lecture either. It's the part in between. With a laser, a sensor and a box of fog, it builds the absorption term $e^{-\int \sigma\,dx}$ from scratch: why two boxes that each take half the light leave a quarter of it and not nothing, why that turns into an exponential, and why the density ends up as an integral in the exponent.
+This is the video I needed back then: the intuition behind some of the questions we usually skip over. It starts from nothing, with a laser, a sensor and a box of fog, and builds that formula up until the $e$ and the integral in its exponent stop looking scary.
 
-The exponential turns out not to be a law of nature. It rests on an assumption about how the particles are placed, and that is the one in the title.
-
-Scattering and emission are for the next video.
-
-{/* Once the video is up: put its id in place of VIDEO_ID below, and take these two comment lines away.
+This one covers absorption only. Scattering and emission come next.
 
 ## Chapters
 
-- [0:00](https://www.youtube.com/watch?v=VIDEO_ID&t=0s) Intro & Motivation
-- [1:28](https://www.youtube.com/watch?v=VIDEO_ID&t=88s) Goals
-- [2:29](https://www.youtube.com/watch?v=VIDEO_ID&t=149s) Light & The Stuff
-- [2:50](https://www.youtube.com/watch?v=VIDEO_ID&t=170s) Absorption Only
-- [3:32](https://www.youtube.com/watch?v=VIDEO_ID&t=212s) Another Box?
-- [4:19](https://www.youtube.com/watch?v=VIDEO_ID&t=259s) Exponential Behaviour
-- [5:46](https://www.youtube.com/watch?v=VIDEO_ID&t=346s) But Why Exponentials?
-- [7:31](https://www.youtube.com/watch?v=VIDEO_ID&t=451s) Non-exponentials
-- [8:28](https://www.youtube.com/watch?v=VIDEO_ID&t=508s) Variable Absorption Coefficient
-- [11:42](https://www.youtube.com/watch?v=VIDEO_ID&t=702s) Wrap up
-*/}
+- [0:00](https://www.youtube.com/watch?v=mHIJVclRZ18&t=0s) Intro & Motivation
+- [1:28](https://www.youtube.com/watch?v=mHIJVclRZ18&t=88s) Goals
+- [2:29](https://www.youtube.com/watch?v=mHIJVclRZ18&t=149s) Light & The Stuff
+- [2:50](https://www.youtube.com/watch?v=mHIJVclRZ18&t=170s) Absorption Only
+- [3:32](https://www.youtube.com/watch?v=mHIJVclRZ18&t=212s) Another Box?
+- [4:19](https://www.youtube.com/watch?v=mHIJVclRZ18&t=259s) Exponential Behaviour
+- [5:46](https://www.youtube.com/watch?v=mHIJVclRZ18&t=346s) But Why Exponentials?
+- [7:31](https://www.youtube.com/watch?v=mHIJVclRZ18&t=451s) Non-exponentials
+- [8:28](https://www.youtube.com/watch?v=mHIJVclRZ18&t=508s) Variable Absorption Coefficient
+- [11:42](https://www.youtube.com/watch?v=mHIJVclRZ18&t=702s) Wrap up
